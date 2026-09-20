@@ -132,7 +132,7 @@ def balanced_banking77_cases(
 def clinc_oos_cases(
     cache_dir: Path = DEFAULT_CACHE,
     *,
-    max_cases: int = 500,
+    max_cases: int | None = 500,
     seed: int = 42,
 ) -> list[BenchmarkCase]:
     path = prepare_public_data(cache_dir)["clinc150_full"]
@@ -172,24 +172,25 @@ def clinc_oos_cases(
                 "oos_filter": "conservative_non_finance",
             },
         )
-        for idx, (text, _) in enumerate(rows[:max_cases])
+        for idx, (text, _) in enumerate(rows if max_cases is None else rows[:max_cases])
     ]
 
 
 def calibration_public_cases(
     cache_dir: Path = DEFAULT_CACHE,
     *,
-    in_scope_cases: int = 500,
-    oos_cases: int = 500,
+    in_scope_cases: int | None = 500,
+    oos_cases: int | None = 500,
     seed: int = 42,
 ) -> list[BenchmarkCase]:
+    outside = clinc_oos_cases(cache_dir, max_cases=oos_cases, seed=seed)
+    resolved_in_scope = len(outside) if in_scope_cases is None else in_scope_cases
     inside = balanced_banking77_cases(
         cache_dir,
-        max_cases=in_scope_cases,
+        max_cases=resolved_in_scope,
         seed=seed,
         experiment="02-calibration",
     )
-    outside = clinc_oos_cases(cache_dir, max_cases=oos_cases, seed=seed)
     combined = inside + outside
     random.Random(seed).shuffle(combined)
     return combined
