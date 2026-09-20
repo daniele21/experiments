@@ -39,9 +39,10 @@ def write_manifest(
     run_group: str,
     suite: str,
     runner_location: str,
-    requested_models: dict[str, str | None],
+    requested_models: dict[str, Any],
     resolved_models: dict[str, list[str]],
     parameters: dict[str, Any],
+    pricing: dict[str, Any],
 ) -> None:
     payload = {
         "run_group": run_group,
@@ -54,6 +55,7 @@ def write_manifest(
         "requested_models": requested_models,
         "resolved_models": resolved_models,
         "parameters": parameters,
+        "pricing": pricing,
         "packages": _package_versions(),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
