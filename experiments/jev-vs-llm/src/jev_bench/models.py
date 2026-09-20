@@ -20,6 +20,7 @@ class Decision:
     value: str | float
     probabilities: dict[str, float] = field(default_factory=dict)
     confidence: float | None = None
+    predicted_probability: float | None = None
 
 
 @dataclass
