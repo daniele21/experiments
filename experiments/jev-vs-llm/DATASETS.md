@@ -68,7 +68,7 @@ BANKING77 gives a relatively difficult fixed-choice classification problem with 
 |---|---:|---:|---:|---|
 | `quick` | 154 | 100 | 100 | Integration check / cheap comparison |
 | `standard` | 770 | 500 | 500 | Default meaningful experiment |
-| `full` | 3,080 | 1,000 | 1,000 | Highest-coverage run |
+| `full` | 3,080 | matched to all filtered OOS | all conservatively filtered OOS | Highest-coverage balanced run |
 
 The BANKING77 routing sampler is class-balanced where a profile uses a subset.
 
