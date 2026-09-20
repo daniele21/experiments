@@ -24,7 +24,9 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "predicted_probability": 0.9,
                 "latency_ms": 100.0,
                 "input_tokens": 10,
+                "cached_input_tokens": 0,
                 "output_tokens": 2,
+                "estimated_cost_usd": 0.00000042,
                 "valid": True,
                 "error": None,
                 "primary_metric": True,
@@ -46,7 +48,9 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "predicted_probability": 0.85,
                 "latency_ms": 110.0,
                 "input_tokens": 10,
+                "cached_input_tokens": 0,
                 "output_tokens": 2,
+                "estimated_cost_usd": 0.00000042,
                 "valid": True,
                 "error": None,
                 "primary_metric": True,
@@ -59,7 +63,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "experiment": "01-routing-public",
                 "case_id": "r2",
                 "provider": "llm-workflow",
-                "model": "llm-test",
+                "model": "gpt-5.6-luna",
                 "question_id": "intent",
                 "expected": "a",
                 "actual": "b",
@@ -68,7 +72,9 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "predicted_probability": 0.65,
                 "latency_ms": 500.0,
                 "input_tokens": 15,
+                "cached_input_tokens": 0,
                 "output_tokens": 4,
+                "estimated_cost_usd": 0.0000078,
                 "valid": True,
                 "error": None,
                 "primary_metric": True,
@@ -81,7 +87,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "experiment": "02-calibration-public",
                 "case_id": "c2",
                 "provider": "llm-workflow",
-                "model": "llm-test",
+                "model": "gpt-5.6-luna",
                 "question_id": "intent",
                 "expected": "other",
                 "actual": "a",
@@ -90,7 +96,9 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "predicted_probability": 0.8,
                 "latency_ms": 520.0,
                 "input_tokens": 15,
+                "cached_input_tokens": 0,
                 "output_tokens": 4,
+                "estimated_cost_usd": 0.0000078,
                 "valid": True,
                 "error": None,
                 "primary_metric": True,
@@ -108,3 +116,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
     assert "Accuracy vs latency" in text
     assert "Probability calibration" in text
     assert "Most frequent confusion pairs" in text
+    assert "Routing cost" in text
+    assert "Run details" in text
+    assert "gpt-5.6-luna" in text
+    assert "model-chip" in text
