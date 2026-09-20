@@ -9,7 +9,7 @@ A reproducible benchmark for understanding **where a System One decision model s
 The benchmark has three executable arms:
 
 - **Jev workflow** — typed `Choice`, `Score`, and `Noul` questions sent to `jev-latest` (or an explicitly pinned Jev model).
-- **LLM workflow** — the same decomposed questions sent to an explicitly configured OpenAI model using strict Structured Outputs. The latency baseline is output-efficient: it emits only the selected value plus two uncertainty scalars, not a full class distribution.
+- **LLM workflow matrix** — the same decomposed questions are run against GPT-5.6 Luna, Terra and Sol by default (configurable through `OPENAI_MODELS`). The latency baseline is output-efficient: it emits only the selected value plus two uncertainty scalars, not a full class distribution.
 - **LLM monolithic** — for workflow experiments 04/05, the complete policy is given to the LLM and it returns the final action directly. This separates the benefit of decomposition from the benefit of the model architecture.
 
 LLM confidence values are self-reported. They are deliberately measured, but must not be assumed to mean the same thing as Jev confidence before calibration is evaluated empirically.
@@ -54,7 +54,8 @@ Export the required keys and choose the exact LLM model:
 ```bash
 export TYPESAFE_API_KEY="..."
 export OPENAI_API_KEY="..."
-export OPENAI_MODEL="<exact model id>"
+export OPENAI_MODEL="gpt-5.6-terra"
+export OPENAI_MODELS="gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol"
 ```
 
 `JEV_MODEL` defaults to `jev-latest` for exploration. For a benchmark that must remain reproducible, set it to the exact returned Jev model version.
@@ -65,7 +66,8 @@ export OPENAI_MODEL="<exact model id>"
 
 ```bash
 export BENCHMARK_LOCATION="milan-local"
-uv run jev-bench compare --scaling-repeats 30
+uv run jev-bench compare --scaling-repeats 30 \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol
 ```
 
 This generates `results/report.html`.
@@ -81,7 +83,8 @@ uv run jev-bench prepare-data
 Run the standard profile:
 
 ```bash
-uv run jev-bench compare-public --profile standard
+uv run jev-bench compare-public --profile standard \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol
 ```
 
 Profiles:
@@ -94,7 +97,7 @@ Profiles:
 
 The public benchmark generates `results/public_report.html`.
 
-The HTML report is the primary human-facing artifact. It shows accuracy and macro-F1 with 95% confidence intervals, latency, accuracy-vs-latency, probability calibration, confidence-based coverage, in-scope vs OOS performance, top confusion pairs, and parallel scaling when present.
+The HTML report is the primary human-facing artifact and is designed as a minimal experiment explorer rather than a raw technical dump. It includes tabs for Overview, Routing, Calibration, Scaling, Workflow, Agent and Run details; global model filters; accuracy/latency/cost trade-off views; and the underlying aggregate tables.
 
 ## Result schema
 
@@ -104,7 +107,8 @@ Every raw row includes:
 run_id, run_group, suite, run_timestamp_utc, runner_location,
 experiment, case_id, provider, model, question_id,
 expected, actual, correct, confidence, predicted_probability,
-primary_metric, latency_ms, input_tokens, output_tokens, valid, error
+primary_metric, latency_ms, input_tokens, cached_input_tokens,
+output_tokens, estimated_cost_usd, valid, error
 ```
 
 This deliberately keeps the raw representation simple enough to analyze with pandas, DuckDB, BigQuery, or another reporting layer later.
@@ -152,7 +156,7 @@ See [`METHODOLOGY.md`](METHODOLOGY.md) for benchmark-grade sample sizes, latency
 - [x] LLM-monolithic baseline for experiments 04/05
 - [x] Accuracy-vs-coverage threshold chart
 - [x] Run grouping with UTC timestamp and runner location
-- [ ] Optional cost normalization from dated price assumptions
+- [x] Cost tracking from a dated provider pricing snapshot (request, 1k requests, run total)
 - [ ] Full manifest: git SHA and installed package versions
 
 ## Sources used for the design
