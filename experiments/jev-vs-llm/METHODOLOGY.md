@@ -18,7 +18,7 @@ The third arm is essential: it separates the gain from **workflow decomposition*
 - **Probability calibration**: Expected Calibration Error plus Brier score computed on the probability assigned to the selected class.
 - **Selective automation**: accuracy vs coverage while increasing the provider-native confidence threshold.
 - **Scaling**: latency as independent questions in one request increase 1, 2, 4, 8, 16, 32.
-- **Token usage**: input/output tokens when exposed by the provider. Cost normalization is optional and must use dated price assumptions.
+- **Token usage and cost**: input, cached-input and output tokens when exposed by the provider. Estimated cost is computed from a committed, dated pricing snapshot and reported per request, per 1,000 requests and per run.
 
 For workflow experiments, **primary accuracy means final-action accuracy**. Intermediate question accuracy is reported separately so a workflow with four subquestions is not accidentally weighted four times more heavily than a single final outcome.
 
@@ -28,7 +28,7 @@ For benchmark-grade runs:
 
 1. Run all providers from the same host and region.
 2. Record the runner location with `BENCHMARK_LOCATION`.
-3. Pin exact model IDs; do not publish a comparison using moving `latest` aliases.
+3. Pin exact model IDs; do not publish a comparison using moving `latest` aliases. The default GPT comparison matrix spans Luna, Terra and Sol so the benchmark measures the speed/cost/intelligence trade-off rather than a single arbitrary LLM.
 4. Perform 5 untimed warm-up requests per provider/shape.
 5. Run at least 30 measured repeats for each scaling point.
 6. Execute the providers sequentially for the default latency benchmark; a separate throughput benchmark can test concurrency later.
@@ -100,3 +100,17 @@ The command runs all benchmark arms under one `run_group` and generates `results
 ## Publication
 
 Before publishing Jev numeric benchmark results, verify the TypeSafe terms applicable to the account used for the run. The repository therefore gitignores raw result directories by default; methodology and code can remain public independently of private numeric outputs.
+
+
+## Cost protocol
+
+Cost is treated as a first-class benchmark metric rather than a post-hoc note.
+
+- Provider-reported token counts are persisted per request.
+- OpenAI cached input tokens are tracked separately when the API reports them.
+- Jev is priced from input tokens; its public output-token price is zero in the current snapshot.
+- OpenAI requests use input, cached-input and output token prices from the committed `pricing_snapshot.json`.
+- Every manifest embeds the pricing snapshot metadata used for that run.
+- If a model is not present in the snapshot, the harness records no cost rather than inventing one.
+- The default cost charts show USD/request, USD/1,000 requests and total run cost.
+- Historical reports must keep their original snapshot; updating today's list price must not rewrite the cost of an older run.
