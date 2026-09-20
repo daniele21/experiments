@@ -68,10 +68,11 @@ Default local matrix:
 | Korgis key | Model | Quantization | Provider API fee |
 |---|---|---|---:|
 | `qwen3.5-4b-q4km` | Qwen3.5-4B | Q4_K_M | $0 |
-| `qwen3.5-9b-q4km` | Qwen3.5-9B | Q4_K_M | $0 |
+| `minicpm3-4b-q4km` | MiniCPM3-4B | Q4_K_M | $0 |
 | `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B | Q4_K_M | $0 |
+| `qwen3.5-9b-q4km` | Qwen3.5-9B | Q4_K_M | $0 |
 
-Qwen3.5 has official 4B and 9B checkpoints; the 9B model is used as the larger Qwen3.5 comparison.
+The 4B tier deliberately includes Qwen3.5-4B, MiniCPM3-4B and Nemotron Nano 4B so model-family effects can be compared at roughly similar scale. Qwen3.5-9B remains as the larger within-family reference.
 
 Local provider API fee is recorded as zero. That **does not mean local inference has zero total cost**: electricity, device purchase/amortisation, thermal impact and device opportunity cost are currently outside the cost model.
 
@@ -185,8 +186,9 @@ First download the local GGUF files from the Korgis repository/environment:
 
 ```bash
 local-llm download qwen3.5-4b-q4km
-local-llm download qwen3.5-9b-q4km
+local-llm download minicpm3-4b-q4km
 local-llm download nemotron-nano-4b
+local-llm download qwen3.5-9b-q4km
 ```
 
 For the default memory-bounded mode, start Korgis with the small anchor model and admin API enabled:
@@ -335,8 +337,9 @@ Default local matrix:
 
 ```text
 Qwen3.5-4B Q4_K_M
-Qwen3.5-9B Q4_K_M
+MiniCPM3-4B Q4_K_M
 Nemotron Nano 4B Q4_K_M
+Qwen3.5-9B Q4_K_M
 ```
 
 Outputs:
@@ -383,7 +386,7 @@ uv run jev-bench compare-public \
   --profile budget \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
   --include-local \
-  --local-models qwen3.5-4b-q4km,qwen3.5-9b-q4km,nemotron-nano-4b
+  --local-models qwen3.5-4b-q4km,minicpm3-4b-q4km,nemotron-nano-4b,qwen3.5-9b-q4km
 ```
 
 This is the preferred command when you want a direct public routing/calibration comparison under the same run group.
@@ -979,8 +982,9 @@ uv run jev-bench report \
 - [x] GPT monolithic workflow/agent baseline
 - [x] Korgis OpenAI-compatible local provider
 - [x] Qwen3.5-4B Q4_K_M local baseline
-- [x] Qwen3.5-9B Q4_K_M local baseline
+- [x] MiniCPM3-4B Q4_K_M local baseline
 - [x] Nemotron Nano 4B Q4_K_M local baseline
+- [x] Qwen3.5-9B Q4_K_M local baseline
 - [x] Experiment 01 — routing
 - [x] Experiment 02 — calibration
 - [x] Experiment 03 — 1/2/4/8/16/32 parallel scaling
