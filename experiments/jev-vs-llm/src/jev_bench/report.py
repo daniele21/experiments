@@ -29,6 +29,7 @@ def _series_name(provider: str, model: str) -> str:
     if provider == "local-korgis":
         labels = {
             "qwen3.5-4b-q4km": "Korgis · Qwen3.5 4B Q4_K_M",
+            "minicpm3-4b-q4km": "Korgis · MiniCPM3 4B Q4_K_M",
             "qwen3.5-9b-q4km": "Korgis · Qwen3.5 9B Q4_K_M",
             "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M",
         }
