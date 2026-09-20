@@ -5,7 +5,7 @@ import time
 from collections.abc import Sequence
 from typing import Any
 
-from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
+from typesafe_sdk import Choice, Noul, RetryPolicy, Score, TypeSafeClient
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
@@ -16,7 +16,12 @@ class JevProvider(DecisionProvider):
 
     def __init__(self, model: str | None = None) -> None:
         self.model = model or os.getenv("JEV_MODEL", "jev-latest")
-        self.client = TypeSafeClient()
+        max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
+        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        self.client = TypeSafeClient(
+            retry=RetryPolicy(max_retries=max_retries),
+            timeout=timeout,
+        )
 
     @staticmethod
     def _question(q: QuestionSpec):
