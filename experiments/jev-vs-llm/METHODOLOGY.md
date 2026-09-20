@@ -49,7 +49,7 @@ Report: accuracy, macro-F1 (planned when the larger dataset lands), valid-output
 
 **Hypothesis:** useful automation depends not only on being right but on knowing when not to act.
 
-Public benchmark: a balanced mixture of BANKING77 in-scope test examples and CLINC150 `oos_test` examples mapped to an explicit `other` choice. This directly tests both classification quality and rejection/OOD behavior without asking a tested model to create the labels.
+Public benchmark: a balanced mixture of BANKING77 in-scope test examples and conservatively filtered CLINC150 `oos_test` examples mapped to an explicit `other` choice. The `full` profile uses all filtered OOS examples and matches them with the same number of BANKING77 cases. This directly tests both classification quality and rejection/OOD behavior without asking a tested model to create the labels.
 
 Report: reliability curve, ECE and Brier score on selected-class probability, plus accuracy-vs-coverage using native confidence. The key operational question is: *at 95% required accuracy, what share of cases can each system automate?*
 
