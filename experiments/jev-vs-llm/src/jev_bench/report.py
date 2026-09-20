@@ -411,6 +411,13 @@ def _case_explorer(rows: pd.DataFrame, experiment: str, title: str) -> str:
             f"{primary_text}"
             "</summary>"
             f"<div class='case-input'><span>Input</span><p>{_safe(input_state)}</p></div>"
+            "<div class='request-meta'>"
+            f"<span>Latency <strong>{_fmt_number(latency, 0)} ms</strong></span>"
+            f"<span>Input tokens <strong>{_safe(first.get('input_tokens'))}</strong></span>"
+            f"<span>Output tokens <strong>{_safe(first.get('output_tokens'))}</strong></span>"
+            f"<span>API cost <strong>{_money(request_cost)}</strong></span>"
+            f"<span>Difficulty <strong>{_safe(first.get('difficulty'))}</strong></span>"
+            "</div>"
             "<div class='table-scroll'><table class='decision-table'>"
             "<thead><tr><th>Decision</th><th>Expected</th><th>Actual</th>"
             "<th>Correct</th><th>Confidence</th><th>Probability</th>"
@@ -955,7 +962,7 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
 .explorer-tools{{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 4px 12px}} .case-search{{width:min(560px,100%);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:white}} .case-count{{font-size:12px;color:var(--muted);white-space:nowrap}}
 .case-list{{display:grid;gap:8px}} .case-card{{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);overflow:hidden}} .case-card summary{{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;cursor:pointer;list-style:none;font-size:12px}} .case-card summary::-webkit-details-marker{{display:none}} .case-model{{color:var(--muted);margin-right:auto}} .case-card[open] summary{{border-bottom:1px solid var(--line);background:white}}
 .status-dot{{width:8px;height:8px;border-radius:50%;background:#98a2b3}} .status-dot.good{{background:#17b26a}} .status-dot.bad{{background:#f04438}} .status-pill{{padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f2f4f7}} .status-pill.good{{background:#ecfdf3;color:#067647}} .status-pill.bad{{background:#fef3f2;color:#b42318}}
-.case-input{{padding:14px}} .case-input span,.trace-block h4{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}} .case-input p{{margin:5px 0 0;white-space:pre-wrap;line-height:1.5}} .decision-table{{min-width:900px;background:white}} .trace-block{{margin:12px 14px 14px}} .trace-block pre{{white-space:pre-wrap;word-break:break-word;background:#101828;color:#f9fafb;border-radius:10px;padding:12px;font-size:11px;overflow:auto}}
+.case-input{{padding:14px}} .case-input span,.trace-block h4{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}} .case-input p{{margin:5px 0 0;white-space:pre-wrap;line-height:1.5}} .request-meta{{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}} .request-meta span{{background:white;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;color:var(--muted)}} .request-meta strong{{color:var(--text)}} .decision-table{{min-width:900px;background:white}} .trace-block{{margin:12px 14px 14px}} .trace-block pre{{white-space:pre-wrap;word-break:break-word;background:#101828;color:#f9fafb;border-radius:10px;padding:12px;font-size:11px;overflow:auto}}
 .empty{{color:var(--muted)}} @media(max-width:720px){{.shell{{padding:18px 12px 50px}}.topbar{{display:block}}.run-meta{{text-align:left;margin-top:12px}}h1{{font-size:30px}}.toolbar{{top:0}}.toolbar-row{{align-items:flex-start}}}}
 </style>
 </head>
@@ -1008,6 +1015,10 @@ function applyModelFilter() {{
   }});
   document.querySelectorAll('.model-card,.case-card').forEach(card => {{
     card.style.display = active.has(card.dataset.series) ? '' : 'none';
+  }});
+  document.querySelectorAll('table.granular-table tbody tr').forEach(row => {{
+    const series = row.cells.length ? row.cells[0].textContent.trim() : '';
+    row.style.display = series && active.has(series) ? '' : 'none';
   }});
   document.querySelectorAll('.case-search').forEach(input => input.dispatchEvent(new Event('input')));
 }}
