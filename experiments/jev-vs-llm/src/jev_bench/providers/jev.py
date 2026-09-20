@@ -7,6 +7,7 @@ from typing import Any
 
 from typesafe_sdk import Choice, Noul, RetryPolicy, Score, TypeSafeClient
 
+from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
@@ -75,13 +76,24 @@ class JevProvider(DecisionProvider):
                         predicted_probability=max(p, 1.0 - p),
                     )
             usage = getattr(response, "usage", None)
+            resolved_model = getattr(response, "model", self.model)
+            input_tokens = getattr(usage, "input_tokens", None)
+            output_tokens = getattr(usage, "output_tokens", None)
             return ProviderResult(
                 provider=self.name,
-                model=getattr(response, "model", self.model),
+                model=resolved_model,
                 answers=answers,
                 latency_ms=latency_ms,
-                input_tokens=getattr(usage, "input_tokens", None),
-                output_tokens=getattr(usage, "output_tokens", None),
+                input_tokens=input_tokens,
+                cached_input_tokens=0,
+                output_tokens=output_tokens,
+                estimated_cost_usd=estimate_cost_usd(
+                    provider=self.name,
+                    model=resolved_model,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cached_input_tokens=0,
+                ),
                 raw=response,
             )
         except Exception as exc:  # noqa: BLE001 - provider boundary records failures
