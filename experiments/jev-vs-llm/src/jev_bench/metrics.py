@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable
+from collections.abc import Iterable
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ def expected_calibration_error(correct: Iterable[int], probability: Iterable[flo
         return math.nan
     edges = np.linspace(0.0, 1.0, bins + 1)
     ece = 0.0
-    for lo, hi in zip(edges[:-1], edges[1:]):
+    for lo, hi in pairwise(edges):
         mask = (p >= lo) & (p < hi if hi < 1.0 else p <= hi)
         if not mask.any():
             continue
