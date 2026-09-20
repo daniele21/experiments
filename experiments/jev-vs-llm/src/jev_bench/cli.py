@@ -336,6 +336,8 @@ def experiment(
             controller.health()
             if manage_korgis_model:
                 controller.activate(model)
+            else:
+                ensure_korgis_models_resident(controller, [model])
             decision_provider = _single_provider(provider, model, seed)
             korgis_identity[model] = controller.model_identity(model)
         else:
