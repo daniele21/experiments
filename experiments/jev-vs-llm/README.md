@@ -63,6 +63,42 @@ export OPENAI_MODELS="gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol"
 
 ## Run
 
+### One experiment at a time
+
+Use `experiment` when developing or inspecting one benchmark dimension without paying for/running the whole suite:
+
+```bash
+# Local routing through Korgis
+uv run jev-bench experiment routing \
+  --provider korgis \
+  --model qwen3.5-4b-q4km
+
+# Public BANKING77 routing only
+uv run jev-bench experiment routing \
+  --provider korgis \
+  --model qwen3.5-4b-q4km \
+  --dataset public \
+  --profile budget
+
+# Parallel 1→32 scaling only
+uv run jev-bench experiment scaling \
+  --provider korgis \
+  --model qwen3.5-4b-q4km \
+  --scaling-repeats 10
+
+# One GPT workflow
+uv run jev-bench experiment workflow \
+  --provider llm \
+  --model gpt-5.6-terra
+
+# Monolithic GPT agent baseline
+uv run jev-bench experiment agent \
+  --provider llm-monolithic \
+  --model gpt-5.6-terra
+```
+
+Accepted experiment names are `routing`, `calibration`, `scaling`, `workflow`, and `agent`. Every command writes raw rows, a manifest and the same drill-down HTML report.
+
 ### Smoke suite
 
 ```bash
@@ -118,7 +154,18 @@ See [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for Korgis setup, model lifecycle and c
 
 The public benchmark generates `results/public_report.html`.
 
-The HTML report is the primary human-facing artifact and is designed as a minimal experiment explorer rather than a raw technical dump. It includes tabs for Overview, Routing, Calibration, Scaling, Workflow, Agent and Run details; global model filters; accuracy/latency/cost trade-off views; and the underlying aggregate tables.
+The HTML report is the primary human-facing artifact and is designed as a minimal experiment explorer rather than a raw technical dump. It includes tabs for Overview, Routing, Calibration, Scaling, Workflow, Agent and Run details; global model filters; accuracy/latency/cost trade-off views; and drill-down from aggregate metrics to individual cases.
+
+Granularity is intentionally layered:
+
+- **Overview** — model-level accuracy, latency and API cost, plus cost by experiment.
+- **Routing** — aggregate metrics → per-class accuracy/validity → confusion pairs → individual requests.
+- **Calibration** — ECE/Brier/reliability/coverage → individual predictions with confidence/probability.
+- **Scaling** — aggregate latency/cost curves → every 1/2/4/8/16/32-question request with validity, tokens and exact errors.
+- **Workflow / Agent** — final accuracy → intermediate decisions → per-case execution trace → final action.
+- **Error explorer** — provider/schema/missing-answer failures stay separate from semantic mistakes.
+
+Case cards are searchable and show the original input, expected/actual values, confidence, selected probability, validity, latency, estimated API cost and errors.
 
 ## Result schema
 
@@ -126,8 +173,8 @@ Every raw row includes:
 
 ```text
 run_id, run_group, suite, run_timestamp_utc, runner_location,
-experiment, case_id, provider, model, question_id,
-expected, actual, correct, confidence, predicted_probability,
+experiment, case_id, input_state, provider, model, question_id,
+expected, actual, decision_trace, correct, confidence, predicted_probability,
 primary_metric, latency_ms, input_tokens, cached_input_tokens,
 output_tokens, estimated_cost_usd, valid, error
 ```
@@ -171,7 +218,7 @@ See [`METHODOLOGY.md`](METHODOLOGY.md) for benchmark-grade sample sizes, latency
 - [x] Experiment 03 — 1/2/4/8/16/32 question scaling
 - [x] Experiment 04 — expense decision workflow
 - [x] Experiment 05 — support decision/hybrid-agent core
-- [x] Interactive HTML dashboard
+- [x] Interactive HTML dashboard with case/question/error drill-down
 - [x] Raw result persistence
 - [x] Public benchmark tier: BANKING77 + CLINC150 OOS
 - [x] LLM-monolithic baseline for experiments 04/05
