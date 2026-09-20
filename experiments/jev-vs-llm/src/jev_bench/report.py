@@ -681,6 +681,9 @@ function applyModelFilter() {{
     }});
     Plotly.restyle(div, {{visible}});
   }});
+  document.querySelectorAll('.model-card').forEach(card => {{
+    card.style.display = active.has(card.dataset.series) ? '' : 'none';
+  }});
 }}
 chips.forEach(chip => chip.addEventListener('click', () => {{
   chip.classList.toggle('active');
