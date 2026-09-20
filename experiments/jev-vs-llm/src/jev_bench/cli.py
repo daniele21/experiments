@@ -10,6 +10,7 @@ import pandas as pd
 import typer
 
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
+from jev_bench.costs import pricing_metadata
 from jev_bench.manifest import write_manifest
 from jev_bench.providers.jev import JevProvider
 from jev_bench.providers.openai import OpenAIMonolithicProvider, OpenAIProvider
@@ -28,6 +29,12 @@ PUBLIC_RAW = Path("results/raw/public_results.csv")
 PUBLIC_REPORT = Path("results/public_report.html")
 MANIFEST_DIR = Path("results/manifests")
 
+DEFAULT_OPENAI_MODELS = [
+    "gpt-5.6-luna",
+    "gpt-5.6-terra",
+    "gpt-5.6-sol",
+]
+
 PUBLIC_PROFILES = {
     "quick": {"routing": 154, "in_scope": 100, "oos": 100},
     "standard": {"routing": 770, "in_scope": 500, "oos": 500},
@@ -37,6 +44,17 @@ PUBLIC_PROFILES = {
 
 def _runner_location() -> str:
     return os.getenv("BENCHMARK_LOCATION", "unspecified")
+
+
+def _model_matrix(value: str | None = None) -> list[str]:
+    raw = value or os.getenv("OPENAI_MODELS", "")
+    if raw.strip():
+        models = [item.strip() for item in raw.split(",") if item.strip()]
+    else:
+        models = DEFAULT_OPENAI_MODELS.copy()
+    if not models:
+        raise typer.BadParameter("At least one OpenAI model is required.")
+    return list(dict.fromkeys(models))
 
 
 def _tag_run(frame: pd.DataFrame, run_group: str, suite: str) -> pd.DataFrame:
@@ -62,6 +80,7 @@ def _record_manifest(
     group: str,
     suite: str,
     parameters: dict,
+    requested_openai_models: list[str] | None = None,
 ) -> Path:
     path = MANIFEST_DIR / f"{group}.json"
     dataset_revisions: dict[str, list[str]] = {}
@@ -87,10 +106,11 @@ def _record_manifest(
         runner_location=_runner_location(),
         requested_models={
             "jev": os.getenv("JEV_MODEL", "jev-latest"),
-            "openai": os.getenv("OPENAI_MODEL"),
+            "openai": requested_openai_models or [os.getenv("OPENAI_MODEL", "")],
         },
         resolved_models=_resolved_models(frame),
         parameters=parameters,
+        pricing=pricing_metadata(),
     )
     return path
 
@@ -105,11 +125,11 @@ def _execute(provider: str, scaling_repeats: int) -> pd.DataFrame:
     raise typer.BadParameter("provider must be jev, llm, or llm-monolithic")
 
 
-def _decision_provider(provider: str):
+def _decision_provider(provider: str, model: str | None = None):
     if provider == "jev":
         return JevProvider()
     if provider == "llm":
-        return OpenAIProvider()
+        return OpenAIProvider(model=model)
     raise typer.BadParameter("public classification supports jev or llm")
 
 
@@ -151,13 +171,39 @@ def compare(
     output: Annotated[Path, typer.Option()] = DEFAULT_RAW,
     html: Annotated[Path, typer.Option()] = DEFAULT_REPORT,
     scaling_repeats: Annotated[int, typer.Option(min=1)] = 10,
+    models: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated OpenAI model matrix. Defaults to OPENAI_MODELS."),
+    ] = None,
 ) -> None:
-    """Run the three smoke-suite arms under one comparison group."""
+    """Run Jev and the GPT matrix on the smoke suite under one comparison group."""
+    model_matrix = _model_matrix(models)
     group = str(uuid.uuid4())
     frames = []
-    for provider in ["jev", "llm", "llm-monolithic"]:
-        typer.echo(f"Running {provider}...")
-        frames.append(_tag_run(_execute(provider, scaling_repeats), group, "smoke"))
+
+    typer.echo("Running Jev workflow...")
+    frames.append(_tag_run(run_all(JevProvider(), scaling_repeats=scaling_repeats), group, "smoke"))
+
+    for model in model_matrix:
+        typer.echo(f"Running decomposed LLM workflow: {model}...")
+        frames.append(
+            _tag_run(
+                run_all(OpenAIProvider(model=model), scaling_repeats=scaling_repeats),
+                group,
+                "smoke",
+            )
+        )
+
+    for model in model_matrix:
+        typer.echo(f"Running monolithic workflow baseline: {model}...")
+        frames.append(
+            _tag_run(
+                run_monolithic_workflows(OpenAIMonolithicProvider(model=model)),
+                group,
+                "smoke",
+            )
+        )
+
     combined = pd.concat(frames, ignore_index=True)
     append_results(combined, output)
     manifest = _record_manifest(
@@ -165,9 +211,11 @@ def compare(
         group=group,
         suite="smoke",
         parameters={"scaling_repeats": scaling_repeats},
+        requested_openai_models=model_matrix,
     )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
+    typer.echo(f"Models: {', '.join(model_matrix)}")
     typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
 
@@ -181,12 +229,16 @@ def compare_public(
     html: Annotated[Path, typer.Option()] = PUBLIC_REPORT,
     cache_dir: Annotated[Path, typer.Option()] = DEFAULT_CACHE,
     seed: Annotated[int, typer.Option()] = 42,
+    models: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated OpenAI model matrix. Defaults to OPENAI_MODELS."),
+    ] = None,
     allow_moving_jev_model: Annotated[
         bool,
         typer.Option(help="Allow jev-latest/jev-preview instead of a pinned Jev version."),
     ] = False,
 ) -> None:
-    """Run Jev vs decomposed LLM on BANKING77 + conservatively filtered CLINC150 OOS."""
+    """Run Jev vs a GPT model matrix on BANKING77 + filtered CLINC150 OOS."""
     if profile not in PUBLIC_PROFILES:
         raise typer.BadParameter("profile must be quick, standard, or full")
 
@@ -197,14 +249,27 @@ def compare_public(
             "Use --allow-moving-jev-model only for exploratory runs."
         )
 
+    model_matrix = _model_matrix(models)
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
     group = str(uuid.uuid4())
     frames = []
-    for provider in ["jev", "llm"]:
-        typer.echo(f"Running public {profile} benchmark: {provider}...")
+
+    typer.echo(f"Running public {profile} benchmark: Jev...")
+    jev_frame = run_public_classification(
+        _decision_provider("jev"),
+        cache_dir=cache_dir,
+        routing_max_cases=sizes["routing"],
+        calibration_in_scope=sizes["in_scope"],
+        calibration_oos=sizes["oos"],
+        seed=seed,
+    )
+    frames.append(_tag_run(jev_frame, group, f"public-{profile}"))
+
+    for model in model_matrix:
+        typer.echo(f"Running public {profile} benchmark: {model}...")
         frame = run_public_classification(
-            _decision_provider(provider),
+            _decision_provider("llm", model=model),
             cache_dir=cache_dir,
             routing_max_cases=sizes["routing"],
             calibration_in_scope=sizes["in_scope"],
@@ -226,9 +291,11 @@ def compare_public(
             "calibration_in_scope": sizes["in_scope"],
             "calibration_oos": sizes["oos"],
         },
+        requested_openai_models=model_matrix,
     )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
+    typer.echo(f"Models: {', '.join(model_matrix)}")
     typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
 
@@ -239,7 +306,7 @@ def report(
     output_html: Annotated[Path, typer.Option()] = DEFAULT_REPORT,
     run_group: Annotated[str | None, typer.Option()] = None,
 ) -> None:
-    """Build the interactive HTML dashboard from raw benchmark rows."""
+    """Build the interactive HTML experiment explorer from raw benchmark rows."""
     build_report(input_csv, output_html, run_group=run_group)
     typer.echo(f"Wrote {output_html}")
 
