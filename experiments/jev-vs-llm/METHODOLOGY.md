@@ -114,3 +114,22 @@ Cost is treated as a first-class benchmark metric rather than a post-hoc note.
 - If a model is not present in the snapshot, the harness records no cost rather than inventing one.
 - The default cost charts show USD/request, USD/1,000 requests and total run cost.
 - Historical reports must keep their original snapshot; updating today's list price must not rewrite the cost of an older run.
+
+
+## Local Korgis baseline
+
+The public decision benchmark can also run through Korgis / Local LLM Server with the same cases and result schema.
+
+Default local matrix:
+
+- Qwen3.5-4B Q4_K_M;
+- Qwen3.5-9B Q4_K_M;
+- NVIDIA Nemotron-3-Nano-4B Q4_K_M.
+
+There is no official Qwen3.5-8B checkpoint, so the official 9B size is used as the larger Qwen3.5 comparison.
+
+For generative-model fairness, local requests explicitly disable thinking and GPT decision baselines default to `reasoning.effort=none`. Both GPT and local confidence/probability scalars are self-reported and must be evaluated empirically rather than assumed calibrated.
+
+Korgis is part of the measured architecture: requests go through its public OpenAI-compatible HTTP boundary, and its `local-llm-identity-v1` execution identity is captured in the run manifest. Model load/unload time is lifecycle evidence and is excluded from per-request inference latency.
+
+The local cost field means **provider API fee**, which is zero. Hardware purchase/amortisation, energy, thermal impact and device opportunity cost are outside this benchmark and remain unmeasured rather than being represented as zero.
