@@ -71,7 +71,7 @@ def _select_run_group(rows: pd.DataFrame, run_group: str | None) -> tuple[pd.Dat
     return rows[rows["run_group"] == latest].copy(), str(latest)
 
 
-def _money(value: float | int | None, digits: int = 4) -> str:
+def _money(value: float | None, digits: int = 4) -> str:
     if value is None or pd.isna(value):
         return "—"
     value = float(value)
@@ -108,7 +108,7 @@ def _overview(rows: pd.DataFrame) -> pd.DataFrame:
                 "cost_per_request_usd": float(costs.mean()) if len(costs) else math.nan,
                 "cost_per_1k_requests_usd": float(costs.mean()) * 1000 if len(costs) else math.nan,
                 "run_cost_usd": float(costs.sum()) if len(costs) else math.nan,
-                "requests": int(len(req)),
+                "requests": len(req),
             }
         )
     return pd.DataFrame(records)
