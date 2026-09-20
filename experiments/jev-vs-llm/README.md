@@ -6,12 +6,11 @@ A reproducible benchmark for understanding **where a System One decision model s
 
 ## What is being compared
 
-The benchmark starts with two executable providers:
+The benchmark has three executable arms:
 
 - **Jev workflow** — typed `Choice`, `Score`, and `Noul` questions sent to `jev-latest` (or an explicitly pinned Jev model).
 - **LLM workflow** — the same decomposed questions sent to an explicitly configured OpenAI model using strict Structured Outputs.
-
-A third baseline, **LLM monolithic**, is planned for workflow experiments. It will ask the LLM for only the final action so we can separate the benefit of workflow decomposition from the benefit of the underlying model architecture.
+- **LLM monolithic** — for workflow experiments 04/05, the complete policy is given to the LLM and it returns the final action directly. This separates the benefit of decomposition from the benefit of the model architecture.
 
 LLM confidence values are self-reported. They are deliberately measured, but must not be assumed to mean the same thing as Jev confidence before calibration is evaluated empirically.
 
@@ -61,9 +60,8 @@ export OPENAI_MODEL="<exact model id>"
 Run each provider separately so rate limits or temporary provider issues do not contaminate the other run:
 
 ```bash
-uv run jev-bench run --provider jev --scaling-repeats 10
-uv run jev-bench run --provider llm --scaling-repeats 10
-uv run jev-bench report
+export BENCHMARK_LOCATION="milan-local"
+uv run jev-bench compare --scaling-repeats 30
 ```
 
 Open:
@@ -79,10 +77,10 @@ The report is the primary human-facing artifact. It contains KPI cards plus inte
 Every raw row includes:
 
 ```text
+run_id, run_group, run_timestamp_utc, runner_location,
 experiment, case_id, provider, model, question_id,
-expected, actual, correct, confidence,
-latency_ms, input_tokens, output_tokens,
-valid, error
+expected, actual, correct, confidence, primary_metric,
+latency_ms, input_tokens, output_tokens, valid, error
 ```
 
 This deliberately keeps the raw representation simple enough to analyze with pandas, DuckDB, BigQuery, or another reporting layer later.
@@ -112,6 +110,8 @@ cases / states
      results/report.html
 ```
 
+See [`METHODOLOGY.md`](METHODOLOGY.md) for benchmark-grade sample sizes, latency protocol, hypotheses and dataset rules.
+
 ## Current implementation status
 
 - [x] Common question/result model
@@ -125,10 +125,11 @@ cases / states
 - [x] Interactive HTML dashboard
 - [x] Raw result persistence
 - [ ] Larger independently labelled datasets
-- [ ] LLM-monolithic baseline for experiments 04/05
-- [ ] Accuracy-vs-coverage threshold chart
-- [ ] Optional cost normalization from a run manifest
-- [ ] Run manifest: git SHA, region, timestamp, package/model versions
+- [x] LLM-monolithic baseline for experiments 04/05
+- [x] Accuracy-vs-coverage threshold chart
+- [x] Run grouping with UTC timestamp and runner location
+- [ ] Optional cost normalization from dated price assumptions
+- [ ] Full manifest: git SHA and installed package versions
 
 ## Sources used for the design
 
