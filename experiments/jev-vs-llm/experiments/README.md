@@ -11,3 +11,5 @@ The Jev vs LLM suite is one repository experiment composed of five controlled su
 | [05](05-hybrid-agent/) | Hybrid agent decision layer | Decision-model routing vs LLM-centric agent design |
 
 All numeric results are produced by the common runner and rendered into the same HTML dashboard. This is intentional: experiment-specific code should not silently change timing or evaluation behavior.
+
+Each experiment can also be run independently with `uv run jev-bench experiment <name> ...`. The resulting report preserves the same hierarchy used by full comparisons: aggregate metrics → experiment breakdown → individual case → individual decision/error.
