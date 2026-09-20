@@ -13,6 +13,13 @@ from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.costs import pricing_metadata
 from jev_bench.manifest import write_manifest
 from jev_bench.providers.jev import JevProvider
+from jev_bench.providers.korgis import (
+    DEFAULT_KORGIS_MODELS,
+    KorgisController,
+    KorgisProvider,
+    ensure_korgis_models_resident,
+    managed_korgis_model_order,
+)
 from jev_bench.providers.openai import OpenAIMonolithicProvider, OpenAIProvider
 from jev_bench.report import build_report
 from jev_bench.runner import (
@@ -36,6 +43,7 @@ DEFAULT_OPENAI_MODELS = [
 ]
 
 PUBLIC_PROFILES = {
+    "budget": {"routing": 77, "in_scope": 40, "oos": 40},
     "quick": {"routing": 154, "in_scope": 100, "oos": 100},
     "standard": {"routing": 770, "in_scope": 500, "oos": 500},
     "full": {"routing": None, "in_scope": None, "oos": None},
@@ -54,6 +62,18 @@ def _model_matrix(value: str | None = None) -> list[str]:
         models = DEFAULT_OPENAI_MODELS.copy()
     if not models:
         raise typer.BadParameter("At least one OpenAI model is required.")
+    return list(dict.fromkeys(models))
+
+
+def _local_model_matrix(value: str | None = None) -> list[str]:
+    raw = value or os.getenv("KORGIS_MODELS", "")
+    models = (
+        [item.strip() for item in raw.split(",") if item.strip()]
+        if raw.strip()
+        else DEFAULT_KORGIS_MODELS.copy()
+    )
+    if not models:
+        raise typer.BadParameter("At least one Korgis model is required.")
     return list(dict.fromkeys(models))
 
 
@@ -81,6 +101,8 @@ def _record_manifest(
     suite: str,
     parameters: dict,
     requested_openai_models: list[str] | None = None,
+    requested_korgis_models: list[str] | None = None,
+    korgis_identity: dict | None = None,
 ) -> Path:
     path = MANIFEST_DIR / f"{group}.json"
     dataset_revisions: dict[str, list[str]] = {}
@@ -107,9 +129,13 @@ def _record_manifest(
         requested_models={
             "jev": os.getenv("JEV_MODEL", "jev-latest"),
             "openai": requested_openai_models or [os.getenv("OPENAI_MODEL", "")],
+            "korgis": requested_korgis_models or [],
         },
         resolved_models=_resolved_models(frame),
-        parameters=parameters,
+        parameters={
+            **parameters,
+            "korgis_identity": korgis_identity or {},
+        },
         pricing=pricing_metadata(),
     )
     return path
