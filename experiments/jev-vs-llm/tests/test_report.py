@@ -14,6 +14,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "runner_location": "test",
                 "experiment": "01-routing-public",
                 "case_id": "r1",
+                "input_state": "I need help with class a.",
                 "provider": "jev",
                 "model": "jev-test",
                 "question_id": "intent",
@@ -38,6 +39,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "runner_location": "test",
                 "experiment": "02-calibration-public",
                 "case_id": "c1",
+                "input_state": "This request is outside scope.",
                 "provider": "jev",
                 "model": "jev-test",
                 "question_id": "intent",
@@ -62,6 +64,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "runner_location": "test",
                 "experiment": "01-routing-public",
                 "case_id": "r2",
+                "input_state": "I need help with class a but the model misses it.",
                 "provider": "llm-workflow",
                 "model": "gpt-5.6-luna",
                 "question_id": "intent",
@@ -86,6 +89,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
                 "runner_location": "test",
                 "experiment": "02-calibration-public",
                 "case_id": "c2",
+                "input_state": "Another outside-scope request.",
                 "provider": "llm-workflow",
                 "model": "gpt-5.6-luna",
                 "question_id": "intent",
@@ -120,3 +124,10 @@ def test_report_builds_interactive_html(tmp_path: Path):
     assert "Run details" in text
     assert "gpt-5.6-luna" in text
     assert "model-chip" in text
+    assert "API cost by experiment" in text
+    assert "Per-class breakdown" in text
+    assert "Routing cases" in text
+    assert "Calibration predictions" in text
+    assert "case-search" in text
+    assert "I need help with class a." in text
+    assert "Error explorer" in text
