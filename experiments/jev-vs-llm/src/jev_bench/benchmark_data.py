@@ -8,10 +8,19 @@ from pathlib import Path
 
 from jev_bench.models import BenchmarkCase, QuestionSpec
 
-BANKING77_BASE = "https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/master/banking_data"
+BANKING77_REVISION = "9d081458ff52e53cf7e848f414e6e9344e4e6696"
+CLINC150_REVISION = "48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e"
+
+BANKING77_BASE = (
+    "https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/"
+    f"{BANKING77_REVISION}/banking_data"
+)
 BANKING77_TEST_URL = f"{BANKING77_BASE}/test.csv"
 BANKING77_CATEGORIES_URL = f"{BANKING77_BASE}/categories.json"
-CLINC150_FULL_URL = "https://raw.githubusercontent.com/clinc/oos-eval/master/data/data_full.json"
+CLINC150_FULL_URL = (
+    "https://raw.githubusercontent.com/clinc/oos-eval/"
+    f"{CLINC150_REVISION}/data/data_full.json"
+)
 
 DEFAULT_CACHE = Path("data/cache")
 
@@ -115,6 +124,7 @@ def balanced_banking77_cases(
                     expected={"intent": label},
                     metadata={
                         "dataset": "banking77",
+                        "dataset_revision": BANKING77_REVISION,
                         "source_split": "test",
                         "difficulty": "in_scope",
                         "benchmark_tier": "public",
@@ -166,6 +176,7 @@ def clinc_oos_cases(
             expected={"intent": "other"},
             metadata={
                 "dataset": "clinc150",
+                "dataset_revision": CLINC150_REVISION,
                 "source_split": "oos_test",
                 "difficulty": "out_of_scope",
                 "benchmark_tier": "public",
