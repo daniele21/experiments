@@ -61,7 +61,6 @@ def _rows_for_case(
                 "experiment": experiment,
                 "case_id": case.case_id,
                 "input_state": _serialize_state(case.state),
-                "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
                 "question_id": "__request__",
@@ -117,7 +116,6 @@ def _rows_for_case(
             {
                 "experiment": experiment,
                 "case_id": case.case_id,
-                "input_state": _serialize_state(case.state),
                 "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
@@ -238,7 +236,6 @@ def run_workflow(
             {
                 "experiment": experiment,
                 "case_id": case.case_id,
-                "input_state": _serialize_state(case.state),
                 "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
@@ -422,6 +419,7 @@ def run_monolithic_workflows(provider) -> pd.DataFrame:
                 {
                     "experiment": experiment,
                     "case_id": case.case_id,
+                    "input_state": _serialize_state(case.state),
                     "provider": result.provider,
                     "model": result.model,
                     "question_id": "final_action",
