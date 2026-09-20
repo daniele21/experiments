@@ -36,6 +36,7 @@ The repo contains both small committed **smoke datasets** and a larger **public 
 6. Report p50, p95 and p99, not a single best latency.
 7. Separate provider errors/schema errors from semantic wrong answers.
 8. Keep `predicted_probability` separate from provider-native `confidence`: ECE/Brier use probability assigned to the selected class; selective automation uses native confidence.
+9. Normalize SDK retries/timeouts across providers so latency and error-rate comparisons have the same transport policy.
 
 ## Setup
 
