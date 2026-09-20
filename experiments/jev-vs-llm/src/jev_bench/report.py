@@ -498,6 +498,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
     rows, selected_group = _select_run_group(all_rows, run_group)
     summary = _with_series(summarize(rows))
     overview = _overview(rows)
+    experiment_cost = _cost_breakdown(rows)
 
     cal = calibration_summary(rows)
     if not cal.empty:
@@ -732,6 +733,12 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             cost_accuracy,
             series_names,
         )
+        + _plot_block(
+            "API cost by experiment",
+            "Breaks estimated provider API cost down by workload instead of hiding it behind one run-level average.",
+            experiment_cost,
+            series_names,
+        )
     )
 
     routing_html = (
@@ -759,6 +766,13 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             confusion_fig,
             series_names,
         )
+        + "<section class='table-card'><div class='plot-copy'><h3>Per-class breakdown</h3>"
+          "<p>Accuracy and valid-output rate for every expected routing class, including the most frequent wrong prediction.</p>"
+          "</div><div class='table-scroll'>"
+        + _per_class_table(_experiment_rows(rows, "01-routing"))
+        + "</div></section>"
+        + _case_explorer(rows, "01-routing", "Routing cases")
+        + _error_explorer(rows, "01-routing")
     )
 
     calibration_html = (
@@ -781,6 +795,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + f"<section class='table-card'><div class='plot-copy'><h3>Calibration metrics</h3><p>ECE and Brier use selected-class probability; native confidence is kept separate.</p></div>{calibration_table}</section>"
+        + _case_explorer(rows, "02-calibration", "Calibration predictions")
+        + _error_explorer(rows, "02-calibration")
     )
 
     scaling_html = (
@@ -796,6 +812,12 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             scaling_cost_fig,
             series_names,
         )
+        + "<section class='table-card'><div class='plot-copy'><h3>Every scaling request</h3>"
+          "<p>Inspect validity, latency, token usage, estimated cost and the exact error for each 1/2/4/8/16/32-question request.</p>"
+          "</div><div class='table-scroll'>"
+        + _scaling_detail_table(rows)
+        + "</div></section>"
+        + _error_explorer(rows, "03-parallel-scaling")
     )
 
     workflow_html = (
@@ -817,6 +839,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             _summary_cost_chart(workflow, "Deterministic workflow cost"),
             series_names,
         )
+        + _case_explorer(rows, "04-workflow", "Workflow execution traces")
+        + _error_explorer(rows, "04-workflow")
     )
 
     agent_html = (
@@ -838,6 +862,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             _summary_cost_chart(agent, "Hybrid agent decision cost"),
             series_names,
         )
+        + _case_explorer(rows, "05-hybrid-agent", "Agent execution traces")
+        + _error_explorer(rows, "05-hybrid-agent")
     )
 
     pricing_rows = []
@@ -899,7 +925,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Jev vs GPT benchmark explorer</title>
+<title>Decision model benchmark explorer</title>
 <script src='https://cdn.plot.ly/plotly-3.1.0.min.js'></script>
 <style>
 :root{{--bg:#f5f6f8;--surface:#fff;--surface-2:#fafafa;--text:#111827;--muted:#667085;--line:#e4e7ec;--accent:#101828;--soft:#f2f4f7}}
@@ -925,6 +951,11 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
 .plot-card,.table-card{{margin-bottom:14px;padding:16px}} .plot-copy{{padding:0 4px 8px}} .plot-copy h3{{margin:0 0 4px;font-size:17px}} .plot-copy p{{margin:0;color:var(--muted);font-size:13px;line-height:1.45;max-width:900px}}
 .js-plotly-plot{{width:100%}} table{{width:100%;border-collapse:collapse;font-size:12px}} th,td{{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}} th{{color:var(--muted);font-weight:650;background:var(--surface-2)}}
 .details-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:8px 0 0}} .details-grid div{{background:var(--surface-2);border-radius:10px;padding:12px}} dt{{font-size:11px;color:var(--muted);margin-bottom:4px}} dd{{margin:0;font-size:13px;font-weight:600}}
+.table-scroll{{overflow:auto;max-width:100%}} .data-table{{min-width:760px}}
+.explorer-tools{{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 4px 12px}} .case-search{{width:min(560px,100%);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:white}} .case-count{{font-size:12px;color:var(--muted);white-space:nowrap}}
+.case-list{{display:grid;gap:8px}} .case-card{{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);overflow:hidden}} .case-card summary{{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;cursor:pointer;list-style:none;font-size:12px}} .case-card summary::-webkit-details-marker{{display:none}} .case-model{{color:var(--muted);margin-right:auto}} .case-card[open] summary{{border-bottom:1px solid var(--line);background:white}}
+.status-dot{{width:8px;height:8px;border-radius:50%;background:#98a2b3}} .status-dot.good{{background:#17b26a}} .status-dot.bad{{background:#f04438}} .status-pill{{padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f2f4f7}} .status-pill.good{{background:#ecfdf3;color:#067647}} .status-pill.bad{{background:#fef3f2;color:#b42318}}
+.case-input{{padding:14px}} .case-input span,.trace-block h4{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}} .case-input p{{margin:5px 0 0;white-space:pre-wrap;line-height:1.5}} .decision-table{{min-width:900px;background:white}} .trace-block{{margin:12px 14px 14px}} .trace-block pre{{white-space:pre-wrap;word-break:break-word;background:#101828;color:#f9fafb;border-radius:10px;padding:12px;font-size:11px;overflow:auto}}
 .empty{{color:var(--muted)}} @media(max-width:720px){{.shell{{padding:18px 12px 50px}}.topbar{{display:block}}.run-meta{{text-align:left;margin-top:12px}}h1{{font-size:30px}}.toolbar{{top:0}}.toolbar-row{{align-items:flex-start}}}}
 </style>
 </head>
@@ -933,7 +964,7 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
   <header class='topbar'>
     <div>
       <div class='brand-kicker'>Decision benchmark explorer</div>
-      <h1>Jev vs GPT</h1>
+      <h1>Decision model benchmark</h1>
       <p class='lead'>Compare decision quality, latency, calibration and estimated API cost across Jev, the configured GPT matrix and optional Korgis local models. Use the model chips to focus every chart on the systems you want to inspect.</p>
     </div>
     <div class='run-meta'>Run <code>{group_text}</code><br>{suite}<br>{locations}<br>Pricing {pricing['as_of']}</div>
@@ -975,13 +1006,32 @@ function applyModelFilter() {{
     }});
     Plotly.restyle(div, {{visible}});
   }});
-  document.querySelectorAll('.model-card').forEach(card => {{
+  document.querySelectorAll('.model-card,.case-card').forEach(card => {{
     card.style.display = active.has(card.dataset.series) ? '' : 'none';
   }});
+  document.querySelectorAll('.case-search').forEach(input => input.dispatchEvent(new Event('input')));
 }}
 chips.forEach(chip => chip.addEventListener('click', () => {{
   chip.classList.toggle('active');
   applyModelFilter();
+}}));
+
+document.querySelectorAll('.case-search').forEach(input => {{
+  input.addEventListener('input', () => {{
+    const query = input.value.trim().toLowerCase();
+    const active = activeSeries();
+    const card = input.closest('.explorer-card');
+    if (!card) return;
+    let visible = 0;
+    card.querySelectorAll('.case-card').forEach(item => {{
+      const seriesVisible = active.has(item.dataset.series);
+      const textVisible = !query || (item.dataset.search || '').includes(query);
+      item.style.display = seriesVisible && textVisible ? '' : 'none';
+      if (seriesVisible && textVisible) visible += 1;
+    }});
+    const count = card.querySelector('.case-count');
+    if (count) count.textContent = visible + ' cases';
+  }});
 }}));
 </script>
 </body>
