@@ -177,7 +177,7 @@ def _model_cards(overview: pd.DataFrame) -> str:
         latency = f"{row['latency_p50_ms']:.0f} ms" if pd.notna(row["latency_p50_ms"]) else "—"
         cost = _money(row["cost_per_1k_requests_usd"], digits=3)
         cards.append(
-            "<article class='model-card'>"
+            f"<article class='model-card' data-series={json.dumps(str(row['series']))}>"
             f"<div class='model-name'>{row['series']}</div>"
             "<div class='metric-row'>"
             f"<div><span>Accuracy</span><strong>{accuracy}</strong></div>"
