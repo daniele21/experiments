@@ -30,7 +30,9 @@ class ProviderResult:
     answers: dict[str, Decision]
     latency_ms: float
     input_tokens: int | None = None
+    cached_input_tokens: int | None = None
     output_tokens: int | None = None
+    estimated_cost_usd: float | None = None
     valid: bool = True
     error: str | None = None
     raw: Any = None
