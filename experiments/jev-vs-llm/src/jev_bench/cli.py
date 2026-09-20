@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Annotated
 
 import pandas as pd
 import typer
@@ -37,7 +38,7 @@ def _tag_run(frame: pd.DataFrame, run_group: str, suite: str) -> pd.DataFrame:
     frame["run_id"] = str(uuid.uuid4())
     frame["run_group"] = run_group
     frame["suite"] = suite
-    frame["run_timestamp_utc"] = datetime.now(timezone.utc).isoformat()
+    frame["run_timestamp_utc"] = datetime.now(UTC).isoformat()
     frame["runner_location"] = os.getenv("BENCHMARK_LOCATION", "unspecified")
     return frame
 
@@ -61,7 +62,9 @@ def _decision_provider(provider: str):
 
 
 @app.command("prepare-data")
-def prepare_data(cache_dir: Path = typer.Option(DEFAULT_CACHE)) -> None:
+def prepare_data(
+    cache_dir: Annotated[Path, typer.Option(help="Local dataset cache directory.")] = DEFAULT_CACHE,
+) -> None:
     """Download canonical public datasets into the local gitignored cache."""
     paths = prepare_public_data(cache_dir)
     for name, path in paths.items():
@@ -70,10 +73,12 @@ def prepare_data(cache_dir: Path = typer.Option(DEFAULT_CACHE)) -> None:
 
 @app.command()
 def run(
-    provider: str = typer.Option(..., help="jev, llm, or llm-monolithic"),
-    output: Path = typer.Option(DEFAULT_RAW),
-    scaling_repeats: int = typer.Option(5, min=1),
-    run_group: str | None = typer.Option(None, help="Shared ID for comparable runs."),
+    provider: Annotated[str, typer.Option(help="jev, llm, or llm-monolithic")],
+    output: Annotated[Path, typer.Option()] = DEFAULT_RAW,
+    scaling_repeats: Annotated[int, typer.Option(min=1)] = 5,
+    run_group: Annotated[
+        str | None, typer.Option(help="Shared ID for comparable runs.")
+    ] = None,
 ) -> None:
     """Run the small smoke suite for one provider."""
     group = run_group or str(uuid.uuid4())
@@ -84,9 +89,9 @@ def run(
 
 @app.command()
 def compare(
-    output: Path = typer.Option(DEFAULT_RAW),
-    html: Path = typer.Option(DEFAULT_REPORT),
-    scaling_repeats: int = typer.Option(10, min=1),
+    output: Annotated[Path, typer.Option()] = DEFAULT_RAW,
+    html: Annotated[Path, typer.Option()] = DEFAULT_REPORT,
+    scaling_repeats: Annotated[int, typer.Option(min=1)] = 10,
 ) -> None:
     """Run the three smoke-suite arms under one comparison group."""
     group = str(uuid.uuid4())
@@ -103,15 +108,18 @@ def compare(
 
 @app.command("compare-public")
 def compare_public(
-    profile: str = typer.Option("standard", help="quick, standard, or full"),
-    output: Path = typer.Option(PUBLIC_RAW),
-    html: Path = typer.Option(PUBLIC_REPORT),
-    cache_dir: Path = typer.Option(DEFAULT_CACHE),
-    seed: int = typer.Option(42),
+    profile: Annotated[
+        str, typer.Option(help="quick, standard, or full")
+    ] = "standard",
+    output: Annotated[Path, typer.Option()] = PUBLIC_RAW,
+    html: Annotated[Path, typer.Option()] = PUBLIC_REPORT,
+    cache_dir: Annotated[Path, typer.Option()] = DEFAULT_CACHE,
+    seed: Annotated[int, typer.Option()] = 42,
 ) -> None:
-    """Run Jev vs decomposed LLM on BANKING77 + CLINC150 OOS."""
+    """Run Jev vs decomposed LLM on BANKING77 + conservatively filtered CLINC150 OOS."""
     if profile not in PUBLIC_PROFILES:
         raise typer.BadParameter("profile must be quick, standard, or full")
+
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
     group = str(uuid.uuid4())
@@ -127,6 +135,7 @@ def compare_public(
             seed=seed,
         )
         frames.append(_tag_run(frame, group, f"public-{profile}"))
+
     combined = pd.concat(frames, ignore_index=True)
     append_results(combined, output)
     build_report(output, html, run_group=group)
@@ -136,9 +145,9 @@ def compare_public(
 
 @app.command()
 def report(
-    input_csv: Path = typer.Option(DEFAULT_RAW),
-    output_html: Path = typer.Option(DEFAULT_REPORT),
-    run_group: str | None = typer.Option(None),
+    input_csv: Annotated[Path, typer.Option()] = DEFAULT_RAW,
+    output_html: Annotated[Path, typer.Option()] = DEFAULT_REPORT,
+    run_group: Annotated[str | None, typer.Option()] = None,
 ) -> None:
     """Build the interactive HTML dashboard from raw benchmark rows."""
     build_report(input_csv, output_html, run_group=run_group)
