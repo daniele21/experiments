@@ -120,6 +120,7 @@ def _record_manifest(
             "max_retries": int(os.getenv("BENCHMARK_MAX_RETRIES", "0")),
             "timeout_seconds": float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60")),
         },
+        "openai_reasoning_effort": os.getenv("OPENAI_REASONING_EFFORT", "none"),
     }
     write_manifest(
         path,
