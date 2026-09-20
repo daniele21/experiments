@@ -9,12 +9,15 @@ A reproducible benchmark for understanding **where a System One decision model s
 The benchmark has three executable arms:
 
 - **Jev workflow** — typed `Choice`, `Score`, and `Noul` questions sent to `jev-latest` (or an explicitly pinned Jev model).
-- **LLM workflow** — the same decomposed questions sent to an explicitly configured OpenAI model using strict Structured Outputs.
+- **LLM workflow** — the same decomposed questions sent to an explicitly configured OpenAI model using strict Structured Outputs. The latency baseline is output-efficient: it emits only the selected value plus two uncertainty scalars, not a full class distribution.
 - **LLM monolithic** — for workflow experiments 04/05, the complete policy is given to the LLM and it returns the final action directly. This separates the benefit of decomposition from the benefit of the model architecture.
 
 LLM confidence values are self-reported. They are deliberately measured, but must not be assumed to mean the same thing as Jev confidence before calibration is evaluated empirically.
 
 ## Experiments
+
+Detailed protocol and interpretation notes live in the [`experiments/`](experiments/) catalogue.
+
 
 | ID | Experiment | Primary question | Main metrics |
 |---|---|---|---|
