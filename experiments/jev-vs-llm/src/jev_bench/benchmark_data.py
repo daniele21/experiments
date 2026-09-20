@@ -100,14 +100,13 @@ def balanced_banking77_cases(
         rng.shuffle(texts)
 
     labels = sorted(by_label)
-    if max_cases is None or max_cases >= len(rows):
-        per_label = max(len(v) for v in by_label.values())
-    else:
-        per_label = max(1, max_cases // len(labels))
+    target = len(rows) if max_cases is None else min(max_cases, len(rows))
+    base, remainder = divmod(target, len(labels))
 
     selected: list[BenchmarkCase] = []
-    for label in labels:
-        texts = by_label[label][:per_label]
+    for label_index, label in enumerate(labels):
+        take = base + (1 if label_index < remainder else 0)
+        texts = by_label[label][:take]
         for idx, text in enumerate(texts):
             selected.append(
                 BenchmarkCase(
@@ -140,9 +139,24 @@ def clinc_oos_cases(
     data = json.loads(path.read_text(encoding="utf-8"))
     raw = data.get("oos_test")
     if not isinstance(raw, list):
-        raise ValueError("CLINC150 data_full.json has no oos_test split")
+        raise TypeError("CLINC150 data_full.json has no oos_test split")
 
-    rows = [(str(item[0]), str(item[1])) for item in raw if len(item) >= 2]
+    finance_terms = {
+        "account", "atm", "bank", "banking", "balance", "card", "cash", "charge",
+        "credit", "currency", "debit", "deposit", "exchange", "fee", "finance",
+        "loan", "money", "payment", "refund", "top up", "transaction", "transfer",
+        "wire", "withdraw", "withdrawal",
+    }
+    rows = []
+    for item in raw:
+        if len(item) < 2:
+            continue
+        text = str(item[0])
+        normalized = text.lower()
+        if any(term in normalized for term in finance_terms):
+            continue
+        rows.append((text, str(item[1])))
+
     rng = random.Random(seed)
     rng.shuffle(rows)
     return [
@@ -155,6 +169,7 @@ def clinc_oos_cases(
                 "source_split": "oos_test",
                 "difficulty": "out_of_scope",
                 "benchmark_tier": "public",
+                "oos_filter": "conservative_non_finance",
             },
         )
         for idx, (text, _) in enumerate(rows[:max_cases])
