@@ -37,6 +37,7 @@ def _rows_for_case(
     case: BenchmarkCase,
     questions: Sequence[QuestionSpec],
     result: ProviderResult,
+    primary: bool = True,
 ) -> list[dict]:
     if not result.valid:
         return [
@@ -55,6 +56,7 @@ def _rows_for_case(
                 "output_tokens": result.output_tokens,
                 "valid": False,
                 "error": result.error,
+                "primary_metric": primary,
                 **case.metadata,
             }
         ]
@@ -79,6 +81,7 @@ def _rows_for_case(
                     "output_tokens": result.output_tokens,
                     "valid": False,
                     "error": "missing answer",
+                    "primary_metric": primary,
                     **case.metadata,
                 }
             )
@@ -99,6 +102,7 @@ def _rows_for_case(
                 "output_tokens": result.output_tokens,
                 "valid": True,
                 "error": result.error,
+                "primary_metric": primary,
                 **case.metadata,
             }
         )
@@ -114,7 +118,7 @@ def run_cases(
     rows = []
     for case in cases:
         result = provider.evaluate(case.state, questions)
-        rows.extend(_rows_for_case(experiment, case, questions, result))
+        rows.extend(_rows_for_case(experiment, case, questions, result, primary=True))
     return rows
 
 
@@ -142,6 +146,7 @@ def run_scaling(provider: DecisionProvider, repeats: int = 5) -> list[dict]:
                     "valid": result.valid,
                     "error": result.error,
                     "question_count": count,
+                    "primary_metric": False,
                 }
             )
     return rows
@@ -203,6 +208,7 @@ def run_workflow(
                 "output_tokens": result.output_tokens,
                 "valid": True,
                 "error": result.error,
+                "primary_metric": True,
             }
         )
     return rows
@@ -224,3 +230,61 @@ def append_results(frame: pd.DataFrame, output: Path) -> None:
         existing = pd.read_csv(output)
         frame = pd.concat([existing, frame], ignore_index=True)
     frame.to_csv(output, index=False)
+
+
+
+EXPENSE_POLICY = """
+Every claim has one final action. If there is a clear fraud/tampering pattern, REVIEW it.
+Otherwise, if the receipt is unreadable, REQUEST_RECEIPT. Otherwise, if it is a meal over
+EUR 75 and the claim description does not match the receipt, MANAGER_REVIEW. Everything
+else is APPROVE.
+""".strip()
+
+SUPPORT_POLICY = """
+Choose one final action. If the customer explicitly requests a human or is clearly angry,
+HANDOFF. Otherwise a refund request enters REFUND_FLOW; a cancellation enters CANCEL_FLOW;
+an urgent technical problem enters PRIORITY_SUPPORT; everything else is ANSWER.
+""".strip()
+
+
+def run_monolithic_workflows(provider) -> pd.DataFrame:
+    rows: list[dict] = []
+    specs = [
+        (
+            "04-workflow",
+            expense_cases(),
+            EXPENSE_POLICY,
+            ["approve", "manager_review", "request_receipt", "review"],
+        ),
+        (
+            "05-hybrid-agent",
+            support_cases(),
+            SUPPORT_POLICY,
+            ["answer", "refund_flow", "cancel_flow", "priority_support", "handoff"],
+        ),
+    ]
+    for experiment, cases, policy, actions in specs:
+        for case in cases:
+            result = provider.decide(case.state, policy, actions)
+            decision = result.answers.get("final_action") if result.valid else None
+            actual = decision.value if decision else None
+            rows.append(
+                {
+                    "experiment": experiment,
+                    "case_id": case.case_id,
+                    "provider": result.provider,
+                    "model": result.model,
+                    "question_id": "final_action",
+                    "expected": case.expected["final_action"],
+                    "actual": actual,
+                    "correct": bool(decision and actual == case.expected["final_action"]),
+                    "confidence": decision.confidence if decision else None,
+                    "latency_ms": result.latency_ms,
+                    "input_tokens": result.input_tokens,
+                    "output_tokens": result.output_tokens,
+                    "valid": result.valid,
+                    "error": result.error,
+                    "primary_metric": True,
+                }
+            )
+    return pd.DataFrame(rows)
