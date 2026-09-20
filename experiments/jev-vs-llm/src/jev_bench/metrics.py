@@ -181,10 +181,13 @@ def reliability_bins(rows: pd.DataFrame, bins: int = 10) -> pd.DataFrame:
         np.linspace(0, 1, bins + 1),
         include_lowest=True,
     )
-    for (provider, interval), frame in subset.groupby(["provider", "bin"], observed=True):
+    for (provider, model, interval), frame in subset.groupby(
+        ["provider", "model", "bin"], observed=True
+    ):
         records.append(
             {
                 "provider": provider,
+                "model": model,
                 "predicted_probability": float(frame["predicted_probability"].mean()),
                 "accuracy": float(frame["correct"].mean()),
                 "count": len(frame),
@@ -198,12 +201,13 @@ def coverage_curve(rows: pd.DataFrame) -> pd.DataFrame:
     records = []
     subset = _calibration_rows(rows)
     subset = subset[subset["confidence"].notna()]
-    for provider, frame in subset.groupby("provider"):
+    for (provider, model), frame in subset.groupby(["provider", "model"]):
         for threshold in np.linspace(0.0, 1.0, 21):
             accepted = frame[frame["confidence"] >= threshold]
             records.append(
                 {
                     "provider": provider,
+                    "model": model,
                     "threshold": threshold,
                     "coverage": len(accepted) / len(frame) if len(frame) else 0,
                     "accuracy": float(accepted["correct"].mean()) if len(accepted) else math.nan,
@@ -220,7 +224,7 @@ def difficulty_summary(rows: pd.DataFrame) -> pd.DataFrame:
     if subset.empty:
         return pd.DataFrame()
     return (
-        subset.groupby(["provider", "difficulty"], as_index=False)
+        subset.groupby(["provider", "model", "difficulty"], as_index=False)
         .agg(
             accuracy=("correct", "mean"),
             n=("case_id", "nunique"),
@@ -241,13 +245,13 @@ def top_confusions(rows: pd.DataFrame, limit: int = 15) -> pd.DataFrame:
     if subset.empty:
         return pd.DataFrame()
     grouped = (
-        subset.groupby(["provider", "expected", "actual"], as_index=False)
+        subset.groupby(["provider", "model", "expected", "actual"], as_index=False)
         .size()
         .rename(columns={"size": "count"})
     )
     grouped["pair"] = grouped["expected"].astype(str) + " → " + grouped["actual"].astype(str)
     return (
-        grouped.sort_values(["provider", "count"], ascending=[True, False])
-        .groupby("provider", as_index=False, group_keys=False)
+        grouped.sort_values(["provider", "model", "count"], ascending=[True, True, False])
+        .groupby(["provider", "model"], as_index=False, group_keys=False)
         .head(limit)
     )
