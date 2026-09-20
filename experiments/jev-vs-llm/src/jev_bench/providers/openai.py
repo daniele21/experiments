@@ -149,3 +149,81 @@ class OpenAIProvider(DecisionProvider):
                 valid=False,
                 error=f"{type(exc).__name__}: {exc}",
             )
+
+
+
+class OpenAIMonolithicProvider:
+    """LLM baseline that receives the whole policy and returns only the final action."""
+
+    name = "llm-monolithic"
+
+    def __init__(self, model: str | None = None) -> None:
+        self.model = model or os.getenv("OPENAI_MODEL", "")
+        if not self.model:
+            raise ValueError("Set OPENAI_MODEL explicitly for reproducible benchmark runs")
+        self.client = OpenAI()
+
+    def decide(
+        self,
+        state: Any,
+        policy: str,
+        actions: Sequence[str],
+    ) -> ProviderResult:
+        started = time.perf_counter()
+        try:
+            schema = {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "enum": list(actions)},
+                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                },
+                "required": ["action", "confidence"],
+                "additionalProperties": False,
+            }
+            response = self.client.responses.create(
+                model=self.model,
+                input=json.dumps(
+                    {
+                        "task": "Apply the policy to the state and choose exactly one final action.",
+                        "policy": policy,
+                        "state": state,
+                        "allowed_actions": list(actions),
+                    },
+                    ensure_ascii=False,
+                ),
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "final_action_benchmark",
+                        "strict": True,
+                        "schema": schema,
+                    }
+                },
+            )
+            latency_ms = (time.perf_counter() - started) * 1000
+            data = json.loads(response.output_text)
+            usage = getattr(response, "usage", None)
+            return ProviderResult(
+                provider=self.name,
+                model=self.model,
+                answers={
+                    "final_action": Decision(
+                        question_id="final_action",
+                        value=data["action"],
+                        confidence=float(data["confidence"]),
+                    )
+                },
+                latency_ms=latency_ms,
+                input_tokens=getattr(usage, "input_tokens", None),
+                output_tokens=getattr(usage, "output_tokens", None),
+                raw=response,
+            )
+        except Exception as exc:
+            return ProviderResult(
+                provider=self.name,
+                model=self.model,
+                answers={},
+                latency_ms=(time.perf_counter() - started) * 1000,
+                valid=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )
