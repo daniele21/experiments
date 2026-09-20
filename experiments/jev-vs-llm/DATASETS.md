@@ -34,7 +34,7 @@ Canonical source:
 
 The upstream repository describes `oos_test` as 1,000 out-of-scope test examples and includes a Creative Commons Attribution 3.0 Unported license.
 
-The benchmark maps every `oos_test` example to the explicit BANKING77 `other` option. This turns the calibration task into:
+The benchmark first applies a conservative lexical filter that removes OOS examples containing obvious finance/banking vocabulary, reducing accidental overlap with BANKING77. The remaining `oos_test` examples are mapped to the explicit BANKING77 `other` option. This turns the calibration task into:
 
 ```text
 77 supported banking intents
