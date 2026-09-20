@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -24,6 +25,15 @@ from jev_bench.datasets import (
 )
 from jev_bench.models import BenchmarkCase, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
+
+
+
+
+
+def _serialize_state(state: object) -> str:
+    if isinstance(state, str):
+        return state
+    return json.dumps(state, ensure_ascii=False, sort_keys=True, default=str)
 
 
 def _binary_prediction(value: str | float) -> int:
@@ -50,6 +60,8 @@ def _rows_for_case(
             {
                 "experiment": experiment,
                 "case_id": case.case_id,
+                "input_state": _serialize_state(case.state),
+                "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
                 "question_id": "__request__",
@@ -79,6 +91,7 @@ def _rows_for_case(
                 {
                     "experiment": experiment,
                     "case_id": case.case_id,
+                    "input_state": _serialize_state(case.state),
                     "provider": result.provider,
                     "model": result.model,
                     "question_id": q.id,
@@ -104,6 +117,8 @@ def _rows_for_case(
             {
                 "experiment": experiment,
                 "case_id": case.case_id,
+                "input_state": _serialize_state(case.state),
+                "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
                 "question_id": q.id,
@@ -150,6 +165,7 @@ def run_scaling(provider: DecisionProvider, repeats: int = 5) -> list[dict]:
                 {
                     "experiment": "03-parallel-scaling",
                     "case_id": f"q{count}-r{repeat}",
+                    "input_state": scaling_state(),
                     "provider": result.provider,
                     "model": result.model,
                     "question_id": "__batch__",
@@ -222,11 +238,22 @@ def run_workflow(
             {
                 "experiment": experiment,
                 "case_id": case.case_id,
+                "input_state": _serialize_state(case.state),
+                "input_state": _serialize_state(case.state),
                 "provider": result.provider,
                 "model": result.model,
                 "question_id": "final_action",
                 "expected": case.expected["final_action"],
                 "actual": action,
+                "decision_trace": json.dumps(
+                    {
+                        "intermediate": values,
+                        "final_action": action,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    default=str,
+                ),
                 "correct": action == case.expected["final_action"],
                 "confidence": min(confidences) if confidences else None,
                 "predicted_probability": min(probabilities) if probabilities else None,
@@ -241,6 +268,61 @@ def run_workflow(
             }
         )
     return rows
+
+
+def run_experiment(
+    experiment: str,
+    provider: DecisionProvider,
+    *,
+    scaling_repeats: int = 5,
+) -> pd.DataFrame:
+    """Run one committed smoke experiment with the shared benchmark harness."""
+    key = experiment.strip().lower().replace("_", "-")
+    aliases = {
+        "01": "routing",
+        "01-routing": "routing",
+        "routing": "routing",
+        "02": "calibration",
+        "02-calibration": "calibration",
+        "calibration": "calibration",
+        "03": "scaling",
+        "03-parallel-scaling": "scaling",
+        "scaling": "scaling",
+        "04": "workflow",
+        "04-workflow": "workflow",
+        "workflow": "workflow",
+        "05": "agent",
+        "05-hybrid-agent": "agent",
+        "agent": "agent",
+    }
+    resolved = aliases.get(key)
+    if resolved is None:
+        raise ValueError(
+            "experiment must be routing, calibration, scaling, workflow, or agent"
+        )
+    if resolved == "routing":
+        rows = run_cases("01-routing", provider, routing_cases(), routing_questions())
+    elif resolved == "calibration":
+        rows = run_cases("02-calibration", provider, calibration_cases(), routing_questions())
+    elif resolved == "scaling":
+        rows = run_scaling(provider, scaling_repeats)
+    elif resolved == "workflow":
+        rows = run_workflow(
+            "04-workflow",
+            provider,
+            expense_cases(),
+            expense_questions(),
+            _expense_action,
+        )
+    else:
+        rows = run_workflow(
+            "05-hybrid-agent",
+            provider,
+            support_cases(),
+            support_questions(),
+            _support_action,
+        )
+    return pd.DataFrame(rows)
 
 
 def run_all(provider: DecisionProvider, scaling_repeats: int = 5) -> pd.DataFrame:
@@ -345,6 +427,16 @@ def run_monolithic_workflows(provider) -> pd.DataFrame:
                     "question_id": "final_action",
                     "expected": case.expected["final_action"],
                     "actual": actual,
+                    "decision_trace": json.dumps(
+                        {
+                            "mode": "monolithic",
+                            "policy": policy,
+                            "final_action": actual,
+                        },
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        default=str,
+                    ),
                     "correct": bool(decision and actual == case.expected["final_action"]),
                     "confidence": decision.confidence if decision else None,
                     "predicted_probability": (
