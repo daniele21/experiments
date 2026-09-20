@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
 
@@ -78,7 +79,7 @@ class JevProvider(DecisionProvider):
                 output_tokens=getattr(usage, "output_tokens", None),
                 raw=response,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary records failures
             return ProviderResult(
                 provider=self.name,
                 model=self.model,
