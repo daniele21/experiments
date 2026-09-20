@@ -25,7 +25,7 @@ class KorgisController:
 
     def __init__(self, base_url: str | None = None, timeout: float | None = None) -> None:
         self.api_base = (base_url or os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1")).rstrip("/")
-        self.root = self.api_base[:-3] if self.api_base.endswith("/v1") else self.api_base
+        self.root = self.api_base.removesuffix("/v1")
         self.timeout = timeout or float(os.getenv("KORGIS_CONTROL_TIMEOUT_SECONDS", "360"))
 
     def _request(
@@ -180,7 +180,7 @@ class KorgisProvider(DecisionProvider):
             data = json.loads(content)
             items = data.get("answers")
             if not isinstance(items, list):
-                raise ValueError("response JSON has no answers array")
+                raise TypeError("response JSON has no answers array")
 
             by_id = {question.id: question for question in questions}
             decisions: dict[str, Decision] = {}
