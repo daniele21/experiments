@@ -48,17 +48,24 @@ class _FakeClient:
 def test_default_korgis_matrix_is_quantized_local_comparison_set():
     assert DEFAULT_KORGIS_MODELS == [
         "qwen3.5-4b-q4km",
-        "qwen3.5-9b-q4km",
+        "minicpm3-4b-q4km",
         "nemotron-nano-4b",
+        "qwen3.5-9b-q4km",
     ]
 
 
 def test_managed_order_runs_anchor_last():
     assert managed_korgis_model_order(
-        ["nemotron-nano-4b", "qwen3.5-4b-q4km", "qwen3.5-9b-q4km"],
+        [
+            "nemotron-nano-4b",
+            "qwen3.5-4b-q4km",
+            "minicpm3-4b-q4km",
+            "qwen3.5-9b-q4km",
+        ],
         "nemotron-nano-4b",
     ) == [
         "qwen3.5-4b-q4km",
+        "minicpm3-4b-q4km",
         "qwen3.5-9b-q4km",
         "nemotron-nano-4b",
     ]
