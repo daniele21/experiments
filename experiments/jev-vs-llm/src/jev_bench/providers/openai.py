@@ -113,11 +113,19 @@ class OpenAIProvider(DecisionProvider):
                     errors.append(f"unexpected question id {qid}")
                     continue
                 probs = {p["label"]: float(p["probability"]) for p in item["probabilities"]}
+                if q.type == "choice":
+                    predicted_probability = probs.get(str(item["value"]))
+                elif q.type == "noul":
+                    p = float(item["value"])
+                    predicted_probability = max(p, 1.0 - p)
+                else:
+                    predicted_probability = None
                 decision = Decision(
                     question_id=qid,
                     value=item["value"],
                     probabilities=probs,
                     confidence=float(item["confidence"]),
+                    predicted_probability=predicted_probability,
                 )
                 q = by_id[qid]
                 if q.type == "choice" and isinstance(q.criteria, dict):
@@ -211,6 +219,7 @@ class OpenAIMonolithicProvider:
                         question_id="final_action",
                         value=data["action"],
                         confidence=float(data["confidence"]),
+                        predicted_probability=float(data["confidence"]),
                     )
                 },
                 latency_ms=latency_ms,
