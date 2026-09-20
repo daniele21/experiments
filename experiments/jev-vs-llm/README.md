@@ -11,8 +11,9 @@ The benchmark has three executable arms:
 - **Jev workflow** — typed `Choice`, `Score`, and `Noul` questions sent to `jev-latest` (or an explicitly pinned Jev model).
 - **LLM workflow matrix** — the same decomposed questions are run against GPT-5.6 Luna, Terra and Sol by default (configurable through `OPENAI_MODELS`). The latency baseline is output-efficient: it emits only the selected value plus two uncertainty scalars, not a full class distribution.
 - **LLM monolithic** — for workflow experiments 04/05, the complete policy is given to the LLM and it returns the final action directly. This separates the benefit of decomposition from the benefit of the model architecture.
+- **Korgis local matrix** — optional Q4_K_M local baselines: Qwen3.5-4B, Qwen3.5-9B and Nemotron-3-Nano-4B, served through the same Korgis/OpenAI-compatible boundary. See [`LOCAL_MODELS.md`](LOCAL_MODELS.md).
 
-LLM confidence values are self-reported. They are deliberately measured, but must not be assumed to mean the same thing as Jev confidence before calibration is evaluated empirically.
+GPT and local generative-model confidence values are self-reported. They are deliberately measured, but must not be assumed to mean the same thing as Jev confidence before calibration is evaluated empirically.
 
 ## Experiments
 
@@ -91,9 +92,29 @@ Profiles:
 
 | Profile | BANKING77 routing | Calibration in-scope | CLINC150 OOS |
 |---|---:|---:|---:|
+| `budget` | 77 (1/intent) | 40 | 40 |
 | `quick` | 154 (~2/intent) | 100 | 100 |
 | `standard` | 770 (~10/intent) | 500 | 500 |
 | `full` | all 3,080 test cases | matched to all filtered OOS | all filtered OOS |
+
+### Local-only Korgis benchmark
+
+This consumes no Jev/OpenAI API budget:
+
+```bash
+uv run jev-bench compare-local --profile budget
+```
+
+To include local models in the same run group as Jev and GPT:
+
+```bash
+uv run jev-bench compare-public \
+  --profile budget \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --include-local
+```
+
+See [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for Korgis setup, model lifecycle and cost semantics.
 
 The public benchmark generates `results/public_report.html`.
 
@@ -157,6 +178,7 @@ See [`METHODOLOGY.md`](METHODOLOGY.md) for benchmark-grade sample sizes, latency
 - [x] Accuracy-vs-coverage threshold chart
 - [x] Run grouping with UTC timestamp and runner location
 - [x] Cost tracking from a dated provider pricing snapshot (request, 1k requests, run total)
+- [x] Korgis local matrix: Qwen3.5-4B/9B + Nemotron-3-Nano-4B Q4_K_M
 - [ ] Full manifest: git SHA and installed package versions
 
 ## Sources used for the design
