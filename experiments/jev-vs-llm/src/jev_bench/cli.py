@@ -10,6 +10,7 @@ import pandas as pd
 import typer
 
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
+from jev_bench.manifest import write_manifest
 from jev_bench.providers.jev import JevProvider
 from jev_bench.providers.openai import OpenAIMonolithicProvider, OpenAIProvider
 from jev_bench.report import build_report
@@ -25,6 +26,7 @@ DEFAULT_RAW = Path("results/raw/results.csv")
 DEFAULT_REPORT = Path("results/report.html")
 PUBLIC_RAW = Path("results/raw/public_results.csv")
 PUBLIC_REPORT = Path("results/public_report.html")
+MANIFEST_DIR = Path("results/manifests")
 
 PUBLIC_PROFILES = {
     "quick": {"routing": 154, "in_scope": 100, "oos": 100},
@@ -33,14 +35,48 @@ PUBLIC_PROFILES = {
 }
 
 
+def _runner_location() -> str:
+    return os.getenv("BENCHMARK_LOCATION", "unspecified")
+
+
 def _tag_run(frame: pd.DataFrame, run_group: str, suite: str) -> pd.DataFrame:
     frame = frame.copy()
     frame["run_id"] = str(uuid.uuid4())
     frame["run_group"] = run_group
     frame["suite"] = suite
     frame["run_timestamp_utc"] = datetime.now(UTC).isoformat()
-    frame["runner_location"] = os.getenv("BENCHMARK_LOCATION", "unspecified")
+    frame["runner_location"] = _runner_location()
     return frame
+
+
+def _resolved_models(frame: pd.DataFrame) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for provider, rows in frame.groupby("provider"):
+        result[str(provider)] = sorted(rows["model"].dropna().astype(str).unique().tolist())
+    return result
+
+
+def _record_manifest(
+    frame: pd.DataFrame,
+    *,
+    group: str,
+    suite: str,
+    parameters: dict,
+) -> Path:
+    path = MANIFEST_DIR / f"{group}.json"
+    write_manifest(
+        path,
+        run_group=group,
+        suite=suite,
+        runner_location=_runner_location(),
+        requested_models={
+            "jev": os.getenv("JEV_MODEL", "jev-latest"),
+            "openai": os.getenv("OPENAI_MODEL"),
+        },
+        resolved_models=_resolved_models(frame),
+        parameters=parameters,
+    )
+    return path
 
 
 def _execute(provider: str, scaling_repeats: int) -> pd.DataFrame:
@@ -84,7 +120,14 @@ def run(
     group = run_group or str(uuid.uuid4())
     frame = _tag_run(_execute(provider, scaling_repeats), group, "smoke")
     append_results(frame, output)
+    manifest = _record_manifest(
+        frame,
+        group=group,
+        suite="smoke",
+        parameters={"provider": provider, "scaling_repeats": scaling_repeats},
+    )
     typer.echo(f"Wrote {len(frame)} rows to {output} (run_group={group})")
+    typer.echo(f"Manifest: {manifest}")
 
 
 @app.command()
@@ -101,8 +144,15 @@ def compare(
         frames.append(_tag_run(_execute(provider, scaling_repeats), group, "smoke"))
     combined = pd.concat(frames, ignore_index=True)
     append_results(combined, output)
+    manifest = _record_manifest(
+        combined,
+        group=group,
+        suite="smoke",
+        parameters={"scaling_repeats": scaling_repeats},
+    )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
+    typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
 
 
@@ -115,10 +165,21 @@ def compare_public(
     html: Annotated[Path, typer.Option()] = PUBLIC_REPORT,
     cache_dir: Annotated[Path, typer.Option()] = DEFAULT_CACHE,
     seed: Annotated[int, typer.Option()] = 42,
+    allow_moving_jev_model: Annotated[
+        bool,
+        typer.Option(help="Allow jev-latest/jev-preview instead of a pinned Jev version."),
+    ] = False,
 ) -> None:
     """Run Jev vs decomposed LLM on BANKING77 + conservatively filtered CLINC150 OOS."""
     if profile not in PUBLIC_PROFILES:
         raise typer.BadParameter("profile must be quick, standard, or full")
+
+    jev_model = os.getenv("JEV_MODEL", "jev-latest")
+    if not allow_moving_jev_model and jev_model in {"jev-latest", "jev-preview"}:
+        raise typer.BadParameter(
+            "Public benchmarks require a pinned JEV_MODEL (for example jev-1.13.0). "
+            "Use --allow-moving-jev-model only for exploratory runs."
+        )
 
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
@@ -138,8 +199,21 @@ def compare_public(
 
     combined = pd.concat(frames, ignore_index=True)
     append_results(combined, output)
+    manifest = _record_manifest(
+        combined,
+        group=group,
+        suite=f"public-{profile}",
+        parameters={
+            "profile": profile,
+            "seed": seed,
+            "routing_cases": sizes["routing"],
+            "calibration_in_scope": sizes["in_scope"],
+            "calibration_oos": sizes["oos"],
+        },
+    )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
+    typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
 
 
