@@ -64,6 +64,15 @@ def _record_manifest(
     parameters: dict,
 ) -> Path:
     path = MANIFEST_DIR / f"{group}.json"
+    dataset_revisions: dict[str, list[str]] = {}
+    if {"dataset", "dataset_revision"}.issubset(frame.columns):
+        valid = frame[frame["dataset"].notna() & frame["dataset_revision"].notna()]
+        for dataset, rows in valid.groupby("dataset"):
+            dataset_revisions[str(dataset)] = sorted(
+                rows["dataset_revision"].astype(str).unique().tolist()
+            )
+
+    parameters = {**parameters, "dataset_revisions": dataset_revisions}
     write_manifest(
         path,
         run_group=group,
