@@ -13,11 +13,12 @@ from jev_bench.providers.base import DecisionProvider
 
 
 class OpenAIProvider(DecisionProvider):
-    """Structured-output LLM baseline.
+    """Low-output structured LLM baseline.
 
-    The LLM is asked to return a decision, confidence and probability distribution for
-    every question. These probabilities are self-reported and should not be interpreted
-    as equivalent to Jev's calibrated probabilities without empirical validation.
+    The LLM returns only the selected value, a native/self-reported confidence score,
+    and an estimated probability that the selected answer is correct. It is deliberately
+    not asked to autoregressively emit the complete class distribution, which would
+    unfairly inflate LLM latency relative to Jev's native probability distribution.
     """
 
     name = "llm-workflow"
@@ -41,24 +42,13 @@ class OpenAIProvider(DecisionProvider):
                             "id": {"type": "string"},
                             "value": {"type": ["string", "number"]},
                             "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                            "probabilities": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "label": {"type": "string"},
-                                        "probability": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "maximum": 1,
-                                        },
-                                    },
-                                    "required": ["label", "probability"],
-                                    "additionalProperties": False,
-                                },
+                            "selected_probability": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
                             },
                         },
-                        "required": ["id", "value", "confidence", "probabilities"],
+                        "required": ["id", "value", "confidence", "selected_probability"],
                         "additionalProperties": False,
                     },
                 }
@@ -82,9 +72,12 @@ class OpenAIProvider(DecisionProvider):
             prompt = {
                 "task": (
                     "Evaluate every question independently against the same state. "
-                    "Return only the requested structured result. For Choice use one supplied option. "
-                    "For Noul use a probability from 0 to 1 as value. For Score use a numeric position "
-                    "on the supplied ordered scale. Give probabilities that sum approximately to 1."
+                    "For Choice, value must be exactly one supplied option. "
+                    "For Noul, value is the probability of YES from 0 to 1. "
+                    "For Score, value is a numeric position on the supplied ordered scale. "
+                    "confidence is your native 0-1 confidence in the decision. "
+                    "selected_probability is your 0-1 estimate that the selected answer is correct. "
+                    "Do not generate a full probability distribution."
                 ),
                 "state": state,
                 "questions": [self._question_payload(q) for q in questions],
@@ -107,27 +100,27 @@ class OpenAIProvider(DecisionProvider):
             decisions: dict[str, Decision] = {}
             valid = True
             errors: list[str] = []
+
             for item in data["answers"]:
                 qid = item["id"]
                 if qid not in by_id:
                     valid = False
                     errors.append(f"unexpected question id {qid}")
                     continue
-                probs = {p["label"]: float(p["probability"]) for p in item["probabilities"]}
+
                 q = by_id[qid]
-                if q.type == "choice":
-                    predicted_probability = probs.get(str(item["value"]))
-                elif q.type == "noul":
-                    p = float(item["value"])
-                    predicted_probability = max(p, 1.0 - p)
-                else:
-                    predicted_probability = None
+                value = item["value"]
+                selected_probability = float(item["selected_probability"])
+                if q.type == "noul":
+                    p_yes = float(value)
+                    selected_probability = max(p_yes, 1.0 - p_yes)
+
                 decision = Decision(
                     question_id=qid,
-                    value=item["value"],
-                    probabilities=probs,
+                    value=value,
+                    probabilities={},
                     confidence=float(item["confidence"]),
-                    predicted_probability=predicted_probability,
+                    predicted_probability=selected_probability,
                 )
                 if (
                     q.type == "choice"
@@ -137,9 +130,11 @@ class OpenAIProvider(DecisionProvider):
                     valid = False
                     errors.append(f"{qid}: value outside allowed choices")
                 decisions[qid] = decision
+
             if set(decisions) != set(by_id):
                 valid = False
                 errors.append("missing question answers")
+
             usage = getattr(response, "usage", None)
             return ProviderResult(
                 provider=self.name,
@@ -161,7 +156,6 @@ class OpenAIProvider(DecisionProvider):
                 valid=False,
                 error=f"{type(exc).__name__}: {exc}",
             )
-
 
 
 class OpenAIMonolithicProvider:
@@ -188,15 +182,23 @@ class OpenAIMonolithicProvider:
                 "properties": {
                     "action": {"type": "string", "enum": list(actions)},
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    "selected_probability": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                    },
                 },
-                "required": ["action", "confidence"],
+                "required": ["action", "confidence", "selected_probability"],
                 "additionalProperties": False,
             }
             response = self.client.responses.create(
                 model=self.model,
                 input=json.dumps(
                     {
-                        "task": "Apply the policy to the state and choose exactly one final action.",
+                        "task": (
+                            "Apply the policy to the state and choose exactly one final action. "
+                            "Also estimate the probability that the selected action is correct."
+                        ),
                         "policy": policy,
                         "state": state,
                         "allowed_actions": list(actions),
@@ -223,7 +225,7 @@ class OpenAIMonolithicProvider:
                         question_id="final_action",
                         value=data["action"],
                         confidence=float(data["confidence"]),
-                        predicted_probability=float(data["confidence"]),
+                        predicted_probability=float(data["selected_probability"]),
                     )
                 },
                 latency_ms=latency_ms,
