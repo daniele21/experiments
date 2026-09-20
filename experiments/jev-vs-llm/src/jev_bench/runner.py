@@ -27,9 +27,6 @@ from jev_bench.models import BenchmarkCase, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
 
-
-
-
 def _serialize_state(state: object) -> str:
     if isinstance(state, str):
         return state
