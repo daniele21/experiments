@@ -25,6 +25,13 @@ def _series_name(provider: str, model: str) -> str:
         return f"Jev · {model}"
     if provider == "llm-monolithic":
         return f"{model} · monolithic"
+    if provider == "local-korgis":
+        labels = {
+            "qwen3.5-4b-q4km": "Korgis · Qwen3.5 4B Q4_K_M",
+            "qwen3.5-9b-q4km": "Korgis · Qwen3.5 9B Q4_K_M",
+            "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M",
+        }
+        return labels.get(model, f"Korgis · {model}")
     return model
 
 
@@ -165,7 +172,7 @@ def _summary_cost_chart(frame: pd.DataFrame, title: str):
         y="cost_per_1k_requests_usd",
         color="series",
         title=title,
-        labels={"series": "model", "cost_per_1k_requests_usd": "USD / 1,000 requests"},
+        labels={"series": "model", "cost_per_1k_requests_usd": "API USD / 1,000 requests"},
         hover_data=["cost_per_request_usd", "run_cost_usd", "mean_input_tokens", "mean_output_tokens"],
     )
 
@@ -182,7 +189,7 @@ def _model_cards(overview: pd.DataFrame) -> str:
             "<div class='metric-row'>"
             f"<div><span>Accuracy</span><strong>{accuracy}</strong></div>"
             f"<div><span>p50</span><strong>{latency}</strong></div>"
-            f"<div><span>Cost / 1k</span><strong>{cost}</strong></div>"
+            f"<div><span>API cost / 1k</span><strong>{cost}</strong></div>"
             "</div>"
             f"<div class='card-foot'>{int(row['requests'])} measured requests · run cost {_money(row['run_cost_usd'])}</div>"
             "</article>"
@@ -240,17 +247,17 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
                 y="accuracy",
                 color="series",
                 text="series",
-                title="Accuracy vs cost",
-                labels={"cost_per_1k_requests_usd": "USD / 1,000 requests", "accuracy": "accuracy"},
+                title="Accuracy vs API cost",
+                labels={"cost_per_1k_requests_usd": "API USD / 1,000 requests", "accuracy": "accuracy"},
                 hover_data=["latency_p50_ms", "run_cost_usd", "requests"],
                 range_y=[0, 1],
             )
             if not priced.empty
-            else _empty_chart("Accuracy vs cost — pricing unavailable")
+            else _empty_chart("Accuracy vs API cost — pricing unavailable")
         )
     else:
         accuracy_latency = _empty_chart("Accuracy vs latency — no data")
-        cost_accuracy = _empty_chart("Accuracy vs cost — no data")
+        cost_accuracy = _empty_chart("Accuracy vs API cost — no data")
 
     routing = _experiment_summary(summary, "01-routing-public")
     if routing.empty:
@@ -258,7 +265,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
 
     routing_accuracy = _summary_accuracy_chart(routing, "Routing accuracy")
     routing_latency = _summary_latency_chart(routing, "Routing latency")
-    routing_cost = _summary_cost_chart(routing, "Routing cost")
+    routing_cost = _summary_cost_chart(routing, "Routing API cost")
 
     if not confusions.empty:
         confusions = _with_series(confusions)
@@ -366,12 +373,12 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             y="cost_per_request_usd",
             color="series",
             markers=True,
-            title="Cost while adding decisions",
+            title="API cost while adding decisions",
             labels={"question_count": "questions in one request", "cost_per_request_usd": "USD / request"},
         )
     else:
         scaling_fig = _empty_chart("Parallel decision scaling — no data")
-        scaling_cost_fig = _empty_chart("Cost while adding decisions — no data")
+        scaling_cost_fig = _empty_chart("API cost while adding decisions — no data")
 
     workflow = _experiment_summary(summary, "04-workflow")
     agent = _experiment_summary(summary, "05-hybrid-agent")
@@ -433,7 +440,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + _plot_block(
-            "Accuracy vs cost",
+            "Accuracy vs API cost",
             "Upper-left is preferable: higher correctness at lower estimated standard API cost.",
             cost_accuracy,
             series_names,
@@ -454,7 +461,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + _plot_block(
-            "Routing cost",
+            "Routing API cost",
             "Estimated list-price cost for 1,000 requests using the pricing snapshot recorded with the run.",
             routing_cost,
             series_names,
@@ -497,7 +504,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + _plot_block(
-            "Cost while adding decisions",
+            "API cost while adding decisions",
             "Shows how estimated request cost changes as the number of independent decisions grows.",
             scaling_cost_fig,
             series_names,
@@ -518,7 +525,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + _plot_block(
-            "Workflow cost",
+            "Workflow API cost",
             "Estimated list-price cost for 1,000 workflow requests.",
             _summary_cost_chart(workflow, "Deterministic workflow cost"),
             series_names,
@@ -539,7 +546,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + _plot_block(
-            "Agent decision cost",
+            "Agent decision API cost",
             "Estimated list-price cost for 1,000 decision-layer requests.",
             _summary_cost_chart(agent, "Hybrid agent decision cost"),
             series_names,
@@ -640,7 +647,7 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
     <div>
       <div class='brand-kicker'>Decision benchmark explorer</div>
       <h1>Jev vs GPT</h1>
-      <p class='lead'>Compare decision quality, latency, calibration and estimated API cost across Jev and the configured GPT model matrix. Use the model chips to focus every chart on the systems you want to inspect.</p>
+      <p class='lead'>Compare decision quality, latency, calibration and estimated API cost across Jev, the configured GPT matrix and optional Korgis local models. Use the model chips to focus every chart on the systems you want to inspect.</p>
     </div>
     <div class='run-meta'>Run <code>{group_text}</code><br>{suite}<br>{locations}<br>Pricing {pricing['as_of']}</div>
   </header>
@@ -652,7 +659,7 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
     </div>
   </div>
 
-  <div class='notice'><strong>Publication note:</strong> verify the TypeSafe terms applicable to the account before publishing Jev performance numbers. Cost values are estimates using the dated list-price snapshot shown in Run details.</div>
+  <div class='notice'><strong>Publication note:</strong> verify the TypeSafe terms applicable to the account before publishing Jev performance numbers. Cloud API cost values are estimates using the dated list-price snapshot shown in Run details. Korgis local models have zero provider API fee; electricity, hardware purchase/amortisation and device opportunity cost are not measured and are not claimed to be zero.</div>
   {tab_sections}
 </div>
 <script>
