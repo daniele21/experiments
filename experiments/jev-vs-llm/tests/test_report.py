@@ -116,7 +116,7 @@ def test_report_builds_interactive_html(tmp_path: Path):
     assert "Accuracy vs latency" in text
     assert "Probability calibration" in text
     assert "Most frequent confusion pairs" in text
-    assert "Routing cost" in text
+    assert "Routing API cost" in text
     assert "Run details" in text
     assert "gpt-5.6-luna" in text
     assert "model-chip" in text
