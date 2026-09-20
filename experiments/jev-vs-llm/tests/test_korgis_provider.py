@@ -16,6 +16,10 @@ class _FakeChatCompletions:
         assert kwargs["model"] == "qwen3.5-4b-q4km"
         assert kwargs["extra_body"]["enable_thinking"] is False
         assert kwargs["response_format"] == {"type": "json_object"}
+        user_payload = json.loads(kwargs["messages"][1]["content"])
+        assert user_payload["required_answer_ids"] == ["intent"]
+        assert "output_example" not in user_payload
+        assert "question_id" not in kwargs["messages"][1]["content"]
         payload = {
             "answers": [
                 {
@@ -80,3 +84,44 @@ def test_korgis_provider_parses_bounded_json_and_has_zero_provider_api_cost():
     assert result.input_tokens == 120
     assert result.output_tokens == 30
     assert result.estimated_cost_usd == 0.0
+
+
+
+class _FakeBooleanNoulChatCompletions:
+    def create(self, **kwargs):
+        payload = {
+            "answers": [
+                {
+                    "id": "urgent",
+                    "value": False,
+                    "confidence": "0.7",
+                    "selected_probability": 0.7,
+                }
+            ]
+        }
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))],
+            usage=SimpleNamespace(prompt_tokens=80, completion_tokens=20),
+        )
+
+
+class _FakeBooleanNoulClient:
+    def __init__(self):
+        self.chat = SimpleNamespace(completions=_FakeBooleanNoulChatCompletions())
+
+
+def test_korgis_provider_accepts_boolean_noul_as_bounded_probability():
+    provider = KorgisProvider("qwen3.5-4b-q4km")
+    provider.client = _FakeBooleanNoulClient()
+    question = QuestionSpec(
+        id="urgent",
+        type="noul",
+        instructions="Is this urgent?",
+    )
+
+    result = provider.evaluate("No hurry.", [question])
+
+    assert result.valid is True
+    assert result.answers["urgent"].value == 0.0
+    assert result.answers["urgent"].predicted_probability == 1.0
+    assert result.answers["urgent"].confidence == 0.7
