@@ -34,6 +34,14 @@
       "output": 20,
       "source": "OpenAI API standard short-context pricing; promotional Sol pricing applies in the current pricing window.",
       "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "korgis-local": {
+      "match": "provider",
+      "input": 0,
+      "cached_input": 0,
+      "output": 0,
+      "source": "No per-token provider API fee for local Korgis inference. Hardware, electricity, amortisation and opportunity cost are excluded.",
+      "source_url": "https://github.com/daniele21/korgis"
     }
   },
   "notes": [
@@ -41,6 +49,7 @@
     "Regional processing or other service tiers can change effective cost.",
     "The benchmark records the pricing snapshot date in every run manifest.",
     "Provider prices can change; historical benchmark reports must keep the snapshot used for that run.",
-    "GPT-5.6 Sol pricing in this snapshot reflects the promotional standard API price current on 2026-09-20."
+    "GPT-5.6 Sol pricing in this snapshot reflects the promotional standard API price current on 2026-09-20.",
+    "Korgis local API cost is recorded as zero provider fee only; this is not a claim of zero total cost of ownership."
   ]
 }
