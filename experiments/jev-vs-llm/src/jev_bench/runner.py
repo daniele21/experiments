@@ -184,7 +184,7 @@ def run_workflow(
     rows = []
     for case in cases:
         result = provider.evaluate(case.state, questions)
-        rows.extend(_rows_for_case(experiment, case, questions, result))
+        rows.extend(_rows_for_case(experiment, case, questions, result, primary=False))
         if not result.valid or any(q.id not in result.answers for q in questions):
             continue
         values = {q.id: result.answers[q.id].value for q in questions}
