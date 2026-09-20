@@ -33,7 +33,7 @@ For benchmark-grade runs:
 5. Run at least 30 measured repeats for each scaling point.
 6. Execute the providers sequentially for the default latency benchmark; a separate throughput benchmark can test concurrency later.
 7. Report failed requests; do not silently remove them.
-8. Do not compare a provider with retries enabled to one with retries disabled without stating it. A future benchmark option will normalize retry policy explicitly.
+8. The harness normalizes both provider SDKs with `BENCHMARK_MAX_RETRIES=0` by default and the same request timeout. This measures single-attempt latency and exposes provider errors instead of hiding them behind retries. Change these settings only as an explicit separate experiment.
 
 Client-observed latency includes network distance. That is intentional for user-experience measurements, but infrastructure/model latency should be measured separately when provider-side timing becomes available.
 
