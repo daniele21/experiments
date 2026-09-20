@@ -61,11 +61,7 @@ class KorgisController:
         return self._request(
             "POST",
             "/api/v1/models/activate",
-            {
-                "model": model,
-                "enable_thinking": False,
-                "show_thinking": False,
-            },
+            {"model": model},
         )
 
     def unload(self, model: str) -> dict[str, Any]:
