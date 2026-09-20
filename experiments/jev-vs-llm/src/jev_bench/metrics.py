@@ -103,9 +103,33 @@ def summarize(rows: pd.DataFrame) -> pd.DataFrame:
                     if requests["input_tokens"].notna().any()
                     else math.nan
                 ),
+                "mean_cached_input_tokens": (
+                    float(requests["cached_input_tokens"].dropna().mean())
+                    if "cached_input_tokens" in requests
+                    and requests["cached_input_tokens"].notna().any()
+                    else math.nan
+                ),
                 "mean_output_tokens": (
                     float(requests["output_tokens"].dropna().mean())
                     if requests["output_tokens"].notna().any()
+                    else math.nan
+                ),
+                "cost_per_request_usd": (
+                    float(requests["estimated_cost_usd"].dropna().mean())
+                    if "estimated_cost_usd" in requests
+                    and requests["estimated_cost_usd"].notna().any()
+                    else math.nan
+                ),
+                "cost_per_1k_requests_usd": (
+                    float(requests["estimated_cost_usd"].dropna().mean()) * 1000
+                    if "estimated_cost_usd" in requests
+                    and requests["estimated_cost_usd"].notna().any()
+                    else math.nan
+                ),
+                "run_cost_usd": (
+                    float(requests["estimated_cost_usd"].dropna().sum())
+                    if "estimated_cost_usd" in requests
+                    and requests["estimated_cost_usd"].notna().any()
                     else math.nan
                 ),
             }
