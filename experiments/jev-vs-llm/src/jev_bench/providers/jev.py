@@ -44,11 +44,13 @@ class JevProvider(DecisionProvider):
             for q in questions:
                 answer = response.answers[q.id]
                 if q.type == "choice":
+                    probabilities = dict(answer.probabilities)
                     answers[q.id] = Decision(
                         question_id=q.id,
                         value=answer.choice,
-                        probabilities=dict(answer.probabilities),
+                        probabilities=probabilities,
                         confidence=float(answer.confidence),
+                        predicted_probability=float(probabilities[answer.choice]),
                     )
                 elif q.type == "score":
                     answers[q.id] = Decision(
@@ -64,6 +66,7 @@ class JevProvider(DecisionProvider):
                         value=p,
                         probabilities={"yes": p, "no": 1.0 - p},
                         confidence=abs(p - 0.5) * 2,
+                        predicted_probability=max(p, 1.0 - p),
                     )
             usage = getattr(response, "usage", None)
             return ProviderResult(
