@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 import pandas as pd
 
