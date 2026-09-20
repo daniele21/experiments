@@ -1,0 +1,55 @@
+{
+  "currency": "USD",
+  "as_of": "2026-09-20",
+  "processing": "standard",
+  "prices_per_million_tokens": {
+    "jev": {
+      "match": "prefix",
+      "input": 0.042,
+      "cached_input": 0.042,
+      "output": 0,
+      "source": "TypeSafe AI public pricing: $42 per billion input tokens; output free.",
+      "source_url": "https://typesafe.ai/"
+    },
+    "gpt-5.6-luna": {
+      "match": "exact",
+      "input": 0.2,
+      "cached_input": 0.02,
+      "output": 1.2,
+      "source": "OpenAI API standard short-context pricing.",
+      "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "gpt-5.6-terra": {
+      "match": "exact",
+      "input": 2,
+      "cached_input": 0.2,
+      "output": 12,
+      "source": "OpenAI API standard short-context pricing.",
+      "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "gpt-5.6-sol": {
+      "match": "exact",
+      "input": 4,
+      "cached_input": 0.4,
+      "output": 20,
+      "source": "OpenAI API standard short-context pricing; promotional Sol pricing applies in the current pricing window.",
+      "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "korgis-local": {
+      "match": "provider",
+      "input": 0,
+      "cached_input": 0,
+      "output": 0,
+      "source": "No per-token provider API fee for local Korgis inference. Hardware, electricity, amortisation and opportunity cost are excluded.",
+      "source_url": "https://github.com/daniele21/korgis"
+    }
+  },
+  "notes": [
+    "OpenAI values are for standard processing and short context (<272K input tokens).",
+    "Regional processing or other service tiers can change effective cost.",
+    "The benchmark records the pricing snapshot date in every run manifest.",
+    "Provider prices can change; historical benchmark reports must keep the snapshot used for that run.",
+    "GPT-5.6 Sol pricing in this snapshot reflects the promotional standard API price current on 2026-09-20.",
+    "Korgis local API cost is recorded as zero provider fee only; this is not a claim of zero total cost of ownership."
+  ]
+}
