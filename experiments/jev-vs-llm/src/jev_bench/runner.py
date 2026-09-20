@@ -249,8 +249,8 @@ def run_public_classification(
     *,
     cache_dir: Path = DEFAULT_CACHE,
     routing_max_cases: int | None = 770,
-    calibration_in_scope: int = 500,
-    calibration_oos: int = 500,
+    calibration_in_scope: int | None = 500,
+    calibration_oos: int | None = 500,
     seed: int = 42,
 ) -> pd.DataFrame:
     """Run benchmark-grade public classification/calibration datasets."""
