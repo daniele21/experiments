@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from openai import OpenAI
 
@@ -128,10 +129,13 @@ class OpenAIProvider(DecisionProvider):
                     confidence=float(item["confidence"]),
                     predicted_probability=predicted_probability,
                 )
-                if q.type == "choice" and isinstance(q.criteria, dict):
-                    if str(decision.value) not in q.criteria:
-                        valid = False
-                        errors.append(f"{qid}: value outside allowed choices")
+                if (
+                    q.type == "choice"
+                    and isinstance(q.criteria, dict)
+                    and str(decision.value) not in q.criteria
+                ):
+                    valid = False
+                    errors.append(f"{qid}: value outside allowed choices")
                 decisions[qid] = decision
             if set(decisions) != set(by_id):
                 valid = False
@@ -148,7 +152,7 @@ class OpenAIProvider(DecisionProvider):
                 error="; ".join(errors) or None,
                 raw=response,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary records failures
             return ProviderResult(
                 provider=self.name,
                 model=self.model,
@@ -227,7 +231,7 @@ class OpenAIMonolithicProvider:
                 output_tokens=getattr(usage, "output_tokens", None),
                 raw=response,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary records failures
             return ProviderResult(
                 provider=self.name,
                 model=self.model,
