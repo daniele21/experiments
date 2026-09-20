@@ -7,20 +7,37 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.io import to_html
 
-from jev_bench.metrics import calibration_summary, reliability_bins, summarize
+from jev_bench.metrics import calibration_summary, coverage_curve, reliability_bins, summarize
 
 
 def _chart_html(fig) -> str:
     return to_html(fig, full_html=False, include_plotlyjs=False, config={"displaylogo": False})
 
 
-def build_report(raw_csv: Path, output_html: Path) -> None:
-    rows = pd.read_csv(raw_csv)
+def _select_run_group(rows: pd.DataFrame, run_group: str | None) -> tuple[pd.DataFrame, str | None]:
+    if "run_group" not in rows.columns:
+        return rows, None
+    if run_group:
+        selected = rows[rows["run_group"] == run_group].copy()
+        if selected.empty:
+            raise ValueError(f"run_group not found: {run_group}")
+        return selected, run_group
+    if "run_timestamp_utc" in rows.columns:
+        latest = rows.sort_values("run_timestamp_utc").iloc[-1]["run_group"]
+    else:
+        latest = rows.iloc[-1]["run_group"]
+    return rows[rows["run_group"] == latest].copy(), str(latest)
+
+
+def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None) -> None:
+    all_rows = pd.read_csv(raw_csv)
+    rows, selected_group = _select_run_group(all_rows, run_group)
     summary = summarize(rows)
     cal = calibration_summary(rows)
     rel = reliability_bins(rows)
+    coverage = coverage_curve(rows)
 
-    comparable = summary[~summary["experiment"].eq("03-parallel-scaling")].copy()
+    comparable = summary[summary["accuracy"].notna()].copy()
     acc = px.bar(
         comparable,
         x="experiment",
@@ -28,7 +45,7 @@ def build_report(raw_csv: Path, output_html: Path) -> None:
         color="provider",
         barmode="group",
         range_y=[0, 1],
-        title="Accuracy by experiment",
+        title="Primary outcome accuracy",
         text_auto=".1%",
     )
     latency = px.bar(
@@ -37,7 +54,7 @@ def build_report(raw_csv: Path, output_html: Path) -> None:
         y="latency_p50_ms",
         color="provider",
         barmode="group",
-        title="Median end-to-end latency",
+        title="Median end-to-end request latency",
         labels={"latency_p50_ms": "p50 latency (ms)"},
     )
     scatter = px.scatter(
@@ -47,18 +64,24 @@ def build_report(raw_csv: Path, output_html: Path) -> None:
         color="provider",
         text="experiment",
         title="Accuracy vs latency — upper-left is better",
-        labels={"latency_p50_ms": "p50 latency (ms)", "accuracy": "accuracy"},
+        labels={"latency_p50_ms": "p50 latency (ms)", "accuracy": "primary accuracy"},
     )
+
     scaling = rows[rows["experiment"].eq("03-parallel-scaling") & rows["valid"]].copy()
-    scaling_fig = px.line(
-        scaling.groupby(["provider", "question_count"], as_index=False)["latency_ms"].median(),
-        x="question_count",
-        y="latency_ms",
-        color="provider",
-        markers=True,
-        title="Parallel decision scaling",
-        labels={"question_count": "questions in one request", "latency_ms": "median latency (ms)"},
-    )
+    if not scaling.empty:
+        scaling_data = scaling.groupby(["provider", "question_count"], as_index=False)["latency_ms"].median()
+        scaling_fig = px.line(
+            scaling_data,
+            x="question_count",
+            y="latency_ms",
+            color="provider",
+            markers=True,
+            title="Parallel decision scaling: 1 → 32 questions in one request",
+            labels={"question_count": "questions in one request", "latency_ms": "median latency (ms)"},
+        )
+    else:
+        scaling_fig = go.Figure().update_layout(title="Parallel decision scaling — no data")
+
     rel_fig = go.Figure()
     rel_fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="perfect calibration"))
     for provider, frame in rel.groupby("provider"):
@@ -72,23 +95,47 @@ def build_report(raw_csv: Path, output_html: Path) -> None:
             )
         )
     rel_fig.update_layout(
-        title="Reliability diagram",
+        title="Reliability: reported confidence vs observed accuracy",
         xaxis_title="reported confidence",
         yaxis_title="observed accuracy",
         xaxis_range=[0, 1],
         yaxis_range=[0, 1],
     )
 
+    if not coverage.empty:
+        coverage_fig = px.line(
+            coverage,
+            x="coverage",
+            y="accuracy",
+            color="provider",
+            markers=True,
+            title="Automation trade-off: accuracy vs coverage",
+            labels={
+                "coverage": "share of cases auto-accepted",
+                "accuracy": "accuracy among accepted cases",
+            },
+            range_x=[0, 1],
+            range_y=[0, 1],
+        )
+    else:
+        coverage_fig = go.Figure().update_layout(title="Accuracy vs coverage — no data")
+
     cards = []
     for _, row in comparable.iterrows():
         cards.append(
             f"<div class='card'><div class='eyebrow'>{row['experiment']} · {row['provider']}</div>"
-            f"<div class='metric'>{row['accuracy']:.1%}</div><div>accuracy</div>"
+            f"<div class='metric'>{row['accuracy']:.1%}</div><div>primary accuracy</div>"
             f"<div class='sub'>{row['latency_p50_ms']:.0f} ms p50 · {row['latency_p95_ms']:.0f} ms p95</div></div>"
         )
 
-    calibration_table = cal.to_html(index=False, float_format=lambda x: f"{x:.4f}") if not cal.empty else "<p>No calibration data.</p>"
+    calibration_table = (
+        cal.to_html(index=False, float_format=lambda x: f"{x:.4f}")
+        if not cal.empty
+        else "<p>No calibration data.</p>"
+    )
     summary_table = summary.to_html(index=False, float_format=lambda x: f"{x:.3f}")
+    group_text = selected_group or "legacy / ungrouped"
+
     html = f"""<!doctype html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
 <title>Jev vs LLM benchmark</title><script src='https://cdn.plot.ly/plotly-3.1.0.min.js'></script>
@@ -99,16 +146,17 @@ main{{max-width:1280px;margin:auto;padding:32px 20px 64px}} h1{{font-size:40px;m
 .card,.panel{{background:white;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 1px 2px #00000008}}
 .metric{{font-size:34px;font-weight:750;margin-top:8px}} .eyebrow{{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280}}
 .sub{{font-size:13px;color:#6b7280;margin-top:8px}} .panel{{margin:14px 0}} table{{border-collapse:collapse;width:100%;font-size:13px}} th,td{{padding:8px;border-bottom:1px solid #eee;text-align:left}}
-.notice{{background:#fff7ed;border:1px solid #fed7aa;padding:14px;border-radius:12px;margin:18px 0}}
+.notice{{background:#fff7ed;border:1px solid #fed7aa;padding:14px;border-radius:12px;margin:18px 0}} code{{background:#eef2f7;padding:2px 5px;border-radius:5px}}
 </style></head><body><main>
-<h1>Jev vs LLM</h1><p class='lead'>Decision-model benchmark: correctness, calibration, latency, parallel scaling and workflow outcomes. Numbers reflect this run and its configured models, region and network path.</p>
+<h1>Jev vs LLM</h1><p class='lead'>Decision-model benchmark: correctness, calibration, latency, parallel scaling and workflow outcomes. Active run group: <code>{group_text}</code>.</p>
 <div class='notice'><b>Publication note:</b> verify the TypeSafe terms applicable to your account before publishing Jev performance numbers. Raw results are gitignored by default.</div>
 <div class='grid'>{''.join(cards)}</div>
 <div class='panel'>{_chart_html(acc)}</div><div class='panel'>{_chart_html(latency)}</div>
 <div class='panel'>{_chart_html(scatter)}</div><div class='panel'>{_chart_html(scaling_fig)}</div>
-<div class='panel'>{_chart_html(rel_fig)}</div>
+<div class='panel'>{_chart_html(rel_fig)}</div><div class='panel'>{_chart_html(coverage_fig)}</div>
 <div class='panel'><h2>Calibration metrics</h2>{calibration_table}</div>
 <div class='panel'><h2>Aggregate metrics</h2>{summary_table}</div>
 </main></body></html>"""
+
     output_html.parent.mkdir(parents=True, exist_ok=True)
     output_html.write_text(html, encoding="utf-8")
