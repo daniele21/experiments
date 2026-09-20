@@ -15,8 +15,8 @@ The third arm is essential: it separates the gain from **workflow decomposition*
 - **Accuracy**: exact final outcome for Choice/final actions; Noul values are thresholded at 0.5; Score tolerance is ±0.5 level.
 - **Valid-output rate**: request returned all required answers and values stayed inside the expected contract.
 - **Latency**: wall-clock client-observed end-to-end latency. Report p50, p95 and p99.
-- **Calibration**: Expected Calibration Error plus a confidence Brier score and reliability curve.
-- **Selective automation**: accuracy vs coverage while increasing the confidence threshold.
+- **Probability calibration**: Expected Calibration Error plus Brier score computed on the probability assigned to the selected class.
+- **Selective automation**: accuracy vs coverage while increasing the provider-native confidence threshold.
 - **Scaling**: latency as independent questions in one request increase 1, 2, 4, 8, 16, 32.
 - **Token usage**: input/output tokens when exposed by the provider. Cost normalization is optional and must use dated price assumptions.
 
@@ -41,7 +41,7 @@ Client-observed latency includes network distance. That is intentional for user-
 
 **Hypothesis:** typed decision models should be competitive on bounded classification while avoiding free-form output failure modes.
 
-Benchmark-grade target: ≥500 independently labelled examples across 10–20 balanced classes, with a held-out set and an `other` class where appropriate.
+Public benchmark: BANKING77 official test split, 77 intents. The `standard` profile samples ~10 examples per intent; the `full` profile runs all 3,080 official test examples.
 
 Report: accuracy, macro-F1 (planned when the larger dataset lands), valid-output rate, p50/p95/p99 latency.
 
@@ -49,11 +49,11 @@ Report: accuracy, macro-F1 (planned when the larger dataset lands), valid-output
 
 **Hypothesis:** useful automation depends not only on being right but on knowing when not to act.
 
-Benchmark-grade target: ≥1,000 examples containing clear, borderline, under-specified and out-of-distribution cases. Ambiguous cases should be labelled independently by multiple humans; disagreement must be preserved rather than hidden.
+Public benchmark: a balanced mixture of BANKING77 in-scope test examples and CLINC150 `oos_test` examples mapped to an explicit `other` choice. This directly tests both classification quality and rejection/OOD behavior without asking a tested model to create the labels.
 
-Report: reliability curve, ECE, confidence Brier score, and accuracy-vs-coverage. The key operational question is: *at 95% required accuracy, what share of cases can each system automate?*
+Report: reliability curve, ECE and Brier score on selected-class probability, plus accuracy-vs-coverage using native confidence. The key operational question is: *at 95% required accuracy, what share of cases can each system automate?*
 
-LLM confidence in this suite is self-reported. It is an empirical baseline, not assumed to be equivalent to Jev confidence.
+LLM confidence in this suite is self-reported. Jev confidence and LLM confidence are therefore treated as provider-native abstention scores, not as probabilities. Probability calibration uses the probability assigned to the selected class instead.
 
 ## Experiment 03 — parallel decision scaling
 
@@ -82,6 +82,7 @@ Benchmark-grade target: ≥300 support turns with multiple intents, escalation r
 ## Dataset policy
 
 - Committed smoke data is intentionally small and human-readable.
+- Public benchmark data is downloaded into `data/cache/` and is not committed.
 - Larger public datasets must preserve their original license and provenance.
 - Synthetic benchmark cases must have deterministic or independently reviewed ground truth.
 - Never use the tested model to create the sole reference label for the same benchmark.
