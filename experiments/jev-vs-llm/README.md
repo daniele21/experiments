@@ -86,7 +86,7 @@ Profiles:
 |---|---:|---:|---:|
 | `quick` | 154 (~2/intent) | 100 | 100 |
 | `standard` | 770 (~10/intent) | 500 | 500 |
-| `full` | all 3,080 test cases | 1,000 | 1,000 |
+| `full` | all 3,080 test cases | matched to all filtered OOS | all filtered OOS |
 
 The public benchmark generates `results/public_report.html`.
 
