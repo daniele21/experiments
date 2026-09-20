@@ -8,3 +8,4 @@ __pycache__/
 experiments/*/data/cache/
 experiments/*/results/raw/
 experiments/*/results/private/
+experiments/*/results/manifests/
