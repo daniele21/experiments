@@ -159,6 +159,52 @@ def _decision_provider(provider: str, model: str | None = None):
     raise typer.BadParameter("public classification supports jev or llm")
 
 
+def _run_korgis_public(
+    *,
+    models: list[str],
+    profile: str,
+    cache_dir: Path,
+    seed: int,
+    group: str,
+    manage_runtime: bool,
+    anchor_model: str,
+) -> tuple[list[pd.DataFrame], dict]:
+    sizes = PUBLIC_PROFILES[profile]
+    controller = KorgisController()
+    controller.health()
+    identities: dict = {}
+    frames: list[pd.DataFrame] = []
+
+    if manage_runtime:
+        controller.activate(anchor_model)
+        order = managed_korgis_model_order(models, anchor_model)
+    else:
+        ensure_korgis_models_resident(controller, models)
+        order = models
+
+    for model in order:
+        typer.echo(f"Running local Korgis benchmark: {model}...")
+        if manage_runtime:
+            controller.activate(model)
+        try:
+            frame = run_public_classification(
+                KorgisProvider(model=model, seed=seed),
+                cache_dir=cache_dir,
+                routing_max_cases=sizes["routing"],
+                calibration_in_scope=sizes["in_scope"],
+                calibration_oos=sizes["oos"],
+                seed=seed,
+            )
+            frames.append(_tag_run(frame, group, f"public-{profile}"))
+            identities[model] = controller.model_identity(model)
+        finally:
+            if manage_runtime and model != anchor_model:
+                controller.activate(anchor_model)
+                controller.unload(model)
+
+    return frames, identities
+
+
 @app.command("prepare-data")
 def prepare_data(
     cache_dir: Annotated[Path, typer.Option(help="Local dataset cache directory.")] = DEFAULT_CACHE,
@@ -249,7 +295,7 @@ def compare(
 @app.command("compare-public")
 def compare_public(
     profile: Annotated[
-        str, typer.Option(help="quick, standard, or full")
+        str, typer.Option(help="budget, quick, standard, or full")
     ] = "standard",
     output: Annotated[Path, typer.Option()] = PUBLIC_RAW,
     html: Annotated[Path, typer.Option()] = PUBLIC_REPORT,
@@ -259,14 +305,32 @@ def compare_public(
         str | None,
         typer.Option(help="Comma-separated OpenAI model matrix. Defaults to OPENAI_MODELS."),
     ] = None,
+    include_local: Annotated[
+        bool,
+        typer.Option(help="Also benchmark local Korgis models."),
+    ] = False,
+    local_models: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated Korgis model keys. Defaults to KORGIS_MODELS."),
+    ] = None,
+    manage_korgis_models: Annotated[
+        bool,
+        typer.Option(
+            help="Use the Korgis admin API to activate local models sequentially and unload non-anchor models."
+        ),
+    ] = True,
+    korgis_anchor_model: Annotated[
+        str,
+        typer.Option(help="Resident model used as the low-memory parking/default runtime."),
+    ] = "nemotron-nano-4b",
     allow_moving_jev_model: Annotated[
         bool,
         typer.Option(help="Allow jev-latest/jev-preview instead of a pinned Jev version."),
     ] = False,
 ) -> None:
-    """Run Jev vs a GPT model matrix on BANKING77 + filtered CLINC150 OOS."""
+    """Run Jev, GPTs and optionally local Korgis models on the public benchmark."""
     if profile not in PUBLIC_PROFILES:
-        raise typer.BadParameter("profile must be quick, standard, or full")
+        raise typer.BadParameter("profile must be budget, quick, standard, or full")
 
     jev_model = os.getenv("JEV_MODEL", "jev-latest")
     if not allow_moving_jev_model and jev_model in {"jev-latest", "jev-preview"}:
@@ -276,10 +340,12 @@ def compare_public(
         )
 
     model_matrix = _model_matrix(models)
+    local_matrix = _local_model_matrix(local_models) if include_local else []
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
     group = str(uuid.uuid4())
     frames = []
+    korgis_identity: dict = {}
 
     typer.echo(f"Running public {profile} benchmark: Jev...")
     jev_frame = run_public_classification(
@@ -304,6 +370,18 @@ def compare_public(
         )
         frames.append(_tag_run(frame, group, f"public-{profile}"))
 
+    if local_matrix:
+        local_frames, korgis_identity = _run_korgis_public(
+            models=local_matrix,
+            profile=profile,
+            cache_dir=cache_dir,
+            seed=seed,
+            group=group,
+            manage_runtime=manage_korgis_models,
+            anchor_model=korgis_anchor_model,
+        )
+        frames.extend(local_frames)
+
     combined = pd.concat(frames, ignore_index=True)
     append_results(combined, output)
     manifest = _record_manifest(
@@ -316,12 +394,84 @@ def compare_public(
             "routing_cases": sizes["routing"],
             "calibration_in_scope": sizes["in_scope"],
             "calibration_oos": sizes["oos"],
+            "manage_korgis_models": manage_korgis_models if local_matrix else False,
+            "korgis_anchor_model": korgis_anchor_model if local_matrix else None,
         },
         requested_openai_models=model_matrix,
+        requested_korgis_models=local_matrix,
+        korgis_identity=korgis_identity,
     )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
-    typer.echo(f"Models: {', '.join(model_matrix)}")
+    typer.echo(f"GPT models: {', '.join(model_matrix)}")
+    if local_matrix:
+        typer.echo(f"Korgis models: {', '.join(local_matrix)}")
+    typer.echo(f"Manifest: {manifest}")
+    typer.echo(f"Dashboard: {html}")
+
+
+@app.command("compare-local")
+def compare_local(
+    profile: Annotated[
+        str, typer.Option(help="budget, quick, standard, or full")
+    ] = "budget",
+    output: Annotated[Path, typer.Option()] = Path("results/raw/local_results.csv"),
+    html: Annotated[Path, typer.Option()] = Path("results/local_report.html"),
+    cache_dir: Annotated[Path, typer.Option()] = DEFAULT_CACHE,
+    seed: Annotated[int, typer.Option()] = 42,
+    models: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated Korgis model keys. Defaults to KORGIS_MODELS."),
+    ] = None,
+    manage_runtime: Annotated[
+        bool,
+        typer.Option(help="Activate models sequentially through the Korgis admin API."),
+    ] = True,
+    anchor_model: Annotated[
+        str,
+        typer.Option(help="Parking/default Korgis runtime used between larger local models."),
+    ] = "nemotron-nano-4b",
+) -> None:
+    """Run only the local Korgis matrix; no paid cloud inference is used."""
+    if profile not in PUBLIC_PROFILES:
+        raise typer.BadParameter("profile must be budget, quick, standard, or full")
+
+    prepare_public_data(cache_dir)
+    local_matrix = _local_model_matrix(models)
+    group = str(uuid.uuid4())
+    frames, identities = _run_korgis_public(
+        models=local_matrix,
+        profile=profile,
+        cache_dir=cache_dir,
+        seed=seed,
+        group=group,
+        manage_runtime=manage_runtime,
+        anchor_model=anchor_model,
+    )
+    combined = pd.concat(frames, ignore_index=True)
+    append_results(combined, output)
+    sizes = PUBLIC_PROFILES[profile]
+    manifest = _record_manifest(
+        combined,
+        group=group,
+        suite=f"local-{profile}",
+        parameters={
+            "profile": profile,
+            "seed": seed,
+            "routing_cases": sizes["routing"],
+            "calibration_in_scope": sizes["in_scope"],
+            "calibration_oos": sizes["oos"],
+            "manage_korgis_models": manage_runtime,
+            "korgis_anchor_model": anchor_model,
+            "api_cost_scope": "local provider fee only; hardware and energy excluded",
+        },
+        requested_openai_models=[],
+        requested_korgis_models=local_matrix,
+        korgis_identity=identities,
+    )
+    build_report(output, html, run_group=group)
+    typer.echo(f"Comparison group: {group}")
+    typer.echo(f"Korgis models: {', '.join(local_matrix)}")
     typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
 
