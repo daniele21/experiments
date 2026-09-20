@@ -30,6 +30,7 @@ class OpenAIProvider(DecisionProvider):
             raise ValueError("Set OPENAI_MODEL explicitly for reproducible benchmark runs")
         max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
         timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        self.reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT", "none")
         self.client = OpenAI(max_retries=max_retries, timeout=timeout)
 
     @staticmethod
@@ -87,6 +88,7 @@ class OpenAIProvider(DecisionProvider):
             }
             response = self.client.responses.create(
                 model=self.model,
+                reasoning={"effort": self.reasoning_effort},
                 input=json.dumps(prompt, ensure_ascii=False),
                 text={
                     "format": {
@@ -210,6 +212,7 @@ class OpenAIMonolithicProvider:
             }
             response = self.client.responses.create(
                 model=self.model,
+                reasoning={"effort": self.reasoning_effort},
                 input=json.dumps(
                     {
                         "task": (
