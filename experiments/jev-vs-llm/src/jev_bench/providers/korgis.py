@@ -125,6 +125,26 @@ class KorgisProvider(DecisionProvider):
             "criteria": question.criteria,
         }
 
+    @staticmethod
+    def _coerce_probability(value: Any) -> float:
+        """Accept common bounded probability encodings without semantic repair."""
+        if isinstance(value, bool):
+            return 1.0 if value else 0.0
+        if isinstance(value, (int, float)):
+            probability = float(value)
+        elif isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "yes"}:
+                return 1.0
+            if normalized in {"false", "no"}:
+                return 0.0
+            probability = float(normalized)
+        else:
+            raise TypeError(f"unsupported probability value: {value!r}")
+        if not 0 <= probability <= 1:
+            raise ValueError("probability outside [0,1]")
+        return probability
+
     def evaluate(self, state: Any, questions: Sequence[QuestionSpec]) -> ProviderResult:
         started = time.perf_counter()
         try:
@@ -132,25 +152,27 @@ class KorgisProvider(DecisionProvider):
                 "task": (
                     "Evaluate every question independently against the same state. "
                     "Return exactly one JSON object with an 'answers' array and no prose. "
+                    "Return exactly one answer for every supplied question and use each supplied "
+                    "question id exactly once. Do not invent ids. "
                     "Each answer must contain id, value, confidence and selected_probability. "
                     "For Choice, value must be exactly one supplied option. "
-                    "For Noul, value is the probability of YES from 0 to 1. "
-                    "For Score, value is a numeric position on the supplied ordered scale. "
+                    "For Noul, value is the probability of YES from 0 to 1; JSON true/false is "
+                    "also accepted as 1/0. For Score, value is numeric. "
                     "confidence is a 0-1 confidence score. selected_probability is a 0-1 "
                     "estimate that the selected answer is correct."
                 ),
                 "state": state,
-                "questions": [self._question_payload(question) for question in questions],
-                "output_example": {
-                    "answers": [
-                        {
-                            "id": "question_id",
-                            "value": "allowed_value",
-                            "confidence": 0.8,
-                            "selected_probability": 0.8,
-                        }
-                    ]
+                "required_answer_ids": [question.id for question in questions],
+                "answer_contract": {
+                    "answer_count": len(questions),
+                    "required_fields": [
+                        "id",
+                        "value",
+                        "confidence",
+                        "selected_probability",
+                    ],
                 },
+                "questions": [self._question_payload(question) for question in questions],
             }
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -196,21 +218,17 @@ class KorgisProvider(DecisionProvider):
                     continue
                 question = by_id[qid]
                 value = item.get("value")
-                confidence = float(item.get("confidence"))
-                selected_probability = float(item.get("selected_probability"))
-                if not 0 <= confidence <= 1:
-                    errors.append(f"{qid}: confidence outside [0,1]")
-                if not 0 <= selected_probability <= 1:
-                    errors.append(f"{qid}: selected_probability outside [0,1]")
+                confidence = self._coerce_probability(item.get("confidence"))
+                selected_probability = self._coerce_probability(
+                    item.get("selected_probability")
+                )
 
                 if question.type == "choice":
                     if not isinstance(question.criteria, dict) or str(value) not in question.criteria:
                         errors.append(f"{qid}: value outside allowed choices")
                 elif question.type == "noul":
-                    value = float(value)
-                    if not 0 <= value <= 1:
-                        errors.append(f"{qid}: noul probability outside [0,1]")
-                    selected_probability = max(float(value), 1.0 - float(value))
+                    value = self._coerce_probability(value)
+                    selected_probability = max(value, 1.0 - value)
                 elif question.type == "score":
                     value = float(value)
 
