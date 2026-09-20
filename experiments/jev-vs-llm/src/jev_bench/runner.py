@@ -5,6 +5,12 @@ from typing import Callable, Sequence
 
 import pandas as pd
 
+from jev_bench.benchmark_data import (
+    DEFAULT_CACHE,
+    balanced_banking77_cases,
+    banking77_question,
+    calibration_public_cases,
+)
 from jev_bench.datasets import (
     calibration_cases,
     expense_cases,
@@ -51,6 +57,7 @@ def _rows_for_case(
                 "actual": None,
                 "correct": False,
                 "confidence": None,
+                "predicted_probability": None,
                 "latency_ms": result.latency_ms,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
@@ -60,6 +67,7 @@ def _rows_for_case(
                 **case.metadata,
             }
         ]
+
     output = []
     for q in questions:
         expected = case.expected.get(q.id)
@@ -76,6 +84,7 @@ def _rows_for_case(
                     "actual": None,
                     "correct": False,
                     "confidence": None,
+                    "predicted_probability": None,
                     "latency_ms": result.latency_ms,
                     "input_tokens": result.input_tokens,
                     "output_tokens": result.output_tokens,
@@ -86,6 +95,7 @@ def _rows_for_case(
                 }
             )
             continue
+
         output.append(
             {
                 "experiment": experiment,
@@ -97,6 +107,7 @@ def _rows_for_case(
                 "actual": decision.value,
                 "correct": _correct(expected, decision.value, q),
                 "confidence": decision.confidence,
+                "predicted_probability": decision.predicted_probability,
                 "latency_ms": result.latency_ms,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
@@ -140,6 +151,7 @@ def run_scaling(provider: DecisionProvider, repeats: int = 5) -> list[dict]:
                     "actual": count,
                     "correct": True,
                     "confidence": None,
+                    "predicted_probability": None,
                     "latency_ms": result.latency_ms,
                     "input_tokens": result.input_tokens,
                     "output_tokens": result.output_tokens,
@@ -187,8 +199,17 @@ def run_workflow(
         rows.extend(_rows_for_case(experiment, case, questions, result, primary=False))
         if not result.valid or any(q.id not in result.answers for q in questions):
             continue
+
         values = {q.id: result.answers[q.id].value for q in questions}
         action = action_fn(values, case.state) if experiment == "04-workflow" else action_fn(values)
+        confidences = [
+            d.confidence for d in result.answers.values() if d.confidence is not None
+        ]
+        probabilities = [
+            d.predicted_probability
+            for d in result.answers.values()
+            if d.predicted_probability is not None
+        ]
         rows.append(
             {
                 "experiment": experiment,
@@ -199,10 +220,8 @@ def run_workflow(
                 "expected": case.expected["final_action"],
                 "actual": action,
                 "correct": action == case.expected["final_action"],
-                "confidence": min(
-                    [d.confidence for d in result.answers.values() if d.confidence is not None],
-                    default=None,
-                ),
+                "confidence": min(confidences) if confidences else None,
+                "predicted_probability": min(probabilities) if probabilities else None,
                 "latency_ms": result.latency_ms,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
@@ -215,6 +234,7 @@ def run_workflow(
 
 
 def run_all(provider: DecisionProvider, scaling_repeats: int = 5) -> pd.DataFrame:
+    """Run the small committed smoke suite."""
     rows = []
     rows += run_cases("01-routing", provider, routing_cases(), routing_questions())
     rows += run_cases("02-calibration", provider, calibration_cases(), routing_questions())
@@ -224,13 +244,51 @@ def run_all(provider: DecisionProvider, scaling_repeats: int = 5) -> pd.DataFram
     return pd.DataFrame(rows)
 
 
+def run_public_classification(
+    provider: DecisionProvider,
+    *,
+    cache_dir: Path = DEFAULT_CACHE,
+    routing_max_cases: int | None = 770,
+    calibration_in_scope: int = 500,
+    calibration_oos: int = 500,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Run benchmark-grade public classification/calibration datasets."""
+    rows = []
+    routing = balanced_banking77_cases(
+        cache_dir,
+        max_cases=routing_max_cases,
+        seed=seed,
+        experiment="01-routing-public",
+    )
+    rows += run_cases(
+        "01-routing-public",
+        provider,
+        routing,
+        [banking77_question(cache_dir, include_other=False)],
+    )
+
+    calibration = calibration_public_cases(
+        cache_dir,
+        in_scope_cases=calibration_in_scope,
+        oos_cases=calibration_oos,
+        seed=seed,
+    )
+    rows += run_cases(
+        "02-calibration-public",
+        provider,
+        calibration,
+        [banking77_question(cache_dir, include_other=True)],
+    )
+    return pd.DataFrame(rows)
+
+
 def append_results(frame: pd.DataFrame, output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists():
         existing = pd.read_csv(output)
         frame = pd.concat([existing, frame], ignore_index=True)
     frame.to_csv(output, index=False)
-
 
 
 EXPENSE_POLICY = """
@@ -279,6 +337,9 @@ def run_monolithic_workflows(provider) -> pd.DataFrame:
                     "actual": actual,
                     "correct": bool(decision and actual == case.expected["final_action"]),
                     "confidence": decision.confidence if decision else None,
+                    "predicted_probability": (
+                        decision.predicted_probability if decision else None
+                    ),
                     "latency_ms": result.latency_ms,
                     "input_tokens": result.input_tokens,
                     "output_tokens": result.output_tokens,
