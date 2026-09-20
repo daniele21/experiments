@@ -169,7 +169,9 @@ class OpenAIMonolithicProvider:
         self.model = model or os.getenv("OPENAI_MODEL", "")
         if not self.model:
             raise ValueError("Set OPENAI_MODEL explicitly for reproducible benchmark runs")
-        self.client = OpenAI()
+        max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
+        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        self.client = OpenAI(max_retries=max_retries, timeout=timeout)
 
     def decide(
         self,
