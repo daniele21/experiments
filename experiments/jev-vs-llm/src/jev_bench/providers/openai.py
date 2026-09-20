@@ -8,6 +8,7 @@ from typing import Any
 
 from openai import OpenAI
 
+from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
@@ -138,13 +139,25 @@ class OpenAIProvider(DecisionProvider):
                 errors.append("missing question answers")
 
             usage = getattr(response, "usage", None)
+            input_tokens = getattr(usage, "input_tokens", None)
+            output_tokens = getattr(usage, "output_tokens", None)
+            input_details = getattr(usage, "input_tokens_details", None)
+            cached_input_tokens = getattr(input_details, "cached_tokens", 0) or 0
             return ProviderResult(
                 provider=self.name,
                 model=self.model,
                 answers=decisions,
                 latency_ms=latency_ms,
-                input_tokens=getattr(usage, "input_tokens", None),
-                output_tokens=getattr(usage, "output_tokens", None),
+                input_tokens=input_tokens,
+                cached_input_tokens=cached_input_tokens,
+                output_tokens=output_tokens,
+                estimated_cost_usd=estimate_cost_usd(
+                    provider=self.name,
+                    model=self.model,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cached_input_tokens=cached_input_tokens,
+                ),
                 valid=valid,
                 error="; ".join(errors) or None,
                 raw=response,
@@ -221,6 +234,10 @@ class OpenAIMonolithicProvider:
             latency_ms = (time.perf_counter() - started) * 1000
             data = json.loads(response.output_text)
             usage = getattr(response, "usage", None)
+            input_tokens = getattr(usage, "input_tokens", None)
+            output_tokens = getattr(usage, "output_tokens", None)
+            input_details = getattr(usage, "input_tokens_details", None)
+            cached_input_tokens = getattr(input_details, "cached_tokens", 0) or 0
             return ProviderResult(
                 provider=self.name,
                 model=self.model,
@@ -233,8 +250,16 @@ class OpenAIMonolithicProvider:
                     )
                 },
                 latency_ms=latency_ms,
-                input_tokens=getattr(usage, "input_tokens", None),
-                output_tokens=getattr(usage, "output_tokens", None),
+                input_tokens=input_tokens,
+                cached_input_tokens=cached_input_tokens,
+                output_tokens=output_tokens,
+                estimated_cost_usd=estimate_cost_usd(
+                    provider=self.name,
+                    model=self.model,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cached_input_tokens=cached_input_tokens,
+                ),
                 raw=response,
             )
         except Exception as exc:  # noqa: BLE001 - provider boundary records failures
