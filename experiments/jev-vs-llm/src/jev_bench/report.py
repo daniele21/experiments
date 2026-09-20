@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html as html_lib
 import json
 import math
 from pathlib import Path
@@ -203,6 +204,292 @@ def _plot_block(title: str, description: str, fig, series_names: list[str]) -> s
         f"<div class='plot-copy'><h3>{title}</h3><p>{description}</p></div>"
         f"{_chart_html(fig, series_names)}"
         "</section>"
+    )
+
+
+
+def _safe(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "—"
+    return html_lib.escape(str(value))
+
+
+def _fmt_number(value: object, digits: int = 3) -> str:
+    if value is None or pd.isna(value):
+        return "—"
+    return f"{float(value):.{digits}f}"
+
+
+def _experiment_rows(rows: pd.DataFrame, prefix: str) -> pd.DataFrame:
+    public_name = f"{prefix}-public"
+    if rows["experiment"].eq(public_name).any():
+        return rows[rows["experiment"].eq(public_name)].copy()
+    return rows[rows["experiment"].eq(prefix)].copy()
+
+
+def _per_class_table(rows: pd.DataFrame) -> str:
+    subset = rows[
+        rows["primary_metric"].fillna(False)
+        & rows["expected"].notna()
+    ].copy()
+    if subset.empty:
+        return "<p class='empty'>No class-level data in this run.</p>"
+    subset = _with_series(subset)
+    records: list[dict[str, object]] = []
+    for (series, expected), frame in subset.groupby(["series", "expected"], dropna=False):
+        valid = frame[frame["valid"]]
+        wrong = valid[~valid["correct"] & valid["actual"].notna()]
+        top_wrong = (
+            wrong["actual"].astype(str).value_counts().index[0]
+            if not wrong.empty
+            else "—"
+        )
+        records.append(
+            {
+                "model": series,
+                "class": expected,
+                "cases": frame["case_id"].nunique(),
+                "valid_rate": float(frame.groupby("case_id")["valid"].all().mean()),
+                "accuracy": float(valid["correct"].mean()) if len(valid) else math.nan,
+                "top_wrong_prediction": top_wrong,
+            }
+        )
+    table = pd.DataFrame(records).sort_values(["model", "accuracy", "class"])
+    return table.to_html(
+        index=False,
+        classes="data-table granular-table",
+        float_format=lambda value: f"{value:.3f}",
+    )
+
+
+def _cost_breakdown(rows: pd.DataFrame):
+    if "estimated_cost_usd" not in rows.columns:
+        return _empty_chart("API cost by experiment — unavailable")
+    valid = _with_series(rows[rows["valid"]].copy())
+    if valid.empty:
+        return _empty_chart("API cost by experiment — no valid requests")
+    requests = valid.sort_values("case_id").drop_duplicates(
+        ["experiment", "case_id", "provider", "model"]
+    )
+    data = (
+        requests.groupby(["experiment", "series"], as_index=False)
+        .agg(
+            requests=("case_id", "nunique"),
+            total_api_cost_usd=("estimated_cost_usd", "sum"),
+            mean_api_cost_usd=("estimated_cost_usd", "mean"),
+        )
+    )
+    data["cost_per_1k_requests_usd"] = data["mean_api_cost_usd"] * 1000
+    return px.bar(
+        data,
+        x="experiment",
+        y="cost_per_1k_requests_usd",
+        color="series",
+        barmode="group",
+        title="API cost by experiment",
+        labels={
+            "experiment": "experiment",
+            "cost_per_1k_requests_usd": "API USD / 1,000 requests",
+            "series": "model",
+        },
+        hover_data=["requests", "total_api_cost_usd", "mean_api_cost_usd"],
+    )
+
+
+def _case_status(frame: pd.DataFrame) -> tuple[str, str]:
+    valid = bool(frame["valid"].all())
+    primary = frame[frame["primary_metric"].fillna(False)]
+    if not valid:
+        return "Invalid", "bad"
+    if len(primary):
+        if bool(primary["correct"].all()):
+            return "Correct", "good"
+        return "Wrong", "bad"
+    return "Valid", "neutral"
+
+
+def _case_explorer(rows: pd.DataFrame, experiment: str, title: str) -> str:
+    subset = _experiment_rows(rows, experiment)
+    if subset.empty:
+        return (
+            "<section class='table-card'><div class='plot-copy'>"
+            f"<h3>{_safe(title)}</h3><p class='empty'>No case-level data in this run.</p>"
+            "</div></section>"
+        )
+
+    subset = _with_series(subset)
+    cards: list[str] = []
+    grouped = subset.groupby(["series", "case_id"], sort=True, dropna=False)
+    for (series, case_id), frame in grouped:
+        frame = frame.copy()
+        status, status_class = _case_status(frame)
+        first = frame.iloc[0]
+        input_state = first.get("input_state", "")
+        if pd.isna(input_state):
+            input_state = ""
+        primary = frame[frame["primary_metric"].fillna(False)]
+        latency = float(frame["latency_ms"].dropna().iloc[0]) if frame["latency_ms"].notna().any() else math.nan
+        request_cost = (
+            float(frame["estimated_cost_usd"].dropna().iloc[0])
+            if "estimated_cost_usd" in frame and frame["estimated_cost_usd"].notna().any()
+            else math.nan
+        )
+
+        decision_rows: list[str] = []
+        for _, row in frame.sort_values(
+            ["primary_metric", "question_id"],
+            ascending=[True, True],
+        ).iterrows():
+            expected = row.get("expected")
+            actual = row.get("actual")
+            icon = "✓" if bool(row.get("correct")) else "✕"
+            valid_icon = "✓" if bool(row.get("valid")) else "✕"
+            decision_rows.append(
+                "<tr>"
+                f"<td><code>{_safe(row.get('question_id'))}</code></td>"
+                f"<td>{_safe(expected)}</td>"
+                f"<td>{_safe(actual)}</td>"
+                f"<td>{icon}</td>"
+                f"<td>{_fmt_number(row.get('confidence'))}</td>"
+                f"<td>{_fmt_number(row.get('predicted_probability'))}</td>"
+                f"<td>{valid_icon}</td>"
+                f"<td>{_safe(row.get('error'))}</td>"
+                "</tr>"
+            )
+
+        trace_html = ""
+        if "decision_trace" in frame.columns:
+            traces = frame["decision_trace"].dropna().astype(str)
+            if len(traces):
+                trace_text = traces.iloc[-1]
+                try:
+                    trace_obj = json.loads(trace_text)
+                    trace_text = json.dumps(
+                        trace_obj,
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    )
+                except json.JSONDecodeError:
+                    pass
+                trace_html = (
+                    "<div class='trace-block'><h4>Decision trace</h4>"
+                    f"<pre>{_safe(trace_text)}</pre></div>"
+                )
+
+        primary_text = ""
+        if len(primary):
+            p = primary.iloc[-1]
+            primary_text = (
+                f"<span>Final: <strong>{_safe(p.get('actual'))}</strong>"
+                f" / expected {_safe(p.get('expected'))}</span>"
+            )
+
+        search_blob = " ".join(
+            [
+                str(series),
+                str(case_id),
+                str(input_state),
+                " ".join(frame["expected"].dropna().astype(str)),
+                " ".join(frame["actual"].dropna().astype(str)),
+                " ".join(frame["error"].dropna().astype(str))
+                if "error" in frame
+                else "",
+            ]
+        ).lower()
+
+        cards.append(
+            f"<details class='case-card' data-series={json.dumps(str(series))} "
+            f"data-search={json.dumps(search_blob)}>"
+            "<summary>"
+            f"<span class='status-dot {status_class}'></span>"
+            f"<strong>{_safe(case_id)}</strong>"
+            f"<span class='case-model'>{_safe(series)}</span>"
+            f"<span class='status-pill {status_class}'>{status}</span>"
+            f"<span>{_fmt_number(latency, 0)} ms</span>"
+            f"<span>{_money(request_cost)}</span>"
+            f"{primary_text}"
+            "</summary>"
+            f"<div class='case-input'><span>Input</span><p>{_safe(input_state)}</p></div>"
+            "<div class='table-scroll'><table class='decision-table'>"
+            "<thead><tr><th>Decision</th><th>Expected</th><th>Actual</th>"
+            "<th>Correct</th><th>Confidence</th><th>Probability</th>"
+            "<th>Valid</th><th>Error</th></tr></thead>"
+            f"<tbody>{''.join(decision_rows)}</tbody></table></div>"
+            f"{trace_html}"
+            "</details>"
+        )
+
+    return (
+        "<section class='table-card explorer-card'>"
+        f"<div class='plot-copy'><h3>{_safe(title)}</h3>"
+        "<p>Search by case id, input, expected/actual output or error. Expand a case to inspect every decision.</p></div>"
+        "<div class='explorer-tools'>"
+        "<input class='case-search' type='search' placeholder='Search cases, inputs, outputs, errors…' "
+        "aria-label='Search cases'>"
+        f"<span class='case-count'>{len(cards)} cases</span>"
+        "</div>"
+        f"<div class='case-list'>{''.join(cards)}</div>"
+        "</section>"
+    )
+
+
+def _error_explorer(rows: pd.DataFrame, experiment: str) -> str:
+    subset = _experiment_rows(rows, experiment)
+    if subset.empty:
+        return ""
+    subset = _with_series(subset)
+    errors = subset[(~subset["valid"]) | subset["error"].notna()].copy()
+    if errors.empty:
+        return (
+            "<section class='table-card'><div class='plot-copy'>"
+            "<h3>Error explorer</h3><p>No schema/provider errors in this experiment.</p>"
+            "</div></section>"
+        )
+    columns = [
+        "series",
+        "case_id",
+        "question_id",
+        "error",
+        "latency_ms",
+        "input_tokens",
+        "output_tokens",
+    ]
+    available = [column for column in columns if column in errors.columns]
+    return (
+        "<section class='table-card'><div class='plot-copy'>"
+        "<h3>Error explorer</h3>"
+        "<p>Provider, schema and missing-answer failures are kept separate from semantic mistakes.</p>"
+        "</div><div class='table-scroll'>"
+        + errors[available].drop_duplicates().to_html(
+            index=False,
+            classes="data-table granular-table",
+            float_format=lambda value: f"{value:.3f}",
+        )
+        + "</div></section>"
+    )
+
+
+def _scaling_detail_table(rows: pd.DataFrame) -> str:
+    subset = rows[rows["experiment"].eq("03-parallel-scaling")].copy()
+    if subset.empty:
+        return "<p class='empty'>No scaling requests in this run.</p>"
+    subset = _with_series(subset)
+    columns = [
+        "series",
+        "case_id",
+        "question_count",
+        "valid",
+        "latency_ms",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost_usd",
+        "error",
+    ]
+    return subset[[column for column in columns if column in subset.columns]].to_html(
+        index=False,
+        classes="data-table granular-table",
+        float_format=lambda value: f"{value:.4f}",
     )
 
 
