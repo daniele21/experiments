@@ -31,7 +31,7 @@ MANIFEST_DIR = Path("results/manifests")
 PUBLIC_PROFILES = {
     "quick": {"routing": 154, "in_scope": 100, "oos": 100},
     "standard": {"routing": 770, "in_scope": 500, "oos": 500},
-    "full": {"routing": None, "in_scope": 1000, "oos": 1000},
+    "full": {"routing": None, "in_scope": None, "oos": None},
 }
 
 
