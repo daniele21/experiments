@@ -24,7 +24,7 @@ LLM confidence values are self-reported. They are deliberately measured, but mus
 | 04 | Deterministic workflow | How well do fuzzy judgments compose with explicit Python rules? | intermediate accuracy, final-action accuracy, latency |
 | 05 | Hybrid agent | Can decision primitives handle routing while an LLM remains available for generation? | final-action accuracy, decision latency, calls/tokens |
 
-The included datasets are deliberately small **smoke datasets** so the harness is runnable immediately. They are not sufficient for publishable conclusions. The next step is to add larger public or independently labelled datasets while keeping the same runner and report format.
+The repo contains both small committed **smoke datasets** and a larger **public benchmark tier**. The public tier downloads BANKING77 for 77-class intent classification and CLINC150 out-of-scope examples for calibration/OOD evaluation. See [`DATASETS.md`](DATASETS.md) for provenance, licensing notes and profiles.
 
 ## Fairness rules
 
@@ -33,9 +33,9 @@ The included datasets are deliberately small **smoke datasets** so the harness i
 3. Warm up before timed runs and use repeated samples for latency.
 4. Give Jev and the workflow LLM the same state and semantically equivalent questions.
 5. Keep deterministic calculations and business rules in code, not in either model.
-6. Report p50 and p95, not a single best latency.
+6. Report p50, p95 and p99, not a single best latency.
 7. Separate provider errors/schema errors from semantic wrong answers.
-8. Do not interpret LLM self-reported confidence as calibrated until the reliability experiment supports that conclusion.
+8. Keep `predicted_probability` separate from provider-native `confidence`: ECE/Brier use probability assigned to the selected class; selective automation uses native confidence.
 
 ## Setup
 
@@ -57,30 +57,50 @@ export OPENAI_MODEL="<exact model id>"
 
 ## Run
 
-Run each provider separately so rate limits or temporary provider issues do not contaminate the other run:
+### Smoke suite
 
 ```bash
 export BENCHMARK_LOCATION="milan-local"
 uv run jev-bench compare --scaling-repeats 30
 ```
 
-Open:
+This generates `results/report.html`.
 
-```text
-results/report.html
+### Public classification + calibration benchmark
+
+Download/cache the canonical datasets:
+
+```bash
+uv run jev-bench prepare-data
 ```
 
-The report is the primary human-facing artifact. It contains KPI cards plus interactive charts for accuracy, latency, accuracy-vs-latency, calibration and parallel scaling.
+Run the standard profile:
+
+```bash
+uv run jev-bench compare-public --profile standard
+```
+
+Profiles:
+
+| Profile | BANKING77 routing | Calibration in-scope | CLINC150 OOS |
+|---|---:|---:|---:|
+| `quick` | 154 (~2/intent) | 100 | 100 |
+| `standard` | 770 (~10/intent) | 500 | 500 |
+| `full` | all 3,080 test cases | 1,000 | 1,000 |
+
+The public benchmark generates `results/public_report.html`.
+
+The HTML report is the primary human-facing artifact. It shows accuracy and macro-F1 with 95% confidence intervals, latency, accuracy-vs-latency, probability calibration, confidence-based coverage, in-scope vs OOS performance, top confusion pairs, and parallel scaling when present.
 
 ## Result schema
 
 Every raw row includes:
 
 ```text
-run_id, run_group, run_timestamp_utc, runner_location,
+run_id, run_group, suite, run_timestamp_utc, runner_location,
 experiment, case_id, provider, model, question_id,
-expected, actual, correct, confidence, primary_metric,
-latency_ms, input_tokens, output_tokens, valid, error
+expected, actual, correct, confidence, predicted_probability,
+primary_metric, latency_ms, input_tokens, output_tokens, valid, error
 ```
 
 This deliberately keeps the raw representation simple enough to analyze with pandas, DuckDB, BigQuery, or another reporting layer later.
@@ -124,7 +144,7 @@ See [`METHODOLOGY.md`](METHODOLOGY.md) for benchmark-grade sample sizes, latency
 - [x] Experiment 05 — support decision/hybrid-agent core
 - [x] Interactive HTML dashboard
 - [x] Raw result persistence
-- [ ] Larger independently labelled datasets
+- [x] Public benchmark tier: BANKING77 + CLINC150 OOS
 - [x] LLM-monolithic baseline for experiments 04/05
 - [x] Accuracy-vs-coverage threshold chart
 - [x] Run grouping with UTC timestamp and runner location
