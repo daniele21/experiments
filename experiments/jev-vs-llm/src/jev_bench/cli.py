@@ -72,7 +72,14 @@ def _record_manifest(
                 rows["dataset_revision"].astype(str).unique().tolist()
             )
 
-    parameters = {**parameters, "dataset_revisions": dataset_revisions}
+    parameters = {
+        **parameters,
+        "dataset_revisions": dataset_revisions,
+        "transport": {
+            "max_retries": int(os.getenv("BENCHMARK_MAX_RETRIES", "0")),
+            "timeout_seconds": float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60")),
+        },
+    }
     write_manifest(
         path,
         run_group=group,
