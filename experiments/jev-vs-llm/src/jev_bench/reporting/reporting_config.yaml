@@ -1,0 +1,85 @@
+# reporting_config.yaml
+# Configuration for the decision model benchmark dashboard and reports.
+
+theme:
+  font_family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+  colors:
+    primary: "#0f172a"        # Slate 900
+    primary_hover: "#1e293b"  # Slate 800
+    accent: "#4f46e5"         # Indigo 600
+    accent_light: "#e0e7ff"   # Indigo 100
+    success: "#059669"        # Emerald 600
+    success_bg: "#ecfdf5"     # Emerald 50
+    warning: "#d97706"        # Amber 600
+    warning_bg: "#fffbeb"     # Amber 50
+    danger: "#dc2626"         # Red 600
+    danger_bg: "#fef2f2"      # Red 50
+    neutral_bg: "#f8fafc"     # Slate 50
+    surface: "#ffffff"
+    surface_alt: "#f1f5f9"    # Slate 100
+    border: "#e2e8f0"         # Slate 200
+    border_dark: "#cbd5e1"    # Slate 300
+    text: "#0f172a"           # Slate 900
+    text_muted: "#64748b"     # Slate 500
+    text_light: "#94a3b8"     # Slate 400
+  chart_palette:
+    - "#4f46e5"  # Indigo
+    - "#059669"  # Emerald
+    - "#d97706"  # Amber
+    - "#7c3aed"  # Violet
+    - "#0284c7"  # Sky
+    - "#e11d48"  # Rose
+    - "#0d9488"  # Teal
+    - "#ea580c"  # Orange
+    - "#475569"  # Slate
+
+experiments:
+  routing:
+    id: "routing"
+    title: "Routing"
+    full_title: "Routing & Intent Classification"
+    tag: "01-routing"
+    public_tag: "01-routing-public"
+    description: "Multi-way intent classification evaluated on client queries. Measures top-1 categorical accuracy, latency, and failure modes."
+    cli_command: "uv run python scripts/run_local_matrix.py --experiments routing --dataset public"
+  calibration:
+    id: "calibration"
+    title: "Calibration"
+    full_title: "Confidence & Probability Calibration"
+    tag: "02-calibration"
+    public_tag: "02-calibration-public"
+    description: "Evaluates whether model confidence reflects true probability, ECE, Brier score, and out-of-scope rejection."
+    cli_command: "uv run python scripts/run_local_matrix.py --experiments calibration --dataset public"
+  scaling:
+    id: "scaling"
+    title: "Scaling"
+    full_title: "Parallel Decision Scaling"
+    tag: "03-parallel-scaling"
+    public_tag: "03-parallel-scaling"
+    description: "Measures throughput, latency degradation, and token consumption when scaling from 1 to 32 concurrent questions per request."
+    cli_command: "uv run python scripts/run_local_matrix.py --experiments scaling"
+  workflow:
+    id: "workflow"
+    title: "Workflow"
+    full_title: "Deterministic Workflow Execution"
+    tag: "04-workflow"
+    public_tag: "04-workflow"
+    description: "Compares structured typed decision DAGs against monolithic LLM prompt policies."
+    cli_command: "uv run python scripts/run_local_matrix.py --experiments workflow"
+  agent:
+    id: "agent"
+    title: "Agent"
+    full_title: "Hybrid Agent Decision Layer"
+    tag: "05-hybrid-agent"
+    public_tag: "05-hybrid-agent"
+    description: "Evaluates multi-turn tool calling and delegation decisions prior to generation."
+    cli_command: "uv run python scripts/run_local_matrix.py --experiments agent"
+
+model_labels:
+  "qwen3.5-4b-q4km": "Korgis · Qwen3.5 4B Q4_K_M"
+  "minicpm3-4b-q4km": "Korgis · MiniCPM3 4B Q4_K_M"
+  "qwen3.5-9b-q4km": "Korgis · Qwen3.5 9B Q4_K_M"
+  "qwen3.5-2b-q4km": "Korgis · Qwen3.5 2B Q4_K_M"
+  "qwen3.5-0.8b-q4km": "Korgis · Qwen3.5 0.8B Q4_K_M"
+  "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M"
+  "nemotron-nano-4b-q8": "Korgis · Nemotron Nano 4B Q8_0"

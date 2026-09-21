@@ -20,22 +20,48 @@ Tutti i modelli sono configurati in [`benchmark-models.yaml`](./benchmark-models
 
 ---
 
-## 2. Panoramica degli Esperimenti
+## 2. Panoramica Dettagliata degli Esperimenti
 
-La suite supporta due tier di dataset:
+La suite include 5 tipologie di esperimenti per valutare sia la precisione semantica del modello sia la sua tenuta architetturale in contesti decisionali strutturati.
 
-### A. Smoke Tier (`--dataset smoke`)
-Test rapido (10-30 secondi per modello) con casi sintetici per verificare il corretto funzionamento end-to-end:
-- **`routing`** (01): Classificazione ticket su 6 reparti (billing, technical, sales, account, shipping, cancellation).
-- **`calibration`** (02): Calibrazione delle probabilità e scarto out-of-scope.
-- **`scaling`** (03): Scalabilità decisionale (1, 2, 4, 8, 16, 32 domande parallele).
-- **`workflow`** (04): Policy a grafo ibrido (decisioni modello + regole deterministiche Python).
-- **`agent`** (05): Agente di approvazione spese con escalation policy.
+### Tabella di Riferimento per il Parametro `--experiments`
 
-### B. Public Benchmark Tier (`--dataset public --profile budget`)
-Valutazione su dataset pubblici reali e standard della letteratura scientifica:
-- **`routing`** (`01-routing-public`): Classificazione su **BANKING77** (77 classi reali di intent bancari).
-- **`calibration`** (`02-calibration-public`): Calibrazione e rilevamento out-of-scope su **BANKING77** (in-scope) e **CLINC150** (out-of-scope).
+| Chiave `--experiments` | ID Esperimento | Cosa valuta | Metriche Primarie | Tier `smoke` | Tier `public` |
+|---|---|---|---|:---:|:---:|
+| **`routing`** | `01-routing` | Classificazione multi-classe dell'intento (routing ticket) | Accuratezza, Macro-F1, Validità JSON, Latenza | ✅ *(24 casi)* | ✅ *(77 classi reali)* |
+| **`calibration`** | `02-calibration` | Calibrazione confidenza e scarto richieste fuori dominio (OOS) | ECE, Brier Score, Reliability Curve, Coverage | ✅ *(24 casi)* | ✅ *(BANKING77 + CLINC150)* |
+| **`scaling`** | `03-scaling` | Stress-test con 1 → 32 decisioni parallele in una sola chiamata | Validità schema, Latenza p50/p95, Token ratio | ✅ *(1,2,4,8,16,32 Q)* | ❌ *(solo sintetico)* |
+| **`workflow`** | `04-workflow` | Policy aziendale ibrida: modello fuzzy + regole Python | Accuratezza intermedia, Azione finale corretta | ✅ *(note spese)* | ❌ *(solo sintetico)* |
+| **`agent`** | `05-agent` | Agente decisionale di supporto clienti con policy di escalation | Decisione intermedia, Azione di escalation/handoff | ✅ *(supporto escalation)* | ❌ *(solo sintetico)* |
+| **`all`** | *Speciale* | Lancia automaticamente tutti gli esperimenti disponibili per il tier | Tutte le metriche aggregate | ✅ *(tutti e 5)* | ✅ *(`routing` + `calibration`)* |
+
+---
+
+### Perché alcuni esperimenti sono solo su dataset sintetico/controllato?
+
+- **`01 Routing` e `02 Calibration` (Dataset Pubblici Reali)**:  
+  Sono compiti canonici di NLP (Text Classification e Out-Of-Scope Detection). Per questi compiti la comunità scientifica ha creato dataset standard annotati da esseri umani:
+  - **BANKING77** *(PolyAI)*: 13.083 query bancarie reali umane suddivise su 77 intent.
+  - **CLINC150** *(Larson et al.)*: 150 domini generici, usato per verificare se il modello riconosce quando una query è estranea e rifiuta di rispondere invece di allucinare.
+
+- **`03 Scaling` (Stress-Test di Sistema)**:  
+  Non è un test di comprensione linguistica, ma uno **stress-test architetturale**. Misura come degradano latenza, consumi di token e aderenza alla grammatica JSON quando si impacchettano 1, 2, 4, 8, 16 e 32 domande parallele nello stesso prompt. Non esiste un "dataset accademico" per questo: si usa un banco controllato di 32 domande graduate (`scaling_question_bank()`).
+
+- **`04 Workflow` e `05 Agent` (Business Policy Ibride)**:  
+  Valutano l'interazione tra un LLM e il codice deterministico Python applicativo:
+  - *04 Workflow*: simula una policy di **approvazione note spese aziendali** (il modello analizza congruità e frode, Python applica le regole di soglia `se importo > €100 e frode < 0.5 -> approva, altrimenti manager_review`).
+  - *05 Agent*: simula una policy di **escalation supporto clienti** (se utente arrabbiato o richiede esplicitamente umano $\rightarrow$ *handoff*; se guasto urgente $\rightarrow$ *priority_support*).  
+  Le policy aziendali e i grafi decisionali sono logiche applicative proprietarie di business, non dataset pubblici aperti.
+
+---
+
+### I Due Tier di Esecuzione
+
+1. **Smoke Tier (`--dataset smoke`)**:
+   - Esegue casi controllati in circa **10-30 secondi per modello**.
+   - Ottimo per testare rapidamente tutti e 5 gli esperimenti (`routing`, `calibration`, `scaling`, `workflow`, `agent`) o per validare un nuovo modello/quantizzazione.
+2. **Public Benchmark Tier (`--dataset public --profile budget`)**:
+   - Esegue la valutazione scientifica rigorosa su larga scala per **`routing`** (77 classi) e **`calibration`** (in-scope + OOS).
 
 ---
 
