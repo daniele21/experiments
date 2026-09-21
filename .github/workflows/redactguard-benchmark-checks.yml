@@ -1,0 +1,38 @@
+name: RedactGuard benchmark checks
+
+on:
+  pull_request:
+    paths:
+      - "experiments/redactguard-local-anonymization/**"
+      - ".github/workflows/redactguard-benchmark-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/redactguard-local-anonymization
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff
+        run: uv run ruff check .
+
+      - name: Compile benchmark
+        run: uv run python -m compileall -q src tests
+
+      - name: Unit tests
+        run: uv run pytest
