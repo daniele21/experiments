@@ -1,0 +1,219 @@
+source:
+  repository: daniele21/redact-guard
+  ref: 70ea5ed4fbbd7182010cc04eb756f636791c5947
+  prompt_builder: anonimizer/services/prompt_builder.py
+  postprocessing: anonimizer/services/pii_detector.py
+profiles:
+  general:
+    private_person:
+      description: 'Any person name: first name, last name, nickname, or professional
+        title.'
+      examples:
+      - Mario Rossi
+      - Dr. Bianchi
+    private_email:
+      description: Any email address.
+      examples:
+      - nome@example.com
+    private_phone:
+      description: Any phone or fax number.
+      examples:
+      - +39 333 1234567
+      - 06 12345678
+    private_address:
+      description: Any postal address, city, or geolocation identifying a person.
+      examples:
+      - Via Roma 15, Milano
+    private_date:
+      description: Any date associated with a person (birth, appointment, event).
+      examples:
+      - 03/01/2025
+      - 15 marzo 1985
+    private_url:
+      description: Personal URL, profile link, or sharing link.
+      examples:
+      - https://linkedin.com/in/mrossi
+    account_number:
+      description: 'Any personal identifier: fiscal code, ID number, account number,
+        license plate.'
+      examples:
+      - 'CF: RSSMRA85M01H501Z'
+      - carta identità AB1234567
+    personal_demographic:
+      description: 'Demographic attribute: age, gender, nationality, ethnicity, religion.'
+      examples:
+      - 45 anni
+      - sesso M
+    secret:
+      description: Any credential, password, access code, or confidential information.
+      examples:
+      - password
+      - PIN
+  healthcare:
+    private_person:
+      description: Person name referring to the patient, client, relative, or healthcare
+        professional.
+      examples:
+      - Mario Rossi
+      - Dr. Bianchi
+      - sig.ra Verdi
+    private_email:
+      description: Email address identifying or contacting the person.
+      examples:
+      - m.rossi@gmail.com
+      - studio@clinica.it
+    private_phone:
+      description: Phone or contact number for the person.
+      examples:
+      - +39 333 1234567
+      - 06 12345678
+    private_address:
+      description: Postal address or location identifying the person.
+      examples:
+      - Via Roma 15, Milano
+      - Piazza Duomo 1
+    private_date:
+      description: Date associated with the person or their private record (birth,
+        visit, diagnosis).
+      examples:
+      - 03/01/2025
+      - 15 marzo 1985
+    health_condition:
+      description: Health condition, diagnosis, symptom, allergy, intolerance, or
+        clinical history.
+      examples:
+      - diabete tipo 2
+      - ipertensione arteriosa
+      - celiachia
+    health_treatment:
+      description: Medication, supplement, therapy, prescription, or treatment for
+        the person.
+      examples:
+      - metformina 500mg
+      - terapia insulinica
+      - integratore ferro
+    health_lab_result:
+      description: Lab result, biomarker, vital sign, clinical score, or exam result.
+      examples:
+      - HbA1c 7.2%
+      - PA 140/90 mmHg
+      - colesterolo totale 220 mg/dL
+    personal_measurement:
+      description: Anthropometric, biometric, or body measurement describing the person.
+      examples:
+      - peso 78 kg
+      - altezza 175 cm
+      - BMI 25.5
+    personal_demographic:
+      description: 'Demographic attribute: age, gender, nationality, ethnicity.'
+      examples:
+      - 45 anni
+      - sesso M
+      - nazionalità italiana
+    account_number:
+      description: Personal account, fiscal code, medical record number, or document
+        identifier.
+      examples:
+      - 'CF: RSSMRA85M01H501Z'
+      - tessera sanitaria 123456789
+    lifestyle_info:
+      description: Lifestyle habit or behavior associated with the person.
+      examples:
+      - fumatore
+      - sedentario
+      - dieta vegetariana
+    secret:
+      description: Credential, access secret, confidential code, or private key.
+      examples:
+      - password
+      - PIN
+      - codice accesso
+  financial:
+    private_person:
+      description: 'Person name: account holder, beneficiary, authorized signatory.'
+      examples:
+      - Mario Rossi
+      - intestatario conto
+    private_email:
+      description: Email address identifying or contacting the account holder.
+      examples:
+      - m.rossi@email.com
+    private_phone:
+      description: Phone or contact number for the account holder.
+      examples:
+      - +39 333 1234567
+    private_address:
+      description: Postal address, residence, or domicile of the account holder.
+      examples:
+      - Via Garibaldi 22, Torino
+    private_date:
+      description: Date associated with a transaction, account opening, or financial
+        event.
+      examples:
+      - 01/04/2025
+      - scadenza 31/12/2025
+    account_number:
+      description: Bank account number, IBAN, credit card number, policy number, fiscal
+        code, or financial identifier.
+      examples:
+      - IBAN IT60X0542811101000000123456
+      - carta **** 4532
+      - 'CF: RSSMRA85M01H501Z'
+    personal_demographic:
+      description: 'Demographic attribute: age, gender, nationality, place of birth,
+        occupation.'
+      examples:
+      - nato il 15/03/1985
+      - 'professione: ingegnere'
+    secret:
+      description: PIN, password, OTP, security question, access credential.
+      examples:
+      - PIN dispositivo
+      - codice cliente
+  legal:
+    private_person:
+      description: Person name referring to a party, witness, attorney, or legal representative.
+      examples:
+      - Avv. Rossi
+      - Mario Bianchi
+      - parte attrice
+    private_email:
+      description: Email address identifying or contacting a party.
+      examples:
+      - avv.rossi@studio.it
+      - segreteria@tribunale.it
+    private_phone:
+      description: Phone or contact number for a party.
+      examples:
+      - +39 02 12345678
+    private_address:
+      description: Postal address, registered office, or domicile of a party.
+      examples:
+      - Via Manzoni 10, 20121 Milano
+      - sede legale in Roma
+    private_date:
+      description: Date associated with a contract, hearing, filing, or legal event.
+      examples:
+      - 10/03/2025
+      - sottoscritto in data 15.01.2024
+    account_number:
+      description: Fiscal code, VAT number, case number, contract ID, or document
+        reference.
+      examples:
+      - 'CF: RSSMRA85M01H501Z'
+      - P.IVA 12345678901
+      - RG n. 1234/2024
+    private_url:
+      description: Personal URL, portal link, or document sharing link.
+      examples:
+      - https://pec.registro.it/doc/123
+    personal_demographic:
+      description: 'Demographic attribute: age, gender, nationality, place of birth.'
+      examples:
+      - nato a Milano il 15/03/1985
+      - cittadinanza italiana
+    secret:
+      description: Credential, access code, confidential signature, or secret information.
+      examples:
+      - firma digitale
+      - codice OTP
