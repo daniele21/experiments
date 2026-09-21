@@ -116,19 +116,24 @@ Cost is treated as a first-class benchmark metric rather than a post-hoc note.
 - Historical reports must keep their original snapshot; updating today's list price must not rewrite the cost of an older run.
 
 
+## MiniCPM API baseline
+
+MiniCPM is measured as a remote API provider through the official ModelBest OpenAI-compatible endpoint. The default model is `MiniCPM-V-4.6-1B`, and the benchmark sends text-only bounded-decision prompts.
+
+MiniCPM is not represented as a local GGUF/Korgis model. Any future self-hosted MiniCPM experiment must be registered and labelled separately from the official API baseline.
+
+If MiniCPM pricing is not present in the dated pricing snapshot, the harness records cost as unknown rather than assuming zero.
+
 ## Local Korgis baseline
 
 The public decision benchmark can also run through Korgis / Local LLM Server with the same cases and result schema.
 
-Default local matrix:
+The default local matrix contains only keys shipped by the current Korgis built-in registry:
 
-- Qwen3.5-4B Q4_K_M;
-- Qwen3.5-9B Q4_K_M;
-- NVIDIA Nemotron-3-Nano-4B Q4_K_M.
+- NVIDIA Nemotron-3-Nano-4B Q4_K_M;
+- Qwen3-VL-4B-Instruct MLX 4-bit.
 
-There is no official Qwen3.5-8B checkpoint, so the official 9B size is used as the larger Qwen3.5 comparison.
-
-For generative-model fairness, local requests explicitly disable thinking and GPT decision baselines default to `reasoning.effort=none`. Both GPT and local confidence/probability scalars are self-reported and must be evaluated empirically rather than assumed calibrated.
+For generative-model fairness, local requests explicitly disable thinking where the runtime supports it and GPT decision baselines default to `reasoning.effort=none`. Generative-model confidence/probability scalars are self-reported and must be evaluated empirically rather than assumed calibrated.
 
 Korgis is part of the measured architecture: requests go through its public OpenAI-compatible HTTP boundary, and its `local-llm-identity-v1` execution identity is captured in the run manifest. Model load/unload time is lifecycle evidence and is excluded from per-request inference latency.
 

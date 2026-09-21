@@ -13,7 +13,7 @@ from jev_bench.providers.korgis import (
 
 class _FakeChatCompletions:
     def create(self, **kwargs):
-        assert kwargs["model"] == "qwen3.5-4b-q4km"
+        assert kwargs["model"] == "nemotron-nano-4b"
         assert kwargs["extra_body"]["enable_thinking"] is False
         assert kwargs["response_format"] == {"type": "json_object"}
         user_payload = json.loads(kwargs["messages"][1]["content"])
@@ -45,12 +45,10 @@ class _FakeClient:
         self.chat = SimpleNamespace(completions=_FakeChatCompletions())
 
 
-def test_default_korgis_matrix_is_quantized_local_comparison_set():
+def test_default_korgis_matrix_contains_only_built_in_registry_models():
     assert DEFAULT_KORGIS_MODELS == [
-        "qwen3.5-4b-q4km",
-        "minicpm3-4b-q4km",
         "nemotron-nano-4b",
-        "qwen3.5-9b-q4km",
+        "qwen3-vl-4b",
     ]
 
 
@@ -58,21 +56,17 @@ def test_managed_order_runs_anchor_last():
     assert managed_korgis_model_order(
         [
             "nemotron-nano-4b",
-            "qwen3.5-4b-q4km",
-            "minicpm3-4b-q4km",
-            "qwen3.5-9b-q4km",
+            "qwen3-vl-4b",
         ],
         "nemotron-nano-4b",
     ) == [
-        "qwen3.5-4b-q4km",
-        "minicpm3-4b-q4km",
-        "qwen3.5-9b-q4km",
+        "qwen3-vl-4b",
         "nemotron-nano-4b",
     ]
 
 
 def test_korgis_provider_parses_bounded_json_and_has_zero_provider_api_cost():
-    provider = KorgisProvider("qwen3.5-4b-q4km")
+    provider = KorgisProvider("nemotron-nano-4b")
     provider.client = _FakeClient()
     question = QuestionSpec(
         id="intent",
@@ -85,7 +79,7 @@ def test_korgis_provider_parses_bounded_json_and_has_zero_provider_api_cost():
 
     assert result.valid is True
     assert result.provider == "local-korgis"
-    assert result.model == "qwen3.5-4b-q4km"
+    assert result.model == "nemotron-nano-4b"
     assert result.answers["intent"].value == "billing"
     assert result.answers["intent"].predicted_probability == 0.75
     assert result.input_tokens == 120
@@ -118,7 +112,7 @@ class _FakeBooleanNoulClient:
 
 
 def test_korgis_provider_accepts_boolean_noul_as_bounded_probability():
-    provider = KorgisProvider("qwen3.5-4b-q4km")
+    provider = KorgisProvider("nemotron-nano-4b")
     provider.client = _FakeBooleanNoulClient()
     question = QuestionSpec(
         id="urgent",
