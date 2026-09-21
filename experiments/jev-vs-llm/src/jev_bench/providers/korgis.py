@@ -14,10 +14,8 @@ from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
 DEFAULT_KORGIS_MODELS = [
-    "qwen3.5-4b-q4km",
-    "minicpm3-4b-q4km",
     "nemotron-nano-4b",
-    "qwen3.5-9b-q4km",
+    "qwen3-vl-4b",
 ]
 
 
