@@ -4,7 +4,7 @@ from collections import Counter
 from statistics import median
 from typing import Iterable
 
-from redact_bench.models import Case, Finding, InferenceResult, Span
+from redact_bench.models import Case, InferenceResult, Span
 
 
 def _predicted_spans(result: InferenceResult) -> list[Span]:
