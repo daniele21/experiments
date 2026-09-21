@@ -23,7 +23,8 @@ The primary scoring unit is the **final RedactGuard span set after deterministic
 
 This v0.1 is pinned to:
 
-- RedactGuard contract source: `daniele21/redact-guard@70ea5ed4fbbd7182010cc04eb756f636791c5947`;
+- frozen RedactGuard detection contract source: `daniele21/redact-guard@70ea5ed4fbbd7182010cc04eb756f636791c5947`;
+- current RedactGuard Korgis integration baseline: `daniele21/redact-guard@b5ac4377b2947ccb954369c3df7cce1e13994df8` (`main`);
 - Korgis recent development baseline: `daniele21/korgis@26a161dc0ef89a133c7a076d3a31544a274c1469` (`dev`);
 - Korgis identity protocol: `local-llm-identity-v1`;
 - inference API: `POST /v1/chat/completions`;
@@ -136,6 +137,6 @@ The next benchmark tier should add an externally labelled generic PII dataset pl
 
 ## Boundary with the RedactGuard product
 
-The current RedactGuard product repository still contains its historical local `llama_cpp_server.py` integration. This experiment intentionally **does not use it**. It validates the target architecture where RedactGuard uses current Korgis as the external local runtime boundary.
+RedactGuard `main` now uses Korgis as the external local runtime boundary and no longer owns an embedded `llama_cpp_server.py`, GGUF downloader, or private model lifecycle. The product integration baseline is `b5ac4377b2947ccb954369c3df7cce1e13994df8`.
 
-A product migration should be done separately after benchmark and integration evidence are accepted.
+The benchmark deliberately keeps the earlier RedactGuard detection-contract SHA frozen because the migration changed runtime plumbing, not the benchmarked prompt/taxonomy/value-to-span semantics. This preserves reproducibility while keeping the product and experiment on the same Korgis architecture.
