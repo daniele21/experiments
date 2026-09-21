@@ -49,3 +49,14 @@ def load_jsonl(path: str | Path) -> list[Case]:
     if len(ids) != len(set(ids)):
         raise ValueError("Dataset contains duplicate case ids")
     return cases
+
+
+
+def load_dataset(path: str | Path) -> list[Case]:
+    """Load either the committed JSONL format or a realistic dataset directory."""
+    dataset_path = Path(path)
+    if dataset_path.is_dir():
+        from redact_bench.realistic_dataset import load_realistic_dataset
+
+        return load_realistic_dataset(dataset_path)
+    return load_jsonl(dataset_path)
