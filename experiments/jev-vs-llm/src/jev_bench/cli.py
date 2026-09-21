@@ -25,6 +25,7 @@ from jev_bench.report import build_report
 from jev_bench.runner import (
     append_results,
     run_all,
+    run_experiment,
     run_monolithic_workflows,
     run_public_classification,
 )
@@ -206,6 +207,45 @@ def _run_korgis_public(
     return frames, identities
 
 
+def _single_provider(provider: str, model: str | None, seed: int):
+    if provider == "jev":
+        return JevProvider()
+    if provider == "llm":
+        return OpenAIProvider(model=model)
+    if provider == "korgis":
+        if not model:
+            raise typer.BadParameter("--model is required for provider=korgis")
+        return KorgisProvider(model=model, seed=seed)
+    raise typer.BadParameter("provider must be jev, llm, korgis, or llm-monolithic")
+
+
+def _single_experiment_name(value: str) -> str:
+    key = value.strip().lower().replace("_", "-")
+    aliases = {
+        "01": "routing",
+        "01-routing": "routing",
+        "routing": "routing",
+        "02": "calibration",
+        "02-calibration": "calibration",
+        "calibration": "calibration",
+        "03": "scaling",
+        "03-parallel-scaling": "scaling",
+        "scaling": "scaling",
+        "04": "workflow",
+        "04-workflow": "workflow",
+        "workflow": "workflow",
+        "05": "agent",
+        "05-hybrid-agent": "agent",
+        "agent": "agent",
+    }
+    resolved = aliases.get(key)
+    if resolved is None:
+        raise typer.BadParameter(
+            "experiment must be routing, calibration, scaling, workflow, or agent"
+        )
+    return resolved
+
+
 @app.command("prepare-data")
 def prepare_data(
     cache_dir: Annotated[Path, typer.Option(help="Local dataset cache directory.")] = DEFAULT_CACHE,
@@ -214,6 +254,143 @@ def prepare_data(
     paths = prepare_public_data(cache_dir)
     for name, path in paths.items():
         typer.echo(f"{name}: {path}")
+
+
+@app.command("experiment")
+def experiment(
+    experiment_name: Annotated[
+        str,
+        typer.Argument(help="routing, calibration, scaling, workflow, or agent"),
+    ],
+    provider: Annotated[
+        str,
+        typer.Option(help="jev, llm, korgis, or llm-monolithic"),
+    ] = "korgis",
+    model: Annotated[
+        str | None,
+        typer.Option(help="Exact GPT model id or Korgis registry key."),
+    ] = None,
+    dataset: Annotated[
+        str,
+        typer.Option(help="smoke or public. Public is supported for routing/calibration."),
+    ] = "smoke",
+    profile: Annotated[
+        str,
+        typer.Option(help="budget, quick, standard, or full when --dataset public."),
+    ] = "budget",
+    scaling_repeats: Annotated[int, typer.Option(min=1)] = 5,
+    seed: Annotated[int, typer.Option()] = 42,
+    output: Annotated[
+        Path, typer.Option()
+    ] = Path("results/raw/experiment_results.csv"),
+    html: Annotated[
+        Path, typer.Option()
+    ] = Path("results/experiment_report.html"),
+    cache_dir: Annotated[Path, typer.Option()] = DEFAULT_CACHE,
+    manage_korgis_model: Annotated[
+        bool,
+        typer.Option(help="Activate the requested Korgis model before the experiment."),
+    ] = True,
+) -> None:
+    """Run one experiment and immediately build a drill-down HTML report."""
+    resolved = _single_experiment_name(experiment_name)
+    dataset = dataset.strip().lower()
+    if dataset not in {"smoke", "public"}:
+        raise typer.BadParameter("dataset must be smoke or public")
+    if profile not in PUBLIC_PROFILES:
+        raise typer.BadParameter("profile must be budget, quick, standard, or full")
+    if dataset == "public" and resolved not in {"routing", "calibration"}:
+        raise typer.BadParameter(
+            "--dataset public is currently supported only for routing and calibration"
+        )
+    if provider == "llm-monolithic" and resolved not in {"workflow", "agent"}:
+        raise typer.BadParameter(
+            "llm-monolithic is supported only for workflow and agent experiments"
+        )
+
+    group = str(uuid.uuid4())
+    korgis_identity: dict = {}
+    requested_openai: list[str] = []
+    requested_korgis: list[str] = []
+
+    if provider == "llm-monolithic":
+        mono_model = model or os.getenv("OPENAI_MODEL")
+        if not mono_model:
+            raise typer.BadParameter("--model or OPENAI_MODEL is required")
+        requested_openai = [mono_model]
+        frame = run_monolithic_workflows(OpenAIMonolithicProvider(model=mono_model))
+        target = "04-workflow" if resolved == "workflow" else "05-hybrid-agent"
+        frame = frame[frame["experiment"].eq(target)].copy()
+    else:
+        if provider == "llm":
+            resolved_model = model or os.getenv("OPENAI_MODEL")
+            if not resolved_model:
+                raise typer.BadParameter("--model or OPENAI_MODEL is required")
+            requested_openai = [resolved_model]
+            decision_provider = _single_provider(provider, resolved_model, seed)
+        elif provider == "korgis":
+            if not model:
+                raise typer.BadParameter("--model is required for provider=korgis")
+            requested_korgis = [model]
+            controller = KorgisController()
+            controller.health()
+            if manage_korgis_model:
+                controller.activate(model)
+            else:
+                ensure_korgis_models_resident(controller, [model])
+            decision_provider = _single_provider(provider, model, seed)
+            korgis_identity[model] = controller.model_identity(model)
+        else:
+            decision_provider = _single_provider(provider, model, seed)
+
+        if dataset == "public":
+            prepare_public_data(cache_dir)
+            sizes = PUBLIC_PROFILES[profile]
+            public = run_public_classification(
+                decision_provider,
+                cache_dir=cache_dir,
+                routing_max_cases=sizes["routing"],
+                calibration_in_scope=sizes["in_scope"],
+                calibration_oos=sizes["oos"],
+                seed=seed,
+            )
+            target = (
+                "01-routing-public"
+                if resolved == "routing"
+                else "02-calibration-public"
+            )
+            frame = public[public["experiment"].eq(target)].copy()
+        else:
+            frame = run_experiment(
+                resolved,
+                decision_provider,
+                scaling_repeats=scaling_repeats,
+            )
+
+    suite = f"{dataset}-{resolved}"
+    frame = _tag_run(frame, group, suite)
+    append_results(frame, output)
+    manifest = _record_manifest(
+        frame,
+        group=group,
+        suite=suite,
+        parameters={
+            "experiment": resolved,
+            "dataset": dataset,
+            "profile": profile if dataset == "public" else None,
+            "seed": seed,
+            "scaling_repeats": scaling_repeats if resolved == "scaling" else None,
+        },
+        requested_openai_models=requested_openai,
+        requested_korgis_models=requested_korgis,
+        korgis_identity=korgis_identity,
+    )
+    build_report(output, html, run_group=group)
+    typer.echo(f"Experiment: {resolved}")
+    typer.echo(f"Provider: {provider}")
+    typer.echo(f"Run group: {group}")
+    typer.echo(f"Manifest: {manifest}")
+    typer.echo(f"Dashboard: {html}")
 
 
 @app.command()

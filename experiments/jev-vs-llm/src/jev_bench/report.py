@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html as html_lib
 import json
 import math
 from pathlib import Path
@@ -28,6 +29,7 @@ def _series_name(provider: str, model: str) -> str:
     if provider == "local-korgis":
         labels = {
             "qwen3.5-4b-q4km": "Korgis · Qwen3.5 4B Q4_K_M",
+            "minicpm3-4b-q4km": "Korgis · MiniCPM3 4B Q4_K_M",
             "qwen3.5-9b-q4km": "Korgis · Qwen3.5 9B Q4_K_M",
             "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M",
         }
@@ -206,11 +208,305 @@ def _plot_block(title: str, description: str, fig, series_names: list[str]) -> s
     )
 
 
+
+def _safe(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "—"
+    return html_lib.escape(str(value))
+
+
+def _fmt_number(value: object, digits: int = 3) -> str:
+    if value is None or pd.isna(value):
+        return "—"
+    return f"{float(value):.{digits}f}"
+
+
+def _experiment_rows(rows: pd.DataFrame, prefix: str) -> pd.DataFrame:
+    public_name = f"{prefix}-public"
+    if rows["experiment"].eq(public_name).any():
+        return rows[rows["experiment"].eq(public_name)].copy()
+    return rows[rows["experiment"].eq(prefix)].copy()
+
+
+def _per_class_table(rows: pd.DataFrame) -> str:
+    subset = rows[
+        rows["primary_metric"].fillna(False)
+        & rows["expected"].notna()
+    ].copy()
+    if subset.empty:
+        return "<p class='empty'>No class-level data in this run.</p>"
+    subset = _with_series(subset)
+    records: list[dict[str, object]] = []
+    for (series, expected), frame in subset.groupby(["series", "expected"], dropna=False):
+        valid = frame[frame["valid"]]
+        wrong = valid[~valid["correct"] & valid["actual"].notna()]
+        top_wrong = (
+            wrong["actual"].astype(str).value_counts().index[0]
+            if not wrong.empty
+            else "—"
+        )
+        records.append(
+            {
+                "model": series,
+                "class": expected,
+                "cases": frame["case_id"].nunique(),
+                "valid_rate": float(frame.groupby("case_id")["valid"].all().mean()),
+                "accuracy": float(valid["correct"].mean()) if len(valid) else math.nan,
+                "top_wrong_prediction": top_wrong,
+            }
+        )
+    table = pd.DataFrame(records).sort_values(["model", "accuracy", "class"])
+    return table.to_html(
+        index=False,
+        classes="data-table granular-table",
+        float_format=lambda value: f"{value:.3f}",
+    )
+
+
+def _cost_breakdown(rows: pd.DataFrame):
+    if "estimated_cost_usd" not in rows.columns:
+        return _empty_chart("API cost by experiment — unavailable")
+    valid = _with_series(rows[rows["valid"]].copy())
+    if valid.empty:
+        return _empty_chart("API cost by experiment — no valid requests")
+    requests = valid.sort_values("case_id").drop_duplicates(
+        ["experiment", "case_id", "provider", "model"]
+    )
+    data = (
+        requests.groupby(["experiment", "series"], as_index=False)
+        .agg(
+            requests=("case_id", "nunique"),
+            total_api_cost_usd=("estimated_cost_usd", "sum"),
+            mean_api_cost_usd=("estimated_cost_usd", "mean"),
+        )
+    )
+    data["cost_per_1k_requests_usd"] = data["mean_api_cost_usd"] * 1000
+    return px.bar(
+        data,
+        x="experiment",
+        y="cost_per_1k_requests_usd",
+        color="series",
+        barmode="group",
+        title="API cost by experiment",
+        labels={
+            "experiment": "experiment",
+            "cost_per_1k_requests_usd": "API USD / 1,000 requests",
+            "series": "model",
+        },
+        hover_data=["requests", "total_api_cost_usd", "mean_api_cost_usd"],
+    )
+
+
+def _case_status(frame: pd.DataFrame) -> tuple[str, str]:
+    valid = bool(frame["valid"].all())
+    primary = frame[frame["primary_metric"].fillna(False)]
+    if not valid:
+        return "Invalid", "bad"
+    if len(primary):
+        if bool(primary["correct"].all()):
+            return "Correct", "good"
+        return "Wrong", "bad"
+    return "Valid", "neutral"
+
+
+def _case_explorer(rows: pd.DataFrame, experiment: str, title: str) -> str:
+    subset = _experiment_rows(rows, experiment)
+    if subset.empty:
+        return (
+            "<section class='table-card'><div class='plot-copy'>"
+            f"<h3>{_safe(title)}</h3><p class='empty'>No case-level data in this run.</p>"
+            "</div></section>"
+        )
+
+    subset = _with_series(subset)
+    cards: list[str] = []
+    grouped = subset.groupby(["series", "case_id"], sort=True, dropna=False)
+    for (series, case_id), frame in grouped:
+        frame = frame.copy()
+        status, status_class = _case_status(frame)
+        first = frame.iloc[0]
+        input_state = first.get("input_state", "")
+        if pd.isna(input_state):
+            input_state = ""
+        primary = frame[frame["primary_metric"].fillna(False)]
+        latency = float(frame["latency_ms"].dropna().iloc[0]) if frame["latency_ms"].notna().any() else math.nan
+        request_cost = (
+            float(frame["estimated_cost_usd"].dropna().iloc[0])
+            if "estimated_cost_usd" in frame and frame["estimated_cost_usd"].notna().any()
+            else math.nan
+        )
+
+        decision_rows: list[str] = []
+        for _, row in frame.sort_values(
+            ["primary_metric", "question_id"],
+            ascending=[True, True],
+        ).iterrows():
+            expected = row.get("expected")
+            actual = row.get("actual")
+            icon = "✓" if bool(row.get("correct")) else "✕"
+            valid_icon = "✓" if bool(row.get("valid")) else "✕"
+            decision_rows.append(
+                "<tr>"
+                f"<td><code>{_safe(row.get('question_id'))}</code></td>"
+                f"<td>{_safe(expected)}</td>"
+                f"<td>{_safe(actual)}</td>"
+                f"<td>{icon}</td>"
+                f"<td>{_fmt_number(row.get('confidence'))}</td>"
+                f"<td>{_fmt_number(row.get('predicted_probability'))}</td>"
+                f"<td>{valid_icon}</td>"
+                f"<td>{_safe(row.get('error'))}</td>"
+                "</tr>"
+            )
+
+        trace_html = ""
+        if "decision_trace" in frame.columns:
+            traces = frame["decision_trace"].dropna().astype(str)
+            if len(traces):
+                trace_text = traces.iloc[-1]
+                try:
+                    trace_obj = json.loads(trace_text)
+                    trace_text = json.dumps(
+                        trace_obj,
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    )
+                except json.JSONDecodeError:
+                    pass
+                trace_html = (
+                    "<div class='trace-block'><h4>Decision trace</h4>"
+                    f"<pre>{_safe(trace_text)}</pre></div>"
+                )
+
+        primary_text = ""
+        if len(primary):
+            p = primary.iloc[-1]
+            primary_text = (
+                f"<span>Final: <strong>{_safe(p.get('actual'))}</strong>"
+                f" / expected {_safe(p.get('expected'))}</span>"
+            )
+
+        search_blob = " ".join(
+            [
+                str(series),
+                str(case_id),
+                str(input_state),
+                " ".join(frame["expected"].dropna().astype(str)),
+                " ".join(frame["actual"].dropna().astype(str)),
+                " ".join(frame["error"].dropna().astype(str))
+                if "error" in frame
+                else "",
+            ]
+        ).lower()
+
+        cards.append(
+            f"<details class='case-card' data-series={json.dumps(str(series))} "
+            f"data-search={json.dumps(search_blob)}>"
+            "<summary>"
+            f"<span class='status-dot {status_class}'></span>"
+            f"<strong>{_safe(case_id)}</strong>"
+            f"<span class='case-model'>{_safe(series)}</span>"
+            f"<span class='status-pill {status_class}'>{status}</span>"
+            f"<span>{_fmt_number(latency, 0)} ms</span>"
+            f"<span>{_money(request_cost)}</span>"
+            f"{primary_text}"
+            "</summary>"
+            f"<div class='case-input'><span>Input</span><p>{_safe(input_state)}</p></div>"
+            "<div class='request-meta'>"
+            f"<span>Latency <strong>{_fmt_number(latency, 0)} ms</strong></span>"
+            f"<span>Input tokens <strong>{_safe(first.get('input_tokens'))}</strong></span>"
+            f"<span>Output tokens <strong>{_safe(first.get('output_tokens'))}</strong></span>"
+            f"<span>API cost <strong>{_money(request_cost)}</strong></span>"
+            f"<span>Difficulty <strong>{_safe(first.get('difficulty'))}</strong></span>"
+            "</div>"
+            "<div class='table-scroll'><table class='decision-table'>"
+            "<thead><tr><th>Decision</th><th>Expected</th><th>Actual</th>"
+            "<th>Correct</th><th>Confidence</th><th>Probability</th>"
+            "<th>Valid</th><th>Error</th></tr></thead>"
+            f"<tbody>{''.join(decision_rows)}</tbody></table></div>"
+            f"{trace_html}"
+            "</details>"
+        )
+
+    return (
+        "<section class='table-card explorer-card'>"
+        f"<div class='plot-copy'><h3>{_safe(title)}</h3>"
+        "<p>Search by case id, input, expected/actual output or error. Expand a case to inspect every decision.</p></div>"
+        "<div class='explorer-tools'>"
+        "<input class='case-search' type='search' placeholder='Search cases, inputs, outputs, errors…' "
+        "aria-label='Search cases'>"
+        f"<span class='case-count'>{len(cards)} cases</span>"
+        "</div>"
+        f"<div class='case-list'>{''.join(cards)}</div>"
+        "</section>"
+    )
+
+
+def _error_explorer(rows: pd.DataFrame, experiment: str) -> str:
+    subset = _experiment_rows(rows, experiment)
+    if subset.empty:
+        return ""
+    subset = _with_series(subset)
+    errors = subset[(~subset["valid"]) | subset["error"].notna()].copy()
+    if errors.empty:
+        return (
+            "<section class='table-card'><div class='plot-copy'>"
+            "<h3>Error explorer</h3><p>No schema/provider errors in this experiment.</p>"
+            "</div></section>"
+        )
+    columns = [
+        "series",
+        "case_id",
+        "question_id",
+        "error",
+        "latency_ms",
+        "input_tokens",
+        "output_tokens",
+    ]
+    available = [column for column in columns if column in errors.columns]
+    return (
+        "<section class='table-card'><div class='plot-copy'>"
+        "<h3>Error explorer</h3>"
+        "<p>Provider, schema and missing-answer failures are kept separate from semantic mistakes.</p>"
+        "</div><div class='table-scroll'>"
+        + errors[available].drop_duplicates().to_html(
+            index=False,
+            classes="data-table granular-table",
+            float_format=lambda value: f"{value:.3f}",
+        )
+        + "</div></section>"
+    )
+
+
+def _scaling_detail_table(rows: pd.DataFrame) -> str:
+    subset = rows[rows["experiment"].eq("03-parallel-scaling")].copy()
+    if subset.empty:
+        return "<p class='empty'>No scaling requests in this run.</p>"
+    subset = _with_series(subset)
+    columns = [
+        "series",
+        "case_id",
+        "question_count",
+        "valid",
+        "latency_ms",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost_usd",
+        "error",
+    ]
+    return subset[[column for column in columns if column in subset.columns]].to_html(
+        index=False,
+        classes="data-table granular-table",
+        float_format=lambda value: f"{value:.4f}",
+    )
+
+
 def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None) -> None:
     all_rows = pd.read_csv(raw_csv)
     rows, selected_group = _select_run_group(all_rows, run_group)
     summary = _with_series(summarize(rows))
     overview = _overview(rows)
+    experiment_cost = _cost_breakdown(rows)
 
     cal = calibration_summary(rows)
     if not cal.empty:
@@ -445,6 +741,12 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             cost_accuracy,
             series_names,
         )
+        + _plot_block(
+            "API cost by experiment",
+            "Breaks estimated provider API cost down by workload instead of hiding it behind one run-level average.",
+            experiment_cost,
+            series_names,
+        )
     )
 
     routing_html = (
@@ -472,6 +774,13 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             confusion_fig,
             series_names,
         )
+        + "<section class='table-card'><div class='plot-copy'><h3>Per-class breakdown</h3>"
+          "<p>Accuracy and valid-output rate for every expected routing class, including the most frequent wrong prediction.</p>"
+          "</div><div class='table-scroll'>"
+        + _per_class_table(_experiment_rows(rows, "01-routing"))
+        + "</div></section>"
+        + _case_explorer(rows, "01-routing", "Routing cases")
+        + _error_explorer(rows, "01-routing")
     )
 
     calibration_html = (
@@ -494,6 +803,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             series_names,
         )
         + f"<section class='table-card'><div class='plot-copy'><h3>Calibration metrics</h3><p>ECE and Brier use selected-class probability; native confidence is kept separate.</p></div>{calibration_table}</section>"
+        + _case_explorer(rows, "02-calibration", "Calibration predictions")
+        + _error_explorer(rows, "02-calibration")
     )
 
     scaling_html = (
@@ -509,6 +820,12 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             scaling_cost_fig,
             series_names,
         )
+        + "<section class='table-card'><div class='plot-copy'><h3>Every scaling request</h3>"
+          "<p>Inspect validity, latency, token usage, estimated cost and the exact error for each 1/2/4/8/16/32-question request.</p>"
+          "</div><div class='table-scroll'>"
+        + _scaling_detail_table(rows)
+        + "</div></section>"
+        + _error_explorer(rows, "03-parallel-scaling")
     )
 
     workflow_html = (
@@ -530,6 +847,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             _summary_cost_chart(workflow, "Deterministic workflow cost"),
             series_names,
         )
+        + _case_explorer(rows, "04-workflow", "Workflow execution traces")
+        + _error_explorer(rows, "04-workflow")
     )
 
     agent_html = (
@@ -551,6 +870,8 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
             _summary_cost_chart(agent, "Hybrid agent decision cost"),
             series_names,
         )
+        + _case_explorer(rows, "05-hybrid-agent", "Agent execution traces")
+        + _error_explorer(rows, "05-hybrid-agent")
     )
 
     pricing_rows = []
@@ -612,7 +933,7 @@ def build_report(raw_csv: Path, output_html: Path, run_group: str | None = None)
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Jev vs GPT benchmark explorer</title>
+<title>Decision model benchmark explorer</title>
 <script src='https://cdn.plot.ly/plotly-3.1.0.min.js'></script>
 <style>
 :root{{--bg:#f5f6f8;--surface:#fff;--surface-2:#fafafa;--text:#111827;--muted:#667085;--line:#e4e7ec;--accent:#101828;--soft:#f2f4f7}}
@@ -638,6 +959,11 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
 .plot-card,.table-card{{margin-bottom:14px;padding:16px}} .plot-copy{{padding:0 4px 8px}} .plot-copy h3{{margin:0 0 4px;font-size:17px}} .plot-copy p{{margin:0;color:var(--muted);font-size:13px;line-height:1.45;max-width:900px}}
 .js-plotly-plot{{width:100%}} table{{width:100%;border-collapse:collapse;font-size:12px}} th,td{{text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}} th{{color:var(--muted);font-weight:650;background:var(--surface-2)}}
 .details-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:8px 0 0}} .details-grid div{{background:var(--surface-2);border-radius:10px;padding:12px}} dt{{font-size:11px;color:var(--muted);margin-bottom:4px}} dd{{margin:0;font-size:13px;font-weight:600}}
+.table-scroll{{overflow:auto;max-width:100%}} .data-table{{min-width:760px}}
+.explorer-tools{{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 4px 12px}} .case-search{{width:min(560px,100%);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:white}} .case-count{{font-size:12px;color:var(--muted);white-space:nowrap}}
+.case-list{{display:grid;gap:8px}} .case-card{{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);overflow:hidden}} .case-card summary{{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;cursor:pointer;list-style:none;font-size:12px}} .case-card summary::-webkit-details-marker{{display:none}} .case-model{{color:var(--muted);margin-right:auto}} .case-card[open] summary{{border-bottom:1px solid var(--line);background:white}}
+.status-dot{{width:8px;height:8px;border-radius:50%;background:#98a2b3}} .status-dot.good{{background:#17b26a}} .status-dot.bad{{background:#f04438}} .status-pill{{padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f2f4f7}} .status-pill.good{{background:#ecfdf3;color:#067647}} .status-pill.bad{{background:#fef3f2;color:#b42318}}
+.case-input{{padding:14px}} .case-input span,.trace-block h4{{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}} .case-input p{{margin:5px 0 0;white-space:pre-wrap;line-height:1.5}} .request-meta{{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}} .request-meta span{{background:white;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;color:var(--muted)}} .request-meta strong{{color:var(--text)}} .decision-table{{min-width:900px;background:white}} .trace-block{{margin:12px 14px 14px}} .trace-block pre{{white-space:pre-wrap;word-break:break-word;background:#101828;color:#f9fafb;border-radius:10px;padding:12px;font-size:11px;overflow:auto}}
 .empty{{color:var(--muted)}} @media(max-width:720px){{.shell{{padding:18px 12px 50px}}.topbar{{display:block}}.run-meta{{text-align:left;margin-top:12px}}h1{{font-size:30px}}.toolbar{{top:0}}.toolbar-row{{align-items:flex-start}}}}
 </style>
 </head>
@@ -646,7 +972,7 @@ h1{{font-size:38px;letter-spacing:-.03em;margin:5px 0 8px}} .lead{{max-width:800
   <header class='topbar'>
     <div>
       <div class='brand-kicker'>Decision benchmark explorer</div>
-      <h1>Jev vs GPT</h1>
+      <h1>Decision model benchmark</h1>
       <p class='lead'>Compare decision quality, latency, calibration and estimated API cost across Jev, the configured GPT matrix and optional Korgis local models. Use the model chips to focus every chart on the systems you want to inspect.</p>
     </div>
     <div class='run-meta'>Run <code>{group_text}</code><br>{suite}<br>{locations}<br>Pricing {pricing['as_of']}</div>
@@ -688,13 +1014,36 @@ function applyModelFilter() {{
     }});
     Plotly.restyle(div, {{visible}});
   }});
-  document.querySelectorAll('.model-card').forEach(card => {{
+  document.querySelectorAll('.model-card,.case-card').forEach(card => {{
     card.style.display = active.has(card.dataset.series) ? '' : 'none';
   }});
+  document.querySelectorAll('table.granular-table tbody tr').forEach(row => {{
+    const series = row.cells.length ? row.cells[0].textContent.trim() : '';
+    row.style.display = series && active.has(series) ? '' : 'none';
+  }});
+  document.querySelectorAll('.case-search').forEach(input => input.dispatchEvent(new Event('input')));
 }}
 chips.forEach(chip => chip.addEventListener('click', () => {{
   chip.classList.toggle('active');
   applyModelFilter();
+}}));
+
+document.querySelectorAll('.case-search').forEach(input => {{
+  input.addEventListener('input', () => {{
+    const query = input.value.trim().toLowerCase();
+    const active = activeSeries();
+    const card = input.closest('.explorer-card');
+    if (!card) return;
+    let visible = 0;
+    card.querySelectorAll('.case-card').forEach(item => {{
+      const seriesVisible = active.has(item.dataset.series);
+      const textVisible = !query || (item.dataset.search || '').includes(query);
+      item.style.display = seriesVisible && textVisible ? '' : 'none';
+      if (seriesVisible && textVisible) visible += 1;
+    }});
+    const count = card.querySelector('.case-count');
+    if (count) count.textContent = visible + ' cases';
+  }});
 }}));
 </script>
 </body>
