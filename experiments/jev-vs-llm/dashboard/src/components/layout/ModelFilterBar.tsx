@@ -74,6 +74,25 @@ export const ModelFilterBar: React.FC<ModelFilterBarProps> = ({
                   {model.dataset === 'public' ? '77' : '24'}
                 </span>
               )}
+              {model.thinking_mode === 'on' && (
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    background: 'rgba(168, 85, 247, 0.15)',
+                    color: '#a855f7',
+                    border: '1px solid rgba(168, 85, 247, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                  }}
+                  title="Reasoning / Thinking traces active"
+                >
+                  🧠 Think
+                </span>
+              )}
               <span
                 className="chip-rt-badge"
                 style={{

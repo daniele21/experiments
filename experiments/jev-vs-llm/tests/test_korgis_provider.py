@@ -31,11 +31,7 @@ class _FakeChatCompletions:
             ]
         }
         return SimpleNamespace(
-            choices=[
-                SimpleNamespace(
-                    message=SimpleNamespace(content=json.dumps(payload))
-                )
-            ],
+            choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))],
             usage=SimpleNamespace(prompt_tokens=120, completion_tokens=30),
         )
 
@@ -87,7 +83,6 @@ def test_korgis_provider_parses_bounded_json_and_has_zero_provider_api_cost():
     assert result.estimated_cost_usd == 0.0
 
 
-
 class _FakeBooleanNoulChatCompletions:
     def create(self, **kwargs):
         payload = {
@@ -126,3 +121,66 @@ def test_korgis_provider_accepts_boolean_noul_as_bounded_probability():
     assert result.answers["urgent"].value == 0.0
     assert result.answers["urgent"].predicted_probability == 1.0
     assert result.answers["urgent"].confidence == 0.7
+
+
+def _thinking_response(content, finish_reason):
+    return SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=content, reasoning_content="Reasoning"),
+                finish_reason=finish_reason,
+            )
+        ],
+        usage=SimpleNamespace(prompt_tokens=1514, completion_tokens=4096),
+    )
+
+
+def test_thinking_limit_preserves_usage_and_raw_response():
+    provider = KorgisProvider("qwen", enable_thinking=True, max_tokens=4096)
+    response = _thinking_response("", "length")
+    provider.client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kwargs: response))
+    )
+    result = provider.evaluate("public input", [])
+    assert result.valid is False
+    assert "generation_limit_reached" in result.error
+    assert "final_content_chars=0" in result.error
+    assert result.output_tokens == 4096
+    assert result.input_tokens == 1514
+    assert result.raw is response
+
+
+def test_empty_final_is_distinct_from_malformed_json():
+    provider = KorgisProvider("qwen", enable_thinking=True)
+    for content, error in [("", "empty_final_content"), ("not JSON", "JSONDecodeError")]:
+        response = _thinking_response(content, "stop")
+        provider.client = SimpleNamespace(
+            chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kwargs: response))
+        )
+        result = provider.evaluate("public input", [])
+        assert error in result.error
+        assert result.raw is response
+        assert result.output_tokens == 4096
+
+
+def test_explicit_sampling_and_budget_reach_thinking_request(monkeypatch):
+    monkeypatch.setenv("KORGIS_MAX_OUTPUT_TOKENS", "512")
+    provider = KorgisProvider(
+        "qwen", enable_thinking=True, max_tokens=8192, sampling={"temperature": 1.0, "top_k": 20}
+    )
+    captured = {}
+
+    def create(**kwargs):
+        captured.update(kwargs)
+        return _thinking_response('{"answers": []}', "stop")
+
+    provider.client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    result = provider.evaluate("public input", [])
+    assert result.valid
+    assert captured["max_tokens"] == 8192
+    assert captured["response_format"] is None
+    assert captured["extra_body"] == dict(
+        enable_thinking=True, show_thinking=False, temperature=1.0, top_k=20
+    )

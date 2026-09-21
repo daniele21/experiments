@@ -4,7 +4,7 @@
     "suite": "public-routing, smoke-routing",
     "runner_location": "milan-local, unspecified",
     "pricing_as_of": "2026-09-20",
-    "total_rows": 659,
+    "total_rows": 736,
     "is_local_zero_cost": false,
     "hardware": {
       "device": "MacBook Pro",
@@ -31,9 +31,9 @@
       "description": "Multi-way intent classification evaluated on client queries. Measures top-1 categorical accuracy, latency, and failure modes.",
       "cli_command": "uv run python scripts/run_local_matrix.py --experiments routing --dataset public",
       "has_data": true,
-      "count": 659,
+      "count": 736,
       "models_count": 8,
-      "badge_text": "659 cases",
+      "badge_text": "736 cases",
       "badge_class": "badge-has-data"
     },
     "calibration": {
@@ -98,7 +98,7 @@
       "latency_p50_ms": 260.7154374709353
     },
     {
-      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
       "series_id": "nemotron-nano-4b-q4__smoke__on",
       "model": "nemotron-nano-4b-q4",
       "provider": "local-korgis",
@@ -162,6 +162,17 @@
       "thinking_mode": "off",
       "accuracy": 0.6233766233766234,
       "latency_p50_ms": 8295.732999918982
+    },
+    {
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series_id": "nemotron-nano-4b-q4__public__on",
+      "model": "nemotron-nano-4b-q4",
+      "provider": "local-korgis",
+      "dataset": "public",
+      "dataset_label": "Banking77 (77)",
+      "thinking_mode": "on",
+      "accuracy": 0.5454545454545454,
+      "latency_p50_ms": 12072.310166957323
     },
     {
       "series": "Korgis · Qwen3.5 2B Q4_K_M",
@@ -264,7 +275,7 @@
     {
       "rank": 2,
       "medal": "🥈",
-      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
       "series_id": "nemotron-nano-4b-q4__smoke__on",
       "model": "nemotron-nano-4b-q4",
       "provider": "local-korgis",
@@ -279,7 +290,7 @@
       "delta_class": "moderate",
       "latency_p50_ms": 6748.481937567703,
       "latency_str": "6748 ms",
-      "speed_str": "1.2x faster",
+      "speed_str": "1.8x faster",
       "speed_class": "faster",
       "vs_leader_speed": "25.9x slower",
       "valid_rate_pct": "100.0%",
@@ -323,7 +334,7 @@
       "delta_class": "moderate",
       "latency_p50_ms": 2613.8810830307193,
       "latency_str": "2614 ms",
-      "speed_str": "3.2x faster",
+      "speed_str": "4.6x faster",
       "speed_class": "faster",
       "vs_leader_speed": "10.0x slower",
       "valid_rate_pct": "100.0%",
@@ -363,7 +374,7 @@
       "delta_class": "far",
       "latency_p50_ms": 1427.0820409292355,
       "latency_str": "1427 ms",
-      "speed_str": "5.8x faster",
+      "speed_str": "8.5x faster",
       "speed_class": "faster",
       "vs_leader_speed": "5.5x slower",
       "valid_rate_pct": "100.0%",
@@ -396,7 +407,7 @@
       "delta_class": "far",
       "latency_p50_ms": 275.4540420137346,
       "latency_str": "275 ms",
-      "speed_str": "30.1x faster",
+      "speed_str": "43.8x faster",
       "speed_class": "faster",
       "vs_leader_speed": "~same speed",
       "valid_rate_pct": "100.0%",
@@ -429,7 +440,7 @@
       "delta_class": "far",
       "latency_p50_ms": 764.4164169905707,
       "latency_str": "764 ms",
-      "speed_str": "10.9x faster",
+      "speed_str": "15.8x faster",
       "speed_class": "faster",
       "vs_leader_speed": "2.9x slower",
       "valid_rate_pct": "100.0%",
@@ -469,8 +480,8 @@
       "delta_class": "far",
       "latency_p50_ms": 8295.732999918982,
       "latency_str": "8296 ms",
-      "speed_str": "Baseline",
-      "speed_class": "baseline",
+      "speed_str": "1.5x faster",
+      "speed_class": "faster",
       "vs_leader_speed": "31.8x slower",
       "valid_rate_pct": "97.4%",
       "valid_count": 75,
@@ -494,6 +505,50 @@
     {
       "rank": 8,
       "medal": "#8",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series_id": "nemotron-nano-4b-q4__public__on",
+      "model": "nemotron-nano-4b-q4",
+      "provider": "local-korgis",
+      "dataset": "public",
+      "dataset_label": "Banking77 (77)",
+      "thinking_mode": "on",
+      "accuracy": 0.5454545454545454,
+      "accuracy_pct": "54.5%",
+      "valid_accuracy": 0.6363636363636364,
+      "valid_accuracy_pct": "63.6%",
+      "delta_str": "-45.5%",
+      "delta_class": "far",
+      "latency_p50_ms": 12072.310166957323,
+      "latency_str": "12072 ms",
+      "speed_str": "Baseline",
+      "speed_class": "baseline",
+      "vs_leader_speed": "46.3x slower",
+      "valid_rate_pct": "85.7%",
+      "valid_count": 66,
+      "total_count": 77,
+      "badges": [
+        {
+          "label": "🧠 Think: ON",
+          "class": "badge-purple"
+        },
+        {
+          "label": "🏛️ Banking77",
+          "class": "badge-indigo"
+        }
+      ],
+      "quant_label": "Q4_K_M",
+      "execution_params": {
+        "ctx_size": 8192,
+        "max_output_tokens": 2048,
+        "temperature": 0.0,
+        "thinking_mode": "on",
+        "backend": "llama_server",
+        "quantization": "Q4_K_M"
+      }
+    },
+    {
+      "rank": 9,
+      "medal": "#9",
       "series": "Korgis · Qwen3.5 2B Q4_K_M",
       "series_id": "qwen3.5-2b-q4km__public__off",
       "model": "qwen3.5-2b-q4km",
@@ -509,7 +564,7 @@
       "delta_class": "far",
       "latency_p50_ms": 2003.6781249800697,
       "latency_str": "2004 ms",
-      "speed_str": "4.1x faster",
+      "speed_str": "6.0x faster",
       "speed_class": "faster",
       "vs_leader_speed": "7.7x slower",
       "valid_rate_pct": "87.0%",
@@ -532,8 +587,8 @@
       }
     },
     {
-      "rank": 9,
-      "medal": "#9",
+      "rank": 10,
+      "medal": "#10",
       "series": "Korgis · Nemotron Nano 4B Q8_0",
       "series_id": "nemotron-nano-4b-q8__public__off",
       "model": "nemotron-nano-4b-q8",
@@ -549,7 +604,7 @@
       "delta_class": "far",
       "latency_p50_ms": 6071.0112089291215,
       "latency_str": "6071 ms",
-      "speed_str": "1.4x faster",
+      "speed_str": "2.0x faster",
       "speed_class": "faster",
       "vs_leader_speed": "23.3x slower",
       "valid_rate_pct": "92.2%",
@@ -572,8 +627,8 @@
       }
     },
     {
-      "rank": 10,
-      "medal": "#10",
+      "rank": 11,
+      "medal": "#11",
       "series": "Korgis · Nemotron Nano 4B Q4_K_M",
       "series_id": "nemotron-nano-4b-q4__public__off",
       "model": "nemotron-nano-4b-q4",
@@ -589,7 +644,7 @@
       "delta_class": "far",
       "latency_p50_ms": 5984.068854013458,
       "latency_str": "5984 ms",
-      "speed_str": "1.4x faster",
+      "speed_str": "2.0x faster",
       "speed_class": "faster",
       "vs_leader_speed": "23.0x slower",
       "valid_rate_pct": "93.5%",
@@ -612,8 +667,8 @@
       }
     },
     {
-      "rank": 11,
-      "medal": "#11",
+      "rank": 12,
+      "medal": "#12",
       "series": "Korgis · Qwen3.5 0.8B Q4_K_M (Smoke)",
       "series_id": "qwen3.5-0.8b-q4km__smoke__off",
       "model": "qwen3.5-0.8b-q4km",
@@ -629,7 +684,7 @@
       "delta_class": "far",
       "latency_p50_ms": 704.274499497842,
       "latency_str": "704 ms",
-      "speed_str": "11.8x faster",
+      "speed_str": "17.1x faster",
       "speed_class": "faster",
       "vs_leader_speed": "2.7x slower",
       "valid_rate_pct": "100.0%",
@@ -652,8 +707,8 @@
       }
     },
     {
-      "rank": 12,
-      "medal": "#12",
+      "rank": 13,
+      "medal": "#13",
       "series": "Korgis · MiniCPM5 2B Q4_K_M",
       "series_id": "minicpm5-2b-q4km__public__off",
       "model": "minicpm5-2b-q4km",
@@ -669,7 +724,7 @@
       "delta_class": "far",
       "latency_p50_ms": 2275.65970888827,
       "latency_str": "2276 ms",
-      "speed_str": "3.6x faster",
+      "speed_str": "5.3x faster",
       "speed_class": "faster",
       "vs_leader_speed": "8.7x slower",
       "valid_rate_pct": "22.1%",
@@ -778,7 +833,7 @@
     "sweet_spot": {
       "rank": 2,
       "medal": "🥈",
-      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
       "series_id": "nemotron-nano-4b-q4__smoke__on",
       "model": "nemotron-nano-4b-q4",
       "provider": "local-korgis",
@@ -793,7 +848,7 @@
       "delta_class": "moderate",
       "latency_p50_ms": 6748.481937567703,
       "latency_str": "6748 ms",
-      "speed_str": "1.2x faster",
+      "speed_str": "1.8x faster",
       "speed_class": "faster",
       "vs_leader_speed": "25.9x slower",
       "valid_rate_pct": "100.0%",
@@ -819,8 +874,8 @@
         "quantization": "Q4_K_M"
       }
     },
-    "total_models": 12,
-    "total_requests": 659
+    "total_models": 13,
+    "total_requests": 736
   },
   "overview": [
     {
@@ -845,7 +900,7 @@
     {
       "provider": "local-korgis",
       "model": "nemotron-nano-4b-q4",
-      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
       "series_id": "nemotron-nano-4b-q4__smoke__on",
       "dataset": "smoke",
       "dataset_label": "Smoke (24)",
@@ -955,6 +1010,25 @@
       "run_cost_usd": 0.0,
       "requests": 77,
       "valid_requests": 75
+    },
+    {
+      "provider": "local-korgis",
+      "model": "nemotron-nano-4b-q4",
+      "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+      "series_id": "nemotron-nano-4b-q4__public__on",
+      "dataset": "public",
+      "dataset_label": "Banking77 (77)",
+      "thinking_mode": "on",
+      "accuracy": 0.5454545454545454,
+      "valid_accuracy": 0.6363636363636364,
+      "valid_rate": 0.8571428571428571,
+      "latency_p50_ms": 12072.310166957323,
+      "latency_p95_ms": 19232.842624973273,
+      "cost_per_request_usd": 0.0,
+      "cost_per_1k_requests_usd": 0.0,
+      "run_cost_usd": 0.0,
+      "requests": 77,
+      "valid_requests": 66
     },
     {
       "provider": "local-korgis",
@@ -1227,18 +1301,18 @@
         "provider": "local-korgis",
         "model": "nemotron-nano-4b-q4",
         "n_requests": 77,
-        "valid_rate": 0.935064935064935,
-        "accuracy": 0.5,
-        "accuracy_ci_low": 0.3874709230948976,
-        "accuracy_ci_high": 0.6125290769051024,
-        "macro_f1": 0.4270833333333333,
+        "valid_rate": 0.8051948051948052,
+        "accuracy": 0.5652173913043478,
+        "accuracy_ci_low": 0.4818507596325363,
+        "accuracy_ci_high": 0.6450514884806497,
+        "macro_f1": 0.49236728184096595,
         "intermediate_accuracy": null,
-        "latency_p50_ms": 5984.068854013458,
-        "latency_p95_ms": 6296.277231245767,
-        "latency_p99_ms": 6542.262857821772,
-        "mean_input_tokens": 1612.5972222222222,
+        "latency_p50_ms": 7800.0166034908025,
+        "latency_p95_ms": 15571.43713530968,
+        "latency_p99_ms": 21679.14562500664,
+        "mean_input_tokens": 1612.5526315789473,
         "mean_cached_input_tokens": 0.0,
-        "mean_output_tokens": 54.583333333333336,
+        "mean_output_tokens": 159.3815789473684,
         "cost_per_request_usd": 0.0,
         "cost_per_1k_requests_usd": 0.0,
         "run_cost_usd": 0.0,
@@ -1730,86 +1804,9 @@
       {
         "provider": "local-korgis",
         "model": "nemotron-nano-4b-q4",
-        "expected": "Refund_not_showing_up",
-        "actual": "request_refund",
-        "count": 1,
-        "pair": "Refund_not_showing_up → request_refund",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "balance_not_updated_after_bank_transfer",
-        "actual": "card_delivery_estimate",
-        "count": 1,
-        "pair": "balance_not_updated_after_bank_transfer → card_delivery_estimate",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "beneficiary_not_allowed",
-        "actual": "pending_cash_withdrawal",
-        "count": 1,
-        "pair": "beneficiary_not_allowed → pending_cash_withdrawal",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "billing",
-        "actual": "sales",
-        "count": 1,
-        "pair": "billing → sales",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "cancellation",
-        "actual": "account",
-        "count": 1,
-        "pair": "cancellation → account",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "cancellation",
-        "actual": "sales",
-        "count": 1,
-        "pair": "cancellation → sales",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
-        "expected": "card_acceptance",
-        "actual": "card_arrival",
-        "count": 1,
-        "pair": "card_acceptance → card_arrival",
-        "dataset_type": "smoke",
-        "thinking_mode": "off",
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
-      },
-      {
-        "provider": "local-korgis",
-        "model": "nemotron-nano-4b-q4",
         "expected": "card_arrival",
         "actual": "card_delivery_estimate",
-        "count": 1,
+        "count": 2,
         "pair": "card_arrival → card_delivery_estimate",
         "dataset_type": "smoke",
         "thinking_mode": "off",
@@ -1820,7 +1817,7 @@
         "model": "nemotron-nano-4b-q4",
         "expected": "card_payment_not_recognised",
         "actual": "extra_charge_on_statement",
-        "count": 1,
+        "count": 2,
         "pair": "card_payment_not_recognised → extra_charge_on_statement",
         "dataset_type": "smoke",
         "thinking_mode": "off",
@@ -1831,7 +1828,7 @@
         "model": "nemotron-nano-4b-q4",
         "expected": "card_payment_wrong_exchange_rate",
         "actual": "extra_charge_on_statement",
-        "count": 1,
+        "count": 2,
         "pair": "card_payment_wrong_exchange_rate → extra_charge_on_statement",
         "dataset_type": "smoke",
         "thinking_mode": "off",
@@ -1840,10 +1837,87 @@
       {
         "provider": "local-korgis",
         "model": "nemotron-nano-4b-q4",
-        "expected": "cash_withdrawal_charge",
+        "expected": "cash_withdrawal_not_recognised",
         "actual": "extra_charge_on_statement",
+        "count": 2,
+        "pair": "cash_withdrawal_not_recognised → extra_charge_on_statement",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "country_support",
+        "actual": "get_physical_card",
+        "count": 2,
+        "pair": "country_support → get_physical_card",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "declined_cash_withdrawal",
+        "actual": "atm_support",
+        "count": 2,
+        "pair": "declined_cash_withdrawal → atm_support",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "direct_debit_payment_not_recognised",
+        "actual": "card_payment_not_recognised",
+        "count": 2,
+        "pair": "direct_debit_payment_not_recognised → card_payment_not_recognised",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "edit_personal_details",
+        "actual": "card_delivery_estimate",
+        "count": 2,
+        "pair": "edit_personal_details → card_delivery_estimate",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "receiving_money",
+        "actual": "fiat_currency_support",
+        "count": 2,
+        "pair": "receiving_money → fiat_currency_support",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "virtual_card_not_working",
+        "actual": "card_payment_not_recognised",
+        "count": 2,
+        "pair": "virtual_card_not_working → card_payment_not_recognised",
+        "dataset_type": "smoke",
+        "thinking_mode": "off",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
+      },
+      {
+        "provider": "local-korgis",
+        "model": "nemotron-nano-4b-q4",
+        "expected": "Refund_not_showing_up",
+        "actual": "request_refund",
         "count": 1,
-        "pair": "cash_withdrawal_charge → extra_charge_on_statement",
+        "pair": "Refund_not_showing_up → request_refund",
         "dataset_type": "smoke",
         "thinking_mode": "off",
         "series": "Korgis · Nemotron Nano 4B Q4_K_M (Smoke)"
@@ -3785,7 +3859,7 @@
         "top_wrong": "account"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "account",
         "cases": 4,
         "valid_rate": 1.0,
@@ -3793,7 +3867,7 @@
         "top_wrong": "—"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "sales",
         "cases": 4,
         "valid_rate": 1.0,
@@ -3801,7 +3875,7 @@
         "top_wrong": "—"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "shipping",
         "cases": 4,
         "valid_rate": 1.0,
@@ -3809,7 +3883,7 @@
         "top_wrong": "—"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "billing",
         "cases": 4,
         "valid_rate": 1.0,
@@ -3817,7 +3891,7 @@
         "top_wrong": "sales"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "cancellation",
         "cases": 4,
         "valid_rate": 1.0,
@@ -3825,12 +3899,540 @@
         "top_wrong": "sales"
       },
       {
-        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking · Smoke)",
         "class": "technical",
         "cases": 4,
         "valid_rate": 1.0,
         "accuracy": 0.75,
         "top_wrong": "account"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "activate_my_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "age_limit",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "atm_support",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "automatic_top_up",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "balance_not_updated_after_cheque_or_cash_deposit",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "cancel_transfer",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_about_to_expire",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_acceptance",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_delivery_estimate",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_linking",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_not_working",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_payment_fee_charged",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_swallowed",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "cash_withdrawal_charge",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "change_pin",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "contactless_not_working",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "declined_card_payment",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "disposable_card_limits",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "exchange_charge",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "exchange_rate",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "failed_transfer",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "fiat_currency_support",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "get_disposable_virtual_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "getting_virtual_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "lost_or_stolen_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "lost_or_stolen_phone",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "passcode_forgotten",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "pending_card_payment",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "pending_top_up",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "pin_blocked",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "request_refund",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "reverted_card_payment?",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "terminate_account",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "top_up_reverted",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "transaction_charged_twice",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "transfer_fee_charged",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "transfer_timing",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "unable_to_verify_identity",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "verify_source_of_funds",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "verify_top_up",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "visa_or_mastercard",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "wrong_amount_of_cash_received",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 1.0,
+        "top_wrong": "—"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "apple_pay_or_google_pay",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "top_up_by_card_charge"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_arrival",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "card_delivery_estimate"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_payment_not_recognised",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "extra_charge_on_statement"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "card_payment_wrong_exchange_rate",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "extra_charge_on_statement"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "cash_withdrawal_not_recognised",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "extra_charge_on_statement"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "compromised_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "card_not_working"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "country_support",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "get_physical_card"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "declined_cash_withdrawal",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "atm_support"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "declined_transfer",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "transfer_not_received_by_recipient"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "direct_debit_payment_not_recognised",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "card_payment_not_recognised"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "edit_personal_details",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "card_delivery_estimate"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "exchange_via_app",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "exchange_rate"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "extra_charge_on_statement",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "transaction_charged_twice"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "get_physical_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "pin_blocked"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "getting_spare_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "supported_cards_and_currencies"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "pending_cash_withdrawal",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "declined_cash_withdrawal"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "receiving_money",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "fiat_currency_support"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "top_up_by_card_charge",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "extra_charge_on_statement"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "top_up_by_cash_or_cheque",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "top_up_by_card_charge"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "topping_up_by_card",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "top_up_failed"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "verify_my_identity",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "why_verify_identity"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "virtual_card_not_working",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "card_payment_not_recognised"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "why_verify_identity",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "unable_to_verify_identity"
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "class": "wrong_exchange_rate_for_cash_withdrawal",
+        "cases": 1,
+        "valid_rate": 1.0,
+        "accuracy": 0.0,
+        "top_wrong": "cash_withdrawal_charge"
       },
       {
         "series": "Korgis · Nemotron Nano 4B Q8_0",
@@ -13450,6 +14052,105 @@
         "latency_ms": 2315.5370419844985,
         "input_tokens": 1630.0,
         "output_tokens": 43.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-top_up_failed-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 13367.313624941744,
+        "input_tokens": 1607.0,
+        "output_tokens": 300.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-beneficiary_not_allowed-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 23946.881624986418,
+        "input_tokens": 1612.0,
+        "output_tokens": 579.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-Refund_not_showing_up-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 10724.371499964036,
+        "input_tokens": 1610.0,
+        "output_tokens": 214.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-top_up_by_bank_transfer_charge-0",
+        "question_id": "__request__",
+        "error": "APITimeoutError: Request timed out.",
+        "latency_ms": 60008.43516702298,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-transfer_not_received_by_recipient-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 11586.183166946284,
+        "input_tokens": 1613.0,
+        "output_tokens": 222.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-top_up_limits-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 11715.212083072402,
+        "input_tokens": 1611.0,
+        "output_tokens": 244.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-supported_cards_and_currencies-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 13791.396916960366,
+        "input_tokens": 1611.0,
+        "output_tokens": 307.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-balance_not_updated_after_bank_transfer-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 11087.934124981984,
+        "input_tokens": 1610.0,
+        "output_tokens": 222.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-order_physical_card-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 14726.623291964645,
+        "input_tokens": 1611.0,
+        "output_tokens": 334.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-pending_transfer-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 9949.562499998136,
+        "input_tokens": 1613.0,
+        "output_tokens": 188.0
+      },
+      {
+        "series": "Korgis · Nemotron Nano 4B Q4_K_M (Thinking)",
+        "case_id": "banking77-transfer_into_account-0",
+        "question_id": "__request__",
+        "error": "intent: value outside allowed choices",
+        "latency_ms": 11446.602375013754,
+        "input_tokens": 1611.0,
+        "output_tokens": 241.0
       }
     ]
   },

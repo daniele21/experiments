@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { RoutingData } from '../../types/benchmark';
 import { Search, ChevronDown, ChevronRight, AlertCircle, DollarSign } from 'lucide-react';
+import { RoutingDatasetInfoCard } from './RoutingDatasetInfoCard';
 
 interface RoutingTabProps {
   data: RoutingData;
@@ -40,6 +41,9 @@ export const RoutingTab: React.FC<RoutingTabProps> = ({ data, selectedSeries }) 
 
   return (
     <div>
+      {/* 0. Dataset and Experiment Context Banner */}
+      <RoutingDatasetInfoCard />
+
       {/* 1. Confusion Pairs */}
       {visibleConfusions.length > 0 && (
         <div className="card">

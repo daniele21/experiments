@@ -34,10 +34,14 @@ public_profile: "budget"
 # Max output tokens for bounded decision queries (prevents runaway generation on small models)
 max_output_tokens: 512
 
-# Reasoning / Thinking mode for models that support it (e.g. nemotron-nano-4b, minicpm5-2b)
+# Reasoning / Thinking mode for models that support it (e.g. nemotron-nano-4b, minicpm5-2b, qwen3.5-9b)
 # If true, models produce reasoning traces before answering. Set to true or pass --thinking via CLI.
 enable_thinking: false
-thinking_max_output_tokens: 2048
+thinking_max_output_tokens: 4096
+
+# Individual query timeout (seconds). In thinking mode, large models (e.g. 9B) generate up to 2048 tokens and need more time.
+benchmark_timeout_seconds: 60
+thinking_timeout_seconds: 360
 
 # Output files
 results_csv: "results/raw/local_results.csv"

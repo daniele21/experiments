@@ -117,17 +117,31 @@ def with_series(frame: pd.DataFrame) -> pd.DataFrame:
         frame["thinking_mode"] = []
         return frame
     frame = frame.copy()
-    if "dataset_type" not in frame.columns:
-        frame["dataset_type"] = [resolve_dataset_type(r) for _, r in frame.iterrows()]
-    if "thinking_mode" not in frame.columns:
-        frame["thinking_mode"] = [resolve_thinking_mode(r) for _, r in frame.iterrows()]
+
+    # Ensure dataset_type and thinking_mode are fully resolved for EVERY row (never NaN or missing)
+    resolved_ds = [
+        str(r["dataset_type"]).strip().lower()
+        if ("dataset_type" in r and pd.notna(r["dataset_type"]) and str(r["dataset_type"]).strip())
+        else resolve_dataset_type(r)
+        for _, r in frame.iterrows()
+    ]
+    resolved_th = [
+        str(r["thinking_mode"]).strip().lower()
+        if ("thinking_mode" in r and pd.notna(r["thinking_mode"]) and str(r["thinking_mode"]).strip())
+        else resolve_thinking_mode(r)
+        for _, r in frame.iterrows()
+    ]
+    frame["dataset_type"] = resolved_ds
+    frame["thinking_mode"] = resolved_th
 
     series_names = []
-    for _, r in frame.iterrows():
+    for idx, r in frame.iterrows():
         base = get_series_name(str(r.get("provider", "")), str(r.get("model", "")))
-        th = str(r.get("thinking_mode", "off"))
-        ds = str(r.get("dataset_type", "smoke"))
-        if th == "on":
+        th = resolved_th[len(series_names)]
+        ds = resolved_ds[len(series_names)]
+        if th == "on" and ds == "smoke":
+            series_names.append(f"{base} (Thinking · Smoke)")
+        elif th == "on":
             series_names.append(f"{base} (Thinking)")
         elif ds == "smoke":
             series_names.append(f"{base} (Smoke)")
@@ -171,8 +185,18 @@ def select_run_group(
     if "run_timestamp_utc" in rows.columns and "model" in rows.columns and "experiment" in rows.columns:
         df_copy = rows.copy()
         df_copy["_task"] = df_copy["experiment"].apply(canonical_task_name)
-        df_copy["_dataset_type"] = [resolve_dataset_type(r) for _, r in df_copy.iterrows()]
-        df_copy["_thinking_mode"] = [resolve_thinking_mode(r) for _, r in df_copy.iterrows()]
+        df_copy["_dataset_type"] = [
+            str(r["dataset_type"]).strip().lower()
+            if ("dataset_type" in r and pd.notna(r["dataset_type"]) and str(r["dataset_type"]).strip())
+            else resolve_dataset_type(r)
+            for _, r in df_copy.iterrows()
+        ]
+        df_copy["_thinking_mode"] = [
+            str(r["thinking_mode"]).strip().lower()
+            if ("thinking_mode" in r and pd.notna(r["thinking_mode"]) and str(r["thinking_mode"]).strip())
+            else resolve_thinking_mode(r)
+            for _, r in df_copy.iterrows()
+        ]
 
         # Filter out aborted runs where 0 requests were valid, IF valid runs exist for that combination
         if "valid" in df_copy.columns:
@@ -183,11 +207,11 @@ def select_run_group(
         else:
             valid_df = df_copy
 
-        df_sorted = valid_df.sort_values(by=["run_timestamp_utc"])
+        df_sorted = valid_df.sort_values(by=["run_timestamp_utc"], na_position="first")
 
         # Select latest run_group per (model, dataset_type, thinking_mode, task)
         latest_pairs = (
-            df_sorted.groupby(["model", "_dataset_type", "_thinking_mode", "_task"])["run_group"]
+            df_sorted.groupby(["model", "_dataset_type", "_thinking_mode", "_task"], dropna=False)["run_group"]
             .last()
             .reset_index()
         )
@@ -216,13 +240,23 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
 
     group_cols = ["provider", "model", "series", "dataset_type", "thinking_mode"]
     for col in ["dataset_type", "thinking_mode"]:
-        if col not in with_s.columns:
+        if col not in with_s.columns or with_s[col].isna().any():
             if col == "dataset_type":
-                with_s["dataset_type"] = [resolve_dataset_type(r) for _, r in with_s.iterrows()]
+                with_s["dataset_type"] = [
+                    resolve_dataset_type(r)
+                    if (col not in r or pd.isna(r[col]) or not str(r[col]).strip())
+                    else str(r[col]).strip().lower()
+                    for _, r in with_s.iterrows()
+                ]
             elif col == "thinking_mode":
-                with_s["thinking_mode"] = [resolve_thinking_mode(r) for _, r in with_s.iterrows()]
+                with_s["thinking_mode"] = [
+                    resolve_thinking_mode(r)
+                    if (col not in r or pd.isna(r[col]) or not str(r[col]).strip())
+                    else str(r[col]).strip().lower()
+                    for _, r in with_s.iterrows()
+                ]
 
-    for (provider, model, series, dataset_type, thinking_mode), group in with_s.groupby(group_cols):
+    for (provider, model, series, dataset_type, thinking_mode), group in with_s.groupby(group_cols, dropna=False):
         reqs = group.sort_values("case_id").drop_duplicates(
             ["experiment", "case_id", "provider", "model"]
         )

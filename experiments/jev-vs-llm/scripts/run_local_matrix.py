@@ -132,6 +132,11 @@ def main() -> int:
         default=None,
         help="Enable/disable reasoning (thinking) traces on supported local models.",
     )
+    parser.add_argument(
+        "--clean", "--fresh",
+        action="store_true",
+        help="Start with a fresh results file (clearing previous runs) instead of appending.",
+    )
 
     args = parser.parse_args()
 
@@ -155,7 +160,9 @@ def main() -> int:
     if args.list:
         print("\nConfigured Local Benchmark Models:")
         for k, v in available_models.items():
-            print(f"  • {k.ljust(22)}: {v.get('model_id')} ({v.get('quantization', 'GGUF')})")
+            tm = v.get("thinking_mode", "none")
+            tm_label = "🧠 switchable" if tm == "switchable" else ("🧠 mandatory" if tm == "always" else "❌ none (instruct direct)")
+            print(f"  • {k.ljust(22)}: {v.get('model_id')} ({v.get('quantization', 'GGUF')}) [thinking: {tm_label}]")
             print(f"    Path: {v.get('path')}")
         return 0
 
@@ -181,6 +188,36 @@ def main() -> int:
     max_tokens = int(cfg.get("max_output_tokens", 512))
     if enable_thinking and max_tokens <= 512:
         max_tokens = int(cfg.get("thinking_max_output_tokens", 2048))
+
+    # Validate thinking mode compatibility upfront before spawning Korgis
+    if enable_thinking:
+        incompatible = [
+            m for m in chosen_models
+            if available_models.get(m, {}).get("thinking_mode") == "none"
+        ]
+        if incompatible:
+            if len(chosen_models) == len(incompatible):
+                print(
+                    f"\n[ERRORE] Il modello '{', '.join(incompatible)}' ha 'thinking_mode: none' in benchmark-models.yaml.\n"
+                    f"         Questo modello non supporta il reasoning/thinking mode poiché è un modello instruct puro.\n"
+                    f"         Modelli locali con supporto al thinking: nemotron-nano-4b-q4, nemotron-nano-4b-q8, minicpm5-2b-q4km.\n\n"
+                    f"Esegui il benchmark omettendo il flag '--thinking':\n"
+                    f"  uv run python scripts/run_local_matrix.py \\\n"
+                    f"    --models {','.join(incompatible)} \\\n"
+                    f"    --experiments {args.experiments or 'routing'} \\\n"
+                    f"    --dataset {dataset} \\\n"
+                    f"    --profile {profile}\n",
+                    file=sys.stderr,
+                )
+                return 1
+            else:
+                print(
+                    f"[AVVISO] I seguenti modelli con 'thinking_mode: none' sono stati ignorati nel run con thinking: {', '.join(incompatible)}"
+                )
+                chosen_models = [m for m in chosen_models if m not in incompatible]
+                if not chosen_models:
+                    print("Error: Nessun modello compatibile con il thinking mode da eseguire.", file=sys.stderr)
+                    return 1
 
     if enable_thinking:
         os.environ["LLAMA_ARG_REASONING"] = "on"
@@ -209,7 +246,9 @@ def main() -> int:
         experiments = list(cfg.get("default_experiments", ["routing"]))
     base_url = cfg.get("korgis_base_url", "http://127.0.0.1:1235/v1")
     korgis_dir = cfg.get("korgis_dir", str(PROJECT_ROOT.parent.parent / "korgis"))
-    max_tokens = int(cfg.get("max_output_tokens", 512))
+
+    timeout_sec = int(cfg.get("thinking_timeout_seconds", 240) if enable_thinking else cfg.get("benchmark_timeout_seconds", 60))
+    os.environ["BENCHMARK_TIMEOUT_SECONDS"] = str(timeout_sec)
 
     print("\n" + "=" * 65)
     print("      AUTONOMOUS LOCAL MODEL BENCHMARK ORCHESTRATOR")
@@ -219,6 +258,7 @@ def main() -> int:
     print(f"Dataset tier        : {dataset} (profile: {profile})")
     print(f"Korgis Base URL     : {base_url}")
     print(f"Thinking Mode       : {'ON (Reasoning traces enabled)' if enable_thinking else 'OFF (Direct JSON)'}")
+    print(f"Query Timeout       : {timeout_sec}s")
     print(f"Max Output Tokens   : {max_tokens}")
     print("=" * 65 + "\n")
 
@@ -242,9 +282,14 @@ def main() -> int:
         else:
             print("[INFO] All requested models are cloud/API providers (e.g. Jev); skipping local Korgis server.")
 
+        output_csv_path = PROJECT_ROOT / cfg.get("results_csv", "results/raw/local_results.csv")
+        if args.clean and output_csv_path.exists():
+            print(f"[INFO] --clean flag passed: removing previous results at {output_csv_path}")
+            output_csv_path.unlink()
+
         orchestrator = ExperimentOrchestrator(
             korgis_manager=korgis,
-            output_csv=PROJECT_ROOT / cfg.get("results_csv", "results/raw/local_results.csv"),
+            output_csv=output_csv_path,
             report_html=PROJECT_ROOT / cfg.get("report_html", "results/local_report.html"),
             max_output_tokens=max_tokens,
             enable_thinking=enable_thinking,

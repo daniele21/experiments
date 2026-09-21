@@ -133,13 +133,28 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
       : '';
 
   // ── Clean short label helper ─────────────────────────────────────
-  const shortLabel = (series: string): string =>
-    series
+  const shortLabel = (row: OverviewRow): string => {
+    let base = row.series
       .replace('Korgis · ', '')
       .replace(' Q4_K_M', '')
       .replace(' Q8_0', ' Q8')
+      .replace(' (Thinking)', '')
+      .replace(' (Thinking · Smoke)', '')
+      .replace(' (Smoke)', '')
       .replace('Jev · ', 'Jev ')
       .replace('nemotron-nano-', 'n-');
+
+    const isThinking = row.thinking_mode === 'on' || row.series.toLowerCase().includes('thinking');
+    const isSmoke = row.dataset === 'smoke' || row.series.toLowerCase().includes('smoke');
+    if (isThinking && isSmoke) {
+      base += ' 🧠 [Think·Smoke]';
+    } else if (isThinking) {
+      base += ' 🧠 [Think]';
+    } else if (isSmoke) {
+      base += ' [Smoke]';
+    }
+    return base;
+  };
 
   return (
     <div className="card frontier-flagship-card">
@@ -154,8 +169,8 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h3 className="card-title" style={{ margin: 0 }}>Cost vs Accuracy Frontier</h3>
                 <span className="frontier-badge-pulse cost-pulse">
-                  <DollarSign size={11} style={{ marginRight: '3px' }} />
-                  Primary Economic Pareto Framework
+                  <DollarSign size={11} style={{ marginRight: '2px' }} />
+                  Strategic TCO Matrix
                 </span>
               </div>
               <p className="card-subtitle" style={{ margin: '4px 0 0 0' }}>
@@ -172,6 +187,24 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
             <div className="legend-indicator-item">
               <span className="legend-dash-line" style={{ background: 'linear-gradient(90deg, #4f46e5, #06b6d4)' }} />
               <span>Cloud API Pareto Curve</span>
+            </div>
+            <div className="legend-indicator-item">
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  border: '1.5px dashed #a855f7',
+                  background: 'rgba(168, 85, 247, 0.12)',
+                  fontSize: '9px',
+                }}
+              >
+                🧠
+              </span>
+              <span style={{ color: '#7c3aed' }}>Reasoning (Thinking ON)</span>
             </div>
           </div>
         </div>
@@ -368,6 +401,7 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
             const layoutInfo = freeLabelYMap.get(row.series) || { actualY: actualCy, layoutY: actualCy };
             const labelY = layoutInfo.layoutY;
             const isHovered = hovered?.row.series === row.series;
+            const isThinking = row.thinking_mode === 'on' || row.series.toLowerCase().includes('thinking');
             const size = isHovered ? 8 : 6;
             const labelX = marginLeft + 38;
 
@@ -380,14 +414,29 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
               >
                 {/* Glow ring on hover */}
                 {isHovered && (
-                  <circle cx={markerX} cy={actualCy} r={16} fill={color} opacity={0.16} />
+                  <circle cx={markerX} cy={actualCy} r={18} fill={isThinking ? '#a855f7' : color} opacity={0.18} />
+                )}
+
+                {/* Thinking Mode Diamond Halo */}
+                {isThinking && (
+                  <rect
+                    x={markerX - (size + 4)}
+                    y={actualCy - (size + 4)}
+                    width={(size + 4) * 2}
+                    height={(size + 4) * 2}
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth={1.5}
+                    strokeDasharray="3 2"
+                    transform={`rotate(45, ${markerX}, ${actualCy})`}
+                  />
                 )}
 
                 {/* Connector line if label was offset vertically to avoid collision */}
                 {Math.abs(labelY - actualCy) > 3 && (
                   <path
                     d={`M ${markerX + 7} ${actualCy} L ${labelX - 4} ${labelY}`}
-                    stroke={color}
+                    stroke={isThinking ? '#a855f7' : color}
                     strokeWidth={1}
                     strokeDasharray="2 2"
                     opacity={0.65}
@@ -401,11 +450,15 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
                   width={size * 2}
                   height={size * 2}
                   fill={color}
-                  stroke="#ffffff"
+                  stroke={isThinking ? '#7c3aed' : '#ffffff'}
                   strokeWidth={2.5}
                   transform={`rotate(45, ${markerX}, ${actualCy})`}
                   style={{
-                    filter: isHovered ? `drop-shadow(0 0 10px ${color})` : 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
+                    filter: isHovered
+                      ? `drop-shadow(0 0 10px ${color})`
+                      : isThinking
+                      ? 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))'
+                      : 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
                     transition: 'all 0.15s ease',
                   }}
                 />
@@ -416,13 +469,17 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
                   y={labelY + 4}
                   style={{
                     fontSize: isHovered ? '11px' : '10.5px',
-                    fontWeight: isHovered ? 800 : 600,
-                    fill: isHovered ? 'var(--text)' : 'var(--text-muted)',
+                    fontWeight: isHovered ? 800 : isThinking ? 700 : 600,
+                    fill: isHovered
+                      ? 'var(--text)'
+                      : isThinking
+                      ? '#6d28d9'
+                      : 'var(--text-muted)',
                     pointerEvents: 'none',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {shortLabel(row.series)} ({formatPct(row.accuracy)})
+                  {shortLabel(row)} ({formatPct(row.accuracy)})
                 </text>
               </g>
             );
@@ -435,6 +492,7 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
             const cx = getCostX(row.cost_per_1k_requests_usd);
             const cy = getAccY(row.accuracy);
             const isHovered = hovered?.row.series === row.series;
+            const isThinking = row.thinking_mode === 'on' || row.series.toLowerCase().includes('thinking');
 
             return (
               <g
@@ -445,7 +503,20 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
               >
                 {/* Glow ring on hover */}
                 {isHovered && (
-                  <circle cx={cx} cy={cy} r={18} fill={color} opacity={0.16} />
+                  <circle cx={cx} cy={cy} r={18} fill={isThinking ? '#a855f7' : color} opacity={0.16} />
+                )}
+
+                {/* Thinking Mode Outer Dashed Concentric Ring */}
+                {isThinking && (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isHovered ? 13 : 10.5}
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    strokeDasharray="3 2"
+                  />
                 )}
 
                 <circle
@@ -453,10 +524,14 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
                   cy={cy}
                   r={isHovered ? 8.5 : 6.5}
                   fill={color}
-                  stroke="#ffffff"
+                  stroke={isThinking ? '#7c3aed' : '#ffffff'}
                   strokeWidth={2.5}
                   style={{
-                    filter: isHovered ? `drop-shadow(0 0 10px ${color})` : 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
+                    filter: isHovered
+                      ? `drop-shadow(0 0 10px ${color})`
+                      : isThinking
+                      ? 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.4))'
+                      : 'drop-shadow(0 1px 3px rgba(0,0,0,0.25))',
                     transition: 'r 0.15s ease, filter 0.15s ease',
                   }}
                 />
@@ -468,13 +543,17 @@ export const CostAccuracyChart: React.FC<CostAccuracyChartProps> = ({
                   textAnchor="middle"
                   style={{
                     fontSize: isHovered ? '12px' : '11px',
-                    fontWeight: isHovered ? 800 : 650,
-                    fill: isHovered ? 'var(--text)' : 'var(--text-muted)',
+                    fontWeight: isHovered ? 800 : isThinking ? 700 : 650,
+                    fill: isHovered
+                      ? 'var(--text)'
+                      : isThinking
+                      ? '#6d28d9'
+                      : 'var(--text-muted)',
                     pointerEvents: 'none',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {shortLabel(row.series)} ({formatPct(row.accuracy)})
+                  {shortLabel(row)} ({formatPct(row.accuracy)})
                 </text>
               </g>
             );

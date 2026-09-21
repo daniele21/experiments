@@ -90,6 +90,12 @@ Local provider API fee is recorded as zero. That **does not mean local inference
 
 See [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for the local-runtime details.
 
+To compare Qwen thinking sampling, extended output and a native reasoning budget
+on the same three public routing cases, run
+`uv run python scripts/compare_thinking.py --cases 3`. See the
+[thinking comparison protocol](LOCAL_MODELS.md#compare-qwen-thinking-policies-on-public-routing-cases)
+for parameters, dedicated runtime ports and diagnostic artifacts.
+
 > [!TIP]
 > To evaluate local models autonomously one at a time with live progress bars:
 > ```bash
@@ -1375,4 +1381,3 @@ uv run jev-bench report \
 - [`DATASETS.md`](DATASETS.md) — public dataset provenance and profiles.
 - [`LOCAL_MODELS.md`](LOCAL_MODELS.md) — Korgis/local-model setup and runtime semantics.
 - [`experiments/`](experiments/) — protocol and interpretation notes for experiments 01–05.
-

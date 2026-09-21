@@ -148,11 +148,44 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
           <div className="frontier-header-legend">
             <div className="legend-indicator-item">
               <span className="legend-dash-line" />
-              <span>Pareto Dominance Curve</span>
+              <span>Pareto Frontier</span>
             </div>
             <div className="legend-indicator-item">
               <span className="legend-zone-swatch" />
-              <span>Optimal Zone (Sub-3s &amp; &gt;70% Acc)</span>
+              <span>Optimal Zone (&lt;3s &amp; &gt;70%)</span>
+            </div>
+            <div className="legend-indicator-item">
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '9px',
+                  height: '9px',
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  border: '1.5px solid #fff',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.3)',
+                }}
+              />
+              <span>Direct Inference</span>
+            </div>
+            <div className="legend-indicator-item">
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '15px',
+                  height: '15px',
+                  borderRadius: '50%',
+                  border: '1.5px dashed #a855f7',
+                  background: 'rgba(168, 85, 247, 0.12)',
+                  fontSize: '9px',
+                  lineHeight: 1,
+                }}
+              >
+                🧠
+              </span>
+              <span style={{ color: '#7c3aed' }}>Reasoning (Thinking ON)</span>
             </div>
           </div>
         </div>
@@ -311,15 +344,29 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
             const cy = getY(entry.accuracy);
             const entryId = entry.series_id || entry.series;
             const isHovered = (hoveredEntry?.entry.series_id || hoveredEntry?.entry.series) === entryId;
+            const isThinking = entry.thinking_mode === 'on' || entry.series.toLowerCase().includes('thinking');
+            const isSmoke = entry.dataset === 'smoke' || entry.series.toLowerCase().includes('smoke');
+
             const { offsetY, offsetX, textAnchor } = labelOffsets[idx] || {
               offsetY: -14,
               offsetX: 0,
               textAnchor: 'middle',
             };
 
-            const modelCleanName = entry.model
+            const cleanName = entry.model
               .replace('-q4km', '')
               .replace('nemotron-', 'n-');
+
+            let labelSuffix = '';
+            if (isThinking && isSmoke) {
+              labelSuffix = ' 🧠 [Think·Smoke]';
+            } else if (isThinking) {
+              labelSuffix = ' 🧠 [Think]';
+            } else if (isSmoke) {
+              labelSuffix = ' [Smoke]';
+            }
+
+            const modelLabel = `${cleanName}${labelSuffix} (${entry.accuracy_pct})`;
 
             return (
               <g
@@ -333,9 +380,26 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={20}
-                    fill={color}
-                    opacity={0.18}
+                    r={24}
+                    fill={isThinking ? '#a855f7' : color}
+                    opacity={0.2}
+                  />
+                )}
+
+                {/* Thinking Mode Outer Dashed Concentric Ring */}
+                {isThinking && (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isHovered ? 13 : 10.5}
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    strokeDasharray="3 2"
+                    style={{
+                      filter: 'drop-shadow(0 0 5px rgba(168, 85, 247, 0.6))',
+                      transition: 'all 0.15s ease',
+                    }}
                   />
                 )}
 
@@ -345,10 +409,14 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
                   cy={cy}
                   r={isHovered ? 9 : 6.5}
                   fill={color}
-                  stroke="#ffffff"
-                  strokeWidth={2.5}
+                  stroke={isThinking ? '#7c3aed' : '#ffffff'}
+                  strokeWidth={isThinking ? 2 : 2.5}
                   style={{
-                    filter: isHovered ? `drop-shadow(0 0 10px ${color})` : 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))',
+                    filter: isHovered
+                      ? `drop-shadow(0 0 10px ${color})`
+                      : isThinking
+                      ? 'drop-shadow(0 2px 6px rgba(168, 85, 247, 0.4))'
+                      : 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))',
                     transition: 'r 0.15s ease, filter 0.15s ease',
                   }}
                 />
@@ -360,13 +428,17 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
                   textAnchor={textAnchor}
                   style={{
                     fontSize: isHovered ? '12px' : '11px',
-                    fontWeight: isHovered ? 800 : 600,
-                    fill: isHovered ? 'var(--text)' : 'var(--text-muted)',
+                    fontWeight: isHovered ? 800 : isThinking ? 700 : 600,
+                    fill: isHovered
+                      ? 'var(--text)'
+                      : isThinking
+                      ? '#6d28d9'
+                      : 'var(--text-muted)',
                     pointerEvents: 'none',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {modelCleanName} ({entry.accuracy_pct})
+                  {modelLabel}
                 </text>
               </g>
             );
@@ -389,6 +461,26 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
               <span>{hoveredEntry.entry.medal}</span>
               <span>{hoveredEntry.entry.series}</span>
             </div>
+            {hoveredEntry.entry.thinking_mode === 'on' && (
+              <div style={{ marginBottom: '6px' }}>
+                <span
+                  style={{
+                    background: 'rgba(168, 85, 247, 0.25)',
+                    color: '#d8b4fe',
+                    border: '1px solid rgba(168, 85, 247, 0.5)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  🧠 REASONING (THINKING ACTIVE)
+                </span>
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '11px', marginTop: '6px' }}>
               <div>
                 <span style={{ color: '#94a3b8' }}>Accuracy: </span>

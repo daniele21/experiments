@@ -456,7 +456,47 @@ stop_korgis_on_complete: true
 
 Models with built-in reasoning templates emit `<think>...</think>` tags before the JSON answer. When thinking is enabled:
 - The orchestrator supports passing `--thinking` via the CLI or setting `enable_thinking: true` in `experiments_config.yaml`.
-- The token limit is automatically adjusted to 2048 tokens (`thinking_max_output_tokens: 2048`) to ensure the model has sufficient space for reasoning without truncating the final JSON object.
+- When the normal limit is at most 512 tokens, the orchestrator uses `thinking_max_output_tokens` (currently 4096 in the checked-in configuration). This is the combined reasoning and final-answer budget; it does not guarantee space for the final JSON.
 - The response parser automatically strips `<think>...</think>` traces to validate and parse the pure JSON decision object.
+- The provider reports `generation_limit_reached` for `finish_reason=length` and `empty_final_content` for an empty final response. It retains the original response and token usage in `ProviderResult` even when parsing fails. A completion stopped by the length limit is invalid even if its partial content happens to parse.
+
+### Compare Qwen thinking policies on public routing cases
+
+```bash
+uv run python scripts/compare_thinking.py --cases 3
+
+# Repeat a single variant, or increase to all 77 budget-profile cases:
+uv run python scripts/compare_thinking.py --variants bounded --cases 77
+```
+
+This diagnostic runner uses the same seed-42 Banking77 cases and prompts for each
+variant, including the original `banking77-top_up_failed-0` case. Three cases are
+a diagnostic sample, not an accuracy estimate. All variants keep thinking enabled
+and use Qwen's general-thinking sampling: temperature 1.0, top-p 0.95, top-k 20,
+min-p 0, presence penalty 1.5, repeat penalty 1.0.
+
+| Variant | Total output tokens | Context | Timeout | Reasoning budget |
+| --- | ---: | ---: | ---: | ---: |
+| `sampling` | 4096 | 8192 | 360 s | Unrestricted |
+| `extended` | 8192 | 16384 | 600 s | Unrestricted |
+| `bounded` | 4096 | 8192 | 360 s | 3000 |
+
+The bounded policy uses the installed llama-server's native
+`LLAMA_ARG_THINK_BUDGET` setting, checked via `--help` before execution. This is a
+server-wide budget on a dedicated runtime, not a per-request Korgis parameter.
+Budget exhaustion lets the backend close thinking and continue the answer; it is
+not a stop sequence on `</think>`. Runtime evidence must confirm the model/backend
+combination actually honors this setting.
+
+The runner starts a fresh Korgis process group per variant on dedicated ports
+1236/8092 (overridable), refuses occupied ports, and discovers the actual private
+backend port if Korgis moves it after a previous connection. It cleans up only its
+own process group and proven descendant worker sessions, then verifies listener
+closure. It uses the existing benchmark registry without editing it. Results go to
+`results/thinking/<UTC timestamp>/`: incremental `results.jsonl`, `summary.json`,
+the case/config manifest, backend properties, runtime identity, server logs and
+raw public-dataset responses. These diagnostic responses can contain reasoning.
+They are separate from the main CSV, dashboard and benchmark reports. A timeout
+or transport failure is recorded without inventing token counts.
 
 By default, without `--thinking`, the runner sets `LLAMA_ARG_REASONING=off` to disable thinking traces for maximum speed and deterministic JSON outputs.

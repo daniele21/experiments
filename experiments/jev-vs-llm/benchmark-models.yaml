@@ -13,7 +13,7 @@ models:
     model_id: "unsloth/qwen3.5-0.8b"
     quantization: "Q4_K_M"
     backend: llama_server
-    thinking_mode: none
+    thinking_mode: switchable
     params:
       ctx_size: 8192
       startup_timeout: 300
@@ -28,7 +28,7 @@ models:
     model_id: "unsloth/qwen3.5-2b"
     quantization: "Q4_K_M"
     backend: llama_server
-    thinking_mode: none
+    thinking_mode: switchable
     params:
       ctx_size: 8192
       startup_timeout: 300
@@ -89,7 +89,7 @@ models:
     model_id: "qwen/qwen3.5-9b"
     quantization: "Q4_K_M"
     backend: llama_server
-    thinking_mode: none
+    thinking_mode: switchable
     params:
       ctx_size: 8192
       startup_timeout: 300

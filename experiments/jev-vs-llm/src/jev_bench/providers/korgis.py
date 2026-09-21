@@ -102,17 +102,34 @@ class KorgisProvider(DecisionProvider):
         *,
         seed: int = 42,
         enable_thinking: bool | None = None,
+        max_tokens: int | None = None,
+        timeout: float | None = None,
+        sampling: dict[str, float | int] | None = None,
     ) -> None:
         self.model = model
         self.base_url = (
             base_url or os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1")
         ).rstrip("/")
-        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
-        self.seed = seed
         env_thinking = os.getenv("KORGIS_ENABLE_THINKING", "false").lower() in {"true", "1", "yes"}
         self.enable_thinking = enable_thinking if enable_thinking is not None else env_thinking
+        default_timeout = "240" if self.enable_thinking else "60"
+        timeout = (
+            timeout if timeout is not None
+            else float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", default_timeout))
+        )
+        self.seed = seed
         default_tokens = "2048" if self.enable_thinking else "512"
-        self.max_tokens = int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", default_tokens))
+        self.max_tokens = (
+            max_tokens if max_tokens is not None
+            else int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", default_tokens))
+        )
+        self.sampling = dict(sampling or {})
+        supported = {
+            "temperature", "top_p", "top_k", "min_p", "repeat_penalty",
+            "presence_penalty", "frequency_penalty",
+        }
+        if unknown := self.sampling.keys() - supported:
+            raise ValueError(f"Unsupported sampling parameters: {sorted(unknown)}")
         self.client = OpenAI(
             base_url=self.base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
@@ -151,6 +168,9 @@ class KorgisProvider(DecisionProvider):
 
     def evaluate(self, state: Any, questions: Sequence[QuestionSpec]) -> ProviderResult:
         started = time.perf_counter()
+        response = None
+        usage = None
+        finish_reason = None
         try:
             prompt = {
                 "task": (
@@ -199,15 +219,26 @@ class KorgisProvider(DecisionProvider):
                 extra_body={
                     "enable_thinking": self.enable_thinking,
                     "show_thinking": False,
+                    **self.sampling,
                 },
             )
             latency_ms = (time.perf_counter() - started) * 1000
+            usage = getattr(response, "usage", None)
+            finish_reason = getattr(response.choices[0], "finish_reason", None)
             content = response.choices[0].message.content or ""
             # Strip reasoning tags if present in output before JSON parsing
             clean_content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
             if clean_content.startswith("```"):
                 clean_content = re.sub(r"^```(?:json)?\s*", "", clean_content)
                 clean_content = re.sub(r"\s*```$", "", clean_content).strip()
+            if finish_reason == "length":
+                raise ValueError(
+                    "generation_limit_reached: "
+                    f"completion_tokens={getattr(usage, 'completion_tokens', None)}, "
+                    f"max_tokens={self.max_tokens}, final_content_chars={len(clean_content)}"
+                )
+            if not clean_content:
+                raise ValueError(f"empty_final_content: finish_reason={finish_reason!r}")
             try:
                 data = json.loads(clean_content)
             except json.JSONDecodeError:
@@ -280,9 +311,12 @@ class KorgisProvider(DecisionProvider):
                 model=self.model,
                 answers={},
                 latency_ms=(time.perf_counter() - started) * 1000,
+                input_tokens=getattr(usage, "prompt_tokens", None),
+                output_tokens=getattr(usage, "completion_tokens", None),
                 estimated_cost_usd=0.0,
                 valid=False,
                 error=f"{type(exc).__name__}: {exc}",
+                raw=response,
             )
 
 

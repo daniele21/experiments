@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ExperimentStatus } from '../../types/benchmark';
 import { Terminal, Copy, Check, Info } from 'lucide-react';
+import { RoutingDatasetInfoCard } from '../routing/RoutingDatasetInfoCard';
 
 interface UnrunExperimentViewProps {
   status: ExperimentStatus;
@@ -18,11 +19,14 @@ export const UnrunExperimentView: React.FC<UnrunExperimentViewProps> = ({ status
   };
 
   return (
-    <div className="empty-state-card">
-      <div className="empty-state-icon">
-        <Info size={24} />
-      </div>
-      <h2 className="empty-state-title">{status.full_title}</h2>
+    <div>
+      {status.id === 'routing' && <RoutingDatasetInfoCard />}
+
+      <div className="empty-state-card" style={{ marginTop: status.id === 'routing' ? '16px' : 0 }}>
+        <div className="empty-state-icon">
+          <Info size={24} />
+        </div>
+        <h2 className="empty-state-title">{status.full_title}</h2>
       <p className="empty-state-desc">
         {status.description}
       </p>
@@ -66,5 +70,7 @@ export const UnrunExperimentView: React.FC<UnrunExperimentViewProps> = ({ status
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
+
