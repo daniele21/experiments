@@ -132,18 +132,109 @@ See [`DATASETS.md`](DATASETS.md) for provenance and licensing.
 
 ---
 
-## 3. Setup
+## 3. Environment setup
 
-From the repository root:
+The benchmark and Korgis are two separate Python projects. Set up both before running local-model comparisons.
 
-```bash
-cd experiments/jev-vs-llm
+A convenient directory layout is:
 
-cp .env.example .env
-uv sync --extra dev
+```text
+~/dev/
+├── experiments/
+└── korgis/
 ```
 
-### Cloud providers
+### 3.1 Clone and prepare the benchmark
+
+```bash
+mkdir -p ~/dev
+cd ~/dev
+
+git clone https://github.com/daniele21/experiments.git
+cd experiments/experiments/jev-vs-llm
+
+python3 -m pip install "uv==0.8.13"
+uv sync --extra dev
+
+cp .env.example .env
+```
+
+All benchmark commands below should be run from:
+
+```text
+experiments/experiments/jev-vs-llm
+```
+
+Verify the CLI:
+
+```bash
+uv run jev-bench --help
+```
+
+### 3.2 Clone and prepare Korgis
+
+In a second checkout:
+
+```bash
+cd ~/dev
+
+git clone https://github.com/daniele21/korgis.git
+cd korgis
+
+python3 -m pip install "uv==0.8.13"
+uv sync --frozen --extra dev
+```
+
+Verify Korgis:
+
+```bash
+uv run --frozen local-llm models
+uv run --frozen local-llm --help
+```
+
+If `local-llm` is installed globally you can omit `uv run --frozen`. The documentation uses the explicit `uv run --frozen local-llm ...` form because it guarantees that the command comes from the checked-out Korgis environment.
+
+### 3.3 Install the `llama-server` backend
+
+The benchmark GGUF entries use Korgis' managed `llama_server` backend. Korgis therefore needs access to a compatible `llama-server` executable.
+
+On macOS or Linux with Homebrew:
+
+```bash
+brew install llama.cpp
+command -v llama-server
+llama-server --version
+```
+
+If the binary is on `PATH`, Korgis can resolve it normally. You can also make the path explicit:
+
+```bash
+export LOCAL_LLM_SERVER_BIN="$(command -v llama-server)"
+```
+
+or pass it at startup:
+
+```bash
+uv run --frozen local-llm serve \
+  --model <MODEL_KEY> \
+  --llama-server-bin "$(command -v llama-server)" \
+  --enable-admin-api \
+  --no-download
+```
+
+On other platforms, install a current `llama.cpp` build using the official install instructions or prebuilt binaries, then point `LOCAL_LLM_SERVER_BIN` / `--llama-server-bin` at the executable.
+
+The important distinction is:
+
+```text
+Korgis package        → control plane / lifecycle / API
+llama-server binary   → GGUF inference runtime
+GGUF file             → model weights
+```
+
+All three must be available for the managed `llama_server` path.
+
+### 3.4 Cloud-provider environment
 
 Set only the credentials you intend to use:
 
@@ -155,13 +246,13 @@ export OPENAI_API_KEY="..."
 export OPENAI_MODEL="gpt-5.6-terra"
 export OPENAI_MODELS="gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol"
 
-# Decision benchmarks should explicitly avoid unnecessary reasoning cost.
+# Decision/classification benchmarks should not pay for unnecessary reasoning.
 export OPENAI_REASONING_EFFORT="none"
 ```
 
 For exploratory Jev runs, `jev-latest` can be used. For reproducible comparisons, pin the exact Jev version.
 
-### Measurement context
+### 3.5 Measurement environment
 
 Record where the benchmark runs:
 
@@ -169,7 +260,7 @@ Record where the benchmark runs:
 export BENCHMARK_LOCATION="milan-local"
 ```
 
-Transport defaults can also be controlled:
+Normalize transport behavior:
 
 ```bash
 export BENCHMARK_MAX_RETRIES=0
@@ -180,21 +271,258 @@ Retries are intentionally normalized because hidden retry behavior would distort
 
 ---
 
-## 4. Start Korgis for local models
+## 4. Prepare Korgis and local GGUF models
 
-First download the local GGUF files from the Korgis repository/environment:
+Local inference is served by Korgis. The benchmark never opens a GGUF directly.
 
-```bash
-local-llm download qwen3.5-4b-q4km
-local-llm download minicpm3-4b-q4km
-local-llm download nemotron-nano-4b
-local-llm download qwen3.5-9b-q4km
+The runtime path is:
+
+```text
+GGUF artifact
+     ↓
+Korgis registry key
+     ↓
+llama.cpp / llama-server runtime
+     ↓
+Korgis OpenAI-compatible API
+     ↓
+jev-bench
 ```
 
-For the default memory-bounded mode, start Korgis with the small anchor model and admin API enabled:
+### 4.1 Check which models Korgis already knows
+
+From the Korgis checkout:
 
 ```bash
-local-llm serve \
+cd ~/dev/korgis
+
+uv run --frozen local-llm models
+```
+
+A model can be downloaded by key only when that key exists in the merged Korgis registry.
+
+For example, if the output contains:
+
+```text
+qwen3.5-4b-q4km
+minicpm3-4b-q4km
+nemotron-nano-4b
+qwen3.5-9b-q4km
+```
+
+you can use the normal Korgis download path.
+
+### 4.2 Download a model that is already registered in Korgis
+
+```bash
+uv run --frozen local-llm download qwen3.5-4b-q4km
+uv run --frozen local-llm download minicpm3-4b-q4km
+uv run --frozen local-llm download nemotron-nano-4b
+uv run --frozen local-llm download qwen3.5-9b-q4km
+```
+
+Korgis resolves:
+
+```text
+registry key
+   ↓
+url
+filename
+backend
+quantization
+runtime params
+   ↓
+~/.local-llm/models/<filename>
+```
+
+If the key is missing, `local-llm download <key>` cannot work: there is no registry entry telling Korgis what artifact to fetch.
+
+### 4.3 Verify a downloaded artifact
+
+For benchmark evidence, hash the resolved local artifact:
+
+```bash
+uv run --frozen local-llm verify-artifact qwen3.5-4b-q4km
+```
+
+The command prints the computed SHA-256 and stores a local verification receipt. Compare the digest with the checksum published by the model source or with the checksum pinned by the benchmark/Korgis registry when one is available.
+
+### 4.4 If Korgis does not have the model: option A — download it yourself
+
+Download the exact GGUF from its authoritative source. For example:
+
+```bash
+mkdir -p ~/models/jev-bench
+
+curl -L \
+  "https://huggingface.co/<ORG>/<GGUF_REPO>/resolve/<REVISION>/<FILE>.gguf" \
+  -o ~/models/jev-bench/<FILE>.gguf
+```
+
+Use an immutable revision/commit instead of `main` when reproducibility matters.
+
+Check the local digest:
+
+```bash
+shasum -a 256 ~/models/jev-bench/<FILE>.gguf
+```
+
+Do not rename or substitute quantizations silently. Record the exact model, GGUF filename, quantization, source revision and SHA-256 used by the run.
+
+### 4.5 One-off custom GGUF: bind the file directly with `--model-path`
+
+For a quick single-model smoke test, Korgis can start a direct local GGUF even when the model is not in its registry:
+
+```bash
+cd ~/dev/korgis
+
+uv run --frozen local-llm serve \
+  --model my-local-model \
+  --model-path "$HOME/models/jev-bench/my-model-Q4_K_M.gguf" \
+  --backend llama_server \
+  --ctx-size 8192 \
+  --enable-admin-api \
+  --no-download
+```
+
+Then verify:
+
+```bash
+curl http://127.0.0.1:1235/health
+curl http://127.0.0.1:1235/v1/models
+curl http://127.0.0.1:1235/v1/runtime/identity
+```
+
+This is useful for **one-off inference testing**.
+
+It is **not the preferred setup for the multi-model benchmark**, because `compare-local` uses registry keys and Korgis' admin API to activate models sequentially.
+
+### 4.6 Reusable custom GGUF: add it to the Korgis user registry
+
+For benchmarking a model repeatedly, give it a stable Korgis key.
+
+Korgis automatically merges:
+
+```text
+built-in registry
+        ↓
+optional external registries
+        ↓
+~/.local-llm/models.yaml
+```
+
+The user registry has the highest priority.
+
+Create:
+
+```text
+~/.local-llm/models.yaml
+```
+
+with a local-path entry:
+
+```yaml
+models:
+  my-model-4b-q4km:
+    path: "/ABSOLUTE/PATH/my-model-4b-Q4_K_M.gguf"
+    model_id: "org/model-4b"
+    quantization: "Q4_K_M"
+    backend: llama_server
+    thinking_mode: none
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      default_temperature: 0.0
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, custom, 4b]
+```
+
+Now Korgis treats the manually downloaded file as a normal registered model:
+
+```bash
+uv run --frozen local-llm models
+uv run --frozen local-llm verify-artifact my-model-4b-q4km
+
+uv run --frozen local-llm serve \
+  --model my-model-4b-q4km \
+  --enable-admin-api \
+  --no-download
+```
+
+The benchmark can then use the same key:
+
+```bash
+cd ~/dev/experiments/experiments/jev-vs-llm
+
+uv run jev-bench experiment routing \
+  --provider korgis \
+  --model my-model-4b-q4km
+```
+
+### 4.7 Alternative: teach Korgis how to download a custom model
+
+Instead of downloading the GGUF manually, add `filename` + `url` to the user registry:
+
+```yaml
+models:
+  my-model-4b-q4km:
+    filename: "my-model-4b-Q4_K_M.gguf"
+    url: "https://huggingface.co/<ORG>/<GGUF_REPO>/resolve/<REVISION>/my-model-4b-Q4_K_M.gguf"
+    model_id: "org/model-4b"
+    quantization: "Q4_K_M"
+    sha256: "<EXPECTED_SHA256>"
+    size_gb: 2.5
+    backend: llama_server
+    thinking_mode: none
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      default_temperature: 0.0
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, custom, 4b]
+```
+
+Then the normal Korgis workflow works:
+
+```bash
+uv run --frozen local-llm models
+uv run --frozen local-llm download my-model-4b-q4km
+uv run --frozen local-llm verify-artifact my-model-4b-q4km
+```
+
+The `sha256` field records the expected artifact identity. The current download command and artifact-verification command are separate operations, so run `verify-artifact` explicitly after downloading.
+
+### 4.8 Experiment-specific registry instead of modifying your home directory
+
+Korgis can also load one or more external YAML/JSON registry files through `LOCAL_LLM_REGISTRY_PATHS`.
+
+Example:
+
+```bash
+export LOCAL_LLM_REGISTRY_PATHS="/absolute/path/benchmark-models.yaml"
+
+uv run --frozen local-llm models
+uv run --frozen local-llm download my-model-4b-q4km
+uv run --frozen local-llm serve \
+  --model my-model-4b-q4km \
+  --enable-admin-api \
+  --no-download
+```
+
+This is useful when the registry configuration belongs to an experiment and you do not want to modify `~/.local-llm/models.yaml`.
+
+### 4.9 Start Korgis for the benchmark matrix
+
+Once all desired model keys resolve correctly:
+
+```bash
+cd ~/dev/korgis
+
+uv run --frozen local-llm serve \
   --model nemotron-nano-4b \
   --enable-admin-api \
   --no-download
@@ -206,13 +534,14 @@ The benchmark defaults to:
 http://127.0.0.1:1235/v1
 ```
 
-Override it if needed:
+In the benchmark shell:
 
 ```bash
 export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export KORGIS_API_KEY="local"
 ```
 
-Before spending time on a benchmark, verify the runtime:
+Before running the benchmark:
 
 ```bash
 curl http://127.0.0.1:1235/health
@@ -220,9 +549,19 @@ curl http://127.0.0.1:1235/v1/models
 curl http://127.0.0.1:1235/v1/runtime/identity
 ```
 
-The default local matrix is executed sequentially. Korgis activates one model, benchmarks it, returns to the anchor model and unloads the temporary model so all GGUF weights do not need to remain resident simultaneously.
+For the default local matrix, Korgis activates one model at a time, runs its cases, returns to the anchor model and unloads temporary runtimes. This avoids keeping every GGUF resident simultaneously.
 
-Runtime identity is captured in the run manifest, including model/runtime information exposed by Korgis.
+### 4.10 Which custom-model path should I use?
+
+| Situation | Recommended path |
+|---|---|
+| Model already in Korgis registry | `local-llm download <key>` |
+| Quick one-off GGUF smoke test | `serve --model-path ...` |
+| Manually downloaded GGUF used repeatedly | add `path:` entry to user/external registry |
+| Want Korgis to download a missing model | add `filename:` + `url:` entry |
+| Multi-model `compare-local` | use stable registry keys for every model |
+
+The benchmark should never depend on an unexplained local filename. Every local model used for comparative evidence should resolve through a documented Korgis registry key.
 
 ---
 
@@ -325,7 +664,7 @@ uv run jev-bench experiment workflow \
 
 `llm-monolithic` is available only for `workflow` and `agent`.
 
-### Step 2 — run all three local models
+### Step 2 — run all four local models
 
 This uses no Jev/OpenAI inference:
 
