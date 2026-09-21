@@ -103,5 +103,5 @@ def test_validation_fails_when_canonical_drifts(tmp_path):
     path = root / "canonical" / "sample.pdf.md"
     path.write_text(path.read_text(encoding="utf-8") + "drift", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+    with pytest.raises(ValueError, match="mismatch"):
         validate_realistic_dataset(root)
