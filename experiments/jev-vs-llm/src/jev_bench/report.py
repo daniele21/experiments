@@ -31,7 +31,10 @@ def _series_name(provider: str, model: str) -> str:
             "qwen3.5-4b-q4km": "Korgis · Qwen3.5 4B Q4_K_M",
             "minicpm3-4b-q4km": "Korgis · MiniCPM3 4B Q4_K_M",
             "qwen3.5-9b-q4km": "Korgis · Qwen3.5 9B Q4_K_M",
+            "qwen3.5-2b-q4km": "Korgis · Qwen3.5 2B Q4_K_M",
+            "qwen3.5-0.8b-q4km": "Korgis · Qwen3.5 0.8B Q4_K_M",
             "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M",
+            "nemotron-nano-4b-q8": "Korgis · Nemotron Nano 4B Q8_0",
         }
         return labels.get(model, f"Korgis · {model}")
     return model
@@ -68,11 +71,23 @@ def _empty_chart(title: str):
 def _select_run_group(rows: pd.DataFrame, run_group: str | None) -> tuple[pd.DataFrame, str | None]:
     if "run_group" not in rows.columns:
         return rows, None
-    if run_group:
+    if run_group and run_group not in {"latest_per_model", "all_latest", "all"}:
         selected = rows[rows["run_group"] == run_group].copy()
         if selected.empty:
             raise ValueError(f"run_group not found: {run_group}")
         return selected, run_group
+
+    # Select latest run per (model, experiment) pair to enable cumulative multi-model reporting
+    if "run_timestamp_utc" in rows.columns and "model" in rows.columns and "experiment" in rows.columns:
+        df_sorted = rows.sort_values("run_timestamp_utc")
+        latest_pairs = (
+            df_sorted.groupby(["model", "experiment"])["run_group"]
+            .last()
+            .reset_index()
+        )
+        selected = pd.merge(rows, latest_pairs, on=["model", "experiment", "run_group"], how="inner")
+        return selected, "latest_per_model"
+
     if "run_timestamp_utc" in rows.columns:
         latest = rows.sort_values("run_timestamp_utc").iloc[-1]["run_group"]
     else:

@@ -577,4 +577,11 @@ max_output_tokens: 512
 stop_korgis_on_complete: true
 ```
 
+### Note on Reasoning Models (e.g. Qwen) and Structured Outputs
+
+Models with built-in reasoning templates (like Qwen) emit `<think>...</think>` tags by default. In `llama-server`, thinking tokens are segregated into `reasoning_content` and do not have JSON schema constraints applied. In long multi-class prompts (like BANKING77 with 77 classes), this can exhaust `max_output_tokens` before reaching the JSON block, returning empty content and a `502 invalid_model_output`.
+
+The orchestrator automatically sets `LLAMA_ARG_REASONING=off` by default to disable thinking traces during structured benchmark tasks, ensuring prompt GBNF grammar constraints and direct fast JSON responses.
+
+
 

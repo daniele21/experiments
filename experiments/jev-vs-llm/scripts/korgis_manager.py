@@ -16,6 +16,7 @@ import atexit
 import json
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import time
@@ -45,6 +46,14 @@ def _free_port(port: int) -> None:
                     os.kill(pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+    except Exception:
+        pass
+
+
+def _clean_lingering_llama_servers() -> None:
+    """Terminate any orphan llama-server processes left from previous interrupted runs."""
+    try:
+        subprocess.run(["pkill", "-9", "llama-server"], stderr=subprocess.DEVNULL, check=False)
     except Exception:
         pass
 
@@ -118,9 +127,26 @@ class KorgisManager:
         # Pre-flight: make sure standard ports (1235 for Korgis, 8091 for llama-server) are free
         _free_port(1235)
         _free_port(8091)
+        _clean_lingering_llama_servers()
 
         logger.info("Starting Korgis server with initial model '%s'...", initial_model)
         env = os.environ.copy()
+
+        # Explicitly ensure LOCAL_LLM_SERVER_BIN points to the validated llama-server binary
+        if "LOCAL_LLM_SERVER_BIN" not in env:
+            discovered_bin = shutil.which("llama-server") or "/opt/homebrew/bin/llama-server"
+            if Path(discovered_bin).is_file():
+                env["LOCAL_LLM_SERVER_BIN"] = str(discovered_bin)
+
+        # Ensure PATH includes /opt/homebrew/bin and local bin directories
+        current_path = env.get("PATH", "")
+        if "/opt/homebrew/bin" not in current_path:
+            env["PATH"] = f"/opt/homebrew/bin:{current_path}"
+
+        # For structured decision benchmarks, disable thinking traces so models output direct JSON
+        # instead of exhausting max_tokens in <think> tags (which leaves content empty -> 502 invalid_model_output).
+        if "LLAMA_ARG_REASONING" not in env:
+            env["LLAMA_ARG_REASONING"] = "off"
         if self.registry_path and self.registry_path.is_file():
             env["LOCAL_LLM_REGISTRY_PATHS"] = str(self.registry_path)
 
@@ -222,9 +248,10 @@ class KorgisManager:
         if self.log_handle and not self.log_handle.closed:
             self.log_handle.close()
 
-        # Ensure ports are completely clean
+        # Ensure ports and child processes are completely clean
         _free_port(1235)
         _free_port(8091)
+        _clean_lingering_llama_servers()
         logger.info("Korgis server and worker runtimes stopped.")
 
     def _read_log_tail(self, lines: int = 15) -> str:

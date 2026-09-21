@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -169,6 +171,15 @@ def main() -> int:
 
     dataset = args.dataset or cfg.get("dataset", "smoke")
     profile = args.profile or cfg.get("public_profile", "budget")
+
+    # Ensure llama-server doesn't divert output tokens to reasoning traces (<think>) for structured JSON evaluation
+    os.environ.setdefault("LLAMA_ARG_REASONING", "off")
+
+    # Explicitly ensure LOCAL_LLM_SERVER_BIN points to the validated llama-server
+    if "LOCAL_LLM_SERVER_BIN" not in os.environ:
+        discovered_bin = shutil.which("llama-server") or "/opt/homebrew/bin/llama-server"
+        if Path(discovered_bin).is_file():
+            os.environ["LOCAL_LLM_SERVER_BIN"] = str(discovered_bin)
 
     # Resolve experiments
     if args.experiments:

@@ -213,7 +213,7 @@ class ExperimentOrchestrator:
                 },
                 requested_korgis_models=models,
             )
-            build_report(self.output_csv, self.report_html, run_group=group_id)
+            build_report(self.output_csv, self.report_html, run_group="latest_per_model")
             logger.info("Report updated at: %s", self.report_html)
 
         return {
