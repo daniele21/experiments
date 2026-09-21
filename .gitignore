@@ -11,6 +11,7 @@ experiments/*/results/private/
 experiments/*/results/manifests/
 experiments/*/results/logs/
 experiments/*/results/*.html
+experiments/*/results/*/
 experiments/*/dashboard/node_modules/
 experiments/*/dashboard/dist/
 korgis/*
