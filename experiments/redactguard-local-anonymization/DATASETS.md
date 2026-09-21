@@ -47,7 +47,31 @@ uv run redact-bench documents \
 
 Do not commit private documents, extracted text or result artifacts containing sensitive information.
 
+## Realistic heterogeneous dataset v0.1
+
+The first realistic test set is now maintained outside Git because it contains source documents and benchmark artifacts that should not be duplicated into the repository.
+
+- prepared canonical/gold dataset: see [REALISTIC_DATASET.md](REALISTIC_DATASET.md);
+- 11 heterogeneous source documents;
+- canonical Markdown per source;
+- exact deterministic gold spans;
+- source formats include PDF, scanned PDF, DOC, DOCX, XLSX, CSV, TXT and PPTX.
+
+After downloading it to `data/realistic/`:
+
+```bash
+uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
+uv run redact-bench compare --dataset data/realistic
+```
+
+The loader verifies the canonical SHA-256 and every gold span before producing benchmark cases. Structural page/sheet/slide/image markers are stripped before inference.
+
+The current gold is deterministic and machine-validated but is explicitly **not independently human-reviewed**.
+
+For exact acquisition paths, local structure, originals and validation behavior, use [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
+
 ## Next quality tier
+
 
 Use two complementary sources.
 

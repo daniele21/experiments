@@ -4,11 +4,12 @@ from pathlib import Path
 
 import typer
 
-from redact_bench.datasets import load_jsonl
+from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.provider import DEFAULT_MODELS, KorgisController
+from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
 
 app = typer.Typer(no_args_is_help=True)
@@ -31,7 +32,7 @@ def check_korgis() -> None:
 def check_data(
     dataset: Path = typer.Option(ROOT / "data/smoke/cases.jsonl"),
 ) -> None:
-    cases = load_jsonl(dataset)
+    cases = load_dataset(dataset)
     typer.echo(f"{len(cases)} cases OK")
 
 
@@ -127,3 +128,24 @@ def documents(
         warmups=warmups,
     )
     typer.echo(str(output))
+
+
+
+@app.command("check-realistic-dataset")
+def check_realistic_dataset(
+    dataset_dir: Path = typer.Option(ROOT / "data/realistic"),
+    require_originals: bool = typer.Option(
+        False,
+        "--require-originals/--no-require-originals",
+    ),
+) -> None:
+    """Validate a downloaded realistic dataset, its hashes and every gold span."""
+    summary = validate_realistic_dataset(
+        dataset_dir,
+        require_originals=require_originals,
+    )
+    typer.echo(
+        f"{summary['dataset_id']}: {summary['documents']} documents / "
+        f"{summary['spans']} gold spans OK"
+    )
+    typer.echo(f"by_type: {summary['by_type']}")

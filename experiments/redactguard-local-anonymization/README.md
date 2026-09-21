@@ -88,6 +88,23 @@ uv run redact-bench check-korgis
 uv run redact-bench check-data
 ```
 
+## Realistic test dataset
+
+A private realistic dataset is available separately from Git. It contains 11 heterogeneous source documents, canonical Markdown and exact deterministic PII gold spans.
+
+Dataset acquisition and validation are documented in [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
+
+After downloading the prepared Drive dataset into `data/realistic/`:
+
+```bash
+uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
+uv run redact-bench compare --dataset data/realistic
+```
+
+`compare --dataset` accepts either the committed JSONL smoke dataset or a realistic dataset directory. The directory loader strips structural metadata markers, verifies the frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is required.
+
+The realistic dataset itself is intentionally ignored by Git.
+
 ## Document end-to-end benchmark
 
 The repository also implements a separate system-level benchmark that starts from PDFs. It deliberately keeps extraction evidence separate from model evidence:
@@ -193,7 +210,7 @@ It does **not** depend on the RedactGuard Python package at runtime and does not
 
 `data/smoke/cases.jsonl` is a small deterministic text integration dataset spanning General, Healthcare, Financial and Legal profiles. `data/documents/manifest.jsonl` adds five deterministic synthetic document cases (six pages) for the PDF/Docling system tier. Both are harness-validation datasets, not sufficient for publishing broad model-quality conclusions.
 
-The next benchmark tier should add an externally labelled generic PII dataset plus a RedactGuard-specific domain set. See [DATASETS.md](DATASETS.md).
+The realistic heterogeneous dataset is now available as a separate access-controlled test tier. A future publication-grade tier should still add independently reviewed/external labels and a held-out split. See [DATASETS.md](DATASETS.md) and [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
 
 ## Boundary with the RedactGuard product
 

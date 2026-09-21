@@ -9,7 +9,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from redact_bench.datasets import load_jsonl
+from redact_bench.datasets import load_dataset
 from redact_bench.metrics import aggregate, score_case
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
@@ -42,7 +42,7 @@ def run_compare(
     output = Path(results_dir) / run_id
     output.mkdir(parents=True, exist_ok=True)
 
-    cases = load_jsonl(dataset_path)
+    cases = load_dataset(dataset_path)
     summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
@@ -136,7 +136,7 @@ def run_latency(
     output = Path(results_dir) / run_id
     output.mkdir(parents=True, exist_ok=True)
 
-    all_cases = load_jsonl(dataset_path)
+    all_cases = load_dataset(dataset_path)
     selected_ids = case_ids or ["g01", "g04", "h05", "f01", "l02"]
     by_id = {case.case_id: case for case in all_cases}
     cases = [by_id[case_id] for case_id in selected_ids if case_id in by_id]
