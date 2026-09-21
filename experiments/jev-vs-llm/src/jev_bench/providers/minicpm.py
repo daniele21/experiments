@@ -131,7 +131,10 @@ class MiniCPMProvider(DecisionProvider):
                 )
 
                 if question.type == "choice":
-                    if not isinstance(question.criteria, dict) or str(value) not in question.criteria:
+                    if (
+                        not isinstance(question.criteria, dict)
+                        or str(value) not in question.criteria
+                    ):
                         errors.append(f"{qid}: value outside allowed choices")
                 elif question.type == "noul":
                     value = self._coerce_probability(value)
