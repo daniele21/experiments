@@ -236,8 +236,6 @@ All three must be available for the managed `llama_server` path.
 
 ### 3.4 Cloud-provider environment
 
-### 3.4 Cloud-provider environment
-
 Set only the credentials you intend to use:
 
 ```bash
@@ -666,7 +664,7 @@ uv run jev-bench experiment workflow \
 
 `llm-monolithic` is available only for `workflow` and `agent`.
 
-### Step 2 — run all three local models
+### Step 2 — run all four local models
 
 This uses no Jev/OpenAI inference:
 
