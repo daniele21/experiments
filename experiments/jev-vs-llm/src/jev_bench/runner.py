@@ -141,12 +141,18 @@ def run_cases(
     provider: DecisionProvider,
     cases: Sequence[BenchmarkCase],
     questions: Sequence[QuestionSpec],
+    show_progress: bool | None = None,
 ) -> list[dict]:
-    rows = []
-    for case in cases:
-        result = provider.evaluate(case.state, questions)
-        rows.extend(_rows_for_case(experiment, case, questions, result, primary=True))
-    return rows
+    from jev_bench.progress import run_cases_with_progress
+
+    return run_cases_with_progress(
+        experiment=experiment,
+        provider=provider,
+        cases=cases,
+        questions=questions,
+        show_progress=show_progress,
+        row_builder=_rows_for_case,
+    )
 
 
 def run_scaling(provider: DecisionProvider, repeats: int = 5) -> list[dict]:

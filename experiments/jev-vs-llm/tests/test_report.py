@@ -117,20 +117,13 @@ def test_report_builds_interactive_html(tmp_path: Path):
     build_report(raw, html, run_group="g1")
 
     text = html.read_text(encoding="utf-8")
-    assert "Accuracy vs latency" in text
-    assert "Probability calibration" in text
-    assert "Most frequent confusion pairs" in text
-    assert "Routing API cost" in text
-    assert "Run details" in text
+    assert "window.__BENCHMARK_DATA__" in text
     assert "gpt-5.6-luna" in text
-    assert "model-chip" in text
-    assert "API cost by experiment" in text
-    assert "Per-class breakdown" in text
-    assert "Routing cases" in text
-    assert "Calibration predictions" in text
-    assert "case-search" in text
+    assert "jev-test" in text
+    assert "routing" in text
+    assert "calibration" in text
     assert "I need help with class a." in text
-    assert "Error explorer" in text
+    assert "local_parameters" in text
 
 
 def test_report_gap_analysis_and_leaderboard(tmp_path: Path):

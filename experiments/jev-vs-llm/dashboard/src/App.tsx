@@ -5,16 +5,19 @@ import { Header } from './components/layout/Header';
 import { NavigationTabs } from './components/layout/NavigationTabs';
 import type { TabKey } from './components/layout/NavigationTabs';
 import { ModelFilterBar } from './components/layout/ModelFilterBar';
+import { DatasetFilterBar, type DatasetFilterKey } from './components/layout/DatasetFilterBar';
 import { KpiCards } from './components/overview/KpiCards';
 import { Leaderboard } from './components/overview/Leaderboard';
 import { AccuracyGapChart } from './components/overview/AccuracyGapChart';
 import { ParetoTradeoffChart } from './components/overview/ParetoTradeoffChart';
 import { LatencyComparisonChart } from './components/overview/LatencyComparisonChart';
 import { LocalEfficiencyCard } from './components/overview/LocalEfficiencyCard';
+import { CostAccuracyChart } from './components/overview/CostAccuracyChart';
+import { ExecutiveVerdictBanner } from './components/overview/ExecutiveVerdictBanner';
 import { RoutingTab } from './components/routing/RoutingTab';
 import { UnrunExperimentView } from './components/experiment/UnrunExperimentView';
 import { RunDetailsTab } from './components/details/RunDetailsTab';
-import { AlertCircle } from 'lucide-react';
+import { getModelRuntime } from './config/theme';
 
 declare global {
   interface Window {
@@ -49,10 +52,45 @@ export const App: React.FC = () => {
     }
   };
 
+  // Active dataset tier filter (all, public, smoke)
+  const [activeDataset, setActiveDataset] = useState<DatasetFilterKey>('all');
+
   // Selected models filter
   const [selectedSeries, setSelectedSeries] = useState<Set<string>>(() => {
     return new Set(data.models.map((m) => m.series));
   });
+
+  // Compute dataset counts
+  const datasetCounts = useMemo(() => {
+    const pub = data.leaderboard.filter((m) => m.dataset === 'public').length;
+    const smk = data.leaderboard.filter((m) => m.dataset === 'smoke').length;
+    return {
+      all: data.leaderboard.length,
+      public: pub,
+      smoke: smk,
+    };
+  }, [data.leaderboard]);
+
+  // Models filtered for the model chips bar
+  const activeModels = useMemo(() => {
+    if (activeDataset === 'all') return data.models;
+    return data.models.filter((m) => m.dataset === activeDataset);
+  }, [data.models, activeDataset]);
+
+  // Frontier view state ('both' | 'latency' | 'cost')
+  const [frontierView, setFrontierView] = useState<'both' | 'latency' | 'cost'>('both');
+
+  // Leaderboard filtered by dataset
+  const filteredLeaderboard = useMemo(() => {
+    if (activeDataset === 'all') return data.leaderboard;
+    return data.leaderboard.filter((m) => m.dataset === activeDataset);
+  }, [data.leaderboard, activeDataset]);
+
+  // Overview filtered by dataset
+  const filteredOverview = useMemo(() => {
+    if (activeDataset === 'all') return data.overview;
+    return data.overview.filter((m) => m.dataset === activeDataset);
+  }, [data.overview, activeDataset]);
 
   const toggleSeries = (series: string) => {
     setSelectedSeries((prev) => {
@@ -66,6 +104,22 @@ export const App: React.FC = () => {
       }
       return next;
     });
+  };
+
+  const handleSetPreset = (preset: 'all' | 'local' | 'non-local') => {
+    if (preset === 'all') {
+      setSelectedSeries(new Set(data.models.map((m) => m.series)));
+    } else if (preset === 'local') {
+      const local = data.models
+        .filter((m) => getModelRuntime(m.provider, m.series).type === 'local')
+        .map((m) => m.series);
+      if (local.length > 0) setSelectedSeries(new Set(local));
+    } else {
+      const nonLocal = data.models
+        .filter((m) => getModelRuntime(m.provider, m.series).type !== 'local')
+        .map((m) => m.series);
+      if (nonLocal.length > 0) setSelectedSeries(new Set(nonLocal));
+    }
   };
 
   useEffect(() => {
@@ -84,7 +138,7 @@ export const App: React.FC = () => {
       {/* 1. Top Header */}
       <Header metadata={data.metadata} />
 
-      {/* 2. Sticky Toolbar: Navigation Tabs & Model Filter Chips */}
+      {/* 2. Sticky Toolbar: Navigation Tabs, Dataset Selector & Model Filter Chips */}
       <div className="toolbar-container">
         <div className="toolbar-content">
           <NavigationTabs
@@ -92,33 +146,99 @@ export const App: React.FC = () => {
             onSelectTab={handleSelectTab}
             experiments={data.experiments}
           />
+          <DatasetFilterBar
+            activeDataset={activeDataset}
+            onSelectDataset={setActiveDataset}
+            counts={datasetCounts}
+          />
           <ModelFilterBar
-            models={data.models}
+            models={activeModels}
             selectedSeries={selectedSeries}
             onToggleSeries={toggleSeries}
+            onSetPreset={handleSetPreset}
           />
-        </div>
-      </div>
-
-      {/* Notice Banner */}
-      <div className="notice-banner">
-        <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-        <div>
-          <strong>Local Execution Note:</strong> Evaluated models run locally via the Korgis inference engine with zero cloud token charges. Accuracy reflects deterministic classification correctness on 77-way intent queries; latency measures client roundtrip time on host hardware.
         </div>
       </div>
 
       {/* 3. Tab Contents */}
       {activeTab === 'overview' && (
-        <main>
-          <KpiCards data={data.kpi_cards} />
-          <Leaderboard entries={data.leaderboard} selectedSeries={selectedSeries} />
-          <AccuracyGapChart entries={data.leaderboard} selectedSeries={selectedSeries} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '20px' }}>
-            <ParetoTradeoffChart entries={data.leaderboard} selectedSeries={selectedSeries} />
-            <LatencyComparisonChart entries={data.leaderboard} selectedSeries={selectedSeries} />
-          </div>
-          <LocalEfficiencyCard entries={data.leaderboard} />
+        <main className="overview-main">
+          {/* Level 1: Executive Verdict & Top-Level Takeaways */}
+          <section className="dashboard-section">
+            <ExecutiveVerdictBanner leaderboard={filteredLeaderboard} metadata={data.metadata} />
+            <KpiCards data={data.kpi_cards} hardware={data.metadata.hardware} />
+          </section>
+
+          {/* Level 2: Core Benchmark Leaderboard & Gap Analysis */}
+          <section className="dashboard-section">
+            <Leaderboard
+              entries={filteredLeaderboard}
+              selectedSeries={selectedSeries}
+              activeDataset={activeDataset}
+            />
+            <AccuracyGapChart entries={filteredLeaderboard} selectedSeries={selectedSeries} />
+          </section>
+
+          {/* Level 3: Strategic Decision Frontiers (Speed & Cost Pareto Frameworks) */}
+          <section className="dashboard-section">
+            <div className="section-intro-row">
+              <div className="section-intro" style={{ marginBottom: 0 }}>
+                <span className="section-step-badge">★ Core Decision Frameworks</span>
+                <h2 className="section-headline">Performance &amp; Cost Frontiers</h2>
+                <p className="section-subheadline">
+                  The primary strategic decision matrix: identifying Pareto-optimal models across response latency and token economics.
+                </p>
+              </div>
+
+              {/* Frontier View Switcher */}
+              <div className="frontier-view-control">
+                <button
+                  type="button"
+                  className={`frontier-view-btn ${frontierView === 'both' ? 'active' : ''}`}
+                  onClick={() => setFrontierView('both')}
+                  title="View both Latency and Cost Frontiers"
+                >
+                  <span>🔲 Dual View (Both)</span>
+                </button>
+                <button
+                  type="button"
+                  className={`frontier-view-btn ${frontierView === 'latency' ? 'active' : ''}`}
+                  onClick={() => setFrontierView('latency')}
+                  title="Focus on Latency vs Accuracy Frontier"
+                >
+                  <span>⚡ Latency vs Accuracy</span>
+                </button>
+                <button
+                  type="button"
+                  className={`frontier-view-btn ${frontierView === 'cost' ? 'active' : ''}`}
+                  onClick={() => setFrontierView('cost')}
+                  title="Focus on Cost vs Accuracy Frontier"
+                >
+                  <span>💰 Cost vs Accuracy</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Frontier Hero Display */}
+            <div className="frontier-hero-stack">
+              {(frontierView === 'both' || frontierView === 'latency') && (
+                <ParetoTradeoffChart entries={filteredLeaderboard} selectedSeries={selectedSeries} />
+              )}
+              {(frontierView === 'both' || frontierView === 'cost') && (
+                <CostAccuracyChart overview={filteredOverview} selectedSeries={selectedSeries} />
+              )}
+            </div>
+
+            {/* Detailed Diagnostic Latency Breakdown */}
+            <div style={{ marginTop: '24px' }}>
+              <LatencyComparisonChart entries={filteredLeaderboard} selectedSeries={selectedSeries} />
+            </div>
+          </section>
+
+          {/* Level 4: Hardware Specifications & Local Economics */}
+          <section className="dashboard-section">
+            <LocalEfficiencyCard entries={filteredLeaderboard} metadata={data.metadata} />
+          </section>
         </main>
       )}
 

@@ -1,10 +1,25 @@
+/**
+ * ParetoTradeoffChart.tsx
+ *
+ * Flagship scatter plot visualizing the latency vs accuracy Pareto frontier.
+ * Features:
+ *  - 960x460 high-resolution canvas with generous breathing room
+ *  - Uncluttered, collision-free label positioning
+ *  - Prominent flagship hero header with status badges and legend
+ *  - Glowing Pareto dominance frontier curve with shaded area
+ *  - Glassmorphic hover tooltip with complete model statistics
+ *  - Actionable strategic takeaway footer
+ */
+
 import React, { useState } from 'react';
 import type { LeaderboardEntry } from '../../types/benchmark';
 import { getSeriesColor } from '../../config/theme';
+import { Zap, Target, TrendingUp } from 'lucide-react';
 
 interface ParetoTradeoffChartProps {
   entries: LeaderboardEntry[];
   selectedSeries: Set<string>;
+  isHeroView?: boolean;
 }
 
 export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
@@ -17,29 +32,31 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
     y: number;
   } | null>(null);
 
-  const visibleEntries = entries.filter((e) => selectedSeries.has(e.series));
+  const visibleEntries = entries.filter((e) =>
+    selectedSeries.has(e.series) || (e.series_id && selectedSeries.has(e.series_id))
+  );
   if (visibleEntries.length === 0) return null;
 
-  // Chart dimensions
-  const width = 800;
-  const height = 400;
-  const marginTop = 30;
-  const marginRight = 40;
-  const marginBottom = 60;
-  const marginLeft = 60;
+  // ── Chart dimensions ─────────────────────────────────────────────
+  const width = 960;
+  const height = 460;
+  const marginTop = 40;
+  const marginRight = 55;
+  const marginBottom = 65;
+  const marginLeft = 75;
 
   const plotWidth = width - marginLeft - marginRight;
   const plotHeight = height - marginTop - marginBottom;
 
-  // Compute domain
+  // ── Domain ───────────────────────────────────────────────────────
   const latencies = visibleEntries.map((e) => e.latency_p50_ms);
   const maxLat = Math.max(9000, Math.ceil(Math.max(...latencies) / 1000) * 1000);
-  const maxAcc = 0.8; // 80% cap for clear vertical resolution
+  const maxAcc = 1.05; // 0% to 100% with headroom so top points never touch the header
 
   const getX = (lat: number) => marginLeft + (lat / maxLat) * plotWidth;
   const getY = (acc: number) => height - marginBottom - (acc / maxAcc) * plotHeight;
 
-  // Determine Pareto Frontier points (sorted by latency ascending, filter strictly increasing accuracy)
+  // ── Pareto Frontier points (sorted by latency ascending, filter strictly increasing accuracy)
   const sortedByLat = [...visibleEntries].sort((a, b) => a.latency_p50_ms - b.latency_p50_ms);
   const paretoPoints: LeaderboardEntry[] = [];
   let currentMaxAcc = -1;
@@ -58,25 +75,129 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
       : '';
 
   const xTicks = [0, 2000, 4000, 6000, 8000];
-  const yTicks = [0, 0.2, 0.4, 0.6, 0.8];
+  const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+  // ── Clean Collision-free Label Offsets ─────────────────────────────
+  const labelOffsets = visibleEntries.map((entry, i) => {
+    const cx = getX(entry.latency_p50_ms);
+    const cy = getY(entry.accuracy);
+    let offsetY = -14;
+    let offsetX = 0;
+    let textAnchor: 'middle' | 'start' | 'end' = 'middle';
+
+    // Near top edge: place below
+    if (cy < marginTop + 35) {
+      offsetY = 20;
+    }
+    // Near right edge: anchor end
+    if (cx > width - marginRight - 120) {
+      textAnchor = 'end';
+      offsetX = -12;
+    }
+    // Near left edge: anchor start
+    if (cx < marginLeft + 100) {
+      textAnchor = 'start';
+      offsetX = 12;
+    }
+
+    // Pairwise collision repulsion
+    for (let j = 0; j < visibleEntries.length; j++) {
+      if (i === j) continue;
+      const other = visibleEntries[j];
+      const ocx = getX(other.latency_p50_ms);
+      const ocy = getY(other.accuracy);
+      const dx = Math.abs(cx - ocx);
+      const dy = Math.abs(cy - ocy);
+
+      if (dx < 90 && dy < 38) {
+        if (cy >= ocy) {
+          offsetY = 22;
+          offsetX = cx >= ocx ? 12 : -12;
+        } else {
+          offsetY = -16;
+          offsetX = cx >= ocx ? 12 : -12;
+        }
+        break;
+      }
+    }
+    return { offsetY, offsetX, textAnchor };
+  });
 
   return (
-    <div className="chart-card">
-      <div className="chart-header">
-        <h3 className="chart-title">Accuracy vs latency (Pareto Frontier)</h3>
-        <p className="chart-desc">
-          Upper-left is preferable: higher correctness with lower latency. The dashed line highlights
-          the Pareto efficiency frontier. Hover over any point to inspect details.
-        </p>
+    <div className="card frontier-flagship-card">
+      <div className="card-header">
+        <div className="card-title-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="frontier-icon-badge frontier-icon-speed">
+              <Zap size={20} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h3 className="card-title" style={{ margin: 0 }}>Latency vs Accuracy Frontier</h3>
+                <span className="frontier-badge-pulse speed-pulse">
+                  <Target size={11} style={{ marginRight: '3px' }} />
+                  Primary Strategic Pareto Framework
+                </span>
+              </div>
+              <p className="card-subtitle" style={{ margin: '4px 0 0 0' }}>
+                Identifies non-dominated architectures: models on the dashed line deliver the highest intent accuracy for their speed tier.
+              </p>
+            </div>
+          </div>
+
+          <div className="frontier-header-legend">
+            <div className="legend-indicator-item">
+              <span className="legend-dash-line" />
+              <span>Pareto Dominance Curve</span>
+            </div>
+            <div className="legend-indicator-item">
+              <span className="legend-zone-swatch" />
+              <span>Optimal Zone (Sub-3s &amp; &gt;70% Acc)</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="chart-wrapper" style={{ position: 'relative' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} className="interactive-chart">
+      <div style={{ position: 'relative', overflow: 'visible', padding: '8px 0' }}>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        >
+          {/* SVG Defs: glow filter and gradient line */}
+          <defs>
+            <linearGradient id="pareto-line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#4f46e5" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
+            <linearGradient id="pareto-area-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.01" />
+            </linearGradient>
+            <radialGradient id="ideal-zone" cx="0%" cy="0%" r="100%">
+              <stop offset="0%" stopColor="#059669" stopOpacity="0.10" />
+              <stop offset="100%" stopColor="#059669" stopOpacity="0.01" />
+            </radialGradient>
+          </defs>
+
+          {/* Ideal Tradeoff Zone (top-left subtle highlight with dashed perimeter) */}
+          <rect
+            x={marginLeft}
+            y={marginTop}
+            width={plotWidth * 0.35}
+            height={plotHeight * 0.35}
+            fill="url(#ideal-zone)"
+            rx={8}
+            stroke="#059669"
+            strokeWidth={1}
+            strokeDasharray="4 4"
+            opacity={0.4}
+          />
+
           {/* Horizontal Grid lines */}
           {yTicks.map((acc) => {
             const y = getY(acc);
             return (
-              <g key={acc}>
+              <g key={`y-${acc}`}>
                 <line
                   x1={marginLeft}
                   y1={y}
@@ -85,10 +206,11 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
                   className="chart-grid-line"
                 />
                 <text
-                  x={marginLeft - 10}
+                  x={marginLeft - 12}
                   y={y + 4}
                   textAnchor="end"
                   className="chart-axis-text"
+                  style={{ fontWeight: 600 }}
                 >
                   {`${Math.round(acc * 100)}%`}
                 </text>
@@ -97,10 +219,10 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
           })}
 
           {/* Vertical Grid lines */}
-          {xTicks.map((lat) => {
-            const x = getX(lat);
+          {xTicks.map((t) => {
+            const x = getX(t);
             return (
-              <g key={lat}>
+              <g key={`x-${t}`}>
                 <line
                   x1={x}
                   y1={marginTop}
@@ -110,17 +232,18 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
                 />
                 <text
                   x={x}
-                  y={height - marginBottom + 20}
+                  y={height - marginBottom + 24}
                   textAnchor="middle"
                   className="chart-axis-text"
+                  style={{ fontWeight: 600 }}
                 >
-                  {lat === 0 ? '0' : `${lat / 1000}s`}
+                  {t === 0 ? '0' : `${t / 1000}s`}
                 </text>
               </g>
             );
           })}
 
-          {/* Axes */}
+          {/* Left Y Axis */}
           <line
             x1={marginLeft}
             y1={marginTop}
@@ -128,6 +251,8 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
             y2={height - marginBottom}
             className="chart-axis-line"
           />
+
+          {/* Bottom X Axis */}
           <line
             x1={marginLeft}
             y1={height - marginBottom}
@@ -139,107 +264,167 @@ export const ParetoTradeoffChart: React.FC<ParetoTradeoffChartProps> = ({
           {/* Axis Titles */}
           <text
             x={marginLeft + plotWidth / 2}
-            y={height - marginBottom + 42}
+            y={height - 14}
             textAnchor="middle"
             className="chart-axis-title"
+            style={{ fontWeight: 700, letterSpacing: '0.04em' }}
           >
-            p50 Latency (milliseconds / seconds)
+            Median Roundtrip Latency (milliseconds / seconds)
           </text>
 
           <text
-            x={-height / 2}
-            y={20}
+            x={-(marginTop + plotHeight / 2)}
+            y={22}
             transform="rotate(-90)"
             textAnchor="middle"
             className="chart-axis-title"
+            style={{ fontWeight: 700, letterSpacing: '0.04em' }}
           >
-            Intent Accuracy
+            Intent Classification Accuracy (%)
           </text>
 
-          {/* Pareto Frontier line */}
+          {/* Pareto Frontier – shaded area under curve */}
+          {paretoPoints.length > 1 && (
+            <path
+              d={`${paretoPath} L ${getX(paretoPoints[paretoPoints.length - 1].latency_p50_ms)} ${height - marginBottom} L ${getX(paretoPoints[0].latency_p50_ms)} ${height - marginBottom} Z`}
+              fill="url(#pareto-area-grad)"
+            />
+          )}
+
+          {/* Pareto Frontier – gradient dashed line */}
           {paretoPath && (
             <path
               d={paretoPath}
               fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2"
-              strokeDasharray="5 5"
-              opacity="0.6"
+              stroke="url(#pareto-line-grad)"
+              strokeWidth="3"
+              strokeDasharray="6 4"
+              opacity={0.85}
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(79, 70, 229, 0.3))' }}
             />
           )}
 
-          {/* Data Points */}
+          {/* Data points */}
           {visibleEntries.map((entry, idx) => {
+            const color = getSeriesColor(entry.series, idx);
             const cx = getX(entry.latency_p50_ms);
             const cy = getY(entry.accuracy);
-            const color = getSeriesColor(entry.series, idx);
-            const isHovered = hoveredEntry?.entry.series === entry.series;
+            const entryId = entry.series_id || entry.series;
+            const isHovered = (hoveredEntry?.entry.series_id || hoveredEntry?.entry.series) === entryId;
+            const { offsetY, offsetX, textAnchor } = labelOffsets[idx] || {
+              offsetY: -14,
+              offsetX: 0,
+              textAnchor: 'middle',
+            };
+
+            const modelCleanName = entry.model
+              .replace('-q4km', '')
+              .replace('nemotron-', 'n-');
 
             return (
               <g
-                key={entry.series}
-                className="chart-scatter-point"
+                key={entryId}
                 onMouseEnter={() => setHoveredEntry({ entry, x: cx, y: cy })}
                 onMouseLeave={() => setHoveredEntry(null)}
+                style={{ cursor: 'pointer' }}
               >
-                {/* Glow ring on hover */}
+                {/* Outer halo ring on hover */}
                 {isHovered && (
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={14}
+                    r={20}
                     fill={color}
-                    opacity={0.25}
+                    opacity={0.18}
                   />
                 )}
-                {/* Point */}
+
+                {/* Main point */}
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={isHovered ? 8 : 6}
+                  r={isHovered ? 9 : 6.5}
                   fill={color}
                   stroke="#ffffff"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
+                  style={{
+                    filter: isHovered ? `drop-shadow(0 0 10px ${color})` : 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))',
+                    transition: 'r 0.15s ease, filter 0.15s ease',
+                  }}
                 />
 
-                {/* Offset Model Label for clarity */}
+                {/* Model label */}
                 <text
-                  x={cx}
-                  y={cy - 12}
-                  textAnchor="middle"
+                  x={cx + offsetX}
+                  y={cy + offsetY}
+                  textAnchor={textAnchor}
                   style={{
-                    fontSize: '11px',
-                    fontWeight: isHovered ? 700 : 600,
+                    fontSize: isHovered ? '12px' : '11px',
+                    fontWeight: isHovered ? 800 : 600,
                     fill: isHovered ? 'var(--text)' : 'var(--text-muted)',
                     pointerEvents: 'none',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {entry.model.replace('-q4km', '').replace('nemotron-', 'n-')} ({entry.accuracy_pct})
+                  {modelCleanName} ({entry.accuracy_pct})
                 </text>
               </g>
             );
           })}
         </svg>
 
-        {/* Hover Tooltip Card */}
+        {/* Glassmorphism Tooltip */}
         {hoveredEntry && (
           <div
             className="chart-tooltip"
             style={{
               left: `${(hoveredEntry.x / width) * 100}%`,
               top: `${(hoveredEntry.y / height) * 100}%`,
+              transform: 'translate(-50%, -120%)',
+              pointerEvents: 'none',
+              zIndex: 10,
             }}
           >
-            <div style={{ fontWeight: 700, marginBottom: '4px' }}>
-              {hoveredEntry.entry.medal} {hoveredEntry.entry.series}
+            <div style={{ fontWeight: 800, fontSize: '13px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>{hoveredEntry.entry.medal}</span>
+              <span>{hoveredEntry.entry.series}</span>
             </div>
-            <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#cbd5e1' }}>
-              <span>Acc: <strong style={{ color: '#fff' }}>{hoveredEntry.entry.accuracy_pct}</strong></span>
-              <span>p50: <strong style={{ color: '#fff' }}>{hoveredEntry.entry.latency_str}</strong></span>
-              <span>Gap: <strong style={{ color: '#fff' }}>{hoveredEntry.entry.delta_str}</strong></span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '11px', marginTop: '6px' }}>
+              <div>
+                <span style={{ color: '#94a3b8' }}>Accuracy: </span>
+                <strong style={{ color: '#ffffff' }}>{hoveredEntry.entry.accuracy_pct}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#94a3b8' }}>Latency p50: </span>
+                <strong style={{ color: '#38bdf8' }}>{hoveredEntry.entry.latency_str}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#94a3b8' }}>Dataset: </span>
+                <strong style={{ color: '#a7f3d0' }}>{hoveredEntry.entry.dataset_label || (hoveredEntry.entry.dataset === 'public' ? 'Banking77' : 'Smoke')}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#94a3b8' }}>Thinking: </span>
+                <strong style={{ color: hoveredEntry.entry.thinking_mode === 'on' ? '#c084fc' : '#e2e8f0' }}>
+                  {hoveredEntry.entry.thinking_mode === 'on' ? 'ON (Reasoning)' : 'Direct'}
+                </strong>
+              </div>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Flagship Strategic Takeaway Callout */}
+      <div className="frontier-card-footer">
+        <div className="frontier-insight-pill">
+          <span className="insight-badge">
+            <TrendingUp size={12} style={{ marginRight: '4px' }} />
+            Strategic Verdict
+          </span>
+          <span className="insight-text">
+            <strong>Jev (261ms / 100% Smoke · 275ms / 72.7% Public)</strong> and <strong>GPT-5.6 Luna (1427ms / 79.2%)</strong> define the upper-left Pareto boundaries.
+            For zero-cost on-device execution, <strong>Nemotron Nano 4B Q4</strong> establishes the local sweet spot, jumping from <strong>83.3% to 87.5%</strong> when reasoning traces are active.
+          </span>
+        </div>
       </div>
     </div>
   );

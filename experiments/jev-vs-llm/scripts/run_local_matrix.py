@@ -4,7 +4,7 @@
 CLI tool for autonomous local benchmark execution across one or more models.
 Usage examples:
   # Run routing smoke test on specific models:
-  uv run python scripts/run_local_matrix.py --models qwen3.5-0.8b-q4km,nemotron-nano-4b
+  uv run python scripts/run_local_matrix.py --models qwen3.5-0.8b-q4km,nemotron-nano-4b-q4
 
   # Run all configured models with public budget profile:
   uv run python scripts/run_local_matrix.py --models all --dataset public --profile budget
@@ -126,6 +126,12 @@ def main() -> int:
         action="store_true",
         help="Keep Korgis server running after benchmark completes.",
     )
+    parser.add_argument(
+        "--thinking",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable/disable reasoning (thinking) traces on supported local models.",
+    )
 
     args = parser.parse_args()
 
@@ -171,9 +177,17 @@ def main() -> int:
 
     dataset = args.dataset or cfg.get("dataset", "smoke")
     profile = args.profile or cfg.get("public_profile", "budget")
+    enable_thinking = args.thinking if args.thinking is not None else bool(cfg.get("enable_thinking", False))
+    max_tokens = int(cfg.get("max_output_tokens", 512))
+    if enable_thinking and max_tokens <= 512:
+        max_tokens = int(cfg.get("thinking_max_output_tokens", 2048))
 
-    # Ensure llama-server doesn't divert output tokens to reasoning traces (<think>) for structured JSON evaluation
-    os.environ.setdefault("LLAMA_ARG_REASONING", "off")
+    if enable_thinking:
+        os.environ["LLAMA_ARG_REASONING"] = "on"
+        os.environ["KORGIS_ENABLE_THINKING"] = "true"
+    else:
+        os.environ["LLAMA_ARG_REASONING"] = "off"
+        os.environ["KORGIS_ENABLE_THINKING"] = "false"
 
     # Explicitly ensure LOCAL_LLM_SERVER_BIN points to the validated llama-server
     if "LOCAL_LLM_SERVER_BIN" not in os.environ:
@@ -204,6 +218,7 @@ def main() -> int:
     print(f"Experiments to run  : {', '.join(experiments)}")
     print(f"Dataset tier        : {dataset} (profile: {profile})")
     print(f"Korgis Base URL     : {base_url}")
+    print(f"Thinking Mode       : {'ON (Reasoning traces enabled)' if enable_thinking else 'OFF (Direct JSON)'}")
     print(f"Max Output Tokens   : {max_tokens}")
     print("=" * 65 + "\n")
 
@@ -213,16 +228,26 @@ def main() -> int:
         korgis_dir=korgis_dir,
         registry_path=registry_file,
         timeout=float(cfg.get("korgis_control_timeout", 360)),
+        enable_thinking=enable_thinking,
     )
 
+    local_models = [
+        m for m in chosen_models
+        if not (m.strip().lower() in {"jev", "jev-latest"} or m.startswith("jev-"))
+    ]
+
     try:
-        korgis.ensure_running(initial_model=chosen_models[0])
+        if local_models:
+            korgis.ensure_running(initial_model=local_models[0])
+        else:
+            print("[INFO] All requested models are cloud/API providers (e.g. Jev); skipping local Korgis server.")
 
         orchestrator = ExperimentOrchestrator(
             korgis_manager=korgis,
             output_csv=PROJECT_ROOT / cfg.get("results_csv", "results/raw/local_results.csv"),
             report_html=PROJECT_ROOT / cfg.get("report_html", "results/local_report.html"),
             max_output_tokens=max_tokens,
+            enable_thinking=enable_thinking,
         )
 
         results = orchestrator.run_matrix(

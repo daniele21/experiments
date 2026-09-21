@@ -69,3 +69,61 @@ export function formatMoney(val: number | null | undefined, digits: number = 2):
   if (val < 0.01) return `$${val.toFixed(4)}`;
   return `$${val.toFixed(digits)}`;
 }
+
+export interface ModelRuntimeInfo {
+  type: 'local' | 'cloud' | 'native';
+  label: string;
+  shortLabel: string;
+  badgeBg: string;
+  badgeColor: string;
+  badgeBorder: string;
+  hardwareSummary: string;
+  costBadge: string;
+  isFree: boolean;
+}
+
+export function getModelRuntime(provider: string = '', series: string = ''): ModelRuntimeInfo {
+  const p = (provider || '').toLowerCase();
+  const s = (series || '').toLowerCase();
+
+  if (p.includes('korgis') || s.includes('korgis') || s.includes('qwen') || s.includes('nemotron') || s.includes('minicpm')) {
+    return {
+      type: 'local',
+      label: 'Apple M3 Pro (36GB Local)',
+      shortLabel: 'M3 Pro Local',
+      badgeBg: '#f0fdf4',
+      badgeColor: '#166534',
+      badgeBorder: '#bbf7d0',
+      hardwareSummary: 'Apple M3 Pro · 11 Cores · 36 GB Unified RAM',
+      costBadge: '$0.00 Free',
+      isFree: true,
+    };
+  }
+
+  if (p.includes('llm') || p.includes('openai') || s.includes('gpt') || s.includes('luna')) {
+    return {
+      type: 'cloud',
+      label: 'Cloud API (OpenAI)',
+      shortLabel: 'Cloud API',
+      badgeBg: '#eef2ff',
+      badgeColor: '#4338ca',
+      badgeBorder: '#c7d2fe',
+      hardwareSummary: 'OpenAI Remote API Endpoint',
+      costBadge: 'Pay-per-token',
+      isFree: false,
+    };
+  }
+
+  // Jev / native router
+  return {
+    type: 'native',
+    label: 'Native Router',
+    shortLabel: 'Native',
+    badgeBg: '#f8fafc',
+    badgeColor: '#0f172a',
+    badgeBorder: '#cbd5e1',
+    hardwareSummary: 'Local Native Compiled Router',
+    costBadge: 'Local Native',
+    isFree: false,
+  };
+}

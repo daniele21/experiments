@@ -9,7 +9,13 @@ from typing import Annotated
 import pandas as pd
 import typer
 
-from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
+from jev_bench.benchmark_data import (
+    DEFAULT_CACHE,
+    balanced_banking77_cases,
+    banking77_question,
+    calibration_public_cases,
+    prepare_public_data,
+)
 from jev_bench.costs import pricing_metadata
 from jev_bench.manifest import write_manifest
 from jev_bench.providers.jev import JevProvider
@@ -26,6 +32,7 @@ from jev_bench.report import build_report
 from jev_bench.runner import (
     append_results,
     run_all,
+    run_cases,
     run_experiment,
     run_monolithic_workflows,
     run_public_classification,
@@ -361,20 +368,26 @@ def experiment(
         if dataset == "public":
             prepare_public_data(cache_dir)
             sizes = PUBLIC_PROFILES[profile]
-            public = run_public_classification(
-                decision_provider,
-                cache_dir=cache_dir,
-                routing_max_cases=sizes["routing"],
-                calibration_in_scope=sizes["in_scope"],
-                calibration_oos=sizes["oos"],
-                seed=seed,
-            )
-            target = (
-                "01-routing-public"
-                if resolved == "routing"
-                else "02-calibration-public"
-            )
-            frame = public[public["experiment"].eq(target)].copy()
+            if resolved == "routing":
+                cases = balanced_banking77_cases(
+                    cache_dir,
+                    max_cases=sizes["routing"],
+                    seed=seed,
+                    experiment="01-routing-public",
+                )
+                questions = [banking77_question(cache_dir, include_other=False)]
+                rows = run_cases("01-routing-public", decision_provider, cases, questions)
+                frame = pd.DataFrame(rows)
+            else:
+                cases = calibration_public_cases(
+                    cache_dir,
+                    in_scope_cases=sizes["in_scope"],
+                    oos_cases=sizes["oos"],
+                    seed=seed,
+                )
+                questions = [banking77_question(cache_dir, include_other=True)]
+                rows = run_cases("02-calibration-public", decision_provider, cases, questions)
+                frame = pd.DataFrame(rows)
         else:
             frame = run_experiment(
                 resolved,
@@ -524,7 +537,7 @@ def compare_public(
     korgis_anchor_model: Annotated[
         str,
         typer.Option(help="Resident model used as the low-memory parking/default runtime."),
-    ] = "nemotron-nano-4b",
+    ] = "nemotron-nano-4b-q4",
     allow_moving_jev_model: Annotated[
         bool,
         typer.Option(help="Allow jev-latest/jev-preview instead of a pinned Jev version."),
@@ -652,7 +665,7 @@ def compare_local(
     anchor_model: Annotated[
         str,
         typer.Option(help="Parking/default Korgis runtime used between larger local models."),
-    ] = "nemotron-nano-4b",
+    ] = "nemotron-nano-4b-q4",
 ) -> None:
     """Run only the local Korgis matrix; no paid cloud inference is used."""
     if profile not in PUBLIC_PROFILES:

@@ -3,6 +3,33 @@
  * TypeScript interfaces for benchmark data structures, metrics, and models.
  */
 
+export interface HardwareInfo {
+  device?: string | null;
+  chip?: string | null;
+  cores?: string | null;
+  memory_gb?: string | null;
+  os?: string | null;
+}
+
+export interface LocalParametersInfo {
+  context_window_tokens?: number;
+  max_output_tokens?: number;
+  temperature?: number;
+  thinking_policy?: string;
+  inference_runtime?: string;
+  hardware_acceleration?: string;
+  batch_slots?: string;
+}
+
+export interface ModelExecutionParams {
+  ctx_size?: number;
+  max_output_tokens?: number;
+  temperature?: number;
+  thinking_mode?: string;
+  quantization?: string;
+  backend?: string;
+}
+
 export interface BenchmarkMetadata {
   run_group: string;
   suite: string;
@@ -10,6 +37,8 @@ export interface BenchmarkMetadata {
   pricing_as_of: string;
   total_rows: number;
   is_local_zero_cost: boolean;
+  hardware?: HardwareInfo;
+  local_parameters?: LocalParametersInfo;
 }
 
 export interface ModelBadge {
@@ -21,10 +50,16 @@ export interface LeaderboardEntry {
   rank: number;
   medal: string;
   series: string;
+  series_id?: string;
   model: string;
   provider: string;
+  dataset?: string;
+  dataset_label?: string;
+  thinking_mode?: string;
   accuracy: number;
   accuracy_pct: string;
+  valid_accuracy?: number;
+  valid_accuracy_pct?: string;
   delta_str: string;
   delta_class: 'leader' | 'close' | 'moderate' | 'far';
   latency_p50_ms: number;
@@ -37,6 +72,7 @@ export interface LeaderboardEntry {
   total_count: number;
   badges: ModelBadge[];
   quant_label?: string;
+  execution_params?: ModelExecutionParams | null;
 }
 
 export interface KpiCardsData {
@@ -62,8 +98,12 @@ export interface ExperimentStatus {
 
 export interface ModelSpec {
   series: string;
+  series_id?: string;
   model: string;
   provider: string;
+  dataset?: string;
+  dataset_label?: string;
+  thinking_mode?: string;
   accuracy: number;
   latency_p50_ms: number;
 }
@@ -72,6 +112,10 @@ export interface OverviewRow {
   provider: string;
   model: string;
   series: string;
+  series_id?: string;
+  dataset?: string;
+  dataset_label?: string;
+  thinking_mode?: string;
   accuracy: number;
   valid_rate: number;
   latency_p50_ms: number;

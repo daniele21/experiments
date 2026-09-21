@@ -10,10 +10,11 @@ Tutti i modelli sono configurati in [`benchmark-models.yaml`](./benchmark-models
 
 | Identificativo Chiave | Modello Base | Quantizzazione | Dimensione | Uso Consigliato |
 |---|---|---|---|---|
-| **`nemotron-nano-4b`** | NVIDIA Nemotron-3 Nano 4B | `Q4_K_M` | 2.5 GB | Baseline veloce, ottimo bilanciamento velocità/accuratezza |
+| **`nemotron-nano-4b-q4`** | NVIDIA Nemotron-3 Nano 4B | `Q4_K_M` | 2.5 GB | Baseline veloce, ottimo bilanciamento velocità/accuratezza |
 | **`nemotron-nano-4b-q8`** | NVIDIA Nemotron-3 Nano 4B | `Q8_0` | 4.3 GB | Massima fedeltà e calibrazione sulla classe 4B |
 | **`qwen3.5-9b-q4km`** | Qwen 3.5 9B | `Q4_K_M` | 5.6 GB | Modello ad alte prestazioni per compiti multi-classe complessi |
 | **`qwen3.5-2b-q4km`** | Qwen 3.5 2B | `Q4_K_M` | 1.2 GB | Modello ultraleggero compatto |
+| **`minicpm5-2b-q4km`** | OpenBMB MiniCPM5 2B | `Q4_K_M` | 1.5 GB | Modello compatto con supporto reasoning opzionale (disabilitato per JSON) |
 
 > [!NOTE]
 > `qwen3.5-0.8b-q4km` rimane registrato nel file di configurazione per test di regressione, ma è escluso dalle sequenze di valutazione standard.
@@ -72,32 +73,32 @@ Tutti i comandi vanno eseguiti dalla cartella root del benchmark:
 cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
 ```
 
-### Modello 1: `nemotron-nano-4b` (NVIDIA 4B Q4)
+### Modello 1: `nemotron-nano-4b-q4` (NVIDIA 4B Q4)
 
 ```bash
 # 1.1 Smoke Test completo (Tutti i 5 esperimenti - circa 1 minuto)
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b \
+  --models nemotron-nano-4b-q4 \
   --experiments all \
   --dataset smoke
 
 # 1.2 Benchmark Pubblico Reale (Routing 77 classi + Calibrazione OOS)
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b \
+  --models nemotron-nano-4b-q4 \
   --experiments all \
   --dataset public \
   --profile budget
 
 # 1.3 Solo Routing su Dataset Pubblico (BANKING77 - 77 casi)
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b \
+  --models nemotron-nano-4b-q4 \
   --experiments routing \
   --dataset public \
   --profile budget
 
 # 1.4 Solo Calibrazione su Dataset Pubblico (BANKING77 + CLINC150)
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b \
+  --models nemotron-nano-4b-q4 \
   --experiments calibration \
   --dataset public \
   --profile budget
@@ -183,7 +184,33 @@ uv run python scripts/run_local_matrix.py \
 
 ---
 
-## 4. Esecuzione Batch Sequenziale (Tutti i 4 Modelli in Fila)
+### Modello 5: `minicpm5-2b-q4km` (OpenBMB MiniCPM5 2B Q4)
+
+```bash
+# 5.1 Smoke Test completo (Tutti i 5 esperimenti - circa 40 secondi)
+uv run python scripts/run_local_matrix.py \
+  --models minicpm5-2b-q4km \
+  --experiments all \
+  --dataset smoke
+
+# 5.2 Benchmark Pubblico Reale (Routing 77 classi + Calibrazione OOS)
+uv run python scripts/run_local_matrix.py \
+  --models minicpm5-2b-q4km \
+  --experiments all \
+  --dataset public \
+  --profile budget
+
+# 5.3 Solo Routing su Dataset Pubblico (BANKING77)
+uv run python scripts/run_local_matrix.py \
+  --models minicpm5-2b-q4km \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+```
+
+---
+
+## 4. Esecuzione Batch Sequenziale
 
 L'orchestratore attiva i modelli **uno alla volta**, gestendo automaticamente lo switch della memoria GPU/RAM e il ciclo di vita del server:
 
@@ -191,26 +218,26 @@ L'orchestratore attiva i modelli **uno alla volta**, gestendo automaticamente lo
 Valuta tutti i 4 modelli sui 5 esperimenti sintetici:
 ```bash
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km \
+  --models nemotron-nano-4b-q4,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km,minicpm5-2b-q4km \
   --experiments all \
   --dataset smoke
 ```
 
-### B. Tutti i 4 modelli sul Benchmark Pubblico di Routing (BANKING77)
+### B. Tutti i modelli sul Benchmark Pubblico di Routing (BANKING77)
 Esegue la matrice comparativa su 77 intent reali:
 ```bash
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km \
+  --models nemotron-nano-4b-q4,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km,minicpm5-2b-q4km \
   --experiments routing \
   --dataset public \
   --profile budget
 ```
 
-### C. Tutti i 4 modelli sul Benchmark Pubblico Completo (Routing + Calibration)
+### C. Tutti i modelli sul Benchmark Pubblico Completo (Routing + Calibration)
 Esecuzione completa approfondita:
 ```bash
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km \
+  --models nemotron-nano-4b-q4,nemotron-nano-4b-q8,qwen3.5-9b-q4km,qwen3.5-2b-q4km,minicpm5-2b-q4km \
   --experiments all \
   --dataset public \
   --profile budget
@@ -236,31 +263,65 @@ uv run python scripts/run_local_matrix.py --list
 Di default Korgis si spegne al termine del benchmark per liberare RAM. Se vuoi mantenerlo attivo per lanciare più comandi consecutivi senza attendere il riavvio:
 ```bash
 uv run python scripts/run_local_matrix.py \
-  --models nemotron-nano-4b \
+  --models nemotron-nano-4b-q4 \
   --experiments routing \
   --keep-korgis
 ```
+
+### Abilitare il Thinking / Reasoning Mode (`--thinking`)
+Per i modelli che supportano tracce di ragionamento (es. `nemotron-nano-4b-q4`, `nemotron-nano-4b-q8`, `minicpm5-2b-q4km`):
+```bash
+# Esecuzione con thinking attivo da riga di comando:
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b-q4 \
+  --experiments routing \
+  --thinking
+
+# Benchmark pubblico reale BANKING77 con thinking:
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b-q4 \
+  --experiments routing \
+  --dataset public \
+  --profile budget \
+  --thinking
+```
+> [!TIP]
+> Puoi anche abilitare il thinking come predefinito per tutte le esecuzioni modificando `enable_thinking: true` nel file [`experiments_config.yaml`](experiments_config.yaml). Il sistema adatterà automaticamente il limite dei token di output a 2048 token per permettere la generazione completa della traccia `<think>` prima del JSON.
 
 ---
 
 ## 6. Consultazione e Analisi dei Risultati
 
-Al termine di ogni run i risultati vengono salvati automaticamente e aggregati in modo cumulativo:
+Al termine di ogni run i risultati vengono salvati automaticamente e aggregati in modo cumulativo e **strutturale**:
 
-1. **Dashboard HTML Interattivo**:
+1. **Accorpamento Strutturale Solido a 4 Dimensioni**:
+   L'aggregazione non sovrascrive né disperde i risultati precedenti. Ogni esecuzione è identificata univocamente da:
+   $$\text{Key} = (\text{Modello}, \text{Dataset}, \text{Configurazione}, \text{Task})$$
+   Questo garantisce che per ciascuna combinazione (es. *Nemotron Nano 4B Q4 con Thinking ON* vs *Thinking OFF*, oppure su *Banking77* vs *Smoke*) vengano sempre mantenuti e visualizzati gli **ultimi risultati validi**.
+
+2. **Filtro per Dataset Tier nella Dashboard UI**:
+   Nella barra superiore della Dashboard è possibile filtrare i risultati con un click:
+   - **`Public Benchmark (Banking77)`**: Mostra solo i run condotti sul dataset pubblico standard a 77 classi per un confronto equo e rigoroso ad armi pari.
+   - **`Smoke Test Suite (24 casi)`**: Mostra i risultati rapidi sui casi sintetici locali (ottimo per confrontare l'impatto immediato di parametri come il thinking on/off).
+   - **`All Runs`**: Visualizza la matrice completa di tutti i modelli e le configurazioni testate.
+
+3. **Dashboard HTML Interattivo**:
    Apri il report grafico nel browser:
    ```bash
    open results/local_report.html
    ```
-   Contiene grafici di accuratezza, tasso di validità del JSON, distribuzione delle latenze per caso e percentili.
+   Oppure visualizza la UI reattiva di sviluppo (se il dev server è avviato):
+   ```bash
+   npm --prefix dashboard run dev
+   ```
 
-2. **Dati Grezzi Tabellari (CSV)**:
+4. **Dati Grezzi Tabellari (CSV)**:
    Tutti i singoli campioni con prompt, token consumati, latenza esatta ed esito:
    ```text
    results/raw/local_results.csv
    ```
 
-3. **Log del Server Locale Korgis / llama-server**:
+5. **Log del Server Locale Korgis / llama-server**:
    Se vuoi analizzare il throughput di token al secondo o i dettagli di inferenza:
    ```bash
    tail -f results/logs/korgis.log

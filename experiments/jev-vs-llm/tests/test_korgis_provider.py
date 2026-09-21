@@ -47,7 +47,7 @@ class _FakeClient:
 
 def test_default_korgis_matrix_contains_only_built_in_registry_models():
     assert DEFAULT_KORGIS_MODELS == [
-        "nemotron-nano-4b",
+        "nemotron-nano-4b-q4",
         "qwen3-vl-4b",
     ]
 
@@ -55,13 +55,13 @@ def test_default_korgis_matrix_contains_only_built_in_registry_models():
 def test_managed_order_runs_anchor_last():
     assert managed_korgis_model_order(
         [
-            "nemotron-nano-4b",
+            "nemotron-nano-4b-q4",
             "qwen3-vl-4b",
         ],
-        "nemotron-nano-4b",
+        "nemotron-nano-4b-q4",
     ) == [
         "qwen3-vl-4b",
-        "nemotron-nano-4b",
+        "nemotron-nano-4b-q4",
     ]
 
 

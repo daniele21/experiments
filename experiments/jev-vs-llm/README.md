@@ -80,10 +80,11 @@ Default local matrix:
 
 | Korgis key | Model | Quantization/backend | Provider API fee |
 |---|---|---|---:|
-| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B | Q4_K_M / llama-server | $0 |
+| `nemotron-nano-4b-q4` | NVIDIA Nemotron-3-Nano-4B | Q4_K_M / llama-server | $0 |
+| `nemotron-nano-4b-q8` | NVIDIA Nemotron-3-Nano-4B | Q8_0 / llama-server | $0 |
 | `qwen3-vl-4b` | Qwen3-VL-4B-Instruct | MLX 4-bit / mlx-vlm-server | $0 |
 
-MiniCPM is intentionally absent from this table because the benchmark uses its official remote API rather than inventing a `minicpm3-4b-q4km` registry key.
+MiniCPM is evaluated via the local `minicpm5-2b-q4km` GGUF runner or its official remote API.
 
 Local provider API fee is recorded as zero. That **does not mean local inference has zero total cost**: electricity, device purchase/amortisation, thermal impact and device opportunity cost are currently outside the cost model.
 
@@ -93,7 +94,7 @@ See [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for the local-runtime details.
 > To evaluate local models autonomously one at a time with live progress bars:
 > ```bash
 > # Run all experiments on a selected model:
-> uv run python scripts/run_local_matrix.py --models nemotron-nano-4b --experiments all --dataset smoke
+> uv run python scripts/run_local_matrix.py --models nemotron-nano-4b-q4 --experiments all --dataset smoke
 > ```
 > See [`LOCAL_MODELS.md`](LOCAL_MODELS.md#15-autonomous-multi-model-runner-run_local_matrixpy) for full options and public benchmark commands.
 

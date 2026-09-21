@@ -56,6 +56,9 @@ from jev_bench.datasets import (
     support_questions,
 )
 from jev_bench.models import BenchmarkCase, QuestionSpec
+from jev_bench.progress import run_cases_with_progress
+from jev_bench.providers.base import DecisionProvider
+from jev_bench.providers.jev import JevProvider
 from jev_bench.providers.korgis import KorgisProvider
 from jev_bench.runner import (
     _expense_action,
@@ -82,6 +85,7 @@ class ExperimentOrchestrator:
         cache_dir: Path = DEFAULT_CACHE,
         max_output_tokens: int = 512,
         seed: int = 42,
+        enable_thinking: bool = False,
     ) -> None:
         self.korgis = korgis_manager
         self.output_csv = output_csv
@@ -89,6 +93,7 @@ class ExperimentOrchestrator:
         self.cache_dir = cache_dir
         self.max_output_tokens = max_output_tokens
         self.seed = seed
+        self.enable_thinking = enable_thinking
 
     def run_matrix(
         self,
@@ -103,8 +108,12 @@ class ExperimentOrchestrator:
         if not experiments:
             raise ValueError("No experiments specified for execution.")
 
-        os.environ["KORGIS_MAX_OUTPUT_TOKENS"] = str(self.max_output_tokens)
+        eff_tokens = self.max_output_tokens
+        if self.enable_thinking and eff_tokens <= 512:
+            eff_tokens = 2048
+        os.environ["KORGIS_MAX_OUTPUT_TOKENS"] = str(eff_tokens)
         os.environ["KORGIS_BASE_URL"] = self.korgis.base_url
+        os.environ["KORGIS_ENABLE_THINKING"] = "true" if self.enable_thinking else "false"
 
         group_id = str(uuid.uuid4())
         total_models = len(models)
@@ -126,23 +135,29 @@ class ExperimentOrchestrator:
             console.print(f"[bold white on blue] MODEL [{idx}/{total_models}]: {model} [/]")
             console.print("━" * 70)
 
-            # 1. Activate model in Korgis
-            try:
-                self.korgis.activate_model(model)
-            except Exception as exc:
-                logger.error("Failed to activate model '%s': %s", model, exc)
-                summary_records.append({
-                    "model": model,
-                    "status": "ERROR_ACTIVATION",
-                    "error": str(exc),
-                })
-                continue
+            is_jev = model.strip().lower() in {"jev", "jev-latest"} or model.startswith("jev-")
+            if is_jev:
+                jev_m = os.getenv("JEV_MODEL", "jev-1.13.0") if model == "jev" else model
+                provider: DecisionProvider = JevProvider(model=jev_m)
+            else:
+                # 1. Activate model in Korgis
+                try:
+                    self.korgis.activate_model(model)
+                except Exception as exc:
+                    logger.error("Failed to activate model '%s': %s", model, exc)
+                    summary_records.append({
+                        "model": model,
+                        "status": "ERROR_ACTIVATION",
+                        "error": str(exc),
+                    })
+                    continue
 
-            provider = KorgisProvider(
-                model=model,
-                base_url=self.korgis.base_url,
-                seed=self.seed,
-            )
+                provider = KorgisProvider(
+                    model=model,
+                    base_url=self.korgis.base_url,
+                    seed=self.seed,
+                    enable_thinking=self.enable_thinking,
+                )
 
             # 2. Run experiments for this model
             for exp_name in experiments:
@@ -158,6 +173,8 @@ class ExperimentOrchestrator:
                     elapsed = time.perf_counter() - t0
 
                     tagged_frame = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
+                    tagged_frame["thinking_mode"] = "on" if self.enable_thinking else "off"
+                    tagged_frame["dataset_type"] = dataset
                     append_results(tagged_frame, self.output_csv)
                     all_frames.append(tagged_frame)
 
@@ -193,13 +210,17 @@ class ExperimentOrchestrator:
                     console.print(f"[bold red]✗ Failed {model} on {exp_name}:[/] {exc}")
 
             # 3. Unload model to completely free VRAM/RAM before next model
-            if idx < total_models:
+            if not is_jev and idx < total_models:
                 self.korgis.unload_model(model)
                 time.sleep(1.0)
 
         # 4. Build report across all evaluated frames
         if all_frames:
             combined = pd.concat(all_frames, ignore_index=True)
+            requested_korgis = [
+                m for m in models
+                if not (m.strip().lower() in {"jev", "jev-latest"} or m.startswith("jev-"))
+            ]
             _record_manifest(
                 combined,
                 group=group_id,
@@ -210,8 +231,9 @@ class ExperimentOrchestrator:
                     "dataset": dataset,
                     "profile": profile if dataset == "public" else None,
                     "seed": self.seed,
+                    "enable_thinking": self.enable_thinking,
                 },
-                requested_korgis_models=models,
+                requested_korgis_models=requested_korgis,
             )
             build_report(self.output_csv, self.report_html, run_group="latest_per_model")
             logger.info("Report updated at: %s", self.report_html)
@@ -226,7 +248,7 @@ class ExperimentOrchestrator:
     def _run_single_experiment(
         self,
         exp_name: str,
-        provider: KorgisProvider,
+        provider: DecisionProvider,
         model_name: str,
         dataset: str,
         profile: str,
@@ -287,70 +309,18 @@ class ExperimentOrchestrator:
     def _run_cases_with_progress(
         self,
         experiment: str,
-        provider: KorgisProvider,
+        provider: DecisionProvider,
         cases: Sequence[BenchmarkCase],
         questions: Sequence[QuestionSpec],
         model_name: str,
     ) -> list[dict]:
         """Execute benchmark cases while displaying a live progress bar and per-case details."""
-        rows: list[dict] = []
-        total = len(cases)
-        correct_count = 0
-        valid_count = 0
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[bold cyan]{task.fields[model]}[/]"),
-            TextColumn("[bold yellow]{task.fields[exp]}[/]"),
-            BarColumn(bar_width=25),
-            TaskProgressColumn(),
-            TextColumn("•"),
-            TimeElapsedColumn(),
-            TextColumn("•"),
-            TimeRemainingColumn(),
-            TextColumn("[dim]({task.fields[status]})[/dim]"),
+        return run_cases_with_progress(
+            experiment=experiment,
+            provider=provider,
+            cases=cases,
+            questions=questions,
+            model_name=model_name,
             console=console,
-            transient=False,
-        ) as progress:
-            task = progress.add_task(
-                "run",
-                total=total,
-                model=model_name,
-                exp=experiment,
-                status="initializing...",
-            )
-
-            for idx, case in enumerate(cases, start=1):
-                result = provider.evaluate(case.state, questions)
-                case_rows = _rows_for_case(experiment, case, questions, result, primary=True)
-                rows.extend(case_rows)
-
-                is_valid = bool(result.valid)
-                is_correct = any(r.get("correct") for r in case_rows)
-                if is_valid:
-                    valid_count += 1
-                if is_correct:
-                    correct_count += 1
-
-                actual_val = case_rows[0].get("actual") if case_rows else None
-                exp_val = case_rows[0].get("expected") if case_rows else None
-                if is_correct:
-                    badge = f"[bold green]✓[/bold green] [green]correct[/green] (ans: [bold]{actual_val}[/bold])"
-                elif is_valid:
-                    badge = f"[bold red]✗[/bold red] [yellow]mismatch[/yellow] (got: [bold]{actual_val}[/bold], exp: [bold]{exp_val}[/bold])"
-                else:
-                    badge = f"[bold red]✗ invalid[/bold red] ({result.error})"
-
-                # Print clean verbose output for each evaluated case
-                progress.console.print(
-                    f"  [{idx:>3}/{total}] {badge} • [dim]{case.case_id}[/dim] • [cyan]{result.latency_ms:.0f}ms[/cyan]"
-                )
-
-                acc = (correct_count / idx) * 100
-                progress.update(
-                    task,
-                    advance=1,
-                    status=f"acc: {acc:.1f}% | lat: {result.latency_ms:.0f}ms",
-                )
-
-        return rows
+            row_builder=_rows_for_case,
+        )

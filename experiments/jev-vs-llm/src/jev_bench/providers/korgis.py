@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -14,7 +15,7 @@ from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
 DEFAULT_KORGIS_MODELS = [
-    "nemotron-nano-4b",
+    "nemotron-nano-4b-q4",
     "qwen3-vl-4b",
 ]
 
@@ -100,6 +101,7 @@ class KorgisProvider(DecisionProvider):
         base_url: str | None = None,
         *,
         seed: int = 42,
+        enable_thinking: bool | None = None,
     ) -> None:
         self.model = model
         self.base_url = (
@@ -107,7 +109,10 @@ class KorgisProvider(DecisionProvider):
         ).rstrip("/")
         timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
         self.seed = seed
-        self.max_tokens = int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", "2048"))
+        env_thinking = os.getenv("KORGIS_ENABLE_THINKING", "false").lower() in {"true", "1", "yes"}
+        self.enable_thinking = enable_thinking if enable_thinking is not None else env_thinking
+        default_tokens = "2048" if self.enable_thinking else "512"
+        self.max_tokens = int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", default_tokens))
         self.client = OpenAI(
             base_url=self.base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
@@ -188,17 +193,29 @@ class KorgisProvider(DecisionProvider):
                         "content": json.dumps(prompt, ensure_ascii=False),
                     },
                 ],
-                response_format={"type": "json_object"},
+                response_format={"type": "json_object"} if not self.enable_thinking else None,
                 max_tokens=self.max_tokens,
                 seed=self.seed,
                 extra_body={
-                    "enable_thinking": False,
+                    "enable_thinking": self.enable_thinking,
                     "show_thinking": False,
                 },
             )
             latency_ms = (time.perf_counter() - started) * 1000
             content = response.choices[0].message.content or ""
-            data = json.loads(content)
+            # Strip reasoning tags if present in output before JSON parsing
+            clean_content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+            if clean_content.startswith("```"):
+                clean_content = re.sub(r"^```(?:json)?\s*", "", clean_content)
+                clean_content = re.sub(r"\s*```$", "", clean_content).strip()
+            try:
+                data = json.loads(clean_content)
+            except json.JSONDecodeError:
+                match = re.search(r"(\{.*\})", clean_content, flags=re.DOTALL)
+                if match:
+                    data = json.loads(match.group(1))
+                else:
+                    raise
             items = data.get("answers")
             if not isinstance(items, list):
                 raise TypeError("response JSON has no answers array")

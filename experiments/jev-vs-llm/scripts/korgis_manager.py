@@ -68,6 +68,7 @@ class KorgisManager:
         registry_path: str | Path | None = None,
         log_file: str | Path = "results/logs/korgis.log",
         timeout: float = 360.0,
+        enable_thinking: bool = False,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.root_url = self.base_url.removesuffix("/v1")
@@ -83,6 +84,7 @@ class KorgisManager:
         self.registry_path = Path(registry_path).resolve() if registry_path else None
         self.log_path = Path(log_file).resolve()
         self.timeout = timeout
+        self.enable_thinking = enable_thinking
         self.process: subprocess.Popen | None = None
         self.log_handle: Any = None
         self.started_by_us = False
@@ -143,9 +145,9 @@ class KorgisManager:
         if "/opt/homebrew/bin" not in current_path:
             env["PATH"] = f"/opt/homebrew/bin:{current_path}"
 
-        # For structured decision benchmarks, disable thinking traces so models output direct JSON
-        # instead of exhausting max_tokens in <think> tags (which leaves content empty -> 502 invalid_model_output).
-        if "LLAMA_ARG_REASONING" not in env:
+        if self.enable_thinking:
+            env["LLAMA_ARG_REASONING"] = "on"
+        elif "LLAMA_ARG_REASONING" not in env:
             env["LLAMA_ARG_REASONING"] = "off"
         if self.registry_path and self.registry_path.is_file():
             env["LOCAL_LLM_REGISTRY_PATHS"] = str(self.registry_path)
@@ -156,6 +158,10 @@ class KorgisManager:
             "--enable-admin-api",
             "--no-download",
         ]
+        if self.enable_thinking:
+            cmd.append("--enable-thinking")
+        else:
+            cmd.append("--no-enable-thinking")
 
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self.log_handle = self.log_path.open("w", encoding="utf-8")

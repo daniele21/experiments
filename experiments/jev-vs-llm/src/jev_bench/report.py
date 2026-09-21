@@ -54,6 +54,7 @@ def build_report(
     raw_csv: Path,
     output_html: Path,
     run_group: str | None = "latest_per_model",
+    update_dashboard: bool | None = None,
 ) -> None:
     """Generate the interactive decision benchmark dashboard from raw results CSV.
 
@@ -65,16 +66,31 @@ def build_report(
     output_html = Path(output_html)
     output_html.parent.mkdir(parents=True, exist_ok=True)
 
+    # Determine whether this is a production/results run or a temporary test run
+    resolved_html = output_html.resolve()
+    resolved_str = str(resolved_html)
+    is_temp = (
+        resolved_str.startswith("/tmp")
+        or resolved_str.startswith("/var/folders")
+        or "pytest" in resolved_str
+    )
+    should_update_dashboard = (
+        update_dashboard
+        if update_dashboard is not None
+        else ("results" in resolved_html.parts and not is_temp)
+    )
+
     # 1. Build complete structured payload
     payload = build_benchmark_payload(raw_csv, run_group)
 
-    # 2. Persist JSON data in results/ and dashboard/src/data/
+    # 2. Persist JSON data in output_html.parent / benchmark_data.json
     json_out = output_html.parent / "benchmark_data.json"
     with open(json_out, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
 
+    # Only update Vite dashboard src/data when generating real project reports (never during unit tests)
     dashboard_data_path = _DASHBOARD_DIR / "src" / "data" / "benchmark_data.json"
-    if dashboard_data_path.parent.exists():
+    if should_update_dashboard and dashboard_data_path.parent.exists():
         with open(dashboard_data_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
 
@@ -84,9 +100,14 @@ def build_report(
         rendered = _inject_payload_into_html(template_html, payload)
         output_html.write_text(rendered, encoding="utf-8")
 
-    # 4. If npm is available, trigger a fresh rebuild of the singlefile bundle
+    # 4. If npm is available and updating dashboard, trigger a fresh rebuild of the singlefile bundle
     npm_bin = shutil.which("npm")
-    if npm_bin and _DASHBOARD_DIR.exists() and (_DASHBOARD_DIR / "package.json").exists():
+    if (
+        should_update_dashboard
+        and npm_bin
+        and _DASHBOARD_DIR.exists()
+        and (_DASHBOARD_DIR / "package.json").exists()
+    ):
         try:
             subprocess.run(
                 [npm_bin, "run", "build"],

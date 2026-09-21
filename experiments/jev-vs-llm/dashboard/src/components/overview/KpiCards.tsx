@@ -1,13 +1,18 @@
 import React from 'react';
-import type { KpiCardsData } from '../../types/benchmark';
-import { Trophy, Zap, Scale, CheckCircle2 } from 'lucide-react';
+import type { KpiCardsData, HardwareInfo } from '../../types/benchmark';
+import { Trophy, Zap, Scale, CheckCircle2, Cpu } from 'lucide-react';
+import { getModelRuntime } from '../../config/theme';
 
 interface KpiCardsProps {
   data: KpiCardsData;
+  hardware?: HardwareInfo;
 }
 
-export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
+export const KpiCards: React.FC<KpiCardsProps> = ({ data, hardware }) => {
   const { leader, fastest, sweet_spot, total_models, total_requests } = data;
+
+  const leaderRt = leader ? getModelRuntime(leader.provider, leader.series) : null;
+  const fastestRt = fastest ? getModelRuntime(fastest.provider, fastest.series) : null;
 
   return (
     <div className="kpi-grid">
@@ -20,7 +25,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
                 <Trophy size={12} />
                 <span>Accuracy Leader</span>
               </span>
-              <span className="kpi-subtext">Rank #1</span>
+              <span className="kpi-subtext">Rank #1 · {leaderRt?.shortLabel}</span>
             </div>
             <div className="kpi-model-name" title={leader.series}>
               {leader.series}
@@ -46,7 +51,7 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
                 <Zap size={12} />
                 <span>Speed Champion</span>
               </span>
-              <span className="kpi-subtext">{fastest.speed_str}</span>
+              <span className="kpi-subtext">{fastest.speed_str} · {fastestRt?.shortLabel}</span>
             </div>
             <div className="kpi-model-name" title={fastest.series}>
               {fastest.series}
@@ -97,7 +102,9 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
               <CheckCircle2 size={12} />
               <span>Benchmark Matrix</span>
             </span>
-            <span className="kpi-subtext">Active</span>
+            <span className="kpi-subtext">
+              {hardware?.chip ? `${hardware.chip}` : 'Active'}
+            </span>
           </div>
           <div className="kpi-model-name">Evaluated Systems</div>
           <div className="kpi-value-row">
@@ -106,8 +113,11 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data }) => {
           </div>
         </div>
         <div className="kpi-footer">
-          <span>Total Requests: {total_requests}</span>
-          <span>100% Local Inference</span>
+          <span>Requests: {total_requests}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <Cpu size={12} />
+            <span>5 Local M3 Pro · 2 Cloud/Engine</span>
+          </span>
         </div>
       </div>
     </div>

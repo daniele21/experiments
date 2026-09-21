@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import platform
+import subprocess
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from jev_bench.costs import pricing_metadata
 from jev_bench.metrics import (
@@ -154,6 +158,100 @@ def _extract_per_class(rows: pd.DataFrame, prefix: str) -> list[dict[str, Any]]:
     return sorted(records, key=lambda x: (x["series"], -x["accuracy"]))
 
 
+def _detect_hardware() -> dict[str, str | None]:
+    """Auto-detect the host hardware specs for local benchmark context.
+
+    On macOS, uses ``system_profiler SPHardwareDataType`` to extract chip name,
+    core count, and unified memory size.  Returns a dict safe for JSON
+    serialisation; unknown fields are ``None``.
+    """
+    result: dict[str, str | None] = {
+        "device": None,
+        "chip": None,
+        "cores": None,
+        "memory_gb": None,
+        "os": platform.system(),
+    }
+
+    # Allow explicit override via environment variables
+    env_device = os.getenv("BENCHMARK_HARDWARE_DEVICE")
+    env_chip = os.getenv("BENCHMARK_HARDWARE_CHIP")
+    env_memory = os.getenv("BENCHMARK_HARDWARE_MEMORY_GB")
+    if env_device or env_chip:
+        result["device"] = env_device
+        result["chip"] = env_chip
+        result["memory_gb"] = env_memory
+        return result
+
+    if platform.system() != "Darwin":
+        return result
+
+    try:
+        raw = subprocess.check_output(
+            ["system_profiler", "SPHardwareDataType"],
+            timeout=10,
+            text=True,
+        )
+        for line in raw.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("Model Name:"):
+                result["device"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("Chip:"):
+                result["chip"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("Total Number of Cores:"):
+                result["cores"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("Memory:"):
+                mem_str = stripped.split(":", 1)[1].strip()
+                result["memory_gb"] = mem_str.replace(" GB", "")
+    except Exception:
+        pass  # graceful fallback: fields stay None
+
+    return result
+
+
+def _load_local_parameters() -> dict[str, Any]:
+    """Extract configured execution parameters for local models."""
+    root = Path(__file__).resolve().parents[3]
+    exp_cfg_path = root / "experiments_config.yaml"
+    reg_path = root / "benchmark-models.yaml"
+
+    enable_thinking = False
+    max_output_tokens = 512
+    if exp_cfg_path.is_file():
+        try:
+            with exp_cfg_path.open("r", encoding="utf-8") as f:
+                c = yaml.safe_load(f) or {}
+                enable_thinking = bool(c.get("enable_thinking", False))
+                max_output_tokens = int(c.get("max_output_tokens", 512))
+                if enable_thinking and max_output_tokens <= 512:
+                    max_output_tokens = int(c.get("thinking_max_output_tokens", 2048))
+        except Exception:
+            pass
+
+    ctx_size = 8192
+    if reg_path.is_file():
+        try:
+            with reg_path.open("r", encoding="utf-8") as f:
+                m = yaml.safe_load(f) or {}
+                for model_data in m.get("models", {}).values():
+                    params = model_data.get("params", {})
+                    if "ctx_size" in params:
+                        ctx_size = int(params["ctx_size"])
+                        break
+        except Exception:
+            pass
+
+    return {
+        "context_window_tokens": ctx_size,
+        "max_output_tokens": max_output_tokens,
+        "temperature": 0.0,
+        "thinking_policy": "enabled (on)" if enable_thinking else "disabled (off)",
+        "inference_runtime": "llama-server (Homebrew llama.cpp)",
+        "hardware_acceleration": "Apple Silicon Metal (Unified Memory)",
+        "batch_slots": "1 parallel slot · continuous batching · unified KV",
+    }
+
+
 def build_benchmark_payload(
     raw_csv: Path, run_group: str | None = "latest_per_model"
 ) -> dict[str, Any]:
@@ -179,8 +277,12 @@ def build_benchmark_payload(
     for m in leaderboard:
         models_list.append({
             "series": m["series"],
+            "series_id": m.get("series_id", m["series"]),
             "model": m["model"],
             "provider": m["provider"],
+            "dataset": m.get("dataset", "public"),
+            "dataset_label": m.get("dataset_label", ""),
+            "thinking_mode": m.get("thinking_mode", "off"),
             "accuracy": m["accuracy"],
             "latency_p50_ms": m["latency_p50_ms"],
         })
@@ -249,6 +351,8 @@ def build_benchmark_payload(
             "pricing_as_of": pricing.get("as_of", "latest"),
             "total_rows": len(rows),
             "is_local_zero_cost": is_local_zero_cost,
+            "hardware": _detect_hardware(),
+            "local_parameters": _load_local_parameters(),
         },
         "experiments": active_exps,
         "models": models_list,

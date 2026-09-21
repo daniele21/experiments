@@ -244,9 +244,10 @@ If you have downloaded GGUF models via LM Studio (typically residing under `~/.l
 |---|---|---|
 | `qwen3.5-0.8b-q4km` | Qwen 3.5 0.8B (Q4_K_M) | `unsloth/Qwen3.5-0.8B-GGUF/Qwen3.5-0.8B-Q4_K_M.gguf` |
 | `qwen3.5-2b-q4km` | Qwen 3.5 2B (Q4_K_M) | `unsloth/Qwen3.5-2B-GGUF/Qwen3.5-2B-Q4_K_M.gguf` |
-| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B (Q4_K_M) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` |
+| `nemotron-nano-4b-q4` | NVIDIA Nemotron-3-Nano-4B (Q4_K_M) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` |
 | `nemotron-nano-4b-q8` | NVIDIA Nemotron-3-Nano-4B (Q8_0) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q8_0.gguf` |
 | `qwen3.5-9b-q4km` | Qwen 3.5 9B (Q4_K_M) | `lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf` |
+| `minicpm5-2b-q4km` | OpenBMB MiniCPM5 2B (Q4_K_M) | `openbmb/MiniCPM5-2B-GGUF/MiniCPM5-2B-Q4_K_M.gguf` |
 
 To use this configuration across runs:
 
@@ -440,7 +441,7 @@ korgis_port: 1235
 default_models:
   - "qwen3.5-0.8b-q4km"
   - "qwen3.5-2b-q4km"
-  - "nemotron-nano-4b"
+  - "nemotron-nano-4b-q4"
   - "nemotron-nano-4b-q8"
   - "qwen3.5-9b-q4km"
 default_experiments:
@@ -451,8 +452,11 @@ max_output_tokens: 512
 stop_korgis_on_complete: true
 ```
 
-### Note on Reasoning Models (e.g. Qwen) and Structured Outputs
+### Note on Reasoning Models (e.g. Nemotron, MiniCPM) and Structured Outputs
 
-Models with built-in reasoning templates (like Qwen) emit `<think>...</think>` tags by default. In `llama-server`, thinking tokens are segregated into `reasoning_content` and do not have JSON schema constraints applied. In long multi-class prompts (like BANKING77 with 77 classes), this can exhaust `max_output_tokens` before reaching the JSON block, returning empty content and a `502 invalid_model_output`.
+Models with built-in reasoning templates emit `<think>...</think>` tags before the JSON answer. When thinking is enabled:
+- The orchestrator supports passing `--thinking` via the CLI or setting `enable_thinking: true` in `experiments_config.yaml`.
+- The token limit is automatically adjusted to 2048 tokens (`thinking_max_output_tokens: 2048`) to ensure the model has sufficient space for reasoning without truncating the final JSON object.
+- The response parser automatically strips `<think>...</think>` traces to validate and parse the pure JSON decision object.
 
-The orchestrator automatically sets `LLAMA_ARG_REASONING=off` by default to disable thinking traces during structured benchmark tasks, ensuring prompt GBNF grammar constraints and direct fast JSON responses.
+By default, without `--thinking`, the runner sets `LLAMA_ARG_REASONING=off` to disable thinking traces for maximum speed and deterministic JSON outputs.
