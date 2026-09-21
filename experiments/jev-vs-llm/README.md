@@ -194,7 +194,49 @@ uv run --frozen local-llm --help
 
 If `local-llm` is installed globally you can omit `uv run --frozen`. The documentation uses the explicit `uv run --frozen local-llm ...` form because it guarantees that the command comes from the checked-out Korgis environment.
 
-### 3.3 Cloud-provider environment
+### 3.3 Install the `llama-server` backend
+
+The benchmark GGUF entries use Korgis' managed `llama_server` backend. Korgis therefore needs access to a compatible `llama-server` executable.
+
+On macOS or Linux with Homebrew:
+
+```bash
+brew install llama.cpp
+command -v llama-server
+llama-server --version
+```
+
+If the binary is on `PATH`, Korgis can resolve it normally. You can also make the path explicit:
+
+```bash
+export LOCAL_LLM_SERVER_BIN="$(command -v llama-server)"
+```
+
+or pass it at startup:
+
+```bash
+uv run --frozen local-llm serve \
+  --model <MODEL_KEY> \
+  --llama-server-bin "$(command -v llama-server)" \
+  --enable-admin-api \
+  --no-download
+```
+
+On other platforms, install a current `llama.cpp` build using the official install instructions or prebuilt binaries, then point `LOCAL_LLM_SERVER_BIN` / `--llama-server-bin` at the executable.
+
+The important distinction is:
+
+```text
+Korgis package        → control plane / lifecycle / API
+llama-server binary   → GGUF inference runtime
+GGUF file             → model weights
+```
+
+All three must be available for the managed `llama_server` path.
+
+### 3.4 Cloud-provider environment
+
+### 3.4 Cloud-provider environment
 
 Set only the credentials you intend to use:
 
@@ -212,7 +254,7 @@ export OPENAI_REASONING_EFFORT="none"
 
 For exploratory Jev runs, `jev-latest` can be used. For reproducible comparisons, pin the exact Jev version.
 
-### 3.4 Measurement environment
+### 3.5 Measurement environment
 
 Record where the benchmark runs:
 
