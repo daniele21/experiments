@@ -1,6 +1,6 @@
 [project]
 name = "redact-bench"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reproducible local anonymization benchmark for RedactGuard through Korgis"
 requires-python = ">=3.11"
 dependencies = [
@@ -11,6 +11,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.12"]
+documents = [
+  "docling>=2.0.0",
+  "reportlab>=4.0",
+]
 
 [project.scripts]
 redact-bench = "redact_bench.cli:app"
