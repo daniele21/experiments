@@ -5,6 +5,7 @@ A reproducible benchmark for comparing **bounded decision systems** across diffe
 - **Jev / System One** for typed probabilistic decisions;
 - **OpenAI GPT workflow models** for the same decomposed decisions;
 - **OpenAI GPT monolithic baselines** for workflow/agent final actions;
+- **MiniCPM through its official ModelBest API** using an API key;
 - **Korgis local LLMs** served through the same OpenAI-compatible HTTP boundary.
 
 The goal is **not** to declare one universal winner. The benchmark is designed to answer a more useful question:
@@ -59,20 +60,30 @@ better model architecture?
 better workflow decomposition?
 ```
 
+### MiniCPM API baseline
+
+MiniCPM is **not** part of the local GGUF/Korgis matrix. The benchmark connects to the official ModelBest OpenAI-compatible API with `MINICPM_API_KEY`.
+
+Default API model:
+
+```text
+MiniCPM-V-4.6-1B
+```
+
+The benchmark sends text-only bounded-decision prompts even though the model is multimodal. Override the model with `MINICPM_MODEL` or `--minicpm-model`. See [`MINICPM_API.md`](MINICPM_API.md).
+
 ### Korgis local models
 
-The local comparison runs through **Korgis / Local LLM Server**, not directly against llama.cpp.
+The local comparison runs through **Korgis / Local LLM Server** and only defaults to keys that actually exist in Korgis' built-in registry.
 
 Default local matrix:
 
-| Korgis key | Model | Quantization | Provider API fee |
+| Korgis key | Model | Quantization/backend | Provider API fee |
 |---|---|---|---:|
-| `qwen3.5-4b-q4km` | Qwen3.5-4B | Q4_K_M | $0 |
-| `minicpm3-4b-q4km` | MiniCPM3-4B | Q4_K_M | $0 |
-| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B | Q4_K_M | $0 |
-| `qwen3.5-9b-q4km` | Qwen3.5-9B | Q4_K_M | $0 |
+| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B | Q4_K_M / llama-server | $0 |
+| `qwen3-vl-4b` | Qwen3-VL-4B-Instruct | MLX 4-bit / mlx-vlm-server | $0 |
 
-The 4B tier deliberately includes Qwen3.5-4B, MiniCPM3-4B and Nemotron Nano 4B so model-family effects can be compared at roughly similar scale. Qwen3.5-9B remains as the larger within-family reference.
+MiniCPM is intentionally absent from this table because the benchmark uses its official remote API rather than inventing a `minicpm3-4b-q4km` registry key.
 
 Local provider API fee is recorded as zero. That **does not mean local inference has zero total cost**: electricity, device purchase/amortisation, thermal impact and device opportunity cost are currently outside the cost model.
 
@@ -254,6 +265,10 @@ export OPENAI_API_KEY="..."
 export OPENAI_MODEL="gpt-5.6-terra"
 export OPENAI_MODELS="gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol"
 
+export MINICPM_API_KEY="..."
+export MINICPM_BASE_URL="https://api.modelbest.cn/v1"
+export MINICPM_MODEL="MiniCPM-V-4.6-1B"
+
 # Decision/classification benchmarks should not pay for unnecessary reasoning.
 export OPENAI_REASONING_EFFORT="none"
 ```
@@ -309,25 +324,22 @@ uv run --frozen local-llm models
 
 A model can be downloaded by key only when that key exists in the merged Korgis registry.
 
-For example, if the output contains:
+On the current Korgis built-in registry, the benchmark defaults are:
 
 ```text
-qwen3.5-4b-q4km
-minicpm3-4b-q4km
 nemotron-nano-4b
-qwen3.5-9b-q4km
+qwen3-vl-4b
 ```
 
-you can use the normal Korgis download path.
+If a key is not listed by `local-llm models`, do not assume it exists. Add an explicit user/external registry entry before using it.
 
 ### 4.2 Download a model that is already registered in Korgis
 
 ```bash
-uv run --frozen local-llm download qwen3.5-4b-q4km
-uv run --frozen local-llm download minicpm3-4b-q4km
 uv run --frozen local-llm download nemotron-nano-4b
-uv run --frozen local-llm download qwen3.5-9b-q4km
 ```
+
+`qwen3-vl-4b` is an MLX-backed registry entry rather than a GGUF download example. Check `local-llm models` and let Korgis resolve the configured backend/artifact.
 
 Korgis resolves:
 
@@ -350,7 +362,7 @@ If the key is missing, `local-llm download <key>` cannot work: there is no regis
 For benchmark evidence, hash the resolved local artifact:
 
 ```bash
-uv run --frozen local-llm verify-artifact qwen3.5-4b-q4km
+uv run --frozen local-llm verify-artifact nemotron-nano-4b
 ```
 
 The command prints the computed SHA-256 and stores a local verification receipt. Compare the digest with the checksum published by the model source or with the checksum pinned by the benchmark/Korgis registry when one is available.
@@ -602,7 +614,7 @@ The `experiment` command is the fastest way to iterate.
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Public BANKING77 routing only
@@ -610,7 +622,7 @@ uv run jev-bench experiment routing \
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km \
+  --model nemotron-nano-4b \
   --dataset public \
   --profile budget
 ```
@@ -620,7 +632,7 @@ uv run jev-bench experiment routing \
 ```bash
 uv run jev-bench experiment calibration \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Scaling only
@@ -628,7 +640,7 @@ uv run jev-bench experiment calibration \
 ```bash
 uv run jev-bench experiment scaling \
   --provider korgis \
-  --model qwen3.5-4b-q4km \
+  --model nemotron-nano-4b \
   --scaling-repeats 10
 ```
 
@@ -637,7 +649,7 @@ uv run jev-bench experiment scaling \
 ```bash
 uv run jev-bench experiment workflow \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Agent only
@@ -645,7 +657,7 @@ uv run jev-bench experiment workflow \
 ```bash
 uv run jev-bench experiment agent \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 The same command works with Jev:
@@ -672,9 +684,9 @@ uv run jev-bench experiment workflow \
 
 `llm-monolithic` is available only for `workflow` and `agent`.
 
-### Step 2 — run all four local models
+### Step 2 — run the registry-backed local matrix
 
-This uses no Jev/OpenAI inference:
+This uses no Jev/OpenAI/MiniCPM remote inference:
 
 ```bash
 uv run jev-bench compare-local --profile budget
@@ -683,10 +695,8 @@ uv run jev-bench compare-local --profile budget
 Default local matrix:
 
 ```text
-Qwen3.5-4B Q4_K_M
-MiniCPM3-4B Q4_K_M
 Nemotron Nano 4B Q4_K_M
-Qwen3.5-9B Q4_K_M
+Qwen3-VL 4B Instruct MLX 4-bit
 ```
 
 Outputs:
@@ -726,17 +736,19 @@ uv run jev-bench compare-public \
 
 For reproducible public runs, `JEV_MODEL` must be pinned unless the moving-model override is explicitly enabled.
 
-### Step 6 — compare cloud + local in one run group
+### Step 6 — add MiniCPM API and local Korgis in the same run group
 
 ```bash
 uv run jev-bench compare-public \
   --profile budget \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --include-minicpm \
+  --minicpm-model MiniCPM-V-4.6-1B \
   --include-local \
-  --local-models qwen3.5-4b-q4km,minicpm3-4b-q4km,nemotron-nano-4b,qwen3.5-9b-q4km
+  --local-models nemotron-nano-4b,qwen3-vl-4b
 ```
 
-This is the preferred command when you want a direct public routing/calibration comparison under the same run group.
+This keeps the boundaries explicit: MiniCPM is a remote API baseline, while Korgis is the local runtime baseline.
 
 ---
 
@@ -1277,7 +1289,7 @@ uv run jev-bench prepare-data
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 ### One GPT experiment
@@ -1327,11 +1339,10 @@ uv run jev-bench report \
 - [x] Jev provider using `typesafe-sdk`
 - [x] OpenAI structured-output workflow baseline
 - [x] GPT monolithic workflow/agent baseline
+- [x] MiniCPM official API provider via ModelBest API key
 - [x] Korgis OpenAI-compatible local provider
-- [x] Qwen3.5-4B Q4_K_M local baseline
-- [x] MiniCPM3-4B Q4_K_M local baseline
 - [x] Nemotron Nano 4B Q4_K_M local baseline
-- [x] Qwen3.5-9B Q4_K_M local baseline
+- [x] Qwen3-VL 4B Instruct MLX 4-bit local baseline
 - [x] Experiment 01 — routing
 - [x] Experiment 02 — calibration
 - [x] Experiment 03 — 1/2/4/8/16/32 parallel scaling
