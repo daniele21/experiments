@@ -42,6 +42,38 @@ uv run --frozen local-llm --help
 
 The commands below use `uv run --frozen local-llm` so they always execute the Korgis environment from this checkout.
 
+### Install the GGUF runtime used by the benchmark
+
+The benchmark model entries use Korgis' managed `llama_server` backend, so a `llama-server` executable must also be installed.
+
+On macOS/Linux with Homebrew:
+
+```bash
+brew install llama.cpp
+command -v llama-server
+llama-server --version
+```
+
+Optionally pin the binary path for Korgis:
+
+```bash
+export LOCAL_LLM_SERVER_BIN="$(command -v llama-server)"
+```
+
+Equivalent supported configuration:
+
+```bash
+uv run --frozen local-llm serve \
+  --model <MODEL_KEY> \
+  --llama-server-bin /absolute/path/to/llama-server \
+  --enable-admin-api \
+  --no-download
+```
+
+Korgis and llama.cpp are separate components: installing the Python Korgis environment does not by itself guarantee that the managed `llama-server` binary exists.
+
+The commands below use `uv run --frozen local-llm` so they always execute the Korgis environment from this checkout.
+
 ---
 
 ## 2. First check whether the model is already registered
