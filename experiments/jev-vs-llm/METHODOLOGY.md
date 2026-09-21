@@ -41,9 +41,9 @@ Client-observed latency includes network distance. That is intentional for user-
 
 **Hypothesis:** typed decision models should be competitive on bounded classification while avoiding free-form output failure modes.
 
-Public benchmark: BANKING77 official test split, 77 intents. The `standard` profile samples ~10 examples per intent; the `full` profile runs all 3,080 official test examples.
+Public benchmark: BANKING77 official test split, 77 intents (closed-set customer intent routing). The benchmark supports four deterministic class-balanced profiles: `budget` (1 example/class = 77 cases), `quick` (2 examples/class = 154 cases), `standard` (10 examples/class = 770 cases), and `full` (all 3,080 official test examples).
 
-Report: accuracy, macro-F1 (planned when the larger dataset lands), valid-output rate, p50/p95/p99 latency.
+Report: accuracy (with Wilson 95% CI), macro-F1 across all 77 classes, valid-output rate (JSON schema compliance), p50/p95/p99 latency, cost/token consumption, and top confusion pairs.
 
 ## Experiment 02 — calibration / abstention
 

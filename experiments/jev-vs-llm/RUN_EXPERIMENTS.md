@@ -66,6 +66,121 @@ La suite include 5 tipologie di esperimenti per valutare sia la precisione seman
 
 ---
 
+### Approfondimento: Il Benchmark di Routing con BANKING77
+
+Nel benchmark pubblico, **`routing` usa BANKING77** (PolyAI, *Casanueva et al., 2020*). È un dataset pubblico di **intent classification** nel dominio dell'assistenza bancaria: ogni esempio è una frase reale scritta da un utente e il modello deve capire **a quale dei 77 intenti predefiniti appartiene**.
+
+#### Cosa significa "Routing" in questo contesto
+
+In questo benchmark, **routing non significa network routing o instradamento di pacchetti di rete**. Significa **intent routing** per il supporto clienti e l'automazione aziendale:
+
+```text
+Messaggio utente (ticket / chat)
+              ↓
+Classificatore / Decision Engine (JEV o LLM)
+              ↓
+1 delle 77 destinazioni / intenti bancari
+```
+
+Esempi concettuali dal dataset:
+
+```text
+"I haven't received my new card yet"
+        ↓
+card_arrival
+
+"I was charged twice for the same transaction"
+        ↓
+card_payment_fee_charged / wrong_amount_of_cash_received
+
+"I forgot my PIN number"
+        ↓
+pin_blocked / change_pin
+```
+
+#### Perché BANKING77 è particolarmente interessante per il confronto JEV vs LLM
+
+Non si tratta di una classificazione banale a 3 opzioni (es. `billing`, `technical_support`, `other`). È una sfida reale per diversi motivi:
+
+1. **77 classi molto vicine semanticamente**: Moltissimi intenti hanno confini sfumati (ad esempio problematiche diverse legate alla carta: `card_arrival`, `card_delivery_estimate`, `card_not_working`, `card_linking`, `lost_or_stolen_card`, oppure pagamenti, bonifici, prelievi bancomat, tassi di cambio). Il modello non può cavarsela con semplici parole chiave.
+2. **Spazio delle azioni strutturato e limitato**: In produzione i sistemi di assistenza automatica devono instradare le richieste verso workflow o dipartimenti ben definiti.
+3. **Decision Engine (JEV) vs Generazione di Token (LLM)**: JEV espone la distribuzione di probabilità nativa su uno spazio di scelte discrete (`Choice`), mentre un LLM deve leggere tutte le 77 opzioni nel contesto e generare output JSON strutturato, testando robustezza grammaticale, consumo di token e latenza.
+4. **Velocità e costi in scenari ad alto volume**: Il routing dei ticket è un'operazione che in produzione deve costare pochissimo ed essere istantanea (<100ms). Valutare modelli compatti locali e JEV su questo task mostra il vero trade-off economico rispetto a LLM cloud giganteschi.
+
+#### Flusso di Valutazione e Metriche
+
+```text
+                    BANKING77
+                         │
+                         ▼
+           "Testo della richiesta"
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+         JEV                           LLM
+          │                             │
+          ▼                             ▼
+   intent predetto               intent predetto
+          │                             │
+          └──────────────┬──────────────┘
+                         ▼
+              Ground Truth Ufficiale
+```
+
+Vengono misurate:
+- **Accuracy** (con intervalli di confidenza di Wilson al 95%);
+- **Macro-F1** (media non pesata su tutti i 77 intenti per non penalizzare classi rare);
+- **Percentuale di JSON valido** (per verificare l'aderenza dello Structured Output dell'LLM);
+- **Latenza client** (p50, p95, p99);
+- **Costo stimato per richiesta**;
+- **Coppie di confusione più frequenti** (per analizzare dove il modello sbaglia tra classi affini).
+
+#### Quale parte del dataset usiamo
+
+Nel repository usiamo **esclusivamente il test set ufficiale di BANKING77**:
+- **3.080 esempi totali**
+- **77 intenti** (in media circa 40 esempi per classe)
+- **Zero label sintetiche**: la ground truth proviene al 100% dalle annotazioni umane originali di PolyAI.
+
+I profili disponibili sono quattro:
+
+| Profilo | Esempi Routing | Esempi per classe | In-Scope Calibration | OOS Calibration | Uso consigliato |
+|---|---:|---:|---:|---:|---|
+| `budget` | **77** | **1 per classe** | 40 | 40 | Sanity check velocissimo ed economico su tutte le 77 classi |
+| `quick` | **154** | **2 per classe** | 100 | 100 | Test rapido di regressione / integrazione |
+| `standard` | **770** | **10 per classe** | 500 | 500 | Benchmark comparativo standard bilanciato |
+| `full` | **3.080** | **~40 per classe** | tutti | tutti | Valutazione esaustiva dell'intero test set |
+
+Quando si usa un sottoinsieme (`budget`, `quick`, `standard`), il campionamento è **rigorosamente bilanciato per classe** (`class-balanced` con seed deterministico 42). Per esempio, `budget` estrae esattamente 1 esempio casuale ma fisso per ciascuna delle 77 classi, `quick` ne estrae 2, e `standard` 10 per classe.
+
+#### Differenza fondamentale: `routing` vs `calibration`
+
+È fondamentale non confondere **`routing`** con **`calibration`**:
+
+- **`routing` è una Closed-Set Classification:**
+  Al modello viene detto che la richiesta appartiene **sicuramente** a una delle 77 categorie bancarie:
+  ```text
+  Query BANKING77
+        ↓
+  {intent_1, intent_2, ... intent_77}
+        ↓
+  Scegline esattamente una
+  ```
+  *In sintesi: misura quanto il modello è bravo a **scegliere la porta giusta tra 77 porte**.*
+
+- **`calibration` è una Open-Set / Out-Of-Scope Detection:**
+  In questo secondo test vengono mescolati esempi bancari in-scope con esempi **fuori dominio** presi dal dataset CLINC150, mappati sull'opzione esplicita `other`:
+  ```text
+  Query (Bancaria oppure OOS)
+        ↓
+  {intent_1, intent_2, ... intent_77} + "other"
+        ↓
+  Classifica nell'intent bancario oppure scarta come "other"
+  ```
+  *In sintesi: misura se il modello **sa accorgersi quando nessuna porta è quella giusta**, facendo crollare la propria confidenza o rifiutando la risposta.*
+
+---
+
 ## 3. Esecuzione per Singolo Modello
 
 Tutti i comandi vanno eseguiti dalla cartella root del benchmark:
