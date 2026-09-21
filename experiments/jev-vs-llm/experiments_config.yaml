@@ -1,0 +1,42 @@
+# experiments_config.yaml
+# Configuration for the autonomous local model benchmark runner.
+
+# Path to the Korgis repository checkout
+korgis_dir: "/Users/moltisantid/Personal/experiments/korgis"
+
+# Korgis connection parameters
+korgis_port: 1235
+korgis_base_url: "http://127.0.0.1:1235/v1"
+korgis_control_timeout: 360
+
+# Model registry file to load
+registry_path: "benchmark-models.yaml"
+
+# Default models to evaluate when none are specified via CLI
+default_models:
+  - "qwen3.5-0.8b-q4km"
+  - "nemotron-nano-4b"
+  - "nemotron-nano-4b-q8"
+  - "qwen3.5-9b-q4km"
+
+# Default experiment list to run per model:
+# Available: routing, calibration, scaling, workflow, agent
+default_experiments:
+  - "routing"
+
+# Benchmark tier: "smoke" (quick, self-contained) or "public" (Banking77 / CLINC150)
+dataset: "smoke"
+
+# Profile for public dataset: "budget", "quick", "standard", or "full"
+public_profile: "budget"
+
+# Max output tokens for bounded decision queries (prevents runaway generation on small models)
+max_output_tokens: 512
+
+# Output files
+results_csv: "results/raw/local_results.csv"
+report_html: "results/local_report.html"
+
+# Execution options
+stop_korgis_on_complete: true
+log_level: "INFO"

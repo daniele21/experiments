@@ -78,6 +78,14 @@ Local provider API fee is recorded as zero. That **does not mean local inference
 
 See [`LOCAL_MODELS.md`](LOCAL_MODELS.md) for the local-runtime details.
 
+> [!TIP]
+> To evaluate local models autonomously one at a time with live progress bars:
+> ```bash
+> # Run all experiments on a selected model:
+> uv run python scripts/run_local_matrix.py --models nemotron-nano-4b --experiments all --dataset smoke
+> ```
+> See [`LOCAL_MODELS.md`](LOCAL_MODELS.md#15-autonomous-multi-model-runner-run_local_matrixpy) for full options and public benchmark commands.
+
 ---
 
 ## 2. The five experiments

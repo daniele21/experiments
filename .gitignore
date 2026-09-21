@@ -9,3 +9,5 @@ experiments/*/data/cache/
 experiments/*/results/raw/
 experiments/*/results/private/
 experiments/*/results/manifests/
+experiments/*/results/logs/
+experiments/*/results/*.html

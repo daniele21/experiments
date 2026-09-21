@@ -72,6 +72,13 @@ uv run --frozen local-llm serve \
 
 Korgis and llama.cpp are separate components: installing the Python Korgis environment does not by itself guarantee that the managed `llama-server` binary exists.
 
+> [!TIP]
+> Korgis listens on port `1235` by default (as configured in `.env`). If another process is holding the port, identify and terminate it:
+> ```bash
+> lsof -i :1235
+> kill <PID>
+> ```
+
 The commands below use `uv run --frozen local-llm` so they always execute the Korgis environment from this checkout.
 
 ---
@@ -208,31 +215,46 @@ models:
 
 The user registry is merged on top of the built-in registry.
 
-Verify that Korgis now resolves the key:
+### LM Studio Local Models (Ready-to-use Registry Configuration)
+
+If you have downloaded GGUF models via LM Studio (typically residing under `~/.lmstudio/models/`), you can register them cleanly. This repository includes a pre-configured registry file [benchmark-models.yaml](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/benchmark-models.yaml) with the following models:
+
+| Registry Key | Model | Path in `~/.lmstudio/models/` |
+|---|---|---|
+| `qwen3.5-0.8b-q4km` | Qwen 3.5 0.8B (Q4_K_M) | `unsloth/Qwen3.5-0.8B-GGUF/Qwen3.5-0.8B-Q4_K_M.gguf` |
+| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B (Q4_K_M) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` |
+| `nemotron-nano-4b-q8` | NVIDIA Nemotron-3-Nano-4B (Q8_0) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q8_0.gguf` |
+| `qwen3.5-9b-q4km` | Qwen 3.5 9B (Q4_K_M) | `lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf` |
+
+To use this configuration across runs:
 
 ```bash
-uv run --frozen local-llm models
-uv run --frozen local-llm verify-artifact my-model-4b-q4km
+# Option 1: Copy to ~/.local-llm/models.yaml (global default)
+cp benchmark-models.yaml ~/.local-llm/models.yaml
+
+# Option 2: Point Korgis to the benchmark file directly
+export LOCAL_LLM_REGISTRY_PATHS="/Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/benchmark-models.yaml"
 ```
 
-Start it:
+Verify that Korgis resolves all 4 models:
+
+```bash
+cd /Users/moltisantid/Personal/experiments/korgis
+uv run --frozen local-llm models
+```
+
+All 4 models should show as `✅ downloaded` with backend `llama_server`.
+
+Start Korgis once with admin API enabled:
 
 ```bash
 uv run --frozen local-llm serve \
-  --model my-model-4b-q4km \
+  --model nemotron-nano-4b \
   --enable-admin-api \
   --no-download
 ```
 
-The benchmark can now refer to the stable key:
-
-```bash
-uv run jev-bench experiment routing \
-  --provider korgis \
-  --model my-model-4b-q4km
-```
-
-This is the preferred path for a manually downloaded GGUF that will participate in benchmark evidence.
+The benchmark can now evaluate each registered model directly or run the automated matrix.
 
 ---
 
@@ -380,15 +402,15 @@ results/raw/local_results.csv
 results/manifests/<run-group>.json
 ```
 
-For a custom matrix:
+For a custom matrix (such as the LM Studio models):
 
 ```bash
 uv run jev-bench compare-local \
   --profile budget \
-  --local-models qwen3.5-4b-q4km,my-model-4b-q4km,nemotron-nano-4b
+  --models qwen3.5-0.8b-q4km,nemotron-nano-4b,nemotron-nano-4b-q8,qwen3.5-9b-q4km
 ```
 
-Every key passed to `--local-models` must be resolvable by the Korgis server currently running.
+Every key passed to `--models` must be resolvable by the Korgis server currently running. Korgis's admin API will automatically activate and swap each model in memory sequentially.
 
 ---
 
@@ -454,3 +476,105 @@ Qwen3.5 4B → Qwen3.5 9B
 ```
 
 MiniCPM-V is intentionally excluded because this benchmark evaluates text-only bounded decisions.
+
+---
+
+## 15. Autonomous Multi-Model Runner (`run_local_matrix.py`)
+
+An autonomous orchestrator script is provided in [`scripts/run_local_matrix.py`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/scripts/run_local_matrix.py) to manage and evaluate multiple local models **sequentially, one at a time**, without requiring manual server restarts or terminal management.
+
+### Key Features
+- **Automatic Korgis Management**: Starts Korgis in the background if not already running, waits for health checks, and cleanly shuts it down when finished.
+- **Sequential Memory Isolation**: Activates each model via the Korgis Admin API, executes the benchmarks, and immediately unloads it to completely free VRAM/RAM before loading the next model.
+- **Live Progress Bar & Verbose Output**: Displays real-time per-case outcomes (predicted vs expected intent, latency, checkmark status), running accuracy percentage, elapsed time, and ETA.
+- **Flexible Model Selection**: Pass models via command-line arguments, select them from an interactive menu, or define them in [`experiments_config.yaml`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/experiments_config.yaml).
+- **Consolidated Summary & Dashboard**: Collects metrics across all evaluated models, appends results to `results/raw/local_results.csv`, and renders the interactive HTML report at `results/local_report.html`.
+
+
+### Usage Examples
+
+```bash
+cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+
+# 1. List available configured models
+uv run python scripts/run_local_matrix.py --list
+
+# 2. Interactive selection (select numbers or 'a' for all)
+uv run python scripts/run_local_matrix.py -i
+
+# 3. Run ALL experiments on a selected model (Smoke Tier: fast ~1-2 min)
+# Runs: 01-routing, 02-calibration, 03-scaling, 04-workflow, 05-hybrid-agent
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b \
+  --experiments all \
+  --dataset smoke
+
+# 4. Run ALL experiments on a selected model (Public Benchmark Tier: real Banking77 + CLINC150)
+# Runs: 01-routing-public (77 banking classes) + 02-calibration-public (in-scope + out-of-scope)
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b \
+  --experiments all \
+  --dataset public \
+  --profile budget
+
+# 5. Run a single specific experiment on a selected model (e.g. routing)
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+
+# 6. Run a comma-separated subset of experiments on a selected model
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b \
+  --experiments routing,calibration \
+  --dataset smoke
+
+# 7. Run ALL models sequentially across ALL experiments
+uv run python scripts/run_local_matrix.py \
+  --models all \
+  --experiments all \
+  --dataset smoke
+
+# 8. Keep Korgis running after benchmarks finish (optional, avoids restart on next run)
+uv run python scripts/run_local_matrix.py \
+  --models nemotron-nano-4b \
+  --keep-korgis
+```
+
+### Experiments Overview
+
+| Experiment ID | Key | What it evaluates | Smoke Tier | Public Tier (`--dataset public`) |
+|---|---|---|---|---|
+| **01** | `routing` | Multi-class intent classification | 24 synthetic cases | 77 real BANKING77 intents (1 per class on `budget`) |
+| **02** | `calibration` | Probability calibration & OOS rejection | 24 synthetic cases | BANKING77 in-scope + CLINC150 out-of-scope |
+| **03** | `scaling` | 1 → 32 parallel decisions in a single call | 1, 2, 4, 8, 16, 32 questions | Smoke only |
+| **04** | `workflow` | Deterministic policy (model decisions + Python rules) | Support ticket routing rules | Smoke only |
+| **05** | `agent` | Hybrid agent decision layer & escalation | Expense approval workflow | Smoke only |
+
+> [!TIP]
+> When using `--experiments all`:
+> - With `--dataset smoke`: runs all 5 experiments (`routing`, `calibration`, `scaling`, `workflow`, `agent`).
+> - With `--dataset public`: runs the 2 public benchmark experiments (`routing` and `calibration`).
+
+### Configuration (`experiments_config.yaml`)
+
+Default runner parameters can be adjusted in [`experiments_config.yaml`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/experiments_config.yaml):
+
+```yaml
+korgis_dir: "/Users/moltisantid/Personal/experiments/korgis"
+korgis_port: 1235
+default_models:
+  - "qwen3.5-0.8b-q4km"
+  - "nemotron-nano-4b"
+  - "nemotron-nano-4b-q8"
+  - "qwen3.5-9b-q4km"
+default_experiments:
+  - "routing"
+dataset: "smoke"
+public_profile: "budget"
+max_output_tokens: 512
+stop_korgis_on_complete: true
+```
+
+
