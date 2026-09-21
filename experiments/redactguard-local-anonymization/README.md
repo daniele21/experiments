@@ -1,6 +1,6 @@
 # RedactGuard local anonymization benchmark
 
-Reproducible benchmark for measuring how local models perform as the **PII detection engine of RedactGuard** when served by **Korgis**.
+Reproducible benchmark for measuring how local models perform as the **PII detection engine of RedactGuard** when served by **Korgis**, both on frozen text inputs and through the full **PDF → Docling → Korgis → RedactGuard post-processing** path.
 
 The benchmark does not embed Korgis and does not start a private inference engine. Korgis is an external local service reached only through its current public HTTP/control-plane contracts.
 
@@ -88,6 +88,66 @@ uv run redact-bench check-korgis
 uv run redact-bench check-data
 ```
 
+## Document end-to-end benchmark
+
+The repository also implements a separate system-level benchmark that starts from PDFs. It deliberately keeps extraction evidence separate from model evidence:
+
+```text
+canonical source + gold PII
+        ↓
+synthetic PDF fixture
+        ↓
+Docling (same page-export contract as RedactGuard)
+        ↓
+extraction alignment / extraction recall
+        ↓
+Korgis
+        ↓
+local model
+        ↓
+RedactGuard-compatible value → span resolution
+        ↓
+model metrics on extracted text
+        +
+end-to-end privacy metrics
+```
+
+Install the document-only dependencies:
+
+```bash
+uv sync --extra dev --extra documents
+```
+
+Validate the committed document manifest and optionally generate the PDFs without running inference:
+
+```bash
+uv run redact-bench check-documents
+uv run redact-bench make-document-fixtures
+```
+
+Run all configured local models end to end:
+
+```bash
+uv run redact-bench documents
+```
+
+Or a subset:
+
+```bash
+uv run redact-bench documents \
+  --models nemotron-nano-4b,qwen3.5-4b-q4km
+```
+
+The generated PDFs are intentionally ignored by Git. Their canonical source text and gold annotations live in `data/documents/manifest.jsonl`, so the fixtures can be regenerated deterministically.
+
+For real/private PDFs, place files with matching manifest filenames in a separate fixture directory and run with `--no-generate-fixtures --fixtures-dir <path>`. Do not commit private document bytes.
+
+The document run writes the normal manifest/report plus `extraction.json`. The report exposes three distinct layers:
+
+1. **Extraction quality** — whether Docling preserved the gold PII and source text.
+2. **Model quality on extracted text** — what the LLM did given the text it actually received.
+3. **End-to-end privacy quality** — PII lost during extraction counts as a miss/leak, so parser failures cannot disappear from the final system score.
+
 ## Run the comparison
 
 ```bash
@@ -131,7 +191,7 @@ It does **not** depend on the RedactGuard Python package at runtime and does not
 
 ## Current dataset scope
 
-`data/smoke/cases.jsonl` is a small deterministic integration dataset spanning General, Healthcare, Financial and Legal profiles. It is for harness validation, not for publishing model-quality conclusions.
+`data/smoke/cases.jsonl` is a small deterministic text integration dataset spanning General, Healthcare, Financial and Legal profiles. `data/documents/manifest.jsonl` adds five deterministic synthetic document cases (six pages) for the PDF/Docling system tier. Both are harness-validation datasets, not sufficient for publishing broad model-quality conclusions.
 
 The next benchmark tier should add an externally labelled generic PII dataset plus a RedactGuard-specific domain set. See [DATASETS.md](DATASETS.md).
 
