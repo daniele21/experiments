@@ -606,7 +606,7 @@ The `experiment` command is the fastest way to iterate.
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Public BANKING77 routing only
@@ -614,7 +614,7 @@ uv run jev-bench experiment routing \
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km \
+  --model nemotron-nano-4b \
   --dataset public \
   --profile budget
 ```
@@ -624,7 +624,7 @@ uv run jev-bench experiment routing \
 ```bash
 uv run jev-bench experiment calibration \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Scaling only
@@ -632,7 +632,7 @@ uv run jev-bench experiment calibration \
 ```bash
 uv run jev-bench experiment scaling \
   --provider korgis \
-  --model qwen3.5-4b-q4km \
+  --model nemotron-nano-4b \
   --scaling-repeats 10
 ```
 
@@ -641,7 +641,7 @@ uv run jev-bench experiment scaling \
 ```bash
 uv run jev-bench experiment workflow \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 #### Agent only
@@ -649,7 +649,7 @@ uv run jev-bench experiment workflow \
 ```bash
 uv run jev-bench experiment agent \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 The same command works with Jev:
@@ -1281,7 +1281,7 @@ uv run jev-bench prepare-data
 ```bash
 uv run jev-bench experiment routing \
   --provider korgis \
-  --model qwen3.5-4b-q4km
+  --model nemotron-nano-4b
 ```
 
 ### One GPT experiment
