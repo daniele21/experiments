@@ -49,15 +49,13 @@ Do not commit private documents, extracted text or result artifacts containing s
 
 ## Realistic heterogeneous dataset v0.1
 
-The first realistic test set is now maintained outside Git because it contains source documents and benchmark artifacts that should not be duplicated into the repository.
+The first realistic model-only test set is committed under `data/realistic/` so benchmark runs do not depend on a separate download.
 
-- prepared canonical/gold dataset: see [REALISTIC_DATASET.md](REALISTIC_DATASET.md);
-- 11 heterogeneous source documents;
+- 11 heterogeneous source representations;
 - canonical Markdown per source;
 - exact deterministic gold spans;
-- source formats include PDF, scanned PDF, DOC, DOCX, XLSX, CSV, TXT and PPTX.
-
-After downloading it to `data/realistic/`:
+- source formats represented include PDF, scanned PDF, DOC, DOCX, XLSX, CSV, TXT and PPTX;
+- original source binaries remain external and are only required for extraction/E2E work.
 
 ```bash
 uv run redact-bench check-realistic-dataset --dataset-dir data/realistic

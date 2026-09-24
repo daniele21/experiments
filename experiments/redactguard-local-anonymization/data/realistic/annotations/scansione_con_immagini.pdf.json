@@ -1,0 +1,368 @@
+{
+  "schema_version": "redactguard-gold-v1",
+  "canonical_filename": "scansione_con_immagini.pdf.md",
+  "profile": "legal",
+  "gold_status": "deterministic_v0.1",
+  "human_reviewed": false,
+  "inference_text_transform": {
+    "strip_structure_markers": true,
+    "marker_pattern": "^\\\\s*<!--\\\\s*(page|sheet|slide|embedded-image)\\\\s*:\\\\s*(.*?)\\\\s*-->\\\\s*$",
+    "preserve_all_other_characters": true
+  },
+  "inference_text_chars": 1356,
+  "inference_text_sha256": "839916ca58069ecd6025f6b432bdbeb0055187ac6b86076a3064393700f1d67d",
+  "gold_policy": {
+    "included_types": [
+      "account_number",
+      "private_address",
+      "private_email",
+      "private_person",
+      "private_phone"
+    ],
+    "organization_names": "excluded_no_frozen_pii_type",
+    "monetary_amounts": "excluded_no_frozen_pii_type",
+    "company_vat_numbers": "included_as_account_number",
+    "iban_and_fiscal_codes": "included_as_account_number",
+    "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+  },
+  "summary": {
+    "span_count": 15,
+    "unique_entity_values": 10,
+    "by_type": {
+      "account_number": 5,
+      "private_address": 2,
+      "private_email": 2,
+      "private_person": 4,
+      "private_phone": 2
+    }
+  },
+  "entities": [
+    {
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "occurrences": 2,
+      "span_indices": [
+        1,
+        5
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "occurrences": 2,
+      "span_indices": [
+        3,
+        7
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "occurrences": 1,
+      "span_indices": [
+        8
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "occurrences": 2,
+      "span_indices": [
+        0,
+        4
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        13
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        10
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "occurrences": 3,
+      "span_indices": [
+        2,
+        6,
+        9
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "occurrences": 1,
+      "span_indices": [
+        12
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        11
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        14
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "start": 63,
+      "end": 93,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 107,
+      "end": 118,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 157,
+      "end": 168,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 229,
+      "end": 240,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 331,
+      "end": 361,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 375,
+      "end": 386,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 425,
+      "end": 436,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 497,
+      "end": 508,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 902,
+      "end": 929,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1119,
+      "end": 1130,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1132,
+      "end": 1154,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1161,
+      "end": 1175,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1193,
+      "end": 1204,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1206,
+      "end": 1229,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1237,
+      "end": 1252,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        },
+        "region": {
+          "kind": "embedded-image",
+          "label": "1"
+        }
+      }
+    }
+  ]
+}

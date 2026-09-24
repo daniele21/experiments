@@ -1,0 +1,723 @@
+{
+  "schema_version": "redactguard-gold-v1",
+  "canonical_filename": "clienti.csv.md",
+  "profile": "financial",
+  "gold_status": "deterministic_v0.1",
+  "human_reviewed": false,
+  "inference_text_transform": {
+    "strip_structure_markers": true,
+    "marker_pattern": "^\\\\s*<!--\\\\s*(page|sheet|slide|embedded-image)\\\\s*:\\\\s*(.*?)\\\\s*-->\\\\s*$",
+    "preserve_all_other_characters": true
+  },
+  "inference_text_chars": 1097,
+  "inference_text_sha256": "a657bfc30609ecaa29720c8ee953659f741e57748ab2460660c5b0e0dc04a600",
+  "gold_policy": {
+    "included_types": [
+      "account_number",
+      "private_email",
+      "private_person",
+      "private_phone"
+    ],
+    "organization_names": "excluded_no_frozen_pii_type",
+    "monetary_amounts": "excluded_no_frozen_pii_type",
+    "company_vat_numbers": "included_as_account_number",
+    "iban_and_fiscal_codes": "included_as_account_number",
+    "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+  },
+  "summary": {
+    "span_count": 50,
+    "unique_entity_values": 33,
+    "by_type": {
+      "account_number": 20,
+      "private_email": 10,
+      "private_person": 10,
+      "private_phone": 10
+    }
+  },
+  "entities": [
+    {
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "occurrences": 5,
+      "span_indices": [
+        3,
+        13,
+        23,
+        33,
+        43
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "occurrences": 5,
+      "span_indices": [
+        8,
+        18,
+        28,
+        38,
+        48
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "occurrences": 10,
+      "span_indices": [
+        4,
+        9,
+        14,
+        19,
+        24,
+        29,
+        34,
+        39,
+        44,
+        49
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        6
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "chiara.blu@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        26
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "davide.rosa@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        41
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "elena.verde@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        46
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "giulia.neri@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        16
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "luigi.verdi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        11
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "marco.grigi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        31
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        1
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "paolo.gialli@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        21
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "sara.viola@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        36
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "occurrences": 1,
+      "span_indices": [
+        5
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "occurrences": 1,
+      "span_indices": [
+        25
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "occurrences": 1,
+      "span_indices": [
+        40
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "occurrences": 1,
+      "span_indices": [
+        45
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "occurrences": 1,
+      "span_indices": [
+        15
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "occurrences": 1,
+      "span_indices": [
+        10
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "occurrences": 1,
+      "span_indices": [
+        30
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "occurrences": 1,
+      "span_indices": [
+        0
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "occurrences": 1,
+      "span_indices": [
+        20
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "occurrences": 1,
+      "span_indices": [
+        35
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 010 334455",
+      "occurrences": 1,
+      "span_indices": [
+        42
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 011 2233445",
+      "occurrences": 1,
+      "span_indices": [
+        17
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        2
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 045 112233",
+      "occurrences": 1,
+      "span_indices": [
+        32
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 049 556677",
+      "occurrences": 1,
+      "span_indices": [
+        47
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 051 998877",
+      "occurrences": 1,
+      "span_indices": [
+        22
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 055 667788",
+      "occurrences": 1,
+      "span_indices": [
+        37
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 06 7654321",
+      "occurrences": 1,
+      "span_indices": [
+        12
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 081 445566",
+      "occurrences": 1,
+      "span_indices": [
+        27
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        7
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "start": 77,
+      "end": 88,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 91,
+      "end": 113,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 116,
+      "end": 130,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 133,
+      "end": 144,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 147,
+      "end": 174,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 179,
+      "end": 191,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 194,
+      "end": 217,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 220,
+      "end": 235,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 238,
+      "end": 249,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 252,
+      "end": 279,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 284,
+      "end": 295,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 298,
+      "end": 320,
+      "pii_type": "private_email",
+      "value": "luigi.verdi@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 323,
+      "end": 337,
+      "pii_type": "private_phone",
+      "value": "+39 06 7654321",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 340,
+      "end": 351,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 354,
+      "end": 381,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 386,
+      "end": 397,
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 400,
+      "end": 422,
+      "pii_type": "private_email",
+      "value": "giulia.neri@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 425,
+      "end": 440,
+      "pii_type": "private_phone",
+      "value": "+39 011 2233445",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 443,
+      "end": 454,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 457,
+      "end": 484,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 489,
+      "end": 501,
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 504,
+      "end": 527,
+      "pii_type": "private_email",
+      "value": "paolo.gialli@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 530,
+      "end": 544,
+      "pii_type": "private_phone",
+      "value": "+39 051 998877",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 547,
+      "end": 558,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 561,
+      "end": 588,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 593,
+      "end": 603,
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 606,
+      "end": 627,
+      "pii_type": "private_email",
+      "value": "chiara.blu@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 630,
+      "end": 644,
+      "pii_type": "private_phone",
+      "value": "+39 081 445566",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 647,
+      "end": 658,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 661,
+      "end": 688,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 693,
+      "end": 704,
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 707,
+      "end": 729,
+      "pii_type": "private_email",
+      "value": "marco.grigi@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 732,
+      "end": 746,
+      "pii_type": "private_phone",
+      "value": "+39 045 112233",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 749,
+      "end": 760,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 763,
+      "end": 790,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 795,
+      "end": 805,
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 808,
+      "end": 829,
+      "pii_type": "private_email",
+      "value": "sara.viola@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 832,
+      "end": 846,
+      "pii_type": "private_phone",
+      "value": "+39 055 667788",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 849,
+      "end": 860,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 863,
+      "end": 890,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 895,
+      "end": 906,
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 909,
+      "end": 931,
+      "pii_type": "private_email",
+      "value": "davide.rosa@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 934,
+      "end": 948,
+      "pii_type": "private_phone",
+      "value": "+39 010 334455",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 951,
+      "end": 962,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 965,
+      "end": 992,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    },
+    {
+      "start": 997,
+      "end": 1008,
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "source_rule": "table:csv:Nome",
+      "structure": null
+    },
+    {
+      "start": 1011,
+      "end": 1033,
+      "pii_type": "private_email",
+      "value": "elena.verde@esempio.it",
+      "source_rule": "table:csv:Email",
+      "structure": null
+    },
+    {
+      "start": 1036,
+      "end": 1050,
+      "pii_type": "private_phone",
+      "value": "+39 049 556677",
+      "source_rule": "table:csv:Telefono",
+      "structure": null
+    },
+    {
+      "start": 1053,
+      "end": 1064,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:csv:P.IVA",
+      "structure": null
+    },
+    {
+      "start": 1067,
+      "end": 1094,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:csv:IBAN",
+      "structure": null
+    }
+  ]
+}

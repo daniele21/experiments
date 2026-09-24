@@ -1,0 +1,2769 @@
+{
+  "schema_version": "redactguard-gold-v1",
+  "canonical_filename": "cartella_multifoglio.xlsx.md",
+  "profile": "financial",
+  "gold_status": "deterministic_v0.1",
+  "human_reviewed": false,
+  "inference_text_transform": {
+    "strip_structure_markers": true,
+    "marker_pattern": "^\\\\s*<!--\\\\s*(page|sheet|slide|embedded-image)\\\\s*:\\\\s*(.*?)\\\\s*-->\\\\s*$",
+    "preserve_all_other_characters": true
+  },
+  "inference_text_chars": 3523,
+  "inference_text_sha256": "1351620a60b04e52ace6dd028dd14deb15b6ab0b69147f45e861ad75de5752c1",
+  "gold_policy": {
+    "included_types": [
+      "account_number",
+      "private_address",
+      "private_date",
+      "private_email",
+      "private_person",
+      "private_phone"
+    ],
+    "organization_names": "excluded_no_frozen_pii_type",
+    "monetary_amounts": "excluded_no_frozen_pii_type",
+    "company_vat_numbers": "included_as_account_number",
+    "iban_and_fiscal_codes": "included_as_account_number",
+    "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+  },
+  "summary": {
+    "span_count": 148,
+    "unique_entity_values": 93,
+    "by_type": {
+      "account_number": 49,
+      "private_address": 10,
+      "private_date": 25,
+      "private_email": 15,
+      "private_person": 39,
+      "private_phone": 10
+    }
+  },
+  "entities": [
+    {
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "occurrences": 8,
+      "span_indices": [
+        4,
+        16,
+        28,
+        40,
+        52,
+        62,
+        65,
+        68
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0001",
+      "occurrences": 1,
+      "span_indices": [
+        69
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0002",
+      "occurrences": 1,
+      "span_indices": [
+        72
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0003",
+      "occurrences": 1,
+      "span_indices": [
+        75
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0004",
+      "occurrences": 1,
+      "span_indices": [
+        78
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0005",
+      "occurrences": 1,
+      "span_indices": [
+        81
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0006",
+      "occurrences": 1,
+      "span_indices": [
+        84
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0007",
+      "occurrences": 1,
+      "span_indices": [
+        87
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0008",
+      "occurrences": 1,
+      "span_indices": [
+        90
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0009",
+      "occurrences": 1,
+      "span_indices": [
+        93
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0010",
+      "occurrences": 1,
+      "span_indices": [
+        96
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0011",
+      "occurrences": 1,
+      "span_indices": [
+        99
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0012",
+      "occurrences": 1,
+      "span_indices": [
+        102
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0013",
+      "occurrences": 1,
+      "span_indices": [
+        105
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0014",
+      "occurrences": 1,
+      "span_indices": [
+        108
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0015",
+      "occurrences": 1,
+      "span_indices": [
+        111
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0016",
+      "occurrences": 1,
+      "span_indices": [
+        114
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0017",
+      "occurrences": 1,
+      "span_indices": [
+        117
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0018",
+      "occurrences": 1,
+      "span_indices": [
+        120
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0019",
+      "occurrences": 1,
+      "span_indices": [
+        123
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0020",
+      "occurrences": 1,
+      "span_indices": [
+        126
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0021",
+      "occurrences": 1,
+      "span_indices": [
+        129
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0022",
+      "occurrences": 1,
+      "span_indices": [
+        132
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0023",
+      "occurrences": 1,
+      "span_indices": [
+        135
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0024",
+      "occurrences": 1,
+      "span_indices": [
+        138
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "2026/0025",
+      "occurrences": 1,
+      "span_indices": [
+        141
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "occurrences": 5,
+      "span_indices": [
+        10,
+        22,
+        34,
+        46,
+        58
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "occurrences": 11,
+      "span_indices": [
+        5,
+        11,
+        17,
+        23,
+        29,
+        35,
+        41,
+        47,
+        53,
+        59,
+        146
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Bologna",
+      "occurrences": 1,
+      "span_indices": [
+        27
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Firenze",
+      "occurrences": 1,
+      "span_indices": [
+        45
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Genova",
+      "occurrences": 1,
+      "span_indices": [
+        51
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Milano",
+      "occurrences": 1,
+      "span_indices": [
+        3
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Napoli",
+      "occurrences": 1,
+      "span_indices": [
+        33
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Padova",
+      "occurrences": 1,
+      "span_indices": [
+        57
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Roma",
+      "occurrences": 1,
+      "span_indices": [
+        15
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Torino",
+      "occurrences": 2,
+      "span_indices": [
+        9,
+        21
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Verona",
+      "occurrences": 1,
+      "span_indices": [
+        39
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-02",
+      "occurrences": 1,
+      "span_indices": [
+        70
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-03",
+      "occurrences": 1,
+      "span_indices": [
+        73
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-04",
+      "occurrences": 1,
+      "span_indices": [
+        76
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-05",
+      "occurrences": 1,
+      "span_indices": [
+        79
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-06",
+      "occurrences": 1,
+      "span_indices": [
+        82
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-07",
+      "occurrences": 1,
+      "span_indices": [
+        85
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-08",
+      "occurrences": 1,
+      "span_indices": [
+        88
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-09",
+      "occurrences": 1,
+      "span_indices": [
+        91
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-10",
+      "occurrences": 1,
+      "span_indices": [
+        94
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-11",
+      "occurrences": 1,
+      "span_indices": [
+        97
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-12",
+      "occurrences": 1,
+      "span_indices": [
+        100
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-13",
+      "occurrences": 1,
+      "span_indices": [
+        103
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-14",
+      "occurrences": 1,
+      "span_indices": [
+        106
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-15",
+      "occurrences": 1,
+      "span_indices": [
+        109
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-16",
+      "occurrences": 1,
+      "span_indices": [
+        112
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-17",
+      "occurrences": 1,
+      "span_indices": [
+        115
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-18",
+      "occurrences": 1,
+      "span_indices": [
+        118
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-19",
+      "occurrences": 1,
+      "span_indices": [
+        121
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-20",
+      "occurrences": 1,
+      "span_indices": [
+        124
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-21",
+      "occurrences": 1,
+      "span_indices": [
+        127
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-22",
+      "occurrences": 1,
+      "span_indices": [
+        130
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-23",
+      "occurrences": 1,
+      "span_indices": [
+        133
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-24",
+      "occurrences": 1,
+      "span_indices": [
+        136
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-25",
+      "occurrences": 1,
+      "span_indices": [
+        139
+      ]
+    },
+    {
+      "pii_type": "private_date",
+      "value": "2026-01-26",
+      "occurrences": 1,
+      "span_indices": [
+        142
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "occurrences": 2,
+      "span_indices": [
+        7,
+        64
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "chiara.blu@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        31
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "davide.rosa@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        49
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "elena.verde@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        55
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "giulia.neri@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        19
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "info@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        67
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "luigi.verdi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        13
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "marco.grigi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        37
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "occurrences": 4,
+      "span_indices": [
+        1,
+        61,
+        145,
+        147
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "paolo.gialli@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        25
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "sara.viola@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        43
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "occurrences": 5,
+      "span_indices": [
+        6,
+        66,
+        71,
+        101,
+        131
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "occurrences": 4,
+      "span_indices": [
+        30,
+        83,
+        113,
+        143
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "occurrences": 3,
+      "span_indices": [
+        48,
+        92,
+        122
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "occurrences": 3,
+      "span_indices": [
+        54,
+        95,
+        125
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "occurrences": 4,
+      "span_indices": [
+        18,
+        77,
+        107,
+        137
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "occurrences": 6,
+      "span_indices": [
+        12,
+        60,
+        74,
+        104,
+        134,
+        144
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "occurrences": 3,
+      "span_indices": [
+        36,
+        86,
+        116
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "occurrences": 4,
+      "span_indices": [
+        0,
+        63,
+        98,
+        128
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "occurrences": 4,
+      "span_indices": [
+        24,
+        80,
+        110,
+        140
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "occurrences": 3,
+      "span_indices": [
+        42,
+        89,
+        119
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 010 334455",
+      "occurrences": 1,
+      "span_indices": [
+        50
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 011 2233445",
+      "occurrences": 1,
+      "span_indices": [
+        20
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        2
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 045 112233",
+      "occurrences": 1,
+      "span_indices": [
+        38
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 049 556677",
+      "occurrences": 1,
+      "span_indices": [
+        56
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 051 998877",
+      "occurrences": 1,
+      "span_indices": [
+        26
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 055 667788",
+      "occurrences": 1,
+      "span_indices": [
+        44
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 06 7654321",
+      "occurrences": 1,
+      "span_indices": [
+        14
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 081 445566",
+      "occurrences": 1,
+      "span_indices": [
+        32
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        8
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "start": 106,
+      "end": 117,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 120,
+      "end": 142,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 145,
+      "end": 159,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 162,
+      "end": 168,
+      "pii_type": "private_address",
+      "value": "Milano",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 171,
+      "end": 182,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 185,
+      "end": 212,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 235,
+      "end": 247,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 250,
+      "end": 273,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 276,
+      "end": 291,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 294,
+      "end": 300,
+      "pii_type": "private_address",
+      "value": "Torino",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 303,
+      "end": 314,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 317,
+      "end": 344,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 367,
+      "end": 378,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 381,
+      "end": 403,
+      "pii_type": "private_email",
+      "value": "luigi.verdi@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 406,
+      "end": 420,
+      "pii_type": "private_phone",
+      "value": "+39 06 7654321",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 423,
+      "end": 427,
+      "pii_type": "private_address",
+      "value": "Roma",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 430,
+      "end": 441,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 444,
+      "end": 471,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 496,
+      "end": 507,
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 510,
+      "end": 532,
+      "pii_type": "private_email",
+      "value": "giulia.neri@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 535,
+      "end": 550,
+      "pii_type": "private_phone",
+      "value": "+39 011 2233445",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 553,
+      "end": 559,
+      "pii_type": "private_address",
+      "value": "Torino",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 562,
+      "end": 573,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 576,
+      "end": 603,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 611,
+      "end": 623,
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 626,
+      "end": 649,
+      "pii_type": "private_email",
+      "value": "paolo.gialli@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 652,
+      "end": 666,
+      "pii_type": "private_phone",
+      "value": "+39 051 998877",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 669,
+      "end": 676,
+      "pii_type": "private_address",
+      "value": "Bologna",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 679,
+      "end": 690,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 693,
+      "end": 720,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 750,
+      "end": 760,
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 763,
+      "end": 784,
+      "pii_type": "private_email",
+      "value": "chiara.blu@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 787,
+      "end": 801,
+      "pii_type": "private_phone",
+      "value": "+39 081 445566",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 804,
+      "end": 810,
+      "pii_type": "private_address",
+      "value": "Napoli",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 813,
+      "end": 824,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 827,
+      "end": 854,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 862,
+      "end": 873,
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 876,
+      "end": 898,
+      "pii_type": "private_email",
+      "value": "marco.grigi@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 901,
+      "end": 915,
+      "pii_type": "private_phone",
+      "value": "+39 045 112233",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 918,
+      "end": 924,
+      "pii_type": "private_address",
+      "value": "Verona",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 927,
+      "end": 938,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 941,
+      "end": 968,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 992,
+      "end": 1002,
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1005,
+      "end": 1026,
+      "pii_type": "private_email",
+      "value": "sara.viola@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1029,
+      "end": 1043,
+      "pii_type": "private_phone",
+      "value": "+39 055 667788",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1046,
+      "end": 1053,
+      "pii_type": "private_address",
+      "value": "Firenze",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1056,
+      "end": 1067,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1070,
+      "end": 1097,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1105,
+      "end": 1116,
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1119,
+      "end": 1141,
+      "pii_type": "private_email",
+      "value": "davide.rosa@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1144,
+      "end": 1158,
+      "pii_type": "private_phone",
+      "value": "+39 010 334455",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1161,
+      "end": 1167,
+      "pii_type": "private_address",
+      "value": "Genova",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1170,
+      "end": 1181,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1184,
+      "end": 1211,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1239,
+      "end": 1250,
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "source_rule": "table:Clienti:Nome",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1253,
+      "end": 1275,
+      "pii_type": "private_email",
+      "value": "elena.verde@esempio.it",
+      "source_rule": "table:Clienti:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1278,
+      "end": 1292,
+      "pii_type": "private_phone",
+      "value": "+39 049 556677",
+      "source_rule": "table:Clienti:Telefono",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1295,
+      "end": 1301,
+      "pii_type": "private_address",
+      "value": "Padova",
+      "source_rule": "table:Clienti:Citta'",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1304,
+      "end": 1315,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "table:Clienti:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1318,
+      "end": 1345,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "table:Clienti:IBAN",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Clienti"
+        }
+      }
+    },
+    {
+      "start": 1468,
+      "end": 1479,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:Fornitori:Referente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1482,
+      "end": 1504,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "table:Fornitori:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1507,
+      "end": 1518,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Fornitori:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1542,
+      "end": 1553,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "table:Fornitori:Referente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1556,
+      "end": 1579,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "table:Fornitori:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1582,
+      "end": 1593,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Fornitori:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1617,
+      "end": 1629,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:Fornitori:Referente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1632,
+      "end": 1647,
+      "pii_type": "private_email",
+      "value": "info@esempio.it",
+      "source_rule": "table:Fornitori:Email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1650,
+      "end": 1661,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "table:Fornitori:P.IVA",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fornitori"
+        }
+      }
+    },
+    {
+      "start": 1746,
+      "end": 1755,
+      "pii_type": "account_number",
+      "value": "2026/0001",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1758,
+      "end": 1768,
+      "pii_type": "private_date",
+      "value": "2026-01-02",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1771,
+      "end": 1783,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1806,
+      "end": 1815,
+      "pii_type": "account_number",
+      "value": "2026/0002",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1818,
+      "end": 1828,
+      "pii_type": "private_date",
+      "value": "2026-01-03",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1831,
+      "end": 1842,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1865,
+      "end": 1874,
+      "pii_type": "account_number",
+      "value": "2026/0003",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1877,
+      "end": 1887,
+      "pii_type": "private_date",
+      "value": "2026-01-04",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1890,
+      "end": 1901,
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1924,
+      "end": 1933,
+      "pii_type": "account_number",
+      "value": "2026/0004",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1936,
+      "end": 1946,
+      "pii_type": "private_date",
+      "value": "2026-01-05",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1949,
+      "end": 1961,
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1984,
+      "end": 1993,
+      "pii_type": "account_number",
+      "value": "2026/0005",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 1996,
+      "end": 2006,
+      "pii_type": "private_date",
+      "value": "2026-01-06",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2009,
+      "end": 2019,
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2042,
+      "end": 2051,
+      "pii_type": "account_number",
+      "value": "2026/0006",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2054,
+      "end": 2064,
+      "pii_type": "private_date",
+      "value": "2026-01-07",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2067,
+      "end": 2078,
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2101,
+      "end": 2110,
+      "pii_type": "account_number",
+      "value": "2026/0007",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2113,
+      "end": 2123,
+      "pii_type": "private_date",
+      "value": "2026-01-08",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2126,
+      "end": 2136,
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2159,
+      "end": 2168,
+      "pii_type": "account_number",
+      "value": "2026/0008",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2171,
+      "end": 2181,
+      "pii_type": "private_date",
+      "value": "2026-01-09",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2184,
+      "end": 2195,
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2218,
+      "end": 2227,
+      "pii_type": "account_number",
+      "value": "2026/0009",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2230,
+      "end": 2240,
+      "pii_type": "private_date",
+      "value": "2026-01-10",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2243,
+      "end": 2254,
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2277,
+      "end": 2286,
+      "pii_type": "account_number",
+      "value": "2026/0010",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2289,
+      "end": 2299,
+      "pii_type": "private_date",
+      "value": "2026-01-11",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2302,
+      "end": 2313,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2336,
+      "end": 2345,
+      "pii_type": "account_number",
+      "value": "2026/0011",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2348,
+      "end": 2358,
+      "pii_type": "private_date",
+      "value": "2026-01-12",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2361,
+      "end": 2373,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2396,
+      "end": 2405,
+      "pii_type": "account_number",
+      "value": "2026/0012",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2408,
+      "end": 2418,
+      "pii_type": "private_date",
+      "value": "2026-01-13",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2421,
+      "end": 2432,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2455,
+      "end": 2464,
+      "pii_type": "account_number",
+      "value": "2026/0013",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2467,
+      "end": 2477,
+      "pii_type": "private_date",
+      "value": "2026-01-14",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2480,
+      "end": 2491,
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2514,
+      "end": 2523,
+      "pii_type": "account_number",
+      "value": "2026/0014",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2526,
+      "end": 2536,
+      "pii_type": "private_date",
+      "value": "2026-01-15",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2539,
+      "end": 2551,
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2574,
+      "end": 2583,
+      "pii_type": "account_number",
+      "value": "2026/0015",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2586,
+      "end": 2596,
+      "pii_type": "private_date",
+      "value": "2026-01-16",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2599,
+      "end": 2609,
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2632,
+      "end": 2641,
+      "pii_type": "account_number",
+      "value": "2026/0016",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2644,
+      "end": 2654,
+      "pii_type": "private_date",
+      "value": "2026-01-17",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2657,
+      "end": 2668,
+      "pii_type": "private_person",
+      "value": "Marco Grigi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2691,
+      "end": 2700,
+      "pii_type": "account_number",
+      "value": "2026/0017",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2703,
+      "end": 2713,
+      "pii_type": "private_date",
+      "value": "2026-01-18",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2716,
+      "end": 2726,
+      "pii_type": "private_person",
+      "value": "Sara Viola",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2749,
+      "end": 2758,
+      "pii_type": "account_number",
+      "value": "2026/0018",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2761,
+      "end": 2771,
+      "pii_type": "private_date",
+      "value": "2026-01-19",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2774,
+      "end": 2785,
+      "pii_type": "private_person",
+      "value": "Davide Rosa",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2808,
+      "end": 2817,
+      "pii_type": "account_number",
+      "value": "2026/0019",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2820,
+      "end": 2830,
+      "pii_type": "private_date",
+      "value": "2026-01-20",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2833,
+      "end": 2844,
+      "pii_type": "private_person",
+      "value": "Elena Verde",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2867,
+      "end": 2876,
+      "pii_type": "account_number",
+      "value": "2026/0020",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2879,
+      "end": 2889,
+      "pii_type": "private_date",
+      "value": "2026-01-21",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2892,
+      "end": 2903,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2926,
+      "end": 2935,
+      "pii_type": "account_number",
+      "value": "2026/0021",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2938,
+      "end": 2948,
+      "pii_type": "private_date",
+      "value": "2026-01-22",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2951,
+      "end": 2963,
+      "pii_type": "private_person",
+      "value": "Anna Bianchi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2986,
+      "end": 2995,
+      "pii_type": "account_number",
+      "value": "2026/0022",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 2998,
+      "end": 3008,
+      "pii_type": "private_date",
+      "value": "2026-01-23",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3011,
+      "end": 3022,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3045,
+      "end": 3054,
+      "pii_type": "account_number",
+      "value": "2026/0023",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3057,
+      "end": 3067,
+      "pii_type": "private_date",
+      "value": "2026-01-24",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3070,
+      "end": 3081,
+      "pii_type": "private_person",
+      "value": "Giulia Neri",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3104,
+      "end": 3113,
+      "pii_type": "account_number",
+      "value": "2026/0024",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3116,
+      "end": 3126,
+      "pii_type": "private_date",
+      "value": "2026-01-25",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3129,
+      "end": 3141,
+      "pii_type": "private_person",
+      "value": "Paolo Gialli",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3164,
+      "end": 3173,
+      "pii_type": "account_number",
+      "value": "2026/0025",
+      "source_rule": "table:Fatture:Numero",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3176,
+      "end": 3186,
+      "pii_type": "private_date",
+      "value": "2026-01-26",
+      "source_rule": "table:Fatture:Data",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3189,
+      "end": 3199,
+      "pii_type": "private_person",
+      "value": "Chiara Blu",
+      "source_rule": "table:Fatture:Cliente",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Fatture"
+        }
+      }
+    },
+    {
+      "start": 3318,
+      "end": 3329,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "freeform:Riepilogo:person",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Riepilogo"
+        }
+      }
+    },
+    {
+      "start": 3331,
+      "end": 3353,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "freeform:Riepilogo:email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Riepilogo"
+        }
+      }
+    },
+    {
+      "start": 3408,
+      "end": 3435,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "freeform:Note:iban",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Note"
+        }
+      }
+    },
+    {
+      "start": 3497,
+      "end": 3519,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "freeform:Note:email",
+      "structure": {
+        "primary": {
+          "kind": "sheet",
+          "label": "Note"
+        }
+      }
+    }
+  ]
+}
