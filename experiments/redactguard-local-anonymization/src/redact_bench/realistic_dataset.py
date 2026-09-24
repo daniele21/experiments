@@ -37,6 +37,12 @@ def validate_realistic_dataset(
     require_originals: bool = False,
 ) -> dict:
     root = Path(dataset_dir)
+    if not root.exists():
+        raise ValueError(
+            f"Realistic dataset directory not found: {root}. "
+            "The model-only dataset is committed in the repository; pull current main "
+            "or pass the correct --dataset-dir."
+        )
     manifest = _read_json(root / "manifest.json")
     documents = list(manifest.get("documents", []))
     if not documents:

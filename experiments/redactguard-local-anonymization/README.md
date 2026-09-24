@@ -90,20 +90,18 @@ uv run redact-bench check-data
 
 ## Realistic test dataset
 
-A private realistic dataset is available separately from Git. It contains 11 heterogeneous source documents, canonical Markdown and exact deterministic PII gold spans.
+The realistic model-only dataset is committed under `data/realistic/`: 11 heterogeneous source representations, canonical Markdown and exact deterministic PII gold spans. A fresh clone does not need a Drive download for model comparison.
 
-Dataset acquisition and validation are documented in [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
-
-After downloading the prepared Drive dataset into `data/realistic/`:
+Usage and the separate original-document/E2E flow are documented in [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
 
 ```bash
 uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
 uv run redact-bench compare --dataset data/realistic
 ```
 
-`compare --dataset` accepts either the committed JSONL smoke dataset or a realistic dataset directory. The directory loader strips structural metadata markers, verifies the frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is required.
+`compare --dataset` accepts either the committed JSONL smoke dataset or the committed realistic dataset directory. The loader strips structural metadata markers, verifies the frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is required.
 
-The realistic dataset itself is intentionally ignored by Git.
+Only `data/realistic/originals/` is ignored by Git; download those original binaries from Drive only for extraction/end-to-end work.
 
 ## Document end-to-end benchmark
 
@@ -210,7 +208,7 @@ It does **not** depend on the RedactGuard Python package at runtime and does not
 
 `data/smoke/cases.jsonl` is a small deterministic text integration dataset spanning General, Healthcare, Financial and Legal profiles. `data/documents/manifest.jsonl` adds five deterministic synthetic document cases (six pages) for the PDF/Docling system tier. Both are harness-validation datasets, not sufficient for publishing broad model-quality conclusions.
 
-The realistic heterogeneous dataset is now available as a separate access-controlled test tier. A future publication-grade tier should still add independently reviewed/external labels and a held-out split. See [DATASETS.md](DATASETS.md) and [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
+The realistic heterogeneous model-only dataset is committed as a reproducible test tier; the original heterogeneous binaries remain access-controlled on Drive. A future publication-grade tier should still add independently reviewed/external labels and a held-out split. See [DATASETS.md](DATASETS.md) and [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
 
 ## Boundary with the RedactGuard product
 

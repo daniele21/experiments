@@ -1,0 +1,184 @@
+{
+  "schema_version": "redactguard-gold-v1",
+  "canonical_filename": "presentazione.pptx.md",
+  "profile": "financial",
+  "gold_status": "deterministic_v0.1",
+  "human_reviewed": false,
+  "inference_text_transform": {
+    "strip_structure_markers": true,
+    "marker_pattern": "^\\\\s*<!--\\\\s*(page|sheet|slide|embedded-image)\\\\s*:\\\\s*(.*?)\\\\s*-->\\\\s*$",
+    "preserve_all_other_characters": true
+  },
+  "inference_text_chars": 368,
+  "inference_text_sha256": "b1a9af772140e9a41ae05ac91605bfeaf2b7ca01608d9e2b533aba28ee82f9e3",
+  "gold_policy": {
+    "included_types": [
+      "account_number",
+      "private_address",
+      "private_email",
+      "private_person",
+      "private_phone"
+    ],
+    "organization_names": "excluded_no_frozen_pii_type",
+    "monetary_amounts": "excluded_no_frozen_pii_type",
+    "company_vat_numbers": "included_as_account_number",
+    "iban_and_fiscal_codes": "included_as_account_number",
+    "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+  },
+  "summary": {
+    "span_count": 7,
+    "unique_entity_values": 6,
+    "by_type": {
+      "account_number": 2,
+      "private_address": 1,
+      "private_email": 1,
+      "private_person": 2,
+      "private_phone": 1
+    }
+  },
+  "entities": [
+    {
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "occurrences": 1,
+      "span_indices": [
+        2
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "occurrences": 1,
+      "span_indices": [
+        1
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "occurrences": 1,
+      "span_indices": [
+        6
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "occurrences": 1,
+      "span_indices": [
+        4
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "occurrences": 2,
+      "span_indices": [
+        0,
+        3
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "occurrences": 1,
+      "span_indices": [
+        5
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "start": 45,
+      "end": 56,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 141,
+      "end": 168,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 209,
+      "end": 220,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 262,
+      "end": 273,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 276,
+      "end": 298,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 301,
+      "end": 315,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 337,
+      "end": 367,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "slide",
+          "label": "3"
+        }
+      }
+    }
+  ]
+}

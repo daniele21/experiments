@@ -1,10 +1,26 @@
 # Realistic test dataset
 
-This experiment has a private, access-controlled realistic dataset for RedactGuard model evaluation.
+The **model-only realistic dataset is committed in this repository** so a fresh clone can validate and run it without downloading anything from Google Drive.
 
-## Source locations
+The original heterogeneous source documents remain external because they are only required for extraction/OCR/full end-to-end tests.
 
-Prepared benchmark dataset (canonical Markdown + gold annotations + manifest):
+## Dataset locations
+
+Committed benchmark dataset:
+
+```text
+data/realistic/
+├── README.md
+├── manifest.json
+├── canonical/
+│   └── <source filename>.md
+└── annotations/
+    ├── README.md
+    ├── summary.json
+    └── <source filename>.json
+```
+
+Upstream prepared dataset in Google Drive:
 
 - https://drive.google.com/drive/folders/1W_fxTf1nLNBfzD5LVQtdLCLcBxrhP4c2
 
@@ -12,9 +28,7 @@ Original heterogeneous source documents:
 
 - https://drive.google.com/drive/folders/1IB49Z2f5tYcgB41p-gaFUGOeFcv29tPK
 
-The prepared dataset is the source to use for **model-only** comparisons. The original source folder is needed only when testing extraction / OCR / full product behavior.
-
-These folders may require the corresponding Google Drive access. The repository intentionally does not embed Google credentials, Drive API tokens or copies of the private dataset.
+The Drive prepared dataset remains the upstream source used when intentionally revising canonical text or gold annotations. The committed copy is the reproducible version used by this experiment.
 
 ## Dataset contract
 
@@ -24,20 +38,7 @@ Current dataset id:
 redactguard-realistic-documents-v0.1
 ```
 
-The prepared Drive folder contains:
-
-```text
-README.md
-manifest.json
-canonical/
-  <source filename>.md
-annotations/
-  README.md
-  summary.json
-  <source filename>.json
-```
-
-The current set contains 11 heterogeneous source documents represented as canonical Markdown and deterministic gold annotations.
+The set contains 11 heterogeneous source documents represented as canonical Markdown and deterministic gold annotations.
 
 Canonical Markdown represents the **visible/source content**, not parser/OCR output. Structural markers such as:
 
@@ -50,7 +51,7 @@ Canonical Markdown represents the **visible/source content**, not parser/OCR out
 
 are metadata. The benchmark strips the complete marker line before model inference and preserves every other character.
 
-Gold spans are therefore defined against the exact stripped inference text, not against the raw Markdown file.
+Gold spans are defined against the exact stripped inference text, not against the raw Markdown file.
 
 Each annotation JSON records:
 
@@ -61,93 +62,27 @@ Each annotation JSON records:
 - SHA-256 of the exact inference text;
 - labeling policy and provenance.
 
-The dataset is currently deterministic gold, not independently human-reviewed gold. Do not describe it as human-reviewed unless that status is changed in the source dataset.
+The dataset is deterministic gold, not independently human-reviewed gold.
 
-## Get the dataset
+## Model-only usage
 
-### Model-only benchmark
+After cloning or pulling current `main`, no dataset download step is required.
 
-In Google Drive, download the complete **prepared benchmark dataset** folder.
-
-Place its contents here:
-
-```text
-experiments/redactguard-local-anonymization/data/realistic/
-├── README.md
-├── manifest.json
-├── canonical/
-└── annotations/
-```
-
-The final path from this experiment directory must therefore contain:
-
-```bash
-test -f data/realistic/manifest.json
-test -d data/realistic/canonical
-test -d data/realistic/annotations
-```
-
-Do not commit this directory. It is intentionally ignored by Git.
-
-Validate the downloaded copy before any benchmark:
+Validate the committed dataset:
 
 ```bash
 uv run redact-bench check-realistic-dataset \
   --dataset-dir data/realistic
 ```
 
-Validation fails if any of the following drift:
-
-- expected files;
-- canonical → inference-text transformation;
-- inference-text length;
-- SHA-256;
-- RedactGuard profile;
-- gold span count;
-- span bounds;
-- `text[start:end] == gold.value`.
-
-### Original files for extraction/E2E work
-
-If extraction or full heterogeneous end-to-end tests are needed, also download the **original source documents** folder.
-
-Place the files under:
-
-```text
-data/realistic/originals/
-├── scansione_nuda.pdf
-├── scansione_cercabile.pdf
-├── scansione_con_immagini.pdf
-├── contratto.pdf
-├── contratto.doc
-├── contratto.docx
-├── tabella_piccola.xlsx
-├── cartella_multifoglio.xlsx
-├── clienti.csv
-├── lettera.txt
-└── presentazione.pptx
-```
-
-Then require source-file completeness during validation:
-
-```bash
-uv run redact-bench check-realistic-dataset \
-  --dataset-dir data/realistic \
-  --require-originals
-```
-
-The existing `redact-bench documents` command is currently a PDF/Docling system tier. The realistic heterogeneous originals include DOC, DOCX, XLSX, CSV, TXT and PPTX as well, so they should not be forced through that PDF-only command. Their extraction/E2E integration must preserve format-specific behavior.
-
-## Run model-only comparison
-
-Once validation succeeds, the same `compare` command can read the realistic dataset directory directly:
+Then run all configured local models:
 
 ```bash
 uv run redact-bench compare \
   --dataset data/realistic
 ```
 
-Subset of models:
+Or a subset:
 
 ```bash
 uv run redact-bench compare \
@@ -166,22 +101,55 @@ canonical/<document>.md
       ↓
 strip structural marker lines
       ↓
-verify SHA-256
+verify text length + SHA-256
       ↓
 annotations/<document>.json
       ↓
-exact gold spans
+verify every exact gold span
       ↓
 Case(profile, inference_text, gold)
       ↓
 normal RedactGuard benchmark runner
 ```
 
-The source filename becomes the benchmark `case_id`, so model results remain traceable to the original document.
+The source filename becomes the benchmark `case_id`, so results remain traceable to the original document format.
+
+## Original files for extraction/E2E work
+
+Only extraction/OCR/full heterogeneous tests need the original binaries.
+
+Download the original Drive folder and place the files under:
+
+```text
+data/realistic/originals/
+├── scansione_nuda.pdf
+├── scansione_cercabile.pdf
+├── scansione_con_immagini.pdf
+├── contratto.pdf
+├── contratto.doc
+├── contratto.docx
+├── tabella_piccola.xlsx
+├── cartella_multifoglio.xlsx
+├── clienti.csv
+├── lettera.txt
+└── presentazione.pptx
+```
+
+`data/realistic/originals/` is ignored by Git.
+
+Check completeness with:
+
+```bash
+uv run redact-bench check-realistic-dataset \
+  --dataset-dir data/realistic \
+  --require-originals
+```
+
+The existing `redact-bench documents` command is currently a PDF/Docling system tier. The realistic originals include DOC, DOCX, XLSX, CSV, TXT and PPTX as well, so the heterogeneous end-to-end tier must preserve format-specific extraction behavior rather than forcing every format through the PDF-only runner.
 
 ## Latency on selected realistic documents
 
-The generic latency command also accepts the dataset directory. Because the default latency case ids belong to the smoke set, explicitly select realistic source filenames:
+The generic latency command also accepts the dataset directory. Explicitly select realistic source filenames because the default latency ids belong to the smoke set:
 
 ```bash
 uv run redact-bench latency \
@@ -191,16 +159,17 @@ uv run redact-bench latency \
   --repeats 30
 ```
 
-## Reproducibility rule
+## Updating the dataset
 
-Never edit the local canonical Markdown to make a model perform better.
+Never edit canonical Markdown locally just to improve a model score.
 
-The Drive dataset is the dataset source of truth. If canonical text or gold annotations need to change:
+When the realistic dataset intentionally changes:
 
-1. change the prepared Drive dataset;
-2. update its annotation spans/hashes;
-3. download the new version;
+1. update the prepared Drive dataset;
+2. update annotation spans/hashes;
+3. copy the new canonical/annotation/manifest version into `data/realistic/`;
 4. run `check-realistic-dataset`;
-5. record the dataset id/version in benchmark evidence.
+5. update the dataset id/version when the benchmark contract changes;
+6. merge only after CI validates the committed dataset.
 
 A hash mismatch is a dataset-version failure, not something the benchmark should silently repair.

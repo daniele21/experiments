@@ -1,0 +1,272 @@
+{
+  "dataset_id": "redactguard-realistic-documents-v0.1",
+  "canonical_contract": {
+    "description": "Canonical Markdown represents visible/source content, not Docling/OCR output.",
+    "structure_markers": "HTML comments such as page/sheet/slide are metadata and should be stripped before LLM inference.",
+    "annotations": "PII gold annotations are intentionally stored separately under annotations/."
+  },
+  "documents": [
+    {
+      "source_filename": "scansione_nuda.pdf",
+      "source_drive_id": "1dk-yc6EymPLrIrxXposf0B7Sh_f4VR-g",
+      "source_mime_type": "application/pdf",
+      "canonical_filename": "scansione_nuda.pdf.md",
+      "canonicalization_method": "manual_visual_transcription",
+      "canonical_chars": 1372,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "scansione_nuda.pdf.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 15,
+      "annotation_by_type": {
+        "account_number": 5,
+        "private_address": 2,
+        "private_email": 2,
+        "private_person": 4,
+        "private_phone": 2
+      },
+      "inference_text_chars": 1355,
+      "inference_text_sha256": "c3ffff9db1ecb5fdbd0153f4c82c3e44be0199ee39c8978d19fd2dfe4786d5b5",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "scansione_cercabile.pdf",
+      "source_drive_id": "1IdogUrDRd4P2q7LepIjuIuNuxVMlvSqO",
+      "source_mime_type": "application/pdf",
+      "canonical_filename": "scansione_cercabile.pdf.md",
+      "canonicalization_method": "manual_visual_transcription_ignoring_noisy_ocr_layer",
+      "canonical_chars": 925,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "scansione_cercabile.pdf.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 16,
+      "annotation_by_type": {
+        "account_number": 4,
+        "private_address": 4,
+        "private_email": 4,
+        "private_person": 4
+      },
+      "inference_text_chars": 908,
+      "inference_text_sha256": "6a26ddd021b42b9628862451c74c4c658c814bb24e181cd9fc923bed8ecf74df",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "tabella_piccola.xlsx",
+      "source_drive_id": "1ymlJzV6mIfXbCKO4AoSXoIvScgnUvNR1",
+      "source_mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "canonical_filename": "tabella_piccola.xlsx.md",
+      "canonicalization_method": "xlsx_xml_sheet_and_table_conversion",
+      "canonical_chars": 20710,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "tabella_piccola.xlsx.json",
+      "benchmark_profile": "financial",
+      "annotation_span_count": 1080,
+      "annotation_by_type": {
+        "account_number": 360,
+        "private_address": 240,
+        "private_email": 120,
+        "private_person": 240,
+        "private_phone": 120
+      },
+      "inference_text_chars": 20689,
+      "inference_text_sha256": "f0bc953b8d09494e251d51f2c65b9773ba2011373676b6366b762e49cb88f7ae",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "scansione_con_immagini.pdf",
+      "source_drive_id": "1Dr6zPv-I6BT_3rb_y2v8ibNdJ_xEDvPQ",
+      "source_mime_type": "application/pdf",
+      "canonical_filename": "scansione_con_immagini.pdf.md",
+      "canonicalization_method": "manual_visual_transcription_including_embedded_image_text",
+      "canonical_chars": 1400,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "scansione_con_immagini.pdf.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 15,
+      "annotation_by_type": {
+        "account_number": 5,
+        "private_address": 2,
+        "private_email": 2,
+        "private_person": 4,
+        "private_phone": 2
+      },
+      "inference_text_chars": 1356,
+      "inference_text_sha256": "839916ca58069ecd6025f6b432bdbeb0055187ac6b86076a3064393700f1d67d",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "presentazione.pptx",
+      "source_drive_id": "1YqtizRKvEqS4SgeN4ORBckNi0BWgBVmF",
+      "source_mime_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "canonical_filename": "presentazione.pptx.md",
+      "canonicalization_method": "pptx_xml_slide_order_conversion",
+      "canonical_chars": 422,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "presentazione.pptx.json",
+      "benchmark_profile": "financial",
+      "annotation_span_count": 7,
+      "annotation_by_type": {
+        "account_number": 2,
+        "private_address": 1,
+        "private_email": 1,
+        "private_person": 2,
+        "private_phone": 1
+      },
+      "inference_text_chars": 368,
+      "inference_text_sha256": "b1a9af772140e9a41ae05ac91605bfeaf2b7ca01608d9e2b533aba28ee82f9e3",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "contratto.docx",
+      "source_drive_id": "12gBALvgshFe_mpiQqfYvASFN1gPLod3P",
+      "source_mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "canonical_filename": "contratto.docx.md",
+      "canonicalization_method": "visible_render_to_pdf_then_text_with_page_boundaries",
+      "canonical_chars": 10381,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "contratto.docx.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 102,
+      "annotation_by_type": {
+        "account_number": 20,
+        "private_address": 8,
+        "private_email": 29,
+        "private_person": 23,
+        "private_phone": 22
+      },
+      "inference_text_chars": 10262,
+      "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "lettera.txt",
+      "source_drive_id": "1UoVZplz5T81VoeN0a6Bb43Y4VliUHyfD",
+      "source_mime_type": "text/plain",
+      "canonical_filename": "lettera.txt.md",
+      "canonicalization_method": "direct_text",
+      "canonical_chars": 602,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "lettera.txt.json",
+      "benchmark_profile": "financial",
+      "annotation_span_count": 9,
+      "annotation_by_type": {
+        "account_number": 3,
+        "private_address": 1,
+        "private_date": 1,
+        "private_email": 1,
+        "private_person": 2,
+        "private_phone": 1
+      },
+      "inference_text_chars": 602,
+      "inference_text_sha256": "ad9698a3729f7e10a80385fbb1e12dd3d05e82e798ca332f21a426c3acdbbb29",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "clienti.csv",
+      "source_drive_id": "1DBBua4hVXmTACKGFNIrV54KitKg8mGqd",
+      "source_mime_type": "text/csv",
+      "canonical_filename": "clienti.csv.md",
+      "canonicalization_method": "csv_to_markdown_table",
+      "canonical_chars": 1097,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "clienti.csv.json",
+      "benchmark_profile": "financial",
+      "annotation_span_count": 50,
+      "annotation_by_type": {
+        "account_number": 20,
+        "private_email": 10,
+        "private_person": 10,
+        "private_phone": 10
+      },
+      "inference_text_chars": 1097,
+      "inference_text_sha256": "a657bfc30609ecaa29720c8ee953659f741e57748ab2460660c5b0e0dc04a600",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "contratto.pdf",
+      "source_drive_id": "1g-Sqhz-b5XQPF2nY3c1kNwYdNZ3hWafF",
+      "source_mime_type": "application/pdf",
+      "canonical_filename": "contratto.pdf.md",
+      "canonicalization_method": "native_pdf_text_layer_with_page_boundaries",
+      "canonical_chars": 2260,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "contratto.pdf.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 22,
+      "annotation_by_type": {
+        "account_number": 6,
+        "private_address": 2,
+        "private_email": 4,
+        "private_person": 6,
+        "private_phone": 4
+      },
+      "inference_text_chars": 2226,
+      "inference_text_sha256": "7cd112859cab894b4eab0a4a553e271b657e2e30f9f5af4873e838b9bcaac806",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "contratto.doc",
+      "source_drive_id": "1S1yEodNi8xjwDq4aA1PYJuif8lW5g9La",
+      "source_mime_type": "application/msword",
+      "canonical_filename": "contratto.doc.md",
+      "canonicalization_method": "visible_render_to_pdf_then_text_with_page_boundaries",
+      "canonical_chars": 10381,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "contratto.doc.json",
+      "benchmark_profile": "legal",
+      "annotation_span_count": 102,
+      "annotation_by_type": {
+        "account_number": 20,
+        "private_address": 8,
+        "private_email": 29,
+        "private_person": 23,
+        "private_phone": 22
+      },
+      "inference_text_chars": 10262,
+      "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3",
+      "human_reviewed": false
+    },
+    {
+      "source_filename": "cartella_multifoglio.xlsx",
+      "source_drive_id": "13DJoOVescTgykakVB0PV2A91Rhxb3h-r",
+      "source_mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "canonical_filename": "cartella_multifoglio.xlsx.md",
+      "canonicalization_method": "xlsx_xml_sheet_and_table_conversion",
+      "canonical_chars": 3644,
+      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_filename": "cartella_multifoglio.xlsx.json",
+      "benchmark_profile": "financial",
+      "annotation_span_count": 148,
+      "annotation_by_type": {
+        "account_number": 49,
+        "private_address": 10,
+        "private_date": 25,
+        "private_email": 15,
+        "private_person": 39,
+        "private_phone": 10
+      },
+      "inference_text_chars": 3523,
+      "inference_text_sha256": "1351620a60b04e52ace6dd028dd14deb15b6ab0b69147f45e861ad75de5752c1",
+      "human_reviewed": false
+    }
+  ],
+  "annotation_contract": {
+    "schema_version": "redactguard-gold-v1",
+    "gold_version": "deterministic_v0.1",
+    "description": "Gold spans are resolved on canonical Markdown after removing structural HTML-comment markers; all other characters are preserved.",
+    "structure_markers_stripped": [
+      "page",
+      "sheet",
+      "slide",
+      "embedded-image"
+    ],
+    "human_reviewed": false,
+    "policy": {
+      "organization_names": "excluded_no_frozen_pii_type",
+      "monetary_amounts": "excluded_no_frozen_pii_type",
+      "company_vat_numbers": "included_as_account_number",
+      "iban_and_fiscal_codes": "included_as_account_number",
+      "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+      "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    }
+  }
+}

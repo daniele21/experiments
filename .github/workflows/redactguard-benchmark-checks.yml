@@ -37,5 +37,8 @@ jobs:
       - name: Validate document manifest
         run: uv run redact-bench check-documents
 
+      - name: Validate realistic dataset
+        run: uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
+
       - name: Unit tests
         run: uv run pytest

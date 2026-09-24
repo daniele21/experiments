@@ -1,0 +1,179 @@
+{
+  "documents": 11,
+  "total_spans": 1566,
+  "documents_summary": {
+    "scansione_nuda.pdf.md": {
+      "annotation_filename": "scansione_nuda.pdf.json",
+      "profile": "legal",
+      "span_count": 15,
+      "unique_entity_values": 10,
+      "by_type": {
+        "account_number": 5,
+        "private_address": 2,
+        "private_email": 2,
+        "private_person": 4,
+        "private_phone": 2
+      },
+      "inference_text_chars": 1355,
+      "inference_text_sha256": "c3ffff9db1ecb5fdbd0153f4c82c3e44be0199ee39c8978d19fd2dfe4786d5b5"
+    },
+    "scansione_cercabile.pdf.md": {
+      "annotation_filename": "scansione_cercabile.pdf.json",
+      "profile": "legal",
+      "span_count": 16,
+      "unique_entity_values": 4,
+      "by_type": {
+        "account_number": 4,
+        "private_address": 4,
+        "private_email": 4,
+        "private_person": 4
+      },
+      "inference_text_chars": 908,
+      "inference_text_sha256": "6a26ddd021b42b9628862451c74c4c658c814bb24e181cd9fc923bed8ecf74df"
+    },
+    "scansione_con_immagini.pdf.md": {
+      "annotation_filename": "scansione_con_immagini.pdf.json",
+      "profile": "legal",
+      "span_count": 15,
+      "unique_entity_values": 10,
+      "by_type": {
+        "account_number": 5,
+        "private_address": 2,
+        "private_email": 2,
+        "private_person": 4,
+        "private_phone": 2
+      },
+      "inference_text_chars": 1356,
+      "inference_text_sha256": "839916ca58069ecd6025f6b432bdbeb0055187ac6b86076a3064393700f1d67d"
+    },
+    "contratto.pdf.md": {
+      "annotation_filename": "contratto.pdf.json",
+      "profile": "legal",
+      "span_count": 22,
+      "unique_entity_values": 10,
+      "by_type": {
+        "account_number": 6,
+        "private_address": 2,
+        "private_email": 4,
+        "private_person": 6,
+        "private_phone": 4
+      },
+      "inference_text_chars": 2226,
+      "inference_text_sha256": "7cd112859cab894b4eab0a4a553e271b657e2e30f9f5af4873e838b9bcaac806"
+    },
+    "contratto.docx.md": {
+      "annotation_filename": "contratto.docx.json",
+      "profile": "legal",
+      "span_count": 102,
+      "unique_entity_values": 10,
+      "by_type": {
+        "account_number": 20,
+        "private_address": 8,
+        "private_email": 29,
+        "private_person": 23,
+        "private_phone": 22
+      },
+      "inference_text_chars": 10262,
+      "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3"
+    },
+    "contratto.doc.md": {
+      "annotation_filename": "contratto.doc.json",
+      "profile": "legal",
+      "span_count": 102,
+      "unique_entity_values": 10,
+      "by_type": {
+        "account_number": 20,
+        "private_address": 8,
+        "private_email": 29,
+        "private_person": 23,
+        "private_phone": 22
+      },
+      "inference_text_chars": 10262,
+      "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3"
+    },
+    "tabella_piccola.xlsx.md": {
+      "annotation_filename": "tabella_piccola.xlsx.json",
+      "profile": "financial",
+      "span_count": 1080,
+      "unique_entity_values": 163,
+      "by_type": {
+        "account_number": 360,
+        "private_address": 240,
+        "private_email": 120,
+        "private_person": 240,
+        "private_phone": 120
+      },
+      "inference_text_chars": 20689,
+      "inference_text_sha256": "f0bc953b8d09494e251d51f2c65b9773ba2011373676b6366b762e49cb88f7ae"
+    },
+    "cartella_multifoglio.xlsx.md": {
+      "annotation_filename": "cartella_multifoglio.xlsx.json",
+      "profile": "financial",
+      "span_count": 148,
+      "unique_entity_values": 93,
+      "by_type": {
+        "account_number": 49,
+        "private_address": 10,
+        "private_date": 25,
+        "private_email": 15,
+        "private_person": 39,
+        "private_phone": 10
+      },
+      "inference_text_chars": 3523,
+      "inference_text_sha256": "1351620a60b04e52ace6dd028dd14deb15b6ab0b69147f45e861ad75de5752c1"
+    },
+    "clienti.csv.md": {
+      "annotation_filename": "clienti.csv.json",
+      "profile": "financial",
+      "span_count": 50,
+      "unique_entity_values": 33,
+      "by_type": {
+        "account_number": 20,
+        "private_email": 10,
+        "private_person": 10,
+        "private_phone": 10
+      },
+      "inference_text_chars": 1097,
+      "inference_text_sha256": "a657bfc30609ecaa29720c8ee953659f741e57748ab2460660c5b0e0dc04a600"
+    },
+    "lettera.txt.md": {
+      "annotation_filename": "lettera.txt.json",
+      "profile": "financial",
+      "span_count": 9,
+      "unique_entity_values": 8,
+      "by_type": {
+        "account_number": 3,
+        "private_address": 1,
+        "private_date": 1,
+        "private_email": 1,
+        "private_person": 2,
+        "private_phone": 1
+      },
+      "inference_text_chars": 602,
+      "inference_text_sha256": "ad9698a3729f7e10a80385fbb1e12dd3d05e82e798ca332f21a426c3acdbbb29"
+    },
+    "presentazione.pptx.md": {
+      "annotation_filename": "presentazione.pptx.json",
+      "profile": "financial",
+      "span_count": 7,
+      "unique_entity_values": 6,
+      "by_type": {
+        "account_number": 2,
+        "private_address": 1,
+        "private_email": 1,
+        "private_person": 2,
+        "private_phone": 1
+      },
+      "inference_text_chars": 368,
+      "inference_text_sha256": "b1a9af772140e9a41ae05ac91605bfeaf2b7ca01608d9e2b533aba28ee82f9e3"
+    }
+  },
+  "total_by_type": {
+    "account_number": 494,
+    "private_address": 278,
+    "private_date": 26,
+    "private_email": 217,
+    "private_person": 357,
+    "private_phone": 194
+  }
+}
