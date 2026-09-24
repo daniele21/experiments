@@ -1,0 +1,1542 @@
+{
+  "schema_version": "redactguard-gold-v1",
+  "canonical_filename": "contratto.doc.md",
+  "profile": "legal",
+  "gold_status": "deterministic_v0.1",
+  "human_reviewed": false,
+  "inference_text_transform": {
+    "strip_structure_markers": true,
+    "marker_pattern": "^\\\\s*<!--\\\\s*(page|sheet|slide|embedded-image)\\\\s*:\\\\s*(.*?)\\\\s*-->\\\\s*$",
+    "preserve_all_other_characters": true
+  },
+  "inference_text_chars": 10262,
+  "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3",
+  "gold_policy": {
+    "included_types": [
+      "account_number",
+      "private_address",
+      "private_email",
+      "private_person",
+      "private_phone"
+    ],
+    "organization_names": "excluded_no_frozen_pii_type",
+    "monetary_amounts": "excluded_no_frozen_pii_type",
+    "company_vat_numbers": "included_as_account_number",
+    "iban_and_fiscal_codes": "included_as_account_number",
+    "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+  },
+  "summary": {
+    "span_count": 102,
+    "unique_entity_values": 10,
+    "by_type": {
+      "account_number": 20,
+      "private_address": 8,
+      "private_email": 29,
+      "private_person": 23,
+      "private_phone": 22
+    }
+  },
+  "entities": [
+    {
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "occurrences": 8,
+      "span_indices": [
+        2,
+        13,
+        29,
+        46,
+        63,
+        74,
+        90,
+        100
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "occurrences": 1,
+      "span_indices": [
+        4
+      ]
+    },
+    {
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "occurrences": 11,
+      "span_indices": [
+        5,
+        12,
+        22,
+        32,
+        39,
+        49,
+        56,
+        66,
+        73,
+        83,
+        93
+      ]
+    },
+    {
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "occurrences": 8,
+      "span_indices": [
+        0,
+        1,
+        15,
+        31,
+        48,
+        65,
+        76,
+        92
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "occurrences": 11,
+      "span_indices": [
+        10,
+        20,
+        27,
+        37,
+        44,
+        54,
+        61,
+        71,
+        81,
+        88,
+        98
+      ]
+    },
+    {
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "occurrences": 18,
+      "span_indices": [
+        7,
+        14,
+        17,
+        24,
+        30,
+        34,
+        41,
+        47,
+        51,
+        58,
+        64,
+        68,
+        75,
+        78,
+        85,
+        91,
+        95,
+        101
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "occurrences": 12,
+      "span_indices": [
+        3,
+        6,
+        16,
+        23,
+        33,
+        40,
+        50,
+        57,
+        67,
+        77,
+        84,
+        94
+      ]
+    },
+    {
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "occurrences": 11,
+      "span_indices": [
+        9,
+        19,
+        26,
+        36,
+        43,
+        53,
+        60,
+        70,
+        80,
+        87,
+        97
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "occurrences": 11,
+      "span_indices": [
+        8,
+        18,
+        25,
+        35,
+        42,
+        52,
+        59,
+        69,
+        79,
+        86,
+        96
+      ]
+    },
+    {
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "occurrences": 11,
+      "span_indices": [
+        11,
+        21,
+        28,
+        38,
+        45,
+        55,
+        62,
+        72,
+        82,
+        89,
+        99
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "start": 22,
+      "end": 52,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 116,
+      "end": 146,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 160,
+      "end": 171,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 210,
+      "end": 221,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 282,
+      "end": 293,
+      "pii_type": "account_number",
+      "value": "98765432103",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 687,
+      "end": 714,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 904,
+      "end": 915,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 917,
+      "end": 939,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 946,
+      "end": 960,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 978,
+      "end": 989,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 991,
+      "end": 1014,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1022,
+      "end": 1037,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1508,
+      "end": 1535,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1567,
+      "end": 1578,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1581,
+      "end": 1603,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "1"
+        }
+      }
+    },
+    {
+      "start": 1627,
+      "end": 1657,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1823,
+      "end": 1834,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1836,
+      "end": 1858,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1865,
+      "end": 1879,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1897,
+      "end": 1908,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1910,
+      "end": 1933,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 1941,
+      "end": 1956,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2427,
+      "end": 2454,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2644,
+      "end": 2655,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2657,
+      "end": 2679,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2686,
+      "end": 2700,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2718,
+      "end": 2729,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2731,
+      "end": 2754,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 2762,
+      "end": 2777,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 3153,
+      "end": 3164,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 3167,
+      "end": 3189,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "2"
+        }
+      }
+    },
+    {
+      "start": 3213,
+      "end": 3243,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3346,
+      "end": 3373,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3563,
+      "end": 3574,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3576,
+      "end": 3598,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3605,
+      "end": 3619,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3637,
+      "end": 3648,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3650,
+      "end": 3673,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 3681,
+      "end": 3696,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4167,
+      "end": 4194,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4384,
+      "end": 4395,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4397,
+      "end": 4419,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4426,
+      "end": 4440,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4458,
+      "end": 4469,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4471,
+      "end": 4494,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4502,
+      "end": 4517,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4754,
+      "end": 4765,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4768,
+      "end": 4790,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "3"
+        }
+      }
+    },
+    {
+      "start": 4814,
+      "end": 4844,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5086,
+      "end": 5113,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5303,
+      "end": 5314,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5316,
+      "end": 5338,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5345,
+      "end": 5359,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5377,
+      "end": 5388,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5390,
+      "end": 5413,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5421,
+      "end": 5436,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 5907,
+      "end": 5934,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6124,
+      "end": 6135,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6137,
+      "end": 6159,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6166,
+      "end": 6180,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6198,
+      "end": 6209,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6211,
+      "end": 6234,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6242,
+      "end": 6257,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6266,
+      "end": 6277,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6280,
+      "end": 6302,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "4"
+        }
+      }
+    },
+    {
+      "start": 6326,
+      "end": 6356,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 6826,
+      "end": 6853,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7043,
+      "end": 7054,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7056,
+      "end": 7078,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7085,
+      "end": 7099,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7117,
+      "end": 7128,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7130,
+      "end": 7153,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7161,
+      "end": 7176,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7647,
+      "end": 7674,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7829,
+      "end": 7840,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7843,
+      "end": 7865,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "5"
+        }
+      }
+    },
+    {
+      "start": 7889,
+      "end": 7919,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 7962,
+      "end": 7973,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 7975,
+      "end": 7997,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8004,
+      "end": 8018,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8036,
+      "end": 8047,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8049,
+      "end": 8072,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8080,
+      "end": 8095,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8569,
+      "end": 8596,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8788,
+      "end": 8799,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8801,
+      "end": 8823,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8830,
+      "end": 8844,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8862,
+      "end": 8873,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8875,
+      "end": 8898,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 8906,
+      "end": 8921,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 9300,
+      "end": 9311,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 9314,
+      "end": 9336,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "6"
+        }
+      }
+    },
+    {
+      "start": 9360,
+      "end": 9390,
+      "pii_type": "private_address",
+      "value": "Via Roma 10, 20121 Milano (MI)",
+      "source_rule": "full_postal_address",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9494,
+      "end": 9521,
+      "pii_type": "account_number",
+      "value": "IT65A0542811101000000123456",
+      "source_rule": "iban_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9713,
+      "end": 9724,
+      "pii_type": "private_person",
+      "value": "Luigi Verdi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9726,
+      "end": 9748,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9755,
+      "end": 9769,
+      "pii_type": "private_phone",
+      "value": "+39 02 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9787,
+      "end": 9798,
+      "pii_type": "private_person",
+      "value": "Mario Rossi",
+      "source_rule": "known_person",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9800,
+      "end": 9823,
+      "pii_type": "private_email",
+      "value": "anna.bianchi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 9831,
+      "end": 9846,
+      "pii_type": "private_phone",
+      "value": "+39 335 1234567",
+      "source_rule": "phone_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 10225,
+      "end": 10236,
+      "pii_type": "account_number",
+      "value": "01234567897",
+      "source_rule": "vat_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    },
+    {
+      "start": 10239,
+      "end": 10261,
+      "pii_type": "private_email",
+      "value": "mario.rossi@esempio.it",
+      "source_rule": "email_regex",
+      "structure": {
+        "primary": {
+          "kind": "page",
+          "label": "7"
+        }
+      }
+    }
+  ]
+}

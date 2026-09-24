@@ -16,4 +16,5 @@ experiments/*/dashboard/node_modules/
 experiments/*/dashboard/dist/
 korgis/*
 korgis
-experiments/*/data/documents/generated/\nexperiments/*/data/realistic/\n
+experiments/*/data/documents/generated/
+experiments/*/data/realistic/originals/
