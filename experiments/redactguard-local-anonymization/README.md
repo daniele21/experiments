@@ -163,6 +163,19 @@ The document run writes the normal manifest/report plus `extraction.json`. The r
 2. **Model quality on extracted text** — what the LLM did given the text it actually received.
 3. **End-to-end privacy quality** — PII lost during extraction counts as a miss/leak, so parser failures cannot disappear from the final system score.
 
+## Evaluation v2
+
+Comparison runs expose both **micro** and **macro** quality:
+
+- micro: every annotated PII span contributes equally, so it represents total corpus exposure;
+- macro: every document contributes equally, so a large XLSX or repeated document cannot hide weak performance elsewhere;
+- by PII type: recall/precision/F1/leakage for each taxonomy category;
+- by document: recall, leakage, precision, over-redaction, zero-leak status and latency;
+- failure analysis: missed gold spans and unmatched predictions for the worst cases;
+- dataset balance: gold-span concentration by document and type.
+
+Do not use micro recall alone as the model-selection criterion.
+
 ## Run the comparison
 
 ```bash
@@ -187,12 +200,13 @@ Each run creates:
 results/<run-id>/
 ├── manifest.json
 ├── metrics.json
+├── failures.json
 ├── rows.json
 ├── <model>.jsonl
 └── report.html
 ```
 
-The manifest captures the exact Korgis runtime identity for every activated model.
+The manifest captures the exact Korgis runtime identity for every activated model. `metrics.json` uses `redactguard-evaluation-v2` and contains micro, macro, by-type, by-profile and by-document views. `failures.json` is a compact diagnostic index for false negatives, false positives and output failures.
 
 ## What is copied from RedactGuard
 

@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from redact_bench.datasets import load_dataset
-from redact_bench.metrics import aggregate, score_case
+from redact_bench.metrics import aggregate_detailed, score_case
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
 
@@ -79,10 +79,11 @@ def run_compare(
                     )
                     + "\n"
                 )
-        summaries[model] = aggregate(model_rows)
+        summaries[model] = aggregate_detailed(model_rows)
 
     manifest = {
         "run_id": run_id,
+        "evaluation_schema": "redactguard-evaluation-v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "dataset": str(Path(dataset_path)),
@@ -109,6 +110,17 @@ def run_compare(
     }
     (output / "metrics.json").write_text(
         json.dumps(summaries, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    (output / "failures.json").write_text(
+        json.dumps(
+            {
+                model: summary.get("failure_analysis", [])
+                for model, summary in summaries.items()
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
     )
     (output / "rows.json").write_text(
         json.dumps(all_rows, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -177,11 +189,12 @@ def run_latency(
                         )
                         + "\n"
                     )
-        summaries[model] = aggregate(model_rows)
+        summaries[model] = aggregate_detailed(model_rows)
 
     manifest = {
         "run_id": run_id,
         "kind": "latency",
+        "evaluation_schema": "redactguard-evaluation-v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "dataset": str(Path(dataset_path)),
