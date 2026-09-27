@@ -3,7 +3,7 @@ name = "benchmark-core"
 version = "0.1.0"
 description = "Shared contracts and infrastructure for reproducible model benchmarks"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pyyaml>=6.0.3"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.12"]
