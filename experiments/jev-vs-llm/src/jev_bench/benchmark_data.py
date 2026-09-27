@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import csv
 import json
-import random
 import urllib.request
 from pathlib import Path
+
+from benchmark_core.reproducibility import seeded_random
 
 from jev_bench.models import BenchmarkCase, QuestionSpec
 
@@ -104,7 +105,7 @@ def balanced_banking77_cases(
     for text, label in rows:
         by_label.setdefault(label, []).append(text)
 
-    rng = random.Random(seed)
+    rng = seeded_random(seed)
     for texts in by_label.values():
         rng.shuffle(texts)
 
@@ -167,7 +168,7 @@ def clinc_oos_cases(
             continue
         rows.append((text, str(item[1])))
 
-    rng = random.Random(seed)
+    rng = seeded_random(seed)
     rng.shuffle(rows)
     return [
         BenchmarkCase(
@@ -203,5 +204,5 @@ def calibration_public_cases(
         experiment="02-calibration",
     )
     combined = inside + outside
-    random.Random(seed).shuffle(combined)
+    seeded_random(seed).shuffle(combined)
     return combined
