@@ -304,7 +304,7 @@ uv run --frozen local-llm verify-artifact my-model-4b-q4km
 For an experiment-owned registry:
 
 ```bash
-export LOCAL_LLM_REGISTRY_PATHS="/absolute/path/benchmark-models.yaml"
+export LOCAL_LLM_REGISTRY_PATHS="/path/to/local-korgis-models.yaml"
 uv run --frozen local-llm models
 ```
 
