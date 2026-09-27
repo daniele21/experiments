@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from benchmark_core.config import parse_csv_selection
+
 from model_capability_bench import load_capability_suite
 
 ROOT = Path(__file__).resolve().parents[1]
