@@ -145,6 +145,8 @@ def preflight_models(
                             f"Provider {provider.provider_key!r} requires environment "
                             f"variable {name!r}"
                         ),
+                        model_key=resolved.model.model_key,
+                        runtime_key=resolved.runtime.runtime_key,
                         provider_key=provider.provider_key,
                         env_var=name,
                     )
