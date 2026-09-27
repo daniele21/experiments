@@ -37,6 +37,16 @@ from benchmark_core.pricing import (
     pricing_snapshot_metadata,
 )
 from benchmark_core.providers import InferenceProvider
+from benchmark_core.registry import (
+    PreflightIssue,
+    PreflightResult,
+    RegistryBundle,
+    RegistryError,
+    ResolvedModel,
+    load_registry,
+    preflight_models,
+    registry_summary,
+)
 from benchmark_core.reporting import summarize_records
 from benchmark_core.reproducibility import fingerprint_values, seeded_random
 from benchmark_core.run_identity import RunIdentity, create_run_identity
@@ -73,7 +83,12 @@ __all__ = [
     "MessageRole",
     "MetricResult",
     "ModelSpec",
+    "PreflightIssue",
+    "PreflightResult",
     "ProviderSpec",
+    "RegistryBundle",
+    "RegistryError",
+    "ResolvedModel",
     "RawInferenceRecord",
     "RunContext",
     "RunIdentity",
@@ -94,10 +109,13 @@ __all__ = [
     "fingerprint_values",
     "inference_error_from_exception",
     "load_pricing_snapshot",
+    "load_registry",
     "load_yaml_mapping",
     "load_yaml_section",
     "parse_csv_selection",
+    "preflight_models",
     "pricing_snapshot_metadata",
+    "registry_summary",
     "resolve_transport_policy",
     "seeded_random",
     "summarize_records",
