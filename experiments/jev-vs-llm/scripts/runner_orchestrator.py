@@ -27,6 +27,7 @@ from rich.console import Console
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.cli import _record_manifest, _tag_run, append_results, build_report
 from jev_bench.providers.korgis import KorgisProvider
+
 from .experiment_execution import run_single_experiment
 from .korgis_manager import KorgisManager
 
