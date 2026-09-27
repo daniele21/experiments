@@ -71,15 +71,12 @@ class KorgisManager:
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.root_url = self.base_url.removesuffix("/v1")
-        if korgis_dir:
-            self.korgis_dir = Path(korgis_dir).resolve()
-        else:
-            candidates = [
-                Path(__file__).resolve().parents[3] / "korgis",
-                Path(__file__).resolve().parents[2] / "korgis",
-                Path.home() / "Personal" / "experiments" / "korgis",
-            ]
-            self.korgis_dir = next((c for c in candidates if c.is_dir()), candidates[0])
+        configured_korgis_dir = korgis_dir or os.getenv("KORGIS_DIR")
+        self.korgis_dir = (
+            Path(configured_korgis_dir).expanduser().resolve()
+            if configured_korgis_dir
+            else (Path(__file__).resolve().parents[3] / "korgis").resolve()
+        )
         self.registry_path = Path(registry_path).resolve() if registry_path else None
         self.log_path = Path(log_file).resolve()
         self.timeout = timeout
@@ -124,6 +121,13 @@ class KorgisManager:
             logger.info("Korgis is already active at %s", self.root_url)
             return True
 
+        if not self.korgis_dir.is_dir():
+            raise RuntimeError(
+                f"Korgis checkout not found at {self.korgis_dir}. "
+                "Set KORGIS_DIR to the local Korgis repository, or start Korgis "
+                "externally before running this command."
+            )
+
         # Pre-flight: make sure standard ports (1235 for Korgis, 8091 for llama-server) are free
         _free_port(1235)
         _free_port(8091)
@@ -132,16 +136,11 @@ class KorgisManager:
         logger.info("Starting Korgis server with initial model '%s'...", initial_model)
         env = os.environ.copy()
 
-        # Explicitly ensure LOCAL_LLM_SERVER_BIN points to the validated llama-server binary
+        # Respect explicit configuration first; otherwise rely only on PATH discovery.
         if "LOCAL_LLM_SERVER_BIN" not in env:
-            discovered_bin = shutil.which("llama-server") or "/opt/homebrew/bin/llama-server"
-            if Path(discovered_bin).is_file():
-                env["LOCAL_LLM_SERVER_BIN"] = str(discovered_bin)
-
-        # Ensure PATH includes /opt/homebrew/bin and local bin directories
-        current_path = env.get("PATH", "")
-        if "/opt/homebrew/bin" not in current_path:
-            env["PATH"] = f"/opt/homebrew/bin:{current_path}"
+            discovered_bin = shutil.which("llama-server")
+            if discovered_bin:
+                env["LOCAL_LLM_SERVER_BIN"] = discovered_bin
 
         # For structured decision benchmarks, disable thinking traces so models output direct JSON
         # instead of exhausting max_tokens in <think> tags (which leaves content empty -> 502 invalid_model_output).
