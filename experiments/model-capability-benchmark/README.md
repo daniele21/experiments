@@ -15,7 +15,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-4 task plugin registry: complete;
 - MCB-5 dataset registry/adapters: complete;
 - MCB-6 five-capability suite: complete;
-- MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending.
+- MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending;
+- MCB-8 neutral capability reporting: complete.
 
 ## Registry
 
@@ -122,8 +123,8 @@ uv run model-bench run \
 ```
 
 The runner persists `state.jsonl`, `raw.jsonl`, `evaluation.jsonl`,
-`aggregates.jsonl`, `events.jsonl`, `environment.json` and
-`run_manifest.json` incrementally.
+`aggregates.jsonl`, `report_index.jsonl`, `events.jsonl`,
+`environment.json` and `run_manifest.json` incrementally.
 
 Re-running the same semantic matrix resumes from completed case identities. Use
 `--retry-failures` to rerun only terminal failed cases.
@@ -134,7 +135,32 @@ is intentionally external to this benchmark.
 See `MCB_7_UNIFIED_RUNNER.md` for architecture, failure semantics and the controlled
 real-provider validation runbook.
 
+## Capability report
+
+Every run now produces a neutral capability × model report without an overall score or
+winner ranking:
+
+```text
+report.html
+report.json
+```
+
+The HTML includes the declared primary metric for each capability, secondary metrics,
+model/runtime metadata, exact case-attempt drill-down and infrastructure events.
+
+A persisted run can be rendered again without provider credentials or a running runtime:
+
+```bash
+uv run model-bench report \
+  --run-dir results/runs/capability-smoke
+```
+
+Unknown provider cost remains `null`; a local provider fee of zero is not interpreted as
+zero hardware/runtime cost.
+
+See `MCB_8_REPORTING.md` for the evidence/report contract.
+
 ## What comes next
 
-MCB-8 adds the comparative capability-matrix reporting layer on top of the raw,
-evaluation and aggregate evidence now produced by MCB-7.
+MCB-9 consolidates `jev-vs-llm` onto the definitive shared core where doing so preserves
+its bounded-decision semantics and characterization baselines.
