@@ -35,7 +35,7 @@ models:
       intent: quality
 
   qwen-image-2.1-local:
-    model_id: qwen-image-2.1
+    model_id: qwen-image-2.1-mflux-q8
     runtime: korgis-image-local
     capabilities:
       text_input: true
@@ -48,4 +48,6 @@ models:
     benchmark_mapping:
       aspect_ratio: "1:1"
       resolution: "1K"
-      intent: local-open-weight
+      intent: local-open-weight-q8
+      runtime: mflux
+      quantization: Q8
