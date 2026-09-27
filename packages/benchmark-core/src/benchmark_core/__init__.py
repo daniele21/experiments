@@ -43,6 +43,7 @@ from benchmark_core.contracts import (
 )
 from benchmark_core.datasets import (
     BenchmarkDataset,
+    cached_source,
     CacheMode,
     DatasetFactory,
     DatasetLoadContext,
@@ -58,6 +59,11 @@ from benchmark_core.datasets import (
     load_clinc_rows,
     load_dataset_profiles,
     load_dataset_specs,
+    require_mapping,
+    require_string_list,
+    require_text,
+    safe_child,
+    single_cached_source,
 )
 from benchmark_core.manifests import write_environment_manifest
 from benchmark_core.persistence import (
@@ -211,6 +217,7 @@ __all__ = [
     "TransportPolicy",
     "append_csv_records",
     "append_jsonl_record",
+    "cached_source",
     "create_openai_compatible_client",
     "create_run_identity",
     "ensure_cached_url",
@@ -235,11 +242,16 @@ __all__ = [
     "pricing_snapshot_metadata",
     "read_jsonl_records",
     "registry_summary",
+    "require_mapping",
+    "require_string_list",
+    "require_text",
     "resolve_capability_context",
     "resolve_transport_policy",
+    "safe_child",
     "seeded_random",
     "sha256_bytes",
     "sha256_file",
+    "single_cached_source",
     "summarize_records",
     "to_jsonable",
     "validate_model_capabilities",
