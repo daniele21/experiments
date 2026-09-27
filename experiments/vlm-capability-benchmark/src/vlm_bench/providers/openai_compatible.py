@@ -15,6 +15,7 @@ from benchmark_core import (
     TokenUsage,
     inference_error_from_exception,
 )
+from cairosvg import svg2png
 
 
 def _media_url(part: ContentPart) -> str:
@@ -27,8 +28,14 @@ def _media_url(part: ContentPart) -> str:
     path = Path(location)
     if not path.is_file():
         raise ValueError(f"image asset does not exist: {path}")
-    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-    return f"data:{part.media.mime_type};base64,{encoded}"
+    raw = path.read_bytes()
+    mime_type = part.media.mime_type
+    if mime_type == "image/svg+xml" or path.suffix.lower() == ".svg":
+        raw = svg2png(bytestring=raw)
+        mime_type = "image/png"
+
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
 
 
 def _openai_content(request: InferenceRequest) -> list[dict[str, Any]]:

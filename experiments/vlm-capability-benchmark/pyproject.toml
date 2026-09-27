@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "benchmark-core",
   "pyyaml>=6.0.3",
+  "cairosvg>=2.7",
 ]
 
 [tool.uv.sources]

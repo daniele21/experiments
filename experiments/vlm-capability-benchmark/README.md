@@ -30,3 +30,23 @@ The initial controlled dataset is
 dataset slice and must pin source revision/license metadata.
 
 See `IMPLEMENTATION_PLAN.md` for the full workstream.
+
+## Dry-run the UI grounding smoke benchmark
+
+Resolve the exact model/case/prompt configuration without starting a local model or making
+an inference call:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models qwen3-vl-4b-instruct \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+For a real run, serve the configured model through an OpenAI-compatible endpoint, set
+`VLM_BASE_URL`, and remove `--dry-run`.
+
+The controlled UI fixtures remain editable SVG sources in the repository. Local SVG assets
+are rasterized to PNG before being sent to the VLM, so the runtime receives a conventional
+raster image while the benchmark source remains diff-friendly.
