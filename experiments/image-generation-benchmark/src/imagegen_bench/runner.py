@@ -19,7 +19,6 @@ from imagegen_bench.config import ResolvedImageModel
 from imagegen_bench.planning import ImageRunPlan
 from imagegen_bench.provider_factory import create_image_provider
 
-
 ProviderFactory = Callable[
     [ResolvedImageModel, ArtifactStore, Mapping[str, str]],
     Any,
@@ -64,9 +63,9 @@ def execute_run_plan(
             )
             execution = execute_arm(
                 arm,
-                lambda prompt=prompt, provider=provider: provider.generate(
+                lambda prompt=prompt, provider=provider, model_key=model.model_key: provider.generate(
                     InferenceRequest(
-                        request_id=f"{model.model_key}-{prompt.prompt_id}",
+                        request_id=f"{model_key}-{prompt.prompt_id}",
                         input=prompt.prompt,
                     )
                 ),
