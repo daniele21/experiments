@@ -15,8 +15,8 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Comma-separated model keys from models.yaml",
     )
-    parser.add_argument("--profile", default="smoke")
-    parser.add_argument("--output-dir", type=Path, default=Path("results"))
+    parser.add_argument("--profile", required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
         "--dry-run",
         action="store_true",
