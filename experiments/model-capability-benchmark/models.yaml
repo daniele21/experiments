@@ -1,0 +1,110 @@
+# Unified model/runtime/provider registry for model-capability-benchmark.
+#
+# Secrets and machine-specific paths MUST NOT be committed here.
+# Environment variables are resolved during preflight/runtime construction.
+
+providers:
+  korgis:
+    type: openai-compatible
+    base_url_env: KORGIS_BASE_URL
+    required_env:
+      - KORGIS_BASE_URL
+    options:
+      protocol: chat-completions
+      local_provider_fee: 0
+
+  openai:
+    type: openai
+    api_key_env: OPENAI_API_KEY
+    required_env:
+      - OPENAI_API_KEY
+    options:
+      protocol: responses
+
+  minicpm-modelbest:
+    type: openai-compatible
+    base_url_env: MINICPM_BASE_URL
+    api_key_env: MINICPM_API_KEY
+    required_env:
+      - MINICPM_API_KEY
+    options:
+      protocol: chat-completions
+      default_base_url: https://api.modelbest.cn/v1
+
+runtimes:
+  korgis-local:
+    provider: korgis
+    deployment: local
+    lifecycle: managed
+    options:
+      runtime_type: korgis
+      control_timeout_env: KORGIS_CONTROL_TIMEOUT_SECONDS
+
+  openai-api:
+    provider: openai
+    deployment: api
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  minicpm-api:
+    provider: minicpm-modelbest
+    deployment: api
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+models:
+  qwen3.5-2b-q4km:
+    model_id: unsloth/qwen3.5-2b
+    runtime_model_id: qwen3.5-2b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 2
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - small
+
+  nemotron-nano-4b:
+    model_id: nvidia/nemotron-3-nano-4b
+    runtime_model_id: nemotron-nano-4b
+    runtime: korgis-local
+    family: nemotron-nano
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - nemotron
+      - small
+
+  gpt-5.6-luna:
+    model_id: gpt-5.6-luna
+    runtime: openai-api
+    family: gpt-5.6
+    tags:
+      - api
+      - closed
+      - openai
+
+  minicpm-v-4.6-1b:
+    model_id: MiniCPM-V-4.6-1B
+    runtime: minicpm-api
+    family: minicpm-v
+    parameters_b: 1
+    tags:
+      - api
+      - open-weight
+      - minicpm
+      - small
