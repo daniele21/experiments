@@ -135,6 +135,7 @@ def write_run_artifacts(
             "raw": "raw.jsonl",
             "evaluation": "evaluation.jsonl",
             "aggregates": "aggregates.jsonl",
+            "report_index": "report_index.jsonl",
             "events": "events.jsonl",
         },
     }
