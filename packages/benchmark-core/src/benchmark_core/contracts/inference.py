@@ -4,6 +4,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from benchmark_core.contracts.media import ContentPart, OutputArtifact
+
 MessageRole = Literal["system", "user", "assistant", "tool"]
 ErrorKind = Literal[
     "configuration",
@@ -64,6 +66,7 @@ class InferenceRequest:
     request_id: str
     input: Any = None
     messages: tuple[InferenceMessage, ...] = ()
+    content: tuple[ContentPart, ...] = ()
     system_prompt: str | None = None
     response_schema: Mapping[str, Any] | None = None
     generation: GenerationConfig = field(default_factory=GenerationConfig)
@@ -72,8 +75,8 @@ class InferenceRequest:
     def __post_init__(self) -> None:
         if not self.request_id.strip():
             raise ValueError("request_id must not be empty")
-        if self.input is None and not self.messages:
-            raise ValueError("an inference request requires input or messages")
+        if self.input is None and not self.messages and not self.content:
+            raise ValueError("an inference request requires input, messages, or content")
 
 
 @dataclass(frozen=True)
@@ -83,6 +86,7 @@ class InferenceResult:
     raw_output: Any
     latency_ms: float
     normalized_output: Any = None
+    output_artifacts: tuple[OutputArtifact, ...] = ()
     usage: TokenUsage = field(default_factory=TokenUsage)
     estimated_cost_usd: float | None = None
     valid: bool = True
