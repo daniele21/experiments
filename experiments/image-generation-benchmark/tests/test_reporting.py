@@ -43,6 +43,15 @@ def _write_run(
                     "error_kind": "",
                     "error_message": "",
                     "generation_config": "{}",
+                    "provider_metadata": json.dumps(
+                        {
+                            "korgis": {
+                                "runtime_key": "qwen-image-2.1-mflux-q8",
+                                "backend": "mflux_image",
+                                "generation": {"quantization_bits": 8},
+                            }
+                        }
+                    ) if model_key == "model-c" else "{}",
                 }
             )
 
@@ -123,3 +132,16 @@ def test_blind_review_supports_three_model_pairwise_comparison(tmp_path) -> None
             frozenset(("model-a", "model-c")),
             frozenset(("model-b", "model-c")),
         }
+
+
+
+def test_identified_report_surfaces_korgis_runtime_provenance(tmp_path) -> None:
+    _write_run(tmp_path, model_keys=("model-a", "model-b", "model-c"))
+
+    output = generate_identified_report(tmp_path, tmp_path / "report.html")
+
+    html = output.read_text(encoding="utf-8")
+    assert "provider=fake" in html
+    assert "runtime=qwen-image-2.1-mflux-q8" in html
+    assert "backend=mflux_image" in html
+    assert "quantization=Q8" in html
