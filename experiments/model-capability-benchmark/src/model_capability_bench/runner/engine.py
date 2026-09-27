@@ -111,6 +111,7 @@ class CapabilityRunner:
         failed_cases = 0
         skipped_cases = 0
         model_failures = 0
+        planned_case_ids: set[str] = set()
 
         for model in selected_models:
             model_arms = arms_by_model.get(model.model.model_key, [])
@@ -228,6 +229,7 @@ class CapabilityRunner:
                                 },
                             )
                             case_id = case_identity.case_id
+                            planned_case_ids.add(case_id)
 
                             if (
                                 config.resume
@@ -242,6 +244,8 @@ class CapabilityRunner:
                             case_metadata = {
                                 "run_id": identity.run_id,
                                 "run_group": identity.run_group,
+                                "suite_id": self.suite.suite.suite_id,
+                                "suite_version": self.suite.suite.version,
                                 "model_key": model.model.model_key,
                                 "model_id": model.model.model_id,
                                 "runtime_key": model.runtime.runtime_key,
@@ -370,7 +374,8 @@ class CapabilityRunner:
                 subset = [
                     item
                     for item in evidence
-                    if item["state"]["metadata"].get("model_key")
+                    if item["case_id"] in planned_case_ids
+                    and item["state"]["metadata"].get("model_key")
                     == model.model.model_key
                     and item["state"]["metadata"].get("capability_id")
                     == capability_id
@@ -378,7 +383,8 @@ class CapabilityRunner:
                 if not subset:
                     continue
                 failure_count = sum(
-                    state.get("metadata", {}).get("model_key")
+                    state.get("case_id") in planned_case_ids
+                    and state.get("metadata", {}).get("model_key")
                     == model.model.model_key
                     and state.get("metadata", {}).get("capability_id")
                     == capability_id
