@@ -1,15 +1,7 @@
-providers:
-  openai-image:
-    type: openai-image
-    api_key_env: OPENAI_API_KEY
-  gemini-image:
-    type: gemini-image
-    api_key_env: GEMINI_API_KEY
-
 models:
   openai-sunburst:
     model_id: gpt-image-2.5-sunburst
-    provider: openai-image
+    runtime: openai-image-api
     capabilities:
       text_input: true
       image_output: true
@@ -25,7 +17,7 @@ models:
 
   gemini-pro-image:
     model_id: gemini-3-pro-image
-    provider: gemini-image
+    runtime: gemini-image-api
     capabilities:
       text_input: true
       image_output: true
