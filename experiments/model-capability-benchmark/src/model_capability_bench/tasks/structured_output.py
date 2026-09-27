@@ -3,9 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from jsonschema import Draft202012Validator
-from jsonschema.exceptions import SchemaError
-
 from benchmark_core import (
     InferenceRequest,
     InferenceResult,
@@ -15,6 +12,8 @@ from benchmark_core import (
     TaskResult,
     TaskSpec,
 )
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 
 class StructuredOutputTask:
