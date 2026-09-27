@@ -11,7 +11,7 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-0 baseline: complete;
 - MCB-1 generic contracts: complete;
 - MCB-2 benchmark-core extraction: complete;
-- MCB-3 unified model/runtime/provider registry: in progress.
+- MCB-3 unified model/runtime/provider registry: complete.
 
 ## Registry
 
@@ -27,7 +27,7 @@ RuntimeSpec
 ProviderSpec
 ```
 
-A model can therefore move between runtimes without redefining task or dataset logic.
+A model can therefore move between runtimes without redefining task or dataset logic. The same registry also carries the shared multimodal capability flags used by the VLM and image-generation tracks.
 
 For local models, `model_id` is the canonical model identity while
 `runtime_model_id` is the alias exposed by the serving runtime.
