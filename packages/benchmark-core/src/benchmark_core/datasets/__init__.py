@@ -16,6 +16,12 @@ from benchmark_core.datasets.public_classification import (
     load_banking77_rows,
     load_clinc_rows,
 )
+from benchmark_core.datasets.registry import (
+    DatasetFactory,
+    DatasetPluginRegistry,
+    DatasetRegistry,
+    DatasetRegistryError,
+)
 from benchmark_core.datasets.sources import (
     cached_source,
     require_mapping,
@@ -23,12 +29,6 @@ from benchmark_core.datasets.sources import (
     require_text,
     safe_child,
     single_cached_source,
-)
-from benchmark_core.datasets.registry import (
-    DatasetFactory,
-    DatasetPluginRegistry,
-    DatasetRegistry,
-    DatasetRegistryError,
 )
 
 __all__ = [
