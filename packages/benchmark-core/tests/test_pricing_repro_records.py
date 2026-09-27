@@ -38,7 +38,10 @@ def test_seeded_random_matches_python_random_semantics() -> None:
     seeded_random(42).shuffle(first)
     seeded_random(42).shuffle(second)
 
-    assert first == second
+    assert first == second == [7, 5, 2, 8, 9, 6, 11, 3, 4, 0, 1, 10]
+    assert fingerprint_values(first) == (
+        "sha256:ae38de3fd95f7a928f632d81a44b7a5a4df8834909c75604e5adbd6b80e78607"
+    )
     assert fingerprint_values(first) == fingerprint_values(second)
     assert fingerprint_values(first) != fingerprint_values(list(reversed(first)))
 
