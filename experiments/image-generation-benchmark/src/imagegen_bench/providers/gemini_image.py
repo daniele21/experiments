@@ -95,7 +95,7 @@ class GeminiImageProvider:
                     "generation_config": generation_config,
                 },
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary captures failures
             return invalid_result(
                 provider_id=self.provider_id,
                 model_id=self.model_id,
