@@ -245,15 +245,15 @@ Spostare nel package condiviso solo componenti già dimostrati generici.
 
 ### Prima estrazione
 
-MCB-2A ha estratto e validato manifest, run identity/tagging e persistence CSV condivisa. MCB-2B ha aggiunto config loading, matrix-arm execution e summary primitives condivise. Restano soprattutto reporting data model, reproducibility helpers e transport/cost hooks prima della chiusura complessiva di MCB-2.
+MCB-2A ha estratto manifest, run identity/tagging e persistence CSV. MCB-2B ha aggiunto config loading, matrix-arm execution e summary primitives. MCB-2C ha aggiunto pricing hooks, reproducibility/fingerprinting e i record generici raw/evaluation/aggregate. Resta principalmente la tranche transport + error/retry/timeout policy prima della chiusura complessiva di MCB-2.
 
 - manifest; ✅ MCB-2A
 - run identity;
 - common telemetry; ✅ contract condiviso, wiring progressivo
 - persistence primitives; ✅ MCB-2A
-- common report data model;
+- common report data model; ✅ generic evidence/aggregate records MCB-2C
 - common model/provider config loading; ✅ loader/config primitives MCB-2B, typed registry in MCB-3
-- utilities per seed/reproducibility;
+- utilities per seed/reproducibility; ✅ MCB-2C
 - generic provider protocol; ✅ MCB-1
 - generic runner primitives. ✅ MCB-2B
 
@@ -265,7 +265,7 @@ Dopo regression test:
 - generic OpenAI transport;
 - runtime-independent error normalization;
 - common retry/timeout policy se effettivamente condivisibile;
-- common cost hooks.
+- common cost hooks. ✅ MCB-2C
 
 ### Da non estrarre prematuramente
 

@@ -1,16 +1,23 @@
 from __future__ import annotations
 
-import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from benchmark_core.pricing import (
+    TokenPrices,
+    estimate_token_cost_usd,
+    load_pricing_snapshot,
+    pricing_snapshot_metadata,
+)
 
 PRICING_FILE = Path(__file__).resolve().parents[2] / "pricing_snapshot.json"
 
 
 @lru_cache(maxsize=1)
 def load_pricing() -> dict[str, Any]:
-    return json.loads(PRICING_FILE.read_text(encoding="utf-8"))
+    """Compatibility wrapper around the shared pricing snapshot loader."""
+    return load_pricing_snapshot(PRICING_FILE)
 
 
 def _price_key(provider: str, model: str) -> str | None:
@@ -37,25 +44,20 @@ def estimate_cost_usd(
     if key is None:
         return None
 
-    prices = load_pricing()["prices_per_million_tokens"][key]
-    input_total = int(input_tokens or 0)
-    cached = min(int(cached_input_tokens or 0), input_total)
-    uncached = input_total - cached
-    output = int(output_tokens or 0)
-
-    return (
-        uncached * float(prices["input"])
-        + cached * float(prices.get("cached_input", prices["input"]))
-        + output * float(prices["output"])
-    ) / 1_000_000
+    price = load_pricing()["prices_per_million_tokens"][key]
+    return estimate_token_cost_usd(
+        TokenPrices(
+            input_per_million=float(price["input"]),
+            cached_input_per_million=float(
+                price.get("cached_input", price["input"])
+            ),
+            output_per_million=float(price["output"]),
+        ),
+        input_tokens=input_tokens,
+        cached_input_tokens=cached_input_tokens,
+        output_tokens=output_tokens,
+    )
 
 
 def pricing_metadata() -> dict[str, Any]:
-    pricing = load_pricing()
-    return {
-        "currency": pricing["currency"],
-        "as_of": pricing["as_of"],
-        "processing": pricing["processing"],
-        "prices_per_million_tokens": pricing["prices_per_million_tokens"],
-        "notes": pricing["notes"],
-    }
+    return pricing_snapshot_metadata(load_pricing())
