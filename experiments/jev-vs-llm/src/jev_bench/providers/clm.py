@@ -71,7 +71,10 @@ class CLMProvider(DecisionProvider):
         if not isinstance(value, dict) or not value:
             raise TypeError("answer probabilities must be a non-empty object")
         probabilities = {str(k): float(v) for k, v in value.items()}
-        if any(\n            probability < 0 or probability > 1\n            for probability in probabilities.values()\n        ):
+        if any(
+            probability < 0 or probability > 1
+            for probability in probabilities.values()
+        ):
             raise ValueError("answer probability outside [0,1]")
         total = sum(probabilities.values())
         if abs(total - 1.0) > 1e-4:
