@@ -17,3 +17,5 @@ A collection of heterogeneous, reproducible experiments. Each experiment lives i
 The VLM and image-generation tracks share a small multimodal extension of `benchmark-core` and are designed to be implemented in parallel after that foundation is stable.
 
 See [`experiments/MULTIMODAL_PARALLEL_PLAN.md`](experiments/MULTIMODAL_PARALLEL_PLAN.md).
+
+First real-model execution steps are documented in [`experiments/MULTIMODAL_SMOKE_RUNBOOK.md`](experiments/MULTIMODAL_SMOKE_RUNBOOK.md).
