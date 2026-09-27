@@ -50,3 +50,19 @@ For a real run, serve the configured model through an OpenAI-compatible endpoint
 The controlled UI fixtures remain editable SVG sources in the repository. Local SVG assets
 are rasterized to PNG before being sent to the VLM, so the runtime receives a conventional
 raster image while the benchmark source remains diff-friendly.
+
+## Generate the visual grounding report
+
+After a completed run:
+
+```bash
+uv run python scripts/generate_report.py --run-dir results/<run-id>
+```
+
+The generated `report.html` embeds the preserved input evidence and overlays:
+- the ground-truth target bounding box;
+- the model's predicted click point;
+- click-hit, label-match, point-distance and latency evidence.
+
+Input visuals are copied into each run directory with SHA-256 evidence, so a run remains
+inspectable even if the source dataset later changes.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from benchmark_core import (
     append_csv_records,
     create_run_identity,
     execute_arm,
+    sha256_file,
     write_environment_manifest,
 )
 
@@ -35,6 +37,28 @@ def _metric_value(task_result: Any, name: str) -> Any:
     return None
 
 
+def _persist_input_asset(run_dir: Path, asset_path: Path) -> tuple[str, str]:
+    digest = sha256_file(asset_path)
+    destination = run_dir / "inputs" / f"{digest}{asset_path.suffix.lower()}"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not destination.exists():
+        shutil.copyfile(asset_path, destination)
+    return str(destination.relative_to(run_dir)), digest
+
+
+def _target_box(case: Any) -> str:
+    if case.target_box is None:
+        return ""
+    return json.dumps(
+        [
+            case.target_box.x_min,
+            case.target_box.y_min,
+            case.target_box.x_max,
+            case.target_box.y_max,
+        ]
+    )
+
+
 def execute_run_plan(
     plan: VLMRunPlan,
     *,
@@ -51,6 +75,10 @@ def execute_run_plan(
     evidence_path = run_dir / "evidence.csv"
     rows: list[dict[str, Any]] = []
     resolved_models: dict[str, list[str]] = {}
+    input_assets = {
+        case.sample_id: _persist_input_asset(run_dir, case.asset_path)
+        for case in plan.cases
+    }
 
     for model in plan.models:
         provider = provider_factory(model, environ)
@@ -78,6 +106,12 @@ def execute_run_plan(
                     if inference.valid
                     else None
                 )
+                parsed_prediction = (
+                    task_result.prediction
+                    if task_result is not None and isinstance(task_result.prediction, dict)
+                    else {}
+                )
+                input_path, input_sha256 = input_assets[case.sample_id]
                 row = {
                     "run_id": identity.run_id,
                     "model_key": model.model_key,
@@ -86,6 +120,13 @@ def execute_run_plan(
                     "task_id": plan.task_id,
                     "sample_id": case.sample_id,
                     "question": case.question,
+                    "input_asset_path": input_path,
+                    "input_asset_sha256": input_sha256,
+                    "target_label": case.target_label or "",
+                    "target_box": _target_box(case),
+                    "prediction_target": parsed_prediction.get("target", ""),
+                    "prediction_x": parsed_prediction.get("x", ""),
+                    "prediction_y": parsed_prediction.get("y", ""),
                     "prediction": json.dumps(
                         task_result.prediction if task_result else inference.normalized_output,
                         sort_keys=True,
@@ -115,6 +156,7 @@ def execute_run_plan(
                     ),
                 }
             else:
+                input_path, input_sha256 = input_assets[case.sample_id]
                 row = {
                     "run_id": identity.run_id,
                     "model_key": model.model_key,
@@ -123,6 +165,13 @@ def execute_run_plan(
                     "task_id": plan.task_id,
                     "sample_id": case.sample_id,
                     "question": case.question,
+                    "input_asset_path": input_path,
+                    "input_asset_sha256": input_sha256,
+                    "target_label": case.target_label or "",
+                    "target_box": _target_box(case),
+                    "prediction_target": "",
+                    "prediction_x": "",
+                    "prediction_y": "",
                     "prediction": "",
                     "valid": False,
                     "click_hit": None,

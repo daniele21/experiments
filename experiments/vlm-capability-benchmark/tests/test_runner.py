@@ -78,6 +78,11 @@ def test_vlm_runner_persists_grounding_evidence_and_manifest(tmp_path) -> None:
     assert len(run_dirs) == 1
     run_dir = run_dirs[0]
     assert (run_dir / "evidence.csv").is_file()
+    input_files = list((run_dir / "inputs").iterdir())
+    assert len(input_files) == 2
+    assert all(path.is_file() for path in input_files)
+    assert all(row["input_asset_path"].startswith("inputs/") for row in rows)
+    assert all(row["input_asset_sha256"] for row in rows)
 
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["suite"] == "vlm-core-v1"
