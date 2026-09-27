@@ -1,5 +1,6 @@
 from model_capability_bench.datasets.banking77 import Banking77Dataset
 from model_capability_bench.datasets.clinc150 import Clinc150OosDataset
+from model_capability_bench.datasets.controlled_yaml import ControlledYamlDataset
 from model_capability_bench.datasets.registry import (
     build_dataset_plugins,
     build_dataset_registry,
@@ -11,6 +12,7 @@ from model_capability_bench.datasets.structured_output import (
 __all__ = [
     "Banking77Dataset",
     "Clinc150OosDataset",
+    "ControlledYamlDataset",
     "StructuredOutputControlledDataset",
     "build_dataset_plugins",
     "build_dataset_registry",
