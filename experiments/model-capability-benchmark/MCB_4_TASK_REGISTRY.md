@@ -1,6 +1,6 @@
 # MCB-4 — Task Registry and Plugin Protocol
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused task registry gate green and all cumulative MCB/VLM/image-generation gates green.
 
 ## Goal
 
@@ -192,6 +192,6 @@ used by tests and emits JSON describing:
 - [x] classification plugin is provider-independent;
 - [x] structured-output plugin is provider-independent;
 - [x] task catalog inspection CLI exists;
-- [ ] focused MCB-4 CI passes;
-- [ ] previous MCB/VLM/image-generation gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused MCB-4 CI passes;
+- [x] previous MCB/VLM/image-generation gates remain green;
+- [x] full Jev characterization suite remains green.
