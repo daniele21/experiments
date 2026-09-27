@@ -29,7 +29,32 @@ def _options(value: Any, *, context: str) -> dict[str, Any]:
     return {str(k): v for k, v in _mapping(value, context=context).items()}
 
 
+def _reject_unknown_keys(
+    raw: Mapping[str, Any],
+    *,
+    allowed: set[str],
+    context: str,
+) -> None:
+    unknown = sorted(str(key) for key in raw if str(key) not in allowed)
+    if unknown:
+        raise RegistryError(
+            f"{context} contains unsupported fields: {', '.join(unknown)}"
+        )
+
+
 def _provider(key: str, raw: Mapping[str, Any]) -> ProviderSpec:
+    _reject_unknown_keys(
+        raw,
+        allowed={
+            "type",
+            "provider_type",
+            "base_url_env",
+            "api_key_env",
+            "required_env",
+            "options",
+        },
+        context=f"provider {key!r}",
+    )
     provider_type = str(raw.get("type") or raw.get("provider_type") or "")
     return ProviderSpec(
         provider_key=key,
@@ -49,6 +74,11 @@ def _provider(key: str, raw: Mapping[str, Any]) -> ProviderSpec:
 
 
 def _runtime(key: str, raw: Mapping[str, Any]) -> RuntimeSpec:
+    _reject_unknown_keys(
+        raw,
+        allowed={"provider", "provider_key", "deployment", "lifecycle", "options"},
+        context=f"runtime {key!r}",
+    )
     return RuntimeSpec(
         runtime_key=key,
         provider_key=str(raw.get("provider") or raw.get("provider_key") or ""),
@@ -62,6 +92,11 @@ def _artifact(raw: Any, *, model_key: str) -> ArtifactSpec | None:
     if raw is None:
         return None
     data = _mapping(raw, context=f"model {model_key!r} artifact")
+    _reject_unknown_keys(
+        data,
+        allowed={"format", "quantization", "size_bytes", "source", "metadata"},
+        context=f"model {model_key!r} artifact",
+    )
     return ArtifactSpec(
         format=str(data.get("format") or ""),
         quantization=(
@@ -79,6 +114,21 @@ def _artifact(raw: Any, *, model_key: str) -> ArtifactSpec | None:
 
 
 def _model(key: str, raw: Mapping[str, Any]) -> ModelSpec:
+    _reject_unknown_keys(
+        raw,
+        allowed={
+            "model_id",
+            "runtime",
+            "runtime_key",
+            "runtime_model_id",
+            "family",
+            "parameters_b",
+            "artifact",
+            "tags",
+            "metadata",
+        },
+        context=f"model {key!r}",
+    )
     return ModelSpec(
         model_key=key,
         model_id=str(raw.get("model_id") or ""),
