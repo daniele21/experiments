@@ -124,6 +124,12 @@ def preflight_models(
     checked_providers: set[str] = set()
 
     for resolved in models:
+        registered = registry.models.get(resolved.model.model_key)
+        if registered != resolved.model:
+            raise RegistryError(
+                f"Resolved model {resolved.model.model_key!r} does not belong to this registry"
+            )
+
         provider = resolved.provider
         if provider.provider_key in checked_providers:
             continue
