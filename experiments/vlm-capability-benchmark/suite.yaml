@@ -1,12 +1,13 @@
 suite:
   id: vlm-core-v1
   version: "1"
-  tasks:
-    - ui_grounding
-  datasets:
-    - controlled-ui-grounding-v1
   profiles:
     - smoke
+  tasks:
+    - id: ui_grounding
+      dataset: datasets/controlled_ui_grounding.yaml
+      prompt: prompts/ui_grounding_v1.txt
+      evaluator: ui_grounding_v1
 
 task_requirements:
   ui_grounding:
