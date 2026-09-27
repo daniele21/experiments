@@ -1,0 +1,14 @@
+suite:
+  id: vlm-core-v1
+  version: "1"
+  tasks:
+    - ui_grounding
+  datasets:
+    - controlled-ui-grounding-v1
+  profiles:
+    - smoke
+
+task_requirements:
+  ui_grounding:
+    image_input: true
+    text_input: true
