@@ -50,8 +50,8 @@ class TaskSpec:
             if not value.strip():
                 raise ValueError(f"{field_name} must not be empty")
 
-        if self.prompt_version is not None and self.prompt_id is None:
-            raise ValueError("prompt_version requires prompt_id")
+        if (self.prompt_id is None) != (self.prompt_version is None):
+            raise ValueError("prompt_id and prompt_version must be provided together")
         if self.prompt_id is not None and not self.prompt_id.strip():
             raise ValueError("prompt_id must not be empty")
         if self.prompt_version is not None and not self.prompt_version.strip():
