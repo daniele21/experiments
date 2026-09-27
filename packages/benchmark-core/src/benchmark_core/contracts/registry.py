@@ -33,11 +33,14 @@ class ProviderSpec:
     provider_type: str
     base_url_env: str | None = None
     api_key_env: str | None = None
+    required_env: tuple[str, ...] = ()
     options: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _require_identifier(self.provider_key, "provider_key")
         _require_identifier(self.provider_type, "provider_type")
+        for env_var in self.required_env:
+            _require_identifier(env_var, "required_env item")
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,10 @@ class RuntimeSpec:
     def __post_init__(self) -> None:
         _require_identifier(self.runtime_key, "runtime_key")
         _require_identifier(self.provider_key, "provider_key")
+        if self.deployment not in {"local", "api", "remote", "hybrid"}:
+            raise ValueError(f"Unsupported deployment: {self.deployment}")
+        if self.lifecycle not in {"external", "managed", "persistent"}:
+            raise ValueError(f"Unsupported lifecycle: {self.lifecycle}")
 
 
 @dataclass(frozen=True)
@@ -58,6 +65,7 @@ class ModelSpec:
     model_key: str
     model_id: str
     runtime_key: str
+    runtime_model_id: str | None = None
     family: str | None = None
     parameters_b: float | None = None
     artifact: ArtifactSpec | None = None
@@ -68,5 +76,7 @@ class ModelSpec:
         _require_identifier(self.model_key, "model_key")
         _require_identifier(self.model_id, "model_id")
         _require_identifier(self.runtime_key, "runtime_key")
+        if self.runtime_model_id is not None:
+            _require_identifier(self.runtime_model_id, "runtime_model_id")
         if self.parameters_b is not None and self.parameters_b <= 0:
             raise ValueError("parameters_b must be > 0")
