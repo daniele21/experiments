@@ -1,6 +1,6 @@
 # MCB-1 — Generic Benchmark Contracts
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused Ruff/contract gate green (12/12) and full Jev characterization suite green (48/48).
 
 MCB-1 introduces the generic vocabulary that later workstreams will use to extract
 infrastructure from `jev-vs-llm` without making Jev semantics part of the shared core.
@@ -151,6 +151,6 @@ This lets MCB-7 later distinguish a wrong model answer from an infrastructure fa
 - [x] benchmark-core does not import `jev_bench`;
 - [x] a fake provider can satisfy `InferenceProvider` structurally;
 - [x] existing `DecisionProvider` can be exposed through a Jev-owned adapter;
-- [ ] focused Ruff checks pass;
-- [ ] generic contract tests pass;
-- [ ] Jev characterization suite remains green.
+- [x] focused Ruff checks pass;
+- [x] generic contract tests pass (12/12 focused contract + characterization tests);
+- [x] Jev characterization suite remains green (48/48).
