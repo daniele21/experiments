@@ -79,7 +79,7 @@ class OpenAIImageProvider:
                 latency_ms=latency_ms,
                 metadata={"generation_options": options},
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - provider boundary captures failures
             return invalid_result(
                 provider_id=self.provider_id,
                 model_id=self.model_id,
