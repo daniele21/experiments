@@ -8,15 +8,22 @@ from typing import Any
 
 
 def to_jsonable(value: Any) -> Any:
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return to_jsonable(dataclasses.asdict(value))
     if isinstance(value, Mapping):
         return {str(key): to_jsonable(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, (list, tuple, set)):
         return [to_jsonable(item) for item in value]
     if isinstance(value, Path):
         return str(value)
-    return value
+
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        return to_jsonable(model_dump())
+
+    return repr(value)
 
 
 def append_jsonl_record(record: Mapping[str, Any], output: Path) -> None:
