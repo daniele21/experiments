@@ -22,6 +22,7 @@ CONFIG_FILES = (
     "profiles.yaml",
     "suite.yaml",
     "runner.yaml",
+    "reporting.yaml",
 )
 
 
