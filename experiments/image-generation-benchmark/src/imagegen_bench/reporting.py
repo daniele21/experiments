@@ -45,6 +45,35 @@ def _image_data_url(path: Path) -> str:
     return f"data:{mime_type};base64,{encoded}"
 
 
+def _json_object(raw: str) -> dict[str, Any]:
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _provenance_badges(row: dict[str, str]) -> str:
+    values = [f"provider={row.get('provider_id', '')}"]
+    metadata = _json_object(row.get("provider_metadata", ""))
+    korgis = metadata.get("korgis")
+    if isinstance(korgis, dict):
+        for label, key in (("runtime", "runtime_key"), ("backend", "backend")):
+            value = korgis.get(key)
+            if value:
+                values.append(f"{label}={value}")
+        generation = korgis.get("generation")
+        if isinstance(generation, dict) and generation.get("quantization_bits") is not None:
+            values.append(f"quantization=Q{generation['quantization_bits']}")
+    return "".join(
+        f'<span class="badge">{escape(str(value))}</span>'
+        for value in values
+        if value and not str(value).endswith("=")
+    )
+
+
 def _page(title: str, body: str, *, script: str = "") -> str:
     return f"""<!doctype html>
 <html lang="en">
@@ -115,6 +144,7 @@ def generate_identified_report(run_dir: Path, output_path: Path) -> Path:
 <span class="small">{escape(row.get("model_id", ""))}</span><br>
 <span class="badge">{escape(row.get("latency_ms", ""))} ms</span>
 <span class="badge">valid={escape(row.get("valid", ""))}</span>
+{_provenance_badges(row)}
 </div>
 </article>"""
             )
