@@ -33,3 +33,19 @@ models:
       aspect_ratio: "1:1"
       resolution: "1K"
       intent: quality
+
+  qwen-image-2.1-local:
+    model_id: qwen-image-2.1
+    runtime: korgis-image-local
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: false
+    generation:
+      output_format: png
+      size: 1024x1024
+      num_inference_steps: 40
+    benchmark_mapping:
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: local-open-weight
