@@ -9,7 +9,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
-from imagegen_bench.human_eval import build_blind_pair
+from imagegen_bench.human_eval import build_blind_pairs
 
 
 def _load_rows(run_dir: Path) -> list[dict[str, str]]:
@@ -143,9 +143,9 @@ def generate_blind_review(run_dir: Path, output_path: Path) -> Path:
         raise TypeError("manifest parameters must be an object")
 
     model_keys = manifest.get("requested_models", {}).get("model_keys", [])
-    if not isinstance(model_keys, list) or len(model_keys) != 2:
-        raise ValueError("blind review currently requires exactly two requested models")
-    first_model, second_model = (str(model_keys[0]), str(model_keys[1]))
+    if not isinstance(model_keys, list) or len(model_keys) < 2:
+        raise ValueError("blind review requires at least two requested models")
+    requested_models = [str(model_key) for model_key in model_keys]
     seed = int(parameters.get("seed", 0))
 
     by_prompt: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
@@ -157,52 +157,57 @@ def generate_blind_review(run_dir: Path, output_path: Path) -> Path:
     blind_key: list[dict[str, str]] = []
     for prompt_id in sorted(by_prompt):
         model_rows = by_prompt[prompt_id]
-        if first_model not in model_rows or second_model not in model_rows:
+        available_models = [
+            model_key
+            for model_key in requested_models
+            if model_key in model_rows and model_rows[model_key].get("artifact_path")
+        ]
+        if len(available_models) < 2:
             continue
 
-        pair = build_blind_pair(
+        for pair in build_blind_pairs(
             prompt_id=prompt_id,
-            first_model=first_model,
-            second_model=second_model,
+            model_keys=available_models,
             seed=seed,
-        )
-        row_a = model_rows[pair.model_for_a]
-        row_b = model_rows[pair.model_for_b]
-        if not row_a.get("artifact_path") or not row_b.get("artifact_path"):
-            continue
-
-        image_a = _image_data_url(_resolve_artifact(run_dir, row_a["artifact_path"]))
-        image_b = _image_data_url(_resolve_artifact(run_dir, row_b["artifact_path"]))
-        prompt = row_a.get("prompt", "")
-        category = row_a.get("category", "")
-        pair_metadata.append(
-            {
-                "pair_id": pair.pair_id,
-                "prompt_id": prompt_id,
-            }
-        )
-        blind_key.append(
-            {
-                "pair_id": pair.pair_id,
-                "prompt_id": prompt_id,
-                "model_for_a": pair.model_for_a,
-                "model_for_b": pair.model_for_b,
-            }
-        )
-
-        criteria = []
-        for criterion in ("prompt_adherence", "visual_preference", "text_quality"):
-            inputs = "".join(
-                f'<label><input type="radio" name="{pair.pair_id}:{criterion}" '
-                f'value="{choice}"> {choice}</label>'
-                for choice in ("A", "B", "tie")
+        ):
+            row_a = model_rows[pair.model_for_a]
+            row_b = model_rows[pair.model_for_b]
+            image_a = _image_data_url(
+                _resolve_artifact(run_dir, row_a["artifact_path"])
             )
-            criteria.append(
-                f'<div class="vote"><strong>{criterion}</strong><br>{inputs}</div>'
+            image_b = _image_data_url(
+                _resolve_artifact(run_dir, row_b["artifact_path"])
+            )
+            prompt = row_a.get("prompt", "")
+            category = row_a.get("category", "")
+            pair_metadata.append(
+                {
+                    "pair_id": pair.pair_id,
+                    "prompt_id": prompt_id,
+                }
+            )
+            blind_key.append(
+                {
+                    "pair_id": pair.pair_id,
+                    "prompt_id": prompt_id,
+                    "model_for_a": pair.model_for_a,
+                    "model_for_b": pair.model_for_b,
+                }
             )
 
-        sections.append(
-            f"""<section class="card" data-pair-id="{pair.pair_id}"
+            criteria = []
+            for criterion in ("prompt_adherence", "visual_preference", "text_quality"):
+                inputs = "".join(
+                    f'<label><input type="radio" name="{pair.pair_id}:{criterion}" '
+                    f'value="{choice}"> {choice}</label>'
+                    for choice in ("A", "B", "tie")
+                )
+                criteria.append(
+                    f'<div class="vote"><strong>{criterion}</strong><br>{inputs}</div>'
+                )
+
+            sections.append(
+                f"""<section class="card" data-pair-id="{pair.pair_id}"
 data-prompt-id="{escape(prompt_id)}">
 <h2>{escape(prompt_id)} · {escape(category)}</h2>
 <p class="prompt">{escape(prompt)}</p>
@@ -214,7 +219,7 @@ data-prompt-id="{escape(prompt_id)}">
 </div>
 {''.join(criteria)}
 </section>"""
-        )
+            )
 
     metadata_json = json.dumps(pair_metadata).replace("</", r"<\/")
     script = f"""<script>
