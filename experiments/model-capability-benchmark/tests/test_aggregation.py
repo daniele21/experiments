@@ -164,9 +164,20 @@ def test_inference_reducers_and_task_metric_mean() -> None:
         ),
         evidence,
     )
+    valid_rate = reduce_metric(
+        CapabilityMetricSpec(
+            name="valid_rate",
+            source="inference",
+            reducer="rate",
+            field="valid",
+            primary=True,
+        ),
+        evidence,
+    )
 
     assert accuracy == pytest.approx(2 / 3)
     assert invalid_rate == pytest.approx(1 / 3)
     assert p50 == 30
     assert p95 == pytest.approx(48)
     assert output_tokens == 2
+    assert valid_rate == pytest.approx(2 / 3)
