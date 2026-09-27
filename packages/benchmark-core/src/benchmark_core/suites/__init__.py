@@ -2,6 +2,7 @@ from benchmark_core.suites.contracts import (
     BenchmarkSuiteSpec,
     CapabilityMetricSpec,
     CapabilitySpec,
+    MetricReducer,
     MetricSource,
 )
 from benchmark_core.suites.loader import SuiteConfigError, load_suite_spec
@@ -15,6 +16,7 @@ __all__ = [
     "BenchmarkSuiteSpec",
     "CapabilityMetricSpec",
     "CapabilitySpec",
+    "MetricReducer",
     "MetricSource",
     "ResolvedCapability",
     "SuiteConfigError",
