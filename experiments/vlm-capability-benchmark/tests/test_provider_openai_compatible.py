@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 
 from benchmark_core import (
@@ -139,3 +140,49 @@ def test_vlm_provider_rejects_reserved_overrides() -> None:
     assert result.error is not None
     assert result.error.kind == "invalid_response"
     assert not transport.calls
+
+
+def test_svg_input_is_rasterized_before_provider_call(tmp_path) -> None:
+    image = tmp_path / "screen.svg"
+    image.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10">'
+        '<rect width="20" height="10" fill="white"/>'
+        "</svg>",
+        encoding="utf-8",
+    )
+    transport = FakeTransport(
+        JsonHttpResponse(
+            body={"choices": [{"message": {"content": "ok"}}]},
+            headers={},
+            status_code=200,
+        )
+    )
+    provider = OpenAICompatibleVLMProvider(
+        model_id="vlm-test",
+        base_url="http://localhost:8000",
+        transport=transport,
+    )
+    request = InferenceRequest(
+        request_id="svg-1",
+        content=(
+            ContentPart(kind="text", text="Inspect the UI"),
+            ContentPart(
+                kind="image",
+                media=MediaRef(
+                    media_id="svg-ui",
+                    media_type="image",
+                    location=str(image),
+                    mime_type="image/svg+xml",
+                    sha256=sha256_file(image),
+                ),
+            ),
+        ),
+    )
+
+    result = provider.generate(request)
+
+    assert result.valid
+    url = transport.calls[0]["payload"]["messages"][0]["content"][1]["image_url"]["url"]
+    assert url.startswith("data:image/png;base64,")
+    png = base64.b64decode(url.split(",", 1)[1])
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
