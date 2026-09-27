@@ -194,3 +194,36 @@ models:
 
     with pytest.raises(RegistryError, match="deployement"):
         load_registry(path)
+
+
+
+def test_registry_loads_multimodal_model_capabilities(tmp_path: Path) -> None:
+    path = tmp_path / "multimodal.yaml"
+    path.write_text(
+        """
+providers:
+  api-provider:
+    type: openai-compatible
+runtimes:
+  api-runtime:
+    provider: api-provider
+    deployment: api
+models:
+  vlm:
+    model_id: vendor/vlm
+    runtime: api-runtime
+    capabilities:
+      text_input: true
+      image_input: true
+      multi_image_input: true
+    tags: [vlm]
+""".strip(),
+        encoding="utf-8",
+    )
+
+    model = load_registry(path).resolve("vlm").model
+
+    assert model.capabilities.text_input is True
+    assert model.capabilities.image_input is True
+    assert model.capabilities.multi_image_input is True
+    assert model.capabilities.image_output is False
