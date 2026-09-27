@@ -1,0 +1,3 @@
+# Concrete provider/model IDs are added together with verified adapters.
+# The prompt suite is intentionally provider-independent.
+models: {}
