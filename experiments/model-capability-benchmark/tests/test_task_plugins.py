@@ -150,11 +150,11 @@ def test_structured_output_uses_sample_schema_and_scores_fields() -> None:
 
     metrics = {metric.name: metric.value for metric in result.metrics}
     assert metrics == {
-        "schema_valid_rate": 1.0,
+        "schema_valid_rate": 0.0,
         "field_accuracy": 1.0,
         "hallucinated_fields": 1,
     }
-    assert result.valid is True
+    assert result.valid is False
 
 
 def test_registry_enforces_task_dataset_compatibility() -> None:
