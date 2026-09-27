@@ -82,7 +82,6 @@ def test_clm_provider_maps_noul_to_existing_harness_semantics():
     assert result.answers["urgent"].predicted_probability == 0.8
 
 
-
 def test_clm_provider_accepts_banking77_sized_choice_space():
     provider = CLMProvider()
     criteria = {f"intent_{index}": f"Banking intent {index}" for index in range(77)}
@@ -121,6 +120,7 @@ def test_clm_provider_accepts_banking77_sized_choice_space():
     assert len(result.answers["intent"].probabilities) == 77
     assert result.answers["intent"].value == "intent_42"
     assert result.answers["intent"].predicted_probability == pytest.approx(0.8)
+
 
 def test_clm_provider_fails_closed_on_missing_answer():
     provider = CLMProvider()
