@@ -14,6 +14,8 @@ profiles:
       banking77: 154
       clinc150-oos: 100
       structured-output-controlled-v1: null
+      qa-abstention-controlled-v1: null
+      math-reasoning-controlled-v1: null
 
   standard:
     max_cases: 1000
@@ -21,6 +23,8 @@ profiles:
       banking77: 770
       clinc150-oos: 500
       structured-output-controlled-v1: null
+      qa-abstention-controlled-v1: null
+      math-reasoning-controlled-v1: null
 
   full:
     max_cases: null
