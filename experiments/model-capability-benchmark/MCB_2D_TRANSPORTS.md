@@ -1,6 +1,6 @@
 # MCB-2D — Shared Transports and Error Policy
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused transport/provider gate green (18/18) and full Jev characterization suite green (52/52).
 
 MCB-2D is the final extraction slice required to complete MCB-2. It moves reusable
 transport mechanics into `benchmark-core` while keeping provider-specific prompts,
@@ -162,6 +162,6 @@ unless it is demonstrably reusable across experiment suites.
 - [x] prompt/parsing semantics remain experiment-owned;
 - [x] retry behavior has focused contract tests;
 - [x] auth/timeout/invalid-response errors have focused contract tests;
-- [ ] focused MCB-2D CI passes;
-- [ ] previous MCB gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused MCB-2D CI passes (18/18);
+- [x] previous MCB gates remain green;
+- [x] full Jev characterization suite remains green (52/52).
