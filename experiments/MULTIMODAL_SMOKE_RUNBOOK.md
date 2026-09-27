@@ -2,7 +2,7 @@
 
 This runbook covers the first controlled real-model smoke runs for:
 
-1. image generation: GPT Image vs Gemini Image;
+1. image generation: GPT Image vs Gemini Image, with an optional local Qwen-Image-2.1 arm through Korgis;
 2. VLM understanding: Qwen3-VL-4B-Instruct on controlled UI grounding.
 
 The smoke runs are intentionally small. They validate the complete path from configuration to
@@ -30,7 +30,11 @@ The `smoke` profile selects:
 - `openai-sunburst`;
 - `gemini-pro-image`.
 
-That is 4 prompts × 2 models = 8 generated images.
+The baseline paid smoke is 4 prompts × 2 models = 8 generated images.
+
+When the local Korgis image runtime is available, add `qwen-image-2.1-local`. The three-arm
+smoke is then 4 prompts × 3 models = 12 generated images. Keep the local arm separate from the
+paid GitHub smoke workflow because it requires a resident local Korgis runtime.
 
 ### Local dry-run
 
@@ -46,6 +50,22 @@ uv run python scripts/run_benchmark.py \
 ```
 
 Inspect the resolved models and prompt IDs before continuing.
+
+For the optional three-arm dry-run:
+
+```bash
+export KORGIS_BASE_URL="http://127.0.0.1:1235"
+
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+The current Korgis Qwen Image baseline is the official BF16 Diffusers pipeline. It is
+resource-heavy and must not be described as a lightweight Apple-local profile until a separate
+quantized/MFlux runtime is integrated and validated.
 
 ### Real API smoke
 
@@ -189,9 +209,10 @@ The report overlays the expected target box and predicted click point and shows:
 
 The first real smoke is accepted when:
 
-1. all 8 model/prompt cases produce persisted artifacts or typed provider failures;
-2. the run manifest records both resolved model IDs and generation config;
-3. `report.html` renders both providers side by side;
+1. all selected model/prompt cases produce persisted artifacts or typed provider failures
+   (8 cases for GPT/Gemini, 12 for the optional GPT/Gemini/Qwen three-arm smoke);
+2. the run manifest records every resolved model ID, runtime/provider identity and generation config;
+3. `report.html` renders every selected provider side by side;
 4. `blind_review.html` does not expose provider/model identity;
 5. `blind_key.json` contains the reversible A/B mapping;
 6. failures remain inspectable rather than disappearing from the report/evidence.
@@ -214,6 +235,7 @@ Only after both vertical slices are accepted:
 - add broader visual reasoning and object grounding;
 - run the full image-generation v1 prompt suite;
 - add repeated generations for stochastic robustness;
-- add Qwen-Image-2.1;
+- validate the Qwen-Image-2.1 local arm on representative hardware;
+- add a quantized MFlux/MLX Qwen-Image-2.1 runtime for lighter Apple-local inference;
 - add image editing/preservation experiments;
 - aggregate blind human votes without collapsing capabilities into a single opaque score.

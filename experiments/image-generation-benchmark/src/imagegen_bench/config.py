@@ -15,7 +15,8 @@ class ResolvedImageModel:
     runtime_key: str
     provider_key: str
     provider_type: str
-    api_key_env: str
+    api_key_env: str | None
+    base_url_env: str | None
     generation: Mapping[str, Any]
     benchmark_mapping: Mapping[str, Any]
     transport_policy: TransportPolicy
@@ -61,9 +62,10 @@ def resolve_image_models(
         if not bool(capabilities.get("image_output")):
             raise ConfigError(f"{model_key}: image_output capability is required")
 
-        api_key_env = str(provider.get("api_key_env", "")).strip()
-        if not api_key_env:
-            raise ConfigError(f"{provider_key}: api_key_env is required")
+        raw_api_key_env = provider.get("api_key_env")
+        api_key_env = str(raw_api_key_env).strip() if raw_api_key_env else None
+        raw_base_url_env = provider.get("base_url_env")
+        base_url_env = str(raw_base_url_env).strip() if raw_base_url_env else None
 
         resolved.append(
             ResolvedImageModel(
@@ -73,6 +75,7 @@ def resolve_image_models(
                 provider_key=provider_key,
                 provider_type=str(provider.get("type", "")).strip(),
                 api_key_env=api_key_env,
+                base_url_env=base_url_env,
                 generation=_mapping(
                     model.get("generation"),
                     context=f"model {model_key!r} generation",

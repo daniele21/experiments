@@ -7,6 +7,11 @@ providers:
     type: gemini-image
     api_key_env: GEMINI_API_KEY
 
+  korgis-image:
+    type: korgis-image
+    base_url_env: KORGIS_BASE_URL
+    api_key_env: KORGIS_API_KEY
+
 runtimes:
   openai-image-api:
     provider: openai-image
@@ -21,3 +26,10 @@ runtimes:
     transport:
       max_retries: 2
       timeout_seconds: 180
+
+  korgis-image-local:
+    provider: korgis-image
+    deployment: local
+    transport:
+      max_retries: 1
+      timeout_seconds: 900
