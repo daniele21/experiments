@@ -5,7 +5,13 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_core.config import load_yaml_mapping
-from benchmark_core.contracts import ArtifactSpec, ModelSpec, ProviderSpec, RuntimeSpec
+from benchmark_core.contracts import (
+    ArtifactSpec,
+    ModelCapabilities,
+    ModelSpec,
+    ProviderSpec,
+    RuntimeSpec,
+)
 from benchmark_core.registry.models import RegistryBundle, RegistryError
 
 
@@ -113,6 +119,32 @@ def _artifact(raw: Any, *, model_key: str) -> ArtifactSpec | None:
     )
 
 
+def _capabilities(raw: Any, *, model_key: str) -> ModelCapabilities:
+    if raw is None:
+        return ModelCapabilities()
+    data = _mapping(raw, context=f"model {model_key!r} capabilities")
+    allowed = {
+        "text_input",
+        "image_input",
+        "image_output",
+        "image_editing",
+        "multi_image_input",
+    }
+    _reject_unknown_keys(
+        data,
+        allowed=allowed,
+        context=f"model {model_key!r} capabilities",
+    )
+    values: dict[str, bool] = {}
+    for name, value in data.items():
+        if not isinstance(value, bool):
+            raise RegistryError(
+                f"model {model_key!r} capability {name!r} must be a boolean"
+            )
+        values[str(name)] = value
+    return ModelCapabilities(**values)
+
+
 def _model(key: str, raw: Mapping[str, Any]) -> ModelSpec:
     _reject_unknown_keys(
         raw,
@@ -124,6 +156,7 @@ def _model(key: str, raw: Mapping[str, Any]) -> ModelSpec:
             "family",
             "parameters_b",
             "artifact",
+            "capabilities",
             "tags",
             "metadata",
         },
@@ -143,6 +176,7 @@ def _model(key: str, raw: Mapping[str, Any]) -> ModelSpec:
             float(raw["parameters_b"]) if raw.get("parameters_b") is not None else None
         ),
         artifact=_artifact(raw.get("artifact"), model_key=key),
+        capabilities=_capabilities(raw.get("capabilities"), model_key=key),
         tags=_tuple_of_strings(raw.get("tags"), context=f"model {key!r} tags"),
         metadata=_options(raw.get("metadata"), context=f"model {key!r} metadata"),
     )
