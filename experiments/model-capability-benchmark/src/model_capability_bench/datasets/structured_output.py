@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
+
 import yaml
 from benchmark_core import (
     DatasetLoadContext,
