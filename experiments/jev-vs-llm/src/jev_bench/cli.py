@@ -135,7 +135,11 @@ def _record_manifest(
         runner_location=_runner_location(),
         requested_models={
             "jev": os.getenv("JEV_MODEL", "jev-latest"),
-            "openai": requested_openai_models or [os.getenv("OPENAI_MODEL", "")],
+            "openai": (
+                requested_openai_models
+                if requested_openai_models is not None
+                else [os.getenv("OPENAI_MODEL", "")]
+            ),
             "minicpm": requested_minicpm_models or [],
             "clm": requested_clm_models or [],
             "korgis": requested_korgis_models or [],
