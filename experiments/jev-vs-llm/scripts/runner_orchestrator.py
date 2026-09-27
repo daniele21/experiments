@@ -21,6 +21,9 @@ from typing import Any
 
 import pandas as pd
 from rich.console import Console
+
+from benchmark_core.reporting import summarize_records
+from benchmark_core.runner import BenchmarkArm, execute_arm
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.cli import _record_manifest, _tag_run, append_results, build_report
 from jev_bench.providers.korgis import KorgisProvider
@@ -106,8 +109,9 @@ class ExperimentOrchestrator:
 
             # 2. Run experiments for this model
             for exp_name in experiments:
-                t0 = time.perf_counter()
-                try:
+                arm = BenchmarkArm(model_key=model, task_id=exp_name)
+
+                def run_and_persist() -> pd.DataFrame:
                     frame = run_single_experiment(
                         exp_name=exp_name,
                         provider=provider,
@@ -117,42 +121,50 @@ class ExperimentOrchestrator:
                         cache_dir=self.cache_dir,
                         seed=self.seed,
                     )
-                    elapsed = time.perf_counter() - t0
+                    tagged = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
+                    append_results(tagged, self.output_csv)
+                    return tagged
 
-                    tagged_frame = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
-                    append_results(tagged_frame, self.output_csv)
+                execution = execute_arm(arm, run_and_persist)
+                if execution.succeeded:
+                    tagged_frame = execution.value
+                    if not isinstance(tagged_frame, pd.DataFrame):
+                        raise TypeError("benchmark arm did not return a DataFrame")
                     all_frames.append(tagged_frame)
 
-                    # Compute quick metrics for model summary
-                    valid_cases = int(tagged_frame["valid"].sum()) if "valid" in tagged_frame else 0
-                    total_cases = len(tagged_frame)
-                    correct_cases = int(tagged_frame["correct"].sum()) if "correct" in tagged_frame else 0
-                    accuracy = (correct_cases / total_cases * 100) if total_cases > 0 else 0.0
-                    avg_lat = float(tagged_frame["latency_ms"].mean()) if "latency_ms" in tagged_frame else 0.0
-
+                    summary = summarize_records(tagged_frame.to_dict(orient="records"))
                     summary_records.append({
                         "model": model,
                         "experiment": exp_name,
                         "status": "SUCCESS",
-                        "total_cases": total_cases,
-                        "valid_cases": valid_cases,
-                        "accuracy_pct": round(accuracy, 1),
-                        "avg_latency_ms": round(avg_lat, 1),
-                        "duration_s": round(elapsed, 1),
+                        "total_cases": summary["total_cases"],
+                        "valid_cases": summary["valid_cases"],
+                        "accuracy_pct": summary["accuracy_pct"],
+                        "avg_latency_ms": summary["avg_latency_ms"],
+                        "duration_s": round(execution.elapsed_s, 1),
                     })
                     console.print(
-                        f"\n[bold green]✓ Done {model}[/] on [bold yellow]{exp_name}[/] in [cyan]{elapsed:.1f}s[/] "
-                        f"| Acc: [bold]{accuracy:.1f}%[/] | Valid: [bold]{valid_cases}/{total_cases}[/] | Latency: [cyan]{avg_lat:.0f}ms[/]\n"
+                        f"\n[bold green]✓ Done {model}[/] on [bold yellow]{exp_name}[/] "
+                        f"in [cyan]{execution.elapsed_s:.1f}s[/] "
+                        f"| Acc: [bold]{summary['accuracy_pct']:.1f}%[/] "
+                        f"| Valid: [bold]{summary['valid_cases']}/{summary['total_cases']}[/] "
+                        f"| Latency: [cyan]{summary['avg_latency_ms']:.0f}ms[/]\n"
                     )
-                except Exception as exc:
-                    logger.error("Experiment '%s' on model '%s' failed: %s", exp_name, model, exc)
+                else:
+                    error = execution.error_message or "unknown execution error"
+                    logger.error(
+                        "Experiment '%s' on model '%s' failed: %s",
+                        exp_name,
+                        model,
+                        error,
+                    )
                     summary_records.append({
                         "model": model,
                         "experiment": exp_name,
                         "status": "ERROR_EXECUTION",
-                        "error": str(exc),
+                        "error": error,
                     })
-                    console.print(f"[bold red]✗ Failed {model} on {exp_name}:[/] {exc}")
+                    console.print(f"[bold red]✗ Failed {model} on {exp_name}:[/] {error}")
 
             # 3. Unload model to completely free VRAM/RAM before next model
             if idx < total_models:

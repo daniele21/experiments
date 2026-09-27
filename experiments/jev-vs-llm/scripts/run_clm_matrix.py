@@ -6,13 +6,16 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import time
 import uuid
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from rich.console import Console
+
+from benchmark_core.config import ConfigError, parse_csv_selection
+from benchmark_core.reporting import summarize_records
+from benchmark_core.runner import BenchmarkArm, execute_arm
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -38,10 +41,10 @@ DEFAULT_REPORT = PROJECT_ROOT / "results/clm_report.html"
 
 
 def _models(value: str) -> list[str]:
-    models = list(dict.fromkeys(item.strip() for item in value.split(",") if item.strip()))
-    if not models:
-        raise ValueError("At least one CLM model/checkpoint name is required")
-    return models
+    try:
+        return parse_csv_selection(value)
+    except ConfigError as exc:
+        raise ValueError("At least one CLM model/checkpoint name is required") from exc
 
 
 def _experiments(value: str, dataset: str) -> list[str]:
@@ -77,22 +80,15 @@ def _summary(
     experiment: str,
     elapsed_s: float,
 ) -> dict[str, Any]:
-    total = len(frame)
-    valid = int(frame["valid"].fillna(False).astype(bool).sum()) if "valid" in frame else 0
-    correct = (
-        int(frame["correct"].fillna(False).astype(bool).sum())
-        if "correct" in frame
-        else 0
-    )
-    latency = float(frame["latency_ms"].mean()) if "latency_ms" in frame else 0.0
+    summary = summarize_records(frame.to_dict(orient="records"))
     return {
         "model": model,
         "experiment": experiment,
         "status": "SUCCESS",
-        "total_cases": total,
-        "valid_cases": valid,
-        "accuracy_pct": round(correct / total * 100 if total else 0.0, 1),
-        "avg_latency_ms": round(latency, 1),
+        "total_cases": summary["total_cases"],
+        "valid_cases": summary["valid_cases"],
+        "accuracy_pct": summary["accuracy_pct"],
+        "avg_latency_ms": summary["avg_latency_ms"],
         "duration_s": round(elapsed_s, 1),
     }
 
@@ -255,8 +251,9 @@ def main() -> int:
         )
 
         for experiment in experiments:
-            started = time.perf_counter()
-            try:
+            arm = BenchmarkArm(model_key=model, task_id=experiment)
+
+            def run_and_persist() -> pd.DataFrame:
                 frame = run_single_experiment(
                     exp_name=experiment,
                     provider=provider,
@@ -266,38 +263,46 @@ def main() -> int:
                     cache_dir=args.cache_dir,
                     seed=args.seed,
                 )
-                elapsed = time.perf_counter() - started
-                tagged = _tag_run(frame, group_id, f"{args.dataset}-{experiment}")
-                append_results(tagged, args.output)
+                tagged_frame = _tag_run(
+                    frame,
+                    group_id,
+                    f"{args.dataset}-{experiment}",
+                )
+                append_results(tagged_frame, args.output)
+                return tagged_frame
+
+            execution = execute_arm(arm, run_and_persist)
+            if execution.succeeded:
+                tagged = execution.value
+                if not isinstance(tagged, pd.DataFrame):
+                    raise TypeError("benchmark arm did not return a DataFrame")
                 all_frames.append(tagged)
 
                 record = _summary(
                     tagged,
                     model=model,
                     experiment=experiment,
-                    elapsed_s=elapsed,
+                    elapsed_s=execution.elapsed_s,
                 )
                 records.append(record)
                 console.print(
                     f"\n[bold green]✓ Done {model}[/] on "
-                    f"[bold yellow]{experiment}[/] in [cyan]{elapsed:.1f}s[/] "
+                    f"[bold yellow]{experiment}[/] in [cyan]{execution.elapsed_s:.1f}s[/] "
                     f"| Acc: [bold]{record['accuracy_pct']}%[/] "
                     f"| Valid: [bold]{record['valid_cases']}/{record['total_cases']}[/] "
                     f"| Latency: [cyan]{record['avg_latency_ms']}ms[/]\n"
                 )
-            except Exception as exc:  # noqa: BLE001 - per-arm failure is benchmark evidence
+            else:
+                error = f"{execution.error_type}: {execution.error_message}"
                 records.append(
                     {
                         "model": model,
                         "experiment": experiment,
                         "status": "ERROR_EXECUTION",
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "error": error,
                     }
                 )
-                console.print(
-                    f"[bold red]✗ Failed {model} on {experiment}:[/] "
-                    f"{type(exc).__name__}: {exc}"
-                )
+                console.print(f"[bold red]✗ Failed {model} on {experiment}:[/] {error}")
 
     if not all_frames:
         console.print("[bold red]No benchmark arm completed successfully.[/]")

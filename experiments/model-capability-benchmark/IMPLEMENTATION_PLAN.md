@@ -245,17 +245,17 @@ Spostare nel package condiviso solo componenti già dimostrati generici.
 
 ### Prima estrazione
 
-MCB-2A ha già estratto e validato manifest, run identity/tagging e persistence CSV condivisa. Restano gli altri componenti elencati prima della chiusura complessiva di MCB-2.
+MCB-2A ha estratto e validato manifest, run identity/tagging e persistence CSV condivisa. MCB-2B ha aggiunto config loading, matrix-arm execution e summary primitives condivise. Restano soprattutto reporting data model, reproducibility helpers e transport/cost hooks prima della chiusura complessiva di MCB-2.
 
 - manifest; ✅ MCB-2A
 - run identity;
 - common telemetry; ✅ contract condiviso, wiring progressivo
 - persistence primitives; ✅ MCB-2A
 - common report data model;
-- common model/provider config loading;
+- common model/provider config loading; ✅ loader/config primitives MCB-2B, typed registry in MCB-3
 - utilities per seed/reproducibility;
 - generic provider protocol; ✅ MCB-1
-- generic runner primitives.
+- generic runner primitives. ✅ MCB-2B
 
 ### Seconda estrazione
 

@@ -26,7 +26,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import yaml
 
 # Add parent directory to path so jev_bench can be imported
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +34,12 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from benchmark_core.config import (
+    ConfigError,
+    load_yaml_mapping,
+    load_yaml_section,
+    parse_csv_selection,
+)
 from scripts.korgis_manager import KorgisManager
 from scripts.runner_orchestrator import ExperimentOrchestrator
 
@@ -42,20 +47,13 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / "experiments_config.yaml"
 
 
 def load_config(config_path: Path) -> dict[str, Any]:
-    """Load configuration YAML with safe fallbacks."""
-    if config_path.is_file():
-        with config_path.open("r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
-    return {}
+    """Compatibility wrapper over the shared benchmark YAML loader."""
+    return load_yaml_mapping(config_path)
 
 
 def load_registry_models(registry_path: Path) -> dict[str, dict[str, Any]]:
-    """Load model definitions from the benchmark registry."""
-    if registry_path.is_file():
-        with registry_path.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-            return data.get("models") or {}
-    return {}
+    """Compatibility wrapper over the shared named-section YAML loader."""
+    return load_yaml_section(registry_path, "models")
 
 
 def prompt_interactive_selection(available: dict[str, dict[str, Any]]) -> list[str]:
@@ -158,10 +156,13 @@ def main() -> int:
     if args.interactive or (not args.models and sys.stdin.isatty() and not cfg.get("default_models")):
         chosen_models = prompt_interactive_selection(available_models)
     elif args.models:
-        if args.models.strip().lower() == "all":
-            chosen_models = list(available_models.keys())
-        else:
-            chosen_models = [m.strip() for m in args.models.split(",") if m.strip()]
+        try:
+            chosen_models = parse_csv_selection(
+                args.models,
+                available=list(available_models.keys()),
+            )
+        except ConfigError:
+            chosen_models = []
     else:
         chosen_models = list(cfg.get("default_models") or available_models.keys())
 
