@@ -1,0 +1,49 @@
+name: MCB-1 contract checks
+
+on:
+  pull_request:
+    paths:
+      - "packages/benchmark-core/**"
+      - "experiments/jev-vs-llm/src/jev_bench/generic_adapter.py"
+      - "experiments/jev-vs-llm/tests/test_generic_adapter.py"
+      - "experiments/jev-vs-llm/pyproject.toml"
+      - "experiments/model-capability-benchmark/**"
+      - ".github/workflows/mcb1-contract-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/jev-vs-llm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      - name: Install Jev test dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff MCB-1 contracts
+        run: >
+          uv run ruff check
+          ../../packages/benchmark-core/src
+          ../../packages/benchmark-core/tests
+          src/jev_bench/generic_adapter.py
+          tests/test_generic_adapter.py
+
+      - name: Contract and characterization tests
+        run: >
+          uv run pytest
+          ../../packages/benchmark-core/tests
+          tests/test_generic_adapter.py
+          tests/test_characterization_contracts.py
