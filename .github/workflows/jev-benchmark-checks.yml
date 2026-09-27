@@ -31,5 +31,11 @@ jobs:
       - name: Ruff
         run: uv run ruff check .
 
+      - name: Install dashboard dependencies
+        run: |
+          if [ -f dashboard/package-lock.json ]; then
+            npm --prefix dashboard ci
+          fi
+
       - name: Unit tests
         run: uv run pytest
