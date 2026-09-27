@@ -252,9 +252,9 @@ def main() -> int:
 
         for experiment in experiments:
             arm = BenchmarkArm(model_key=model, task_id=experiment)
-            execution = execute_arm(
-                arm,
-                lambda: run_single_experiment(
+
+            def run_and_persist() -> pd.DataFrame:
+                frame = run_single_experiment(
                     exp_name=experiment,
                     provider=provider,
                     model_name=model,
@@ -262,14 +262,20 @@ def main() -> int:
                     profile=args.profile,
                     cache_dir=args.cache_dir,
                     seed=args.seed,
-                ),
-            )
+                )
+                tagged_frame = _tag_run(
+                    frame,
+                    group_id,
+                    f"{args.dataset}-{experiment}",
+                )
+                append_results(tagged_frame, args.output)
+                return tagged_frame
+
+            execution = execute_arm(arm, run_and_persist)
             if execution.succeeded:
-                frame = execution.value
-                if not isinstance(frame, pd.DataFrame):
+                tagged = execution.value
+                if not isinstance(tagged, pd.DataFrame):
                     raise TypeError("benchmark arm did not return a DataFrame")
-                tagged = _tag_run(frame, group_id, f"{args.dataset}-{experiment}")
-                append_results(tagged, args.output)
                 all_frames.append(tagged)
 
                 record = _summary(
