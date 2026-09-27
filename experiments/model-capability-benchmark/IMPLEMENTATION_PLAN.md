@@ -144,7 +144,7 @@ benchmark-core -X-> experiment suites
 
 # 5. Workstream
 
-## MCB-0 — Baseline e characterization tests
+## MCB-0 — Baseline e characterization tests ✅ COMPLETE
 
 ### Obiettivo
 
@@ -893,7 +893,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 ### Foundation
 
-- [ ] MCB-0 characterization tests
+- [x] MCB-0 characterization tests
 - [ ] MCB-1 generic contracts
 - [ ] MCB-2 benchmark-core extraction
 
