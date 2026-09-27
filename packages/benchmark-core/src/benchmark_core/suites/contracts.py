@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field as dataclass_field
+import dataclasses
 from typing import Any, Literal
 
 from benchmark_core.contracts import GenerationConfig
@@ -23,14 +23,14 @@ MetricReducer = Literal[
 ]
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class CapabilityMetricSpec:
     name: str
     source: MetricSource
     reducer: str
     field: str | None = None
     primary: bool = False
-    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
+    options: Mapping[str, Any] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -55,7 +55,7 @@ class CapabilityMetricSpec:
             raise ValueError("metric field must not be empty")
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class CapabilityContextBinding:
     key: str
     source: ContextSource
@@ -87,7 +87,7 @@ class CapabilityContextBinding:
             )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class CapabilitySpec:
     capability_id: str
     task_id: str
@@ -96,7 +96,7 @@ class CapabilitySpec:
     description: str | None = None
     tags: tuple[str, ...] = ()
     context_bindings: tuple[CapabilityContextBinding, ...] = ()
-    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
+    options: Mapping[str, Any] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.capability_id.strip():
@@ -123,7 +123,7 @@ class CapabilitySpec:
             raise ValueError("capability must declare exactly one primary metric")
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class BenchmarkSuiteSpec:
     suite_id: str
     version: str
@@ -131,7 +131,7 @@ class BenchmarkSuiteSpec:
     generation: GenerationConfig
     capabilities: tuple[CapabilitySpec, ...]
     description: str | None = None
-    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
+    options: Mapping[str, Any] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for field_name, value in (
