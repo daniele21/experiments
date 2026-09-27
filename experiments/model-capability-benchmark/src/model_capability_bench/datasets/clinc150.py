@@ -31,11 +31,11 @@ class Clinc150OosDataset:
         path = single_cached_source(self.spec, context)
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
-            raise ValueError("CLINC150 data root must be an object")
+            raise TypeError("CLINC150 data root must be an object")
 
         raw = payload.get(self.spec.split)
         if not isinstance(raw, list):
-            raise ValueError(
+            raise TypeError(
                 f"CLINC150 source has no list split {self.spec.split!r}"
             )
 
