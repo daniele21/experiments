@@ -25,6 +25,16 @@ ProviderFactory = Callable[
 ]
 
 
+def _relative_artifact_path(run_dir: Path, artifact_path: str) -> str:
+    if not artifact_path:
+        return ""
+    path = Path(artifact_path)
+    try:
+        return str(path.resolve().relative_to(run_dir.resolve()))
+    except ValueError:
+        return artifact_path
+
+
 def _default_provider_factory(
     model: ResolvedImageModel,
     store: ArtifactStore,
@@ -85,7 +95,11 @@ def execute_run_plan(
                     "valid": result.valid,
                     "latency_ms": result.latency_ms,
                     "artifact_id": artifact.artifact_id if artifact else "",
-                    "artifact_path": artifact.path if artifact else "",
+                    "artifact_path": (
+                        _relative_artifact_path(run_dir, artifact.path)
+                        if artifact
+                        else ""
+                    ),
                     "artifact_sha256": artifact.sha256 if artifact else "",
                     "error_kind": result.error.kind if result.error else "",
                     "error_message": result.error.message if result.error else "",
