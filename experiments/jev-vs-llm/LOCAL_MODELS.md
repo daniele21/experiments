@@ -236,47 +236,39 @@ models:
     tags: [local-benchmark, custom]
 ```
 
-### 9.3 LM Studio Local Models (Ready-to-use Registry Configuration)
+### 9.3 Benchmark registry vs Korgis artifact registry
 
-If you have downloaded GGUF models via LM Studio (typically residing under `~/.lmstudio/models/`), you can register them cleanly. This repository includes a pre-configured registry file [`benchmark-models.yaml`](benchmark-models.yaml) with the following models:
+The repository now keeps only the portable benchmark identity in
+[`models.yaml`](models.yaml): model key, canonical model ID, runtime,
+quantization and tags.
 
-| Registry Key | Model | Path in `~/.lmstudio/models/` |
-|---|---|---|
-| `qwen3.5-0.8b-q4km` | Qwen 3.5 0.8B (Q4_K_M) | `unsloth/Qwen3.5-0.8B-GGUF/Qwen3.5-0.8B-Q4_K_M.gguf` |
-| `qwen3.5-2b-q4km` | Qwen 3.5 2B (Q4_K_M) | `unsloth/Qwen3.5-2B-GGUF/Qwen3.5-2B-Q4_K_M.gguf` |
-| `nemotron-nano-4b` | NVIDIA Nemotron-3-Nano-4B (Q4_K_M) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf` |
-| `nemotron-nano-4b-q8` | NVIDIA Nemotron-3-Nano-4B (Q8_0) | `lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q8_0.gguf` |
-| `qwen3.5-9b-q4km` | Qwen 3.5 9B (Q4_K_M) | `lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf` |
-
-To use this configuration across runs:
+Actual local artifact paths do **not** belong in this repository. Keep them in a
+Korgis user/external registry, for example `~/.local-llm/models.yaml`, or point
+Korgis at another local file:
 
 ```bash
-# Option 1: Copy to ~/.local-llm/models.yaml (global default)
-cp benchmark-models.yaml ~/.local-llm/models.yaml
-
-# Option 2: Point Korgis to the benchmark file directly
-export LOCAL_LLM_REGISTRY_PATHS="/Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/benchmark-models.yaml"
+export LOCAL_LLM_REGISTRY_PATHS="$HOME/.config/my-benchmark-korgis-models.yaml"
 ```
 
-Verify that Korgis resolves all configured models:
+The external Korgis registry must expose the same `runtime_model_id` keys used by
+`models.yaml`, for example `qwen3.5-2b-q4km` or `nemotron-nano-4b-q8`.
+
+Verify the runtime mapping before a benchmark:
 
 ```bash
-cd /Users/moltisantid/Personal/experiments/korgis
+cd "$KORGIS_DIR"
 uv run --frozen local-llm models
 ```
 
-All configured models should show as `✅ downloaded` with backend `llama_server`.
+This separation is deliberate:
 
-Start Korgis once with admin API enabled:
-
-```bash
-uv run --frozen local-llm serve \
-  --model nemotron-nano-4b \
-  --enable-admin-api \
-  --no-download
+```text
+models.yaml                      portable benchmark identity
+        ↓ model/runtime key
+Korgis external registry         machine-local artifact resolution
+        ↓
+GGUF / MLX artifact
 ```
-
-The benchmark can now evaluate each registered model directly or run the automated matrix.
 
 ### 9.4 Registry-managed download example
 
@@ -312,7 +304,7 @@ uv run --frozen local-llm verify-artifact my-model-4b-q4km
 For an experiment-owned registry:
 
 ```bash
-export LOCAL_LLM_REGISTRY_PATHS="/absolute/path/benchmark-models.yaml"
+export LOCAL_LLM_REGISTRY_PATHS="/path/to/local-korgis-models.yaml"
 uv run --frozen local-llm models
 ```
 
@@ -354,20 +346,20 @@ If a future experiment deliberately self-hosts a MiniCPM artifact, add that arti
 
 ## 12. Autonomous Multi-Model Runner (`run_local_matrix.py`)
 
-An autonomous orchestrator script is provided in [`scripts/run_local_matrix.py`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/scripts/run_local_matrix.py) to manage and evaluate multiple local models **sequentially, one at a time**, without requiring manual server restarts or terminal management.
+An autonomous orchestrator script is provided in [`scripts/run_local_matrix.py`](scripts/run_local_matrix.py) to manage and evaluate multiple local models **sequentially, one at a time**, without requiring manual server restarts or terminal management.
 
 ### Key Features
 - **Automatic Korgis Management**: Starts Korgis in the background if not already running, waits for health checks, and cleanly shuts it down when finished.
 - **Sequential Memory Isolation**: Activates each model via the Korgis Admin API, executes the benchmarks, and immediately unloads it to completely free VRAM/RAM before loading the next model.
 - **Live Progress Bar & Verbose Output**: Displays real-time per-case outcomes (predicted vs expected intent, latency, checkmark status), running accuracy percentage, elapsed time, and ETA.
-- **Flexible Model Selection**: Pass models via command-line arguments, select them from an interactive menu, or define them in [`experiments_config.yaml`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/experiments_config.yaml).
+- **Flexible Model Selection**: Pass models via command-line arguments, select them from an interactive menu, or define them in [`experiments_config.yaml`](experiments_config.yaml).
 - **Consolidated Summary & Dashboard**: Collects metrics across all evaluated models, appends results to `results/raw/local_results.csv`, and renders the interactive HTML report at `results/local_report.html`.
 
 
 ### Usage Examples
 
 ```bash
-cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+cd experiments/jev-vs-llm
 
 # 1. List available configured models
 uv run python scripts/run_local_matrix.py --list
@@ -432,11 +424,19 @@ uv run python scripts/run_local_matrix.py \
 
 ### Configuration (`experiments_config.yaml`)
 
-Default runner parameters can be adjusted in [`experiments_config.yaml`](file:///Users/moltisantid/Personal/experiments/experiments/jev-vs-llm/experiments_config.yaml):
+Default runner parameters can be adjusted in [`experiments_config.yaml`](experiments_config.yaml).
+Machine-specific values are environment variables:
+
+```bash
+export KORGIS_DIR="/path/to/korgis"
+export LOCAL_LLM_REGISTRY_PATHS="/path/to/local-korgis-models.yaml"
+```
+
+Portable defaults remain in YAML:
 
 ```yaml
-korgis_dir: "/Users/moltisantid/Personal/experiments/korgis"
-korgis_port: 1235
+benchmark_registry_path: "models.yaml"
+korgis_base_url: "http://127.0.0.1:1235/v1"
 default_models:
   - "qwen3.5-0.8b-q4km"
   - "qwen3.5-2b-q4km"

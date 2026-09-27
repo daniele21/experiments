@@ -1,0 +1,83 @@
+providers:
+  korgis:
+    type: openai-compatible
+    base_url_env: KORGIS_BASE_URL
+    required_env:
+      - KORGIS_BASE_URL
+    options:
+      protocol: chat-completions
+      local_provider_fee: 0
+
+runtimes:
+  korgis-local:
+    provider: korgis
+    deployment: local
+    lifecycle: managed
+    options:
+      runtime_type: korgis
+
+models:
+  qwen3.5-0.8b-q4km:
+    model_id: unsloth/qwen3.5-0.8b
+    runtime_model_id: qwen3.5-0.8b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 0.8
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, qwen, small]
+
+  qwen3.5-2b-q4km:
+    model_id: unsloth/qwen3.5-2b
+    runtime_model_id: qwen3.5-2b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 2
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, qwen, small]
+
+  nemotron-nano-4b:
+    model_id: nvidia/nemotron-3-nano-4b
+    runtime_model_id: nemotron-nano-4b
+    runtime: korgis-local
+    family: nemotron-nano
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, nemotron, small]
+
+  nemotron-nano-4b-q8:
+    model_id: nvidia/nemotron-3-nano-4b-q8
+    runtime_model_id: nemotron-nano-4b-q8
+    runtime: korgis-local
+    family: nemotron-nano
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q8_0
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, nemotron, q8]
+
+  qwen3.5-9b-q4km:
+    model_id: qwen/qwen3.5-9b
+    runtime_model_id: qwen3.5-9b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 9
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, qwen, medium]

@@ -16,7 +16,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-5 dataset registry/adapters: complete;
 - MCB-6 five-capability suite: complete;
 - MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending;
-- MCB-8 neutral capability reporting: complete.
+- MCB-8 neutral capability reporting: complete;
+- MCB-9 Jev consolidation/migration: complete.
 
 ## Registry
 
@@ -162,5 +163,9 @@ See `MCB_8_REPORTING.md` for the evidence/report contract.
 
 ## What comes next
 
-MCB-9 consolidates `jev-vs-llm` onto the definitive shared core where doing so preserves
-its bounded-decision semantics and characterization baselines.
+The MCB-0…9 architecture workstream is complete. The next validation step is the controlled
+real-provider E2E documented in `MCB_7_UNIFIED_RUNNER.md`: run the same capability slice
+through Korgis and an API model, then inspect the persisted evidence and neutral report.
+
+Jev remains a bounded-decision suite on top of the same core. Its task semantics and rich
+Jev-specific dashboard stay intentionally separate from the generic capability report.

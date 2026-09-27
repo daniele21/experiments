@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import csv
-import json
-from pathlib import Path
-
 from benchmark_core import (
     DatasetLoadContext,
     DatasetLoadResult,
     DatasetSpec,
     Sample,
     fingerprint_values,
+    load_banking77_categories,
+    load_banking77_rows,
     seeded_random,
     sha256_file,
 )
@@ -25,43 +23,6 @@ class Banking77Dataset:
     def spec(self) -> DatasetSpec:
         return self._spec
 
-    @staticmethod
-    def _categories(path: Path) -> tuple[str, ...]:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if (
-            not isinstance(payload, list)
-            or not payload
-            or not all(isinstance(item, str) and item.strip() for item in payload)
-        ):
-            raise ValueError("BANKING77 categories must be a non-empty string list")
-        categories = tuple(str(item) for item in payload)
-        if len(categories) != len(set(categories)):
-            raise ValueError("BANKING77 categories contain duplicates")
-        return categories
-
-    @staticmethod
-    def _rows(path: Path) -> list[tuple[int, str, str]]:
-        rows: list[tuple[int, str, str]] = []
-        with path.open("r", encoding="utf-8", newline="") as handle:
-            reader = csv.reader(handle)
-            header = next(reader, None)
-            if header != ["text", "category"]:
-                raise ValueError(f"Unexpected BANKING77 header: {header}")
-            for source_index, row in enumerate(reader):
-                if len(row) != 2:
-                    raise ValueError(
-                        f"BANKING77 row {source_index} must contain text and category"
-                    )
-                text, category = row
-                if not text.strip() or not category.strip():
-                    raise ValueError(
-                        f"BANKING77 row {source_index} contains an empty value"
-                    )
-                rows.append((source_index, text, category))
-        if not rows:
-            raise ValueError("BANKING77 test split is empty")
-        return rows
-
     def load(self, context: DatasetLoadContext) -> DatasetLoadResult:
         test_path = cached_source(self.spec, context, file_key="test")
         categories_path = cached_source(
@@ -69,9 +30,9 @@ class Banking77Dataset:
             context,
             file_key="categories",
         )
-        categories = self._categories(categories_path)
+        categories = load_banking77_categories(categories_path)
         category_set = set(categories)
-        rows = self._rows(test_path)
+        rows = load_banking77_rows(test_path)
 
         by_label: dict[str, list[tuple[int, str]]] = {
             label: [] for label in categories

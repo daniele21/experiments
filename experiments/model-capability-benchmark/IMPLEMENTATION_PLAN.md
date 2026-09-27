@@ -664,7 +664,7 @@ Per i modelli locali mantenere campi distinti per:
 
 ---
 
-## MCB-9 — Migrazione di `jev-vs-llm` al core definitivo
+## MCB-9 — Migrazione di `jev-vs-llm` al core definitivo ✅ COMPLETE
 
 ### Obiettivo
 
@@ -681,9 +681,12 @@ Rimuovere duplicazioni transitorie create durante la migrazione.
 
 ### Definition of Done
 
-- un solo implementation path per telemetry/manifests/persistence condivisi;
-- vecchi comandi Jev documentati o sostituiti con migration path chiaro;
-- risultati Jev pre/post migration compatibili sui regression fixtures.
+- [x] un solo implementation path per telemetry/manifests/persistence condivisi;
+- [x] dataset source/parsing e model/runtime registry consolidati nel core condiviso;
+- [x] vecchi comandi Jev mantenuti e migration path locale documentato;
+- [x] generic Jev task adapter disponibile senza spostare bounded-decision semantics nel core;
+- [x] risultati Jev pre/post migration confermati dai regression fixtures sulla HEAD finale;
+- [x] gate cumulativi verdi sulla HEAD finale.
 
 ---
 
@@ -943,7 +946,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 - [ ] capability matrix dashboard
 - [x] resume/failure hardening
 - [ ] local resource telemetry
-- [ ] Jev migration cleanup
+- [x] Jev migration cleanup
 - [ ] documentation/tutorial for adding model/task/dataset/provider
 
 ---
@@ -965,20 +968,22 @@ Il workstream è concluso quando:
 
 ---
 
-# 14. Prossimo passo
+# 14. Stato finale e prossime validazioni
 
-MCB-0…8 hanno ora chiuso foundation, registries, capability suite, unified runner e
-reporting comparativo.
+Il workstream architetturale **MCB-0…9 è implementato**: contratti, core condiviso,
+registry, task/dataset plugin, capability suite, unified runner, reporting e migrazione Jev
+sono consolidati e coperti dai gate automatici.
 
-Il prossimo blocco è **MCB-9 — migrazione/cleanup di `jev-vs-llm`**:
+La prossima attività non è un nuovo refactor strutturale. È la **validazione ambientale
+controlled E2E** già documentata in `MCB_7_UNIFIED_RUNNER.md`:
 
-- individuare le duplicazioni rimaste tra Jev e benchmark-core;
-- migrare solo telemetry, persistence, manifests, registry/runtime e reporting primitives
-  realmente condivisibili;
-- mantenere `DecisionProvider`, `QuestionSpec`, bounded-decision semantics e evaluator
-  Jev nella suite specifica;
-- sostituire entrypoint duplicati solo dopo characterization equivalence;
-- documentare il migration path e rimuovere codice transitorio quando non più usato.
+- eseguire lo stesso slice su un modello Korgis reale e un modello API reale;
+- conservare evidence, manifest e report della run;
+- confrontare validità, qualità, latenza, token e costo osservato;
+- verificare resume/failure handling anche su runtime reale.
 
-In parallelo resta la validazione ambientale del controlled E2E Korgis reale + API reale,
-documentata in `MCB_7_UNIFIED_RUNNER.md`.
+Enhancement successivi, non blocker del core MCB-0…9:
+
+- local resource telemetry (RAM/VRAM, throughput, startup/switch latency quando misurabile);
+- tutorial operativo per aggiungere model/task/dataset/provider;
+- nuove capability/dataset in base agli esperimenti editoriali.

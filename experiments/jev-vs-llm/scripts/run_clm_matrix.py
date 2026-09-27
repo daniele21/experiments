@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Autonomous CLM benchmark runner aligned with RUN_EXPERIMENTS.md."""
 
 from __future__ import annotations
@@ -11,11 +10,10 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from rich.console import Console
-
 from benchmark_core.config import ConfigError, parse_csv_selection
 from benchmark_core.reporting import summarize_records
 from benchmark_core.runner import BenchmarkArm, execute_arm
+from rich.console import Console
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -253,7 +251,11 @@ def main() -> int:
         for experiment in experiments:
             arm = BenchmarkArm(model_key=model, task_id=experiment)
 
-            def run_and_persist() -> pd.DataFrame:
+            def run_and_persist(
+                experiment: str = experiment,
+                provider: CLMProvider = provider,
+                model: str = model,
+            ) -> pd.DataFrame:
                 frame = run_single_experiment(
                     exp_name=experiment,
                     provider=provider,

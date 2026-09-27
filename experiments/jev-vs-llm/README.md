@@ -540,7 +540,7 @@ Korgis can also load one or more external YAML/JSON registry files through `LOCA
 Example:
 
 ```bash
-export LOCAL_LLM_REGISTRY_PATHS="/absolute/path/benchmark-models.yaml"
+export LOCAL_LLM_REGISTRY_PATHS="/path/to/local-korgis-models.yaml"
 
 uv run --frozen local-llm models
 uv run --frozen local-llm download my-model-4b-q4km

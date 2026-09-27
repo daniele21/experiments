@@ -7,7 +7,6 @@ from typing import Annotated
 
 import pandas as pd
 import typer
-
 from benchmark_core.run_identity import create_run_identity
 
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data

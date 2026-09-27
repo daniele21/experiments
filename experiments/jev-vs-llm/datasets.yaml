@@ -1,0 +1,62 @@
+datasets:
+  banking77:
+    version: "1"
+    adapter: jev-banking77
+    source: PolyAI-LDN/task-specific-datasets
+    revision: 9d081458ff52e53cf7e848f414e6e9344e4e6696
+    split: test
+    license: CC-BY-4.0
+    sample_schema_version: "1"
+    cache_mode: download
+    options:
+      timeout_seconds: 60
+      user_agent: jev-bench/0.1
+      files:
+        test:
+          url: https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/9d081458ff52e53cf7e848f414e6e9344e4e6696/banking_data/test.csv
+          cache_path: banking77/test.csv
+        categories:
+          url: https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/9d081458ff52e53cf7e848f414e6e9344e4e6696/banking_data/categories.json
+          cache_path: banking77/categories.json
+
+  clinc150-oos:
+    version: "1"
+    adapter: jev-clinc150-oos
+    source: clinc/oos-eval
+    revision: 48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e
+    split: oos_test
+    license: CC-BY-3.0
+    sample_schema_version: "1"
+    cache_mode: download
+    options:
+      timeout_seconds: 60
+      user_agent: jev-bench/0.1
+      file:
+        url: https://raw.githubusercontent.com/clinc/oos-eval/48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e/data/data_full.json
+        cache_path: clinc150/data_full.json
+      exclude_terms:
+        - account
+        - atm
+        - bank
+        - banking
+        - balance
+        - card
+        - cash
+        - charge
+        - credit
+        - currency
+        - debit
+        - deposit
+        - exchange
+        - fee
+        - finance
+        - loan
+        - money
+        - payment
+        - refund
+        - top up
+        - transaction
+        - transfer
+        - wire
+        - withdraw
+        - withdrawal

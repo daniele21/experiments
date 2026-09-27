@@ -62,7 +62,7 @@ def _extract_cases(rows: pd.DataFrame, prefix: str, max_cases: int = 250) -> lis
     for (series, case_id), frame in subset.groupby(["series", "case_id"], sort=False):
         first = frame.iloc[0]
         valid = bool(frame["valid"].all())
-        primary = frame[frame["primary_metric"].fillna(False) == True]  # noqa: E712
+        primary = frame[frame["primary_metric"].fillna(False) == True]
 
         if not valid:
             status = "Invalid"
@@ -120,7 +120,7 @@ def _extract_errors(rows: pd.DataFrame, prefix: str) -> list[dict[str, Any]]:
     if subset.empty:
         return []
     subset = with_series(subset)
-    errors = subset[(subset["valid"] == False) | subset["error"].notna()].copy()  # noqa: E712
+    errors = subset[(subset["valid"] == False) | subset["error"].notna()].copy()
     if errors.empty:
         return []
     cols = ["series", "case_id", "question_id", "error", "latency_ms", "input_tokens", "output_tokens"]
@@ -140,8 +140,8 @@ def _extract_per_class(rows: pd.DataFrame, prefix: str) -> list[dict[str, Any]]:
     subset = with_series(subset)
     records = []
     for (series, expected), frame in subset.groupby(["series", "expected"], dropna=False):
-        valid = frame[frame["valid"] == True]  # noqa: E712
-        wrong = valid[(valid["correct"] == False) & valid["actual"].notna()]  # noqa: E712
+        valid = frame[frame["valid"] == True]
+        wrong = valid[(valid["correct"] == False) & valid["actual"].notna()]
         top_wrong = wrong["actual"].astype(str).value_counts().index[0] if not wrong.empty else "—"
         records.append({
             "series": str(series),
@@ -211,7 +211,7 @@ def build_benchmark_payload(
     cal_errors = _extract_errors(rows, "02-calibration")
 
     # Scaling section
-    scaling_rows = rows[rows["experiment"].eq("03-parallel-scaling") & (rows["valid"] == True)].copy()  # noqa: E712
+    scaling_rows = rows[rows["experiment"].eq("03-parallel-scaling") & (rows["valid"] == True)].copy()
     scaling_summary = []
     scaling_detail = []
     if not scaling_rows.empty:

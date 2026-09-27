@@ -6,7 +6,7 @@ Questo documento raccoglie tutti i comandi pronti all'uso per eseguire i benchma
 
 ## 1. I 4 Modelli Locali Selezionati
 
-Tutti i modelli sono configurati in [`benchmark-models.yaml`](./benchmark-models.yaml) e puntano agli artifact GGUF scaricati in LM Studio:
+Le identità benchmark dei modelli sono dichiarate nel registry portabile [`models.yaml`](./models.yaml). I path reali degli artifact GGUF/MLX sono risolti da Korgis tramite il suo registry locale o `LOCAL_LLM_REGISTRY_PATHS` e non sono committati nel repo:
 
 | Identificativo Chiave | Modello Base | Quantizzazione | Dimensione | Uso Consigliato |
 |---|---|---|---|---|
@@ -69,7 +69,7 @@ La suite include 5 tipologie di esperimenti per valutare sia la precisione seman
 
 Tutti i comandi vanno eseguiti dalla cartella root del benchmark:
 ```bash
-cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+cd experiments/jev-vs-llm
 ```
 
 ### Modello 1: `nemotron-nano-4b` (NVIDIA 4B Q4)
@@ -238,7 +238,7 @@ ssh -L 8700:localhost:8700 <gpu-host>
 Poi, dalla root del benchmark:
 
 ```bash
-cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+cd experiments/jev-vs-llm
 export CLM_BASE_URL=http://127.0.0.1:8700
 export CLM_MODEL=clm-latest
 ```

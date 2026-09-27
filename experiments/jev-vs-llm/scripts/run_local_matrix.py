@@ -26,7 +26,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 # Add parent directory to path so jev_bench can be imported
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -34,12 +33,14 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from benchmark_core import load_registry
 from benchmark_core.config import (
     ConfigError,
     load_yaml_mapping,
     load_yaml_section,
     parse_csv_selection,
 )
+
 from scripts.korgis_manager import KorgisManager
 from scripts.runner_orchestrator import ExperimentOrchestrator
 
@@ -52,8 +53,25 @@ def load_config(config_path: Path) -> dict[str, Any]:
 
 
 def load_registry_models(registry_path: Path) -> dict[str, dict[str, Any]]:
-    """Compatibility wrapper over the shared named-section YAML loader."""
-    return load_yaml_section(registry_path, "models")
+    """Expose typed models while preserving the historical models-only wrapper."""
+    payload = load_yaml_mapping(registry_path)
+    if "providers" not in payload and "runtimes" not in payload:
+        return load_yaml_section(registry_path, "models")
+
+    bundle = load_registry(registry_path)
+    result: dict[str, dict[str, Any]] = {}
+    for key, spec in bundle.models.items():
+        result[key] = {
+            "model_id": spec.model_id,
+            "runtime_model_id": spec.runtime_model_id,
+            "quantization": (
+                spec.artifact.quantization
+                if spec.artifact is not None
+                else None
+            ),
+            "tags": list(spec.tags),
+        }
+    return result
 
 
 def prompt_interactive_selection(available: dict[str, dict[str, Any]]) -> list[str]:
@@ -140,15 +158,18 @@ def main() -> int:
         l.setLevel(logging.WARNING)
         l.propagate = False
 
-    registry_rel = cfg.get("registry_path", "benchmark-models.yaml")
+    registry_rel = cfg.get("benchmark_registry_path", "models.yaml")
     registry_file = (PROJECT_ROOT / registry_rel).resolve()
     available_models = load_registry_models(registry_file)
 
     if args.list:
         print("\nConfigured Local Benchmark Models:")
         for k, v in available_models.items():
-            print(f"  • {k.ljust(22)}: {v.get('model_id')} ({v.get('quantization', 'GGUF')})")
-            print(f"    Path: {v.get('path')}")
+            quantization = v.get("quantization") or "unquantized"
+            print(
+                f"  • {k.ljust(22)}: {v.get('model_id')} "
+                f"({quantization})"
+            )
         return 0
 
     # Resolve models to run
@@ -176,11 +197,11 @@ def main() -> int:
     # Ensure llama-server doesn't divert output tokens to reasoning traces (<think>) for structured JSON evaluation
     os.environ.setdefault("LLAMA_ARG_REASONING", "off")
 
-    # Explicitly ensure LOCAL_LLM_SERVER_BIN points to the validated llama-server
+    # Use explicit environment or PATH discovery; never guess machine-specific paths.
     if "LOCAL_LLM_SERVER_BIN" not in os.environ:
-        discovered_bin = shutil.which("llama-server") or "/opt/homebrew/bin/llama-server"
-        if Path(discovered_bin).is_file():
-            os.environ["LOCAL_LLM_SERVER_BIN"] = str(discovered_bin)
+        discovered_bin = shutil.which("llama-server")
+        if discovered_bin:
+            os.environ["LOCAL_LLM_SERVER_BIN"] = discovered_bin
 
     # Resolve experiments
     if args.experiments:
@@ -195,7 +216,7 @@ def main() -> int:
     else:
         experiments = list(cfg.get("default_experiments", ["routing"]))
     base_url = cfg.get("korgis_base_url", "http://127.0.0.1:1235/v1")
-    korgis_dir = cfg.get("korgis_dir", str(PROJECT_ROOT.parent.parent / "korgis"))
+    korgis_dir = os.getenv("KORGIS_DIR") or cfg.get("korgis_dir")
     max_tokens = int(cfg.get("max_output_tokens", 512))
 
     print("\n" + "=" * 65)
@@ -212,7 +233,7 @@ def main() -> int:
     korgis = KorgisManager(
         base_url=base_url,
         korgis_dir=korgis_dir,
-        registry_path=registry_file,
+        registry_path=None,
         timeout=float(cfg.get("korgis_control_timeout", 360)),
     )
 
