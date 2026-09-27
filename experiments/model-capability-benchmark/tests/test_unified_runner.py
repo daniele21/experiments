@@ -138,7 +138,11 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     root = tmp_path / "evidence"
     assert len(read_jsonl_records(root / "raw.jsonl")) == 64
     assert len(read_jsonl_records(root / "evaluation.jsonl")) == 64
+    assert len(read_jsonl_records(root / "report_index.jsonl")) == 12
     assert len(read_jsonl_records(root / "aggregates.jsonl")) == 34
+    report_index = read_jsonl_records(root / "report_index.jsonl")
+    assert len(report_index) == 6
+    assert all(item["cases"] for item in report_index)
 
     resumed_runtime = _FakeRuntime()
     resumed = _runner(tmp_path, runtime=resumed_runtime).run(config)
