@@ -17,6 +17,10 @@ class ResolvedModel:
     runtime: RuntimeSpec
     provider: ProviderSpec
 
+    @property
+    def effective_model_id(self) -> str:
+        return self.model.runtime_model_id or self.model.model_id
+
 
 @dataclass(frozen=True)
 class RegistryBundle:
@@ -75,12 +79,9 @@ class RegistryBundle:
                 continue
             if family is not None and model.family != family:
                 continue
-            if (
-                max_parameters_b is not None
-                and model.parameters_b is not None
-                and model.parameters_b > max_parameters_b
-            ):
-                continue
+            if max_parameters_b is not None:
+                if model.parameters_b is None or model.parameters_b > max_parameters_b:
+                    continue
             if quantization is not None:
                 if model.artifact is None or model.artifact.quantization != quantization:
                     continue
@@ -128,15 +129,7 @@ def preflight_models(
             continue
         checked_providers.add(provider.provider_key)
 
-        required_env = provider.options.get("required_env", ())
-        if isinstance(required_env, str):
-            required_env = (required_env,)
-        if not isinstance(required_env, Sequence):
-            raise RegistryError(
-                f"Provider {provider.provider_key!r} option required_env must be a sequence"
-            )
-
-        for env_var in required_env:
+        for env_var in provider.required_env:
             name = str(env_var)
             if not environ.get(name):
                 issues.append(
