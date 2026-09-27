@@ -8,6 +8,11 @@ from typing import Any
 
 from openai import OpenAI
 
+from benchmark_core.transports import (
+    create_openai_compatible_client,
+    resolve_transport_policy,
+)
+
 from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
@@ -28,10 +33,13 @@ class OpenAIProvider(DecisionProvider):
         self.model = model or os.getenv("OPENAI_MODEL", "")
         if not self.model:
             raise ValueError("Set OPENAI_MODEL explicitly for reproducible benchmark runs")
-        max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
-        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=60,
+        )
         self.reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT", "none")
-        self.client = OpenAI(max_retries=max_retries, timeout=timeout)
+        self.client = create_openai_compatible_client(OpenAI, policy=policy)
 
     @staticmethod
     def _schema() -> dict[str, Any]:
@@ -184,9 +192,12 @@ class OpenAIMonolithicProvider:
         self.model = model or os.getenv("OPENAI_MODEL", "")
         if not self.model:
             raise ValueError("Set OPENAI_MODEL explicitly for reproducible benchmark runs")
-        max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
-        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
-        self.client = OpenAI(max_retries=max_retries, timeout=timeout)
+        policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=60,
+        )
+        self.client = create_openai_compatible_client(OpenAI, policy=policy)
 
     def decide(
         self,
