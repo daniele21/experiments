@@ -9,7 +9,7 @@ from benchmark_core import DatasetLoadContext, DatasetSpec, ensure_cached_url
 
 def require_mapping(value: Any, *, context: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
-        raise ValueError(f"{context} must be a mapping")
+        raise TypeError(f"{context} must be a mapping")
     return value
 
 
