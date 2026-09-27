@@ -1,6 +1,6 @@
 # MCB-6 — Capability Suite
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused capability-suite gate and all cumulative MCB/VLM/image-generation gates are green.
 
 MCB-6 composes the model, task and dataset registries into the first complete,
 versioned capability suite.
@@ -228,9 +228,9 @@ Actual multi-model execution remains MCB-7.
 - [x] mathematical reasoning has a versioned controlled corpus/task;
 - [x] private chain-of-thought is not scored;
 - [x] one command can plan multiple models across multiple capabilities;
-- [ ] focused MCB-6 CI passes;
-- [ ] previous MCB/VLM/image-generation gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused MCB-6 CI passes;
+- [x] previous MCB/VLM/image-generation gates remain green;
+- [x] full Jev characterization suite remains green.
 
 The original plan phrase "same command can evaluate multiple models on multiple tasks" is
 completed operationally by MCB-7, because inference execution is explicitly the unified
