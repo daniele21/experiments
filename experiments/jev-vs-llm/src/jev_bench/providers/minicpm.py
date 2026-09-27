@@ -10,6 +10,7 @@ from benchmark_core.transports import (
     create_openai_compatible_client,
     resolve_transport_policy,
 )
+from openai import OpenAI
 
 from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
