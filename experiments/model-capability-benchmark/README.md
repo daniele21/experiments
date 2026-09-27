@@ -13,7 +13,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-2 benchmark-core extraction: complete;
 - MCB-3 unified model/runtime/provider registry: complete;
 - MCB-4 task plugin registry: complete;
-- MCB-5 dataset registry/adapters: complete.
+- MCB-5 dataset registry/adapters: complete;
+- MCB-6 five-capability suite: complete.
 
 ## Registry
 
@@ -92,8 +93,22 @@ read from the environment and is never written to the registry or manifest.
 
 See `.env.example` for the currently supported environment variables.
 
+## Capability suite
+
+`suite.yaml` now composes five capability families: BANKING77 intent classification,
+BANKING77 + CLINC150 OOS/top-label calibration, structured output with real JSON Schema
+validation, QA with abstention, and final-answer-only mathematical reasoning.
+
+Inspect the same suite across a local and API model without provider calls:
+
+```bash
+uv run python scripts/suite_inspect.py \
+  --models qwen3.5-2b-q4km,gpt-5.6-luna \
+  --capabilities all
+```
+
 ## What comes next
 
-MCB-6 composes the stabilized model, task and dataset registries into the first capability
-suite: BANKING77 intent classification, structured output, and OOS/calibration. MCB-7 then
-adds the unified model × task × dataset runner and evidence persistence path.
+MCB-7 consumes this matrix plan in the unified model × capability × dataset runner,
+including incremental raw/evaluation evidence, aggregate reducers, failure isolation and
+resume support.
