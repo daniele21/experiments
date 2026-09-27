@@ -167,3 +167,30 @@ models:
 
     with pytest.raises(ValueError, match="Unsupported deployment"):
         load_registry(path)
+
+
+
+def test_registry_rejects_unknown_fields_instead_of_ignoring_typos(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "typo.yaml"
+    path.write_text(
+        """
+providers:
+  provider-a:
+    type: openai
+runtimes:
+  runtime-a:
+    provider: provider-a
+    deployment: api
+    deployement: local
+models:
+  model-a:
+    model_id: model-a
+    runtime: runtime-a
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RegistryError, match="deployement"):
+        load_registry(path)
