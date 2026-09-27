@@ -55,15 +55,18 @@ def test_catalog_profiles_and_task_references_are_consistent() -> None:
     profiles = load_dataset_profiles(PROFILES)
 
     assert datasets.summary() == {
-        "datasets": 3,
+        "datasets": 5,
         "dataset_ids": [
             "banking77",
             "clinc150-oos",
+            "math-reasoning-controlled-v1",
+            "qa-abstention-controlled-v1",
             "structured-output-controlled-v1",
         ],
         "adapters": [
             "banking77",
             "clinc150-oos",
+            "controlled-yaml",
             "structured-output-controlled",
         ],
     }
@@ -151,6 +154,11 @@ def test_profiles_are_configuration_driven() -> None:
     assert profiles["full"].max_cases_for("banking77") is None
     assert (
         profiles["smoke"].max_cases_for("structured-output-controlled-v1")
+        is None
+    )
+    assert profiles["budget"].max_cases_for("qa-abstention-controlled-v1") is None
+    assert (
+        profiles["standard"].max_cases_for("math-reasoning-controlled-v1")
         is None
     )
 
