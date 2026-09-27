@@ -44,8 +44,20 @@ uv run python scripts/run_benchmark.py \
   --dry-run
 ```
 
-For a real run, serve the configured model through an OpenAI-compatible endpoint, set
-`VLM_BASE_URL`, and remove `--dry-run`.
+For a real run, use Korgis as the local runtime. Korgis already registers
+`qwen3-vl-4b` with its MLX VLM backend and exposes the OpenAI-compatible chat endpoint used by
+this benchmark.
+
+Start Korgis with:
+
+```bash
+uv run --frozen local-llm serve \
+  --model qwen3-vl-4b \
+  --enable-admin-api \
+  --no-download
+```
+
+Then set `KORGIS_BASE_URL=http://127.0.0.1:1235` and remove `--dry-run`.
 
 The controlled UI fixtures remain editable SVG sources in the repository. Local SVG assets
 are rasterized to PNG before being sent to the VLM, so the runtime receives a conventional

@@ -1,12 +1,12 @@
 providers:
-  vllm-openai-compatible:
+  korgis-openai-compatible:
     type: openai-compatible
-    base_url_env: VLM_BASE_URL
-    api_key_env: VLM_API_KEY
+    base_url_env: KORGIS_BASE_URL
+    api_key_env: KORGIS_API_KEY
 
 runtimes:
-  qwen-vllm-local:
-    provider: vllm-openai-compatible
+  korgis-local:
+    provider: korgis-openai-compatible
     deployment: local
     lifecycle: external
     transport:
