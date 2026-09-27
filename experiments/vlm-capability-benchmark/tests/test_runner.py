@@ -53,6 +53,9 @@ def test_vlm_smoke_plan_is_deterministic() -> None:
     assert first.task_id == "ui_grounding"
     assert len(first.cases) == 2
     assert first.prompt_sha256
+    assert first.models[0].runtime_key == "korgis-local"
+    assert first.models[0].provider_key == "korgis-openai-compatible"
+    assert first.models[0].model_id == "qwen3-vl-4b"
 
 
 def test_vlm_runner_persists_grounding_evidence_and_manifest(tmp_path) -> None:
