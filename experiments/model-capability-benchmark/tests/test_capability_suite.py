@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from benchmark_core import (
     DatasetLoadContext,
     InferenceResult,
@@ -146,7 +147,7 @@ def test_calibration_context_resolves_banking_label_space_for_clinc(
     assert result.valid is True
     assert metrics["accuracy"] == 1.0
     assert metrics["oos_correct"] == 1.0
-    assert metrics["brier_correctness_component"] == 0.04
+    assert metrics["brier_correctness_component"] == pytest.approx(0.04)
 
 
 def test_qa_and_math_controlled_datasets_execute_task_contracts(
