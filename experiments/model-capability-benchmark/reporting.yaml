@@ -1,0 +1,6 @@
+reporting:
+  title: Model Capability Benchmark
+  html_filename: report.html
+  json_filename: report.json
+  numeric_precision: 4
+  max_case_rows_per_cell: 100

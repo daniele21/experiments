@@ -148,6 +148,7 @@ state.jsonl
 raw.jsonl
 evaluation.jsonl
 aggregates.jsonl
+report_index.jsonl
 events.jsonl
 environment.json
 run_manifest.json
@@ -191,6 +192,12 @@ Contains:
 Contains capability metrics for the selected model/capability matrix.
 
 Unknown API cost remains `null`; it is never silently converted to zero.
+
+### report_index.jsonl
+
+Added by MCB-8 as the stable bridge from execution to reporting. Each model × capability
+entry pins the exact `case_id + attempt` pairs used by the aggregate records, so a report
+never drifts to a later retry or `--no-resume` attempt.
 Korgis may report API/provider fee zero, which does not imply hardware/runtime cost zero.
 
 ## Resume

@@ -609,7 +609,7 @@ aggregate/report
 
 ---
 
-## MCB-8 — Reporting e capability matrix
+## MCB-8 — Reporting e capability matrix ✅ COMPLETE
 
 ### Obiettivo
 
@@ -654,10 +654,13 @@ Per i modelli locali mantenere campi distinti per:
 
 ### Definition of Done
 
-- confronto leggibile task × modello;
-- drill-down ai singoli casi;
-- raw evidence collegata alle aggregazioni;
-- nessun ranking unico obbligatorio.
+- [x] confronto leggibile capability/task × modello;
+- [x] drill-down ai singoli casi e attempt esatti;
+- [x] raw/evaluation evidence collegata alle aggregazioni tramite report index;
+- [x] nessun ranking unico obbligatorio;
+- [x] HTML standalone e JSON machine-readable;
+- [x] rendering artifact-only senza provider/runtime;
+- [x] API cost unknown resta null e local provider fee 0 non implica runtime cost 0.
 
 ---
 
@@ -924,7 +927,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 - [x] one local + one API runtime
 - [x] generic matrix runner
 - [x] raw evidence + manifest
-- [ ] minimal comparative report
+- [x] minimal comparative report
 
 ### Capability expansion
 
@@ -964,17 +967,18 @@ Il workstream è concluso quando:
 
 # 14. Prossimo passo
 
-MCB-0…7 hanno ora stabilizzato contratti, registries, capability suite e unified runner.
+MCB-0…8 hanno ora chiuso foundation, registries, capability suite, unified runner e
+reporting comparativo.
 
-Il prossimo blocco di sviluppo è **MCB-8 — reporting e capability matrix**:
+Il prossimo blocco è **MCB-9 — migrazione/cleanup di `jev-vs-llm`**:
 
-- leggere esclusivamente gli evidence artifact MCB-7;
-- produrre una vista model × capability senza overall score opaco;
-- mostrare primary metric, validity, latency p50/p95, token e cost quando noto;
-- mantenere drill-down ai singoli case/attempt;
-- distinguere API fee, costo sconosciuto e resource cost locale;
-- preparare un report comparativo minimale prima della migrazione MCB-9.
+- individuare le duplicazioni rimaste tra Jev e benchmark-core;
+- migrare solo telemetry, persistence, manifests, registry/runtime e reporting primitives
+  realmente condivisibili;
+- mantenere `DecisionProvider`, `QuestionSpec`, bounded-decision semantics e evaluator
+  Jev nella suite specifica;
+- sostituire entrypoint duplicati solo dopo characterization equivalence;
+- documentare il migration path e rimuovere codice transitorio quando non più usato.
 
-In parallelo, quando sono disponibili un Korgis locale reale e credenziali API, eseguire
-il controlled E2E documentato in `MCB_7_UNIFIED_RUNNER.md` e conservare i relativi
-evidence artifact come validazione ambientale.
+In parallelo resta la validazione ambientale del controlled E2E Korgis reale + API reale,
+documentata in `MCB_7_UNIFIED_RUNNER.md`.

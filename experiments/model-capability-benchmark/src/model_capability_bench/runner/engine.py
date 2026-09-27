@@ -390,6 +390,32 @@ class CapabilityRunner:
                     == capability_id
                     for state in failures
                 )
+                self.evidence_store.append_report_index(
+                    {
+                        "run_id": identity.run_id,
+                        "run_group": identity.run_group,
+                        "model_key": model.model.model_key,
+                        "capability_id": capability_id,
+                        "task_id": capability.task_id,
+                        "profile": config.profile,
+                        "cases": [
+                            {
+                                "case_id": item["case_id"],
+                                "attempt": item["attempt"],
+                            }
+                            for item in subset
+                        ],
+                        "dataset_ids": sorted(
+                            {
+                                str(
+                                    item["state"]["metadata"].get("dataset_id")
+                                )
+                                for item in subset
+                            }
+                        ),
+                        "failure_count": failure_count,
+                    }
+                )
                 aggregate_records = aggregate_capability(
                     capability,
                     subset,

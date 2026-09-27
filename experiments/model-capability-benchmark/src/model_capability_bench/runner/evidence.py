@@ -60,6 +60,10 @@ class EvidenceStore:
     def aggregates_path(self) -> Path:
         return self.root / "aggregates.jsonl"
 
+    @property
+    def report_index_path(self) -> Path:
+        return self.root / "report_index.jsonl"
+
     def should_skip(self, case_id: str, *, retry_failures: bool) -> bool:
         state = self._latest_state.get(case_id)
         if state is None:
@@ -186,6 +190,9 @@ class EvidenceStore:
 
     def append_aggregate(self, record: dict[str, Any]) -> None:
         append_jsonl_record(record, self.aggregates_path)
+
+    def append_report_index(self, record: dict[str, Any]) -> None:
+        append_jsonl_record(record, self.report_index_path)
 
     def failed_states(self) -> list[dict[str, Any]]:
         return [
