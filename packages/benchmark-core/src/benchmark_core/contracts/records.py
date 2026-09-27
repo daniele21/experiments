@@ -6,6 +6,7 @@ from typing import Any
 
 from benchmark_core.contracts.evaluation import MetricResult, TaskResult
 from benchmark_core.contracts.inference import InferenceResult
+from benchmark_core.contracts.media import OutputArtifact
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,7 @@ class RawInferenceRecord:
     raw_output: Any
     normalized_output: Any
     latency_ms: float
+    output_artifacts: tuple[OutputArtifact, ...] = ()
     input_tokens: int | None = None
     cached_input_tokens: int | None = None
     output_tokens: int | None = None
@@ -53,6 +55,7 @@ class RawInferenceRecord:
             raw_output=result.raw_output,
             normalized_output=result.normalized_output,
             latency_ms=result.latency_ms,
+            output_artifacts=result.output_artifacts,
             input_tokens=result.usage.input_tokens,
             cached_input_tokens=result.usage.cached_input_tokens,
             output_tokens=result.usage.output_tokens,
