@@ -12,11 +12,15 @@ _TINY_PNG = base64.b64decode(
 )
 
 
-def _write_run(run_dir: Path) -> None:
+def _write_run(
+    run_dir: Path,
+    *,
+    model_keys: tuple[str, ...] = ("model-a", "model-b"),
+) -> None:
     artifacts = run_dir / "artifacts"
     artifacts.mkdir(parents=True)
     rows = []
-    for model_key in ("model-a", "model-b"):
+    for model_key in model_keys:
         model_dir = artifacts / model_key
         model_dir.mkdir()
         for prompt_id in ("text-001", "comp-001"):
@@ -50,7 +54,7 @@ def _write_run(run_dir: Path) -> None:
     (run_dir / "manifest.json").write_text(
         json.dumps(
             {
-                "requested_models": {"model_keys": ["model-a", "model-b"]},
+                "requested_models": {"model_keys": list(model_keys)},
                 "parameters": {"seed": 42},
             }
         ),
@@ -88,3 +92,34 @@ def test_blind_review_hides_model_identity_and_writes_separate_key(tmp_path) -> 
         key["pairs"][0]["model_for_a"],
         key["pairs"][0]["model_for_b"],
     } == {"model-a", "model-b"}
+
+
+
+def test_blind_review_supports_three_model_pairwise_comparison(tmp_path) -> None:
+    _write_run(tmp_path, model_keys=("model-a", "model-b", "model-c"))
+
+    output = generate_blind_review(tmp_path, tmp_path / "blind_review.html")
+
+    html = output.read_text(encoding="utf-8")
+    assert "model-a" not in html
+    assert "model-b" not in html
+    assert "model-c" not in html
+
+    key = json.loads((tmp_path / "blind_key.json").read_text(encoding="utf-8"))
+    # 2 prompts x C(3, 2) unique model pairs.
+    assert len(key["pairs"]) == 6
+    for prompt_id in ("text-001", "comp-001"):
+        prompt_pairs = [
+            row
+            for row in key["pairs"]
+            if row["prompt_id"] == prompt_id
+        ]
+        assert len(prompt_pairs) == 3
+        assert {
+            frozenset((row["model_for_a"], row["model_for_b"]))
+            for row in prompt_pairs
+        } == {
+            frozenset(("model-a", "model-b")),
+            frozenset(("model-a", "model-c")),
+            frozenset(("model-b", "model-c")),
+        }
