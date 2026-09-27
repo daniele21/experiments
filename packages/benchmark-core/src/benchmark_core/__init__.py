@@ -43,7 +43,6 @@ from benchmark_core.contracts import (
 )
 from benchmark_core.datasets import (
     BenchmarkDataset,
-    cached_source,
     CacheMode,
     DatasetFactory,
     DatasetLoadContext,
@@ -53,6 +52,7 @@ from benchmark_core.datasets import (
     DatasetRegistry,
     DatasetRegistryError,
     DatasetSpec,
+    cached_source,
     ensure_cached_url,
     load_banking77_categories,
     load_banking77_rows,
