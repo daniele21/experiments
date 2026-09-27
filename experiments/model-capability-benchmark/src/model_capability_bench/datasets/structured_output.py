@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
-
 import yaml
 from benchmark_core import (
     DatasetLoadContext,
@@ -50,7 +48,7 @@ class StructuredOutputControlledDataset:
     def _samples(path: Path, spec: DatasetSpec) -> tuple[Sample, ...]:
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict) or not isinstance(payload.get("cases"), list):
-            raise ValueError("controlled dataset root must contain a cases list")
+            raise TypeError("controlled dataset root must contain a cases list")
 
         seen: set[str] = set()
         samples: list[Sample] = []
@@ -76,12 +74,12 @@ class StructuredOutputControlledDataset:
             )
             expected = case.get("expected")
             if not isinstance(expected, Mapping):
-                raise ValueError(
+                raise TypeError(
                     f"controlled case {sample_id!r} expected must be an object"
                 )
             schema = case.get("response_schema")
             if not isinstance(schema, Mapping) or not schema:
-                raise ValueError(
+                raise TypeError(
                     f"controlled case {sample_id!r} response_schema must be an object"
                 )
             samples.append(
