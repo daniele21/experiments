@@ -51,8 +51,22 @@ jobs:
           uv run pytest
           ../../packages/benchmark-core/tests/test_jsonl_and_cases.py
 
-      - name: Unified runner and aggregate tests
+      - name: Unified runner and integration tests
         run: >
           uv run pytest
           tests/test_unified_runner.py
           tests/test_aggregation.py
+          tests/test_runtime_providers.py
+          tests/test_runner_manifest.py
+
+      - name: CLI catalog smoke
+        env:
+          KORGIS_BASE_URL: http://127.0.0.1:1235/v1
+          OPENAI_API_KEY: ci-placeholder
+          MINICPM_API_KEY: ci-placeholder
+        run: |
+          uv run model-bench models
+          uv run model-bench tasks
+          uv run model-bench datasets
+          uv run model-bench capabilities
+          uv run model-bench validate-config --models all
