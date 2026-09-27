@@ -12,7 +12,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-1 generic contracts: complete;
 - MCB-2 benchmark-core extraction: complete;
 - MCB-3 unified model/runtime/provider registry: complete;
-- MCB-4 task plugin registry: complete.
+- MCB-4 task plugin registry: complete;
+- MCB-5 dataset registry/adapters: complete.
 
 ## Registry
 
@@ -93,6 +94,6 @@ See `.env.example` for the currently supported environment variables.
 
 ## What comes next
 
-MCB-4 introduced the task plugin registry. MCB-5 now separates datasets from tasks. Once those
-two boundaries are available, the first vertical slice will run the same local/API model
-registry against BANKING77 classification and a controlled structured-output task.
+MCB-6 composes the stabilized model, task and dataset registries into the first capability
+suite: BANKING77 intent classification, structured output, and OOS/calibration. MCB-7 then
+adds the unified model × task × dataset runner and evidence persistence path.
