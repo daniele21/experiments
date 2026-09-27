@@ -41,6 +41,16 @@ from benchmark_core.reporting import summarize_records
 from benchmark_core.reproducibility import fingerprint_values, seeded_random
 from benchmark_core.run_identity import RunIdentity, create_run_identity
 from benchmark_core.runner import ArmExecution, BenchmarkArm, execute_arm
+from benchmark_core.transports import (
+    JsonHttpResponse,
+    JsonHttpTransport,
+    TransportError,
+    TransportErrorKind,
+    TransportPolicy,
+    create_openai_compatible_client,
+    inference_error_from_exception,
+    resolve_transport_policy,
+)
 
 __all__ = [
     "AggregateMetricRecord",
@@ -57,6 +67,8 @@ __all__ = [
     "InferenceProvider",
     "InferenceRequest",
     "InferenceResult",
+    "JsonHttpResponse",
+    "JsonHttpTransport",
     "LifecycleMode",
     "MessageRole",
     "MetricResult",
@@ -71,16 +83,22 @@ __all__ = [
     "TaskResult",
     "TokenPrices",
     "TokenUsage",
+    "TransportError",
+    "TransportErrorKind",
+    "TransportPolicy",
     "append_csv_records",
+    "create_openai_compatible_client",
     "create_run_identity",
     "estimate_token_cost_usd",
     "execute_arm",
     "fingerprint_values",
+    "inference_error_from_exception",
     "load_pricing_snapshot",
     "load_yaml_mapping",
     "load_yaml_section",
     "parse_csv_selection",
     "pricing_snapshot_metadata",
+    "resolve_transport_policy",
     "seeded_random",
     "summarize_records",
     "write_environment_manifest",
