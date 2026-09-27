@@ -57,7 +57,13 @@ from benchmark_core.datasets import (
     load_dataset_specs,
 )
 from benchmark_core.manifests import write_environment_manifest
-from benchmark_core.persistence import append_csv_records
+from benchmark_core.persistence import (
+    append_csv_records,
+    append_jsonl_record,
+    iter_jsonl_records,
+    read_jsonl_records,
+    to_jsonable,
+)
 from benchmark_core.pricing import (
     TokenPrices,
     estimate_token_cost_usd,
@@ -78,7 +84,12 @@ from benchmark_core.registry import (
 from benchmark_core.reporting import summarize_records
 from benchmark_core.reproducibility import fingerprint_values, seeded_random
 from benchmark_core.run_identity import RunIdentity, create_run_identity
-from benchmark_core.runner import ArmExecution, BenchmarkArm, execute_arm
+from benchmark_core.runner import (
+    ArmExecution,
+    BenchmarkArm,
+    BenchmarkCaseIdentity,
+    execute_arm,
+)
 from benchmark_core.suites import (
     BenchmarkSuiteSpec,
     CapabilityContextBinding,
@@ -124,6 +135,7 @@ __all__ = [
     "ArtifactStore",
     "ArtifactStoreError",
     "BenchmarkArm",
+    "BenchmarkCaseIdentity",
     "BenchmarkDataset",
     "BenchmarkSuiteSpec",
     "BenchmarkTask",
@@ -195,6 +207,7 @@ __all__ = [
     "TransportErrorKind",
     "TransportPolicy",
     "append_csv_records",
+    "append_jsonl_record",
     "create_openai_compatible_client",
     "create_run_identity",
     "ensure_cached_url",
@@ -202,6 +215,7 @@ __all__ = [
     "execute_arm",
     "fingerprint_values",
     "inference_error_from_exception",
+    "iter_jsonl_records",
     "load_dataset_profiles",
     "load_dataset_specs",
     "load_pricing_snapshot",
@@ -213,6 +227,7 @@ __all__ = [
     "parse_csv_selection",
     "preflight_models",
     "pricing_snapshot_metadata",
+    "read_jsonl_records",
     "registry_summary",
     "resolve_capability_context",
     "resolve_transport_policy",
@@ -220,6 +235,7 @@ __all__ = [
     "sha256_bytes",
     "sha256_file",
     "summarize_records",
+    "to_jsonable",
     "validate_model_capabilities",
     "validate_suite",
     "write_environment_manifest",
