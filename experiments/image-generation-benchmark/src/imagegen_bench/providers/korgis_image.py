@@ -69,13 +69,13 @@ class KorgisImageProvider:
             )
             body = response.body
             if not isinstance(body, Mapping):
-                raise ValueError("Korgis image provider returned a non-object response")
+                raise TypeError("Korgis image provider returned a non-object response")
             data = body.get("data")
             if not isinstance(data, list) or not data:
                 raise ValueError("Korgis image provider returned no image data")
             first = data[0]
             if not isinstance(first, Mapping):
-                raise ValueError("Korgis image provider returned invalid image data")
+                raise TypeError("Korgis image provider returned invalid image data")
             image_bytes = decode_base64_image(str(first.get("b64_json") or ""))
 
             korgis_metadata = body.get("korgis")
