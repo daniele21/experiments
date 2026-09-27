@@ -9,7 +9,6 @@ from vlm_bench.config import ResolvedVLMModel
 from vlm_bench.planning import build_run_plan
 from vlm_bench.runner import execute_run_plan
 
-
 ROOT = Path(__file__).parents[1]
 
 
