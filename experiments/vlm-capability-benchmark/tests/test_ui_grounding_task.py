@@ -10,7 +10,6 @@ from vlm_bench.tasks import (
     parse_ui_grounding_prediction,
 )
 
-
 ROOT = Path(__file__).parents[1]
 
 
