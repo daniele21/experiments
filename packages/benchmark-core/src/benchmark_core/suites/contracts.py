@@ -7,6 +7,7 @@ from typing import Any, Literal
 from benchmark_core.contracts import GenerationConfig
 
 MetricSource = Literal["task_metric", "evaluation", "inference"]
+ContextSource = Literal["literal", "dataset_metadata"]
 MetricReducer = Literal[
     "mean",
     "sum",
@@ -55,6 +56,38 @@ class CapabilityMetricSpec:
 
 
 @dataclass(frozen=True)
+class CapabilityContextBinding:
+    key: str
+    source: ContextSource
+    dataset_id: str | None = None
+    field: str | None = None
+    value: Any = None
+    append: tuple[Any, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.key.strip():
+            raise ValueError("context binding key must not be empty")
+        if self.source not in {"literal", "dataset_metadata"}:
+            raise ValueError(f"Unsupported context source: {self.source}")
+
+        if self.source == "dataset_metadata":
+            if self.dataset_id is None or not self.dataset_id.strip():
+                raise ValueError(
+                    "dataset_metadata context binding requires dataset_id"
+                )
+            if self.field is None or not self.field.strip():
+                raise ValueError("dataset_metadata context binding requires field")
+            if self.value is not None:
+                raise ValueError(
+                    "dataset_metadata context binding cannot define literal value"
+                )
+        elif self.dataset_id is not None or self.field is not None:
+            raise ValueError(
+                "literal context binding cannot reference dataset_id or field"
+            )
+
+
+@dataclass(frozen=True)
 class CapabilitySpec:
     capability_id: str
     task_id: str
@@ -62,6 +95,7 @@ class CapabilitySpec:
     metrics: tuple[CapabilityMetricSpec, ...]
     description: str | None = None
     tags: tuple[str, ...] = ()
+    context_bindings: tuple[CapabilityContextBinding, ...] = ()
     options: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -77,6 +111,10 @@ class CapabilitySpec:
             raise ValueError("dataset_ids must not contain duplicates")
         if not self.metrics:
             raise ValueError("capability must declare at least one metric")
+
+        context_keys = [binding.key for binding in self.context_bindings]
+        if len(context_keys) != len(set(context_keys)):
+            raise ValueError("capability context binding keys must be unique")
 
         names = [metric.name for metric in self.metrics]
         if len(names) != len(set(names)):
