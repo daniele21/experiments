@@ -28,6 +28,28 @@ class ArtifactSpec:
 
 
 @dataclass(frozen=True)
+class ModelCapabilities:
+    text_input: bool = True
+    image_input: bool = False
+    image_output: bool = False
+    image_editing: bool = False
+    multi_image_input: bool = False
+
+    def missing(self, required: "ModelCapabilities") -> tuple[str, ...]:
+        return tuple(
+            name
+            for name in (
+                "text_input",
+                "image_input",
+                "image_output",
+                "image_editing",
+                "multi_image_input",
+            )
+            if getattr(required, name) and not getattr(self, name)
+        )
+
+
+@dataclass(frozen=True)
 class ProviderSpec:
     provider_key: str
     provider_type: str
@@ -61,6 +83,7 @@ class ModelSpec:
     family: str | None = None
     parameters_b: float | None = None
     artifact: ArtifactSpec | None = None
+    capabilities: ModelCapabilities = field(default_factory=ModelCapabilities)
     tags: tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
