@@ -398,7 +398,13 @@ class CapabilityRunner:
                         "capability_id": capability_id,
                         "task_id": capability.task_id,
                         "profile": config.profile,
-                        "case_ids": [item["case_id"] for item in subset],
+                        "cases": [
+                            {
+                                "case_id": item["case_id"],
+                                "attempt": item["attempt"],
+                            }
+                            for item in subset
+                        ],
                         "dataset_ids": sorted(
                             {
                                 str(
