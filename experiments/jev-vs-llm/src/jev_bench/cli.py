@@ -12,6 +12,7 @@ import typer
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.costs import pricing_metadata
 from jev_bench.manifest import write_manifest
+from jev_bench.providers.clm import CLMProvider
 from jev_bench.providers.jev import JevProvider
 from jev_bench.providers.korgis import (
     DEFAULT_KORGIS_MODELS,
@@ -104,6 +105,7 @@ def _record_manifest(
     parameters: dict,
     requested_openai_models: list[str] | None = None,
     requested_minicpm_models: list[str] | None = None,
+    requested_clm_models: list[str] | None = None,
     requested_korgis_models: list[str] | None = None,
     korgis_identity: dict | None = None,
 ) -> Path:
@@ -124,6 +126,7 @@ def _record_manifest(
             "timeout_seconds": float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60")),
         },
         "openai_reasoning_effort": os.getenv("OPENAI_REASONING_EFFORT", "none"),
+        "clm_temperature": float(os.getenv("CLM_TEMPERATURE", "1.0")),
     }
     write_manifest(
         path,
@@ -134,6 +137,7 @@ def _record_manifest(
             "jev": os.getenv("JEV_MODEL", "jev-latest"),
             "openai": requested_openai_models or [os.getenv("OPENAI_MODEL", "")],
             "minicpm": requested_minicpm_models or [],
+            "clm": requested_clm_models or [],
             "korgis": requested_korgis_models or [],
         },
         resolved_models=_resolved_models(frame),
@@ -153,9 +157,11 @@ def _execute(provider: str, scaling_repeats: int) -> pd.DataFrame:
         return run_all(OpenAIProvider(), scaling_repeats=scaling_repeats)
     if provider == "minicpm":
         return run_all(MiniCPMProvider(), scaling_repeats=scaling_repeats)
+    if provider == "clm":
+        return run_all(CLMProvider(), scaling_repeats=scaling_repeats)
     if provider == "llm-monolithic":
         return run_monolithic_workflows(OpenAIMonolithicProvider())
-    raise typer.BadParameter("provider must be jev, llm, minicpm, or llm-monolithic")
+    raise typer.BadParameter("provider must be jev, llm, minicpm, clm, or llm-monolithic")
 
 
 def _decision_provider(provider: str, model: str | None = None):
@@ -165,7 +171,9 @@ def _decision_provider(provider: str, model: str | None = None):
         return OpenAIProvider(model=model)
     if provider == "minicpm":
         return MiniCPMProvider(model=model)
-    raise typer.BadParameter("public classification supports jev, llm, or minicpm")
+    if provider == "clm":
+        return CLMProvider(model=model)
+    raise typer.BadParameter("public classification supports jev, llm, minicpm, or clm")
 
 
 def _run_korgis_public(
@@ -221,12 +229,14 @@ def _single_provider(provider: str, model: str | None, seed: int):
         return OpenAIProvider(model=model)
     if provider == "minicpm":
         return MiniCPMProvider(model=model)
+    if provider == "clm":
+        return CLMProvider(model=model)
     if provider == "korgis":
         if not model:
             raise typer.BadParameter("--model is required for provider=korgis")
         return KorgisProvider(model=model, seed=seed)
     raise typer.BadParameter(
-        "provider must be jev, llm, minicpm, korgis, or llm-monolithic"
+        "provider must be jev, llm, minicpm, clm, korgis, or llm-monolithic"
     )
 
 
@@ -275,11 +285,11 @@ def experiment(
     ],
     provider: Annotated[
         str,
-        typer.Option(help="jev, llm, minicpm, korgis, or llm-monolithic"),
+        typer.Option(help="jev, llm, minicpm, clm, korgis, or llm-monolithic"),
     ] = "korgis",
     model: Annotated[
         str | None,
-        typer.Option(help="Exact GPT/MiniCPM model id or Korgis registry key."),
+        typer.Option(help="Exact GPT/MiniCPM/CLM model id or Korgis registry key."),
     ] = None,
     dataset: Annotated[
         str,
@@ -323,6 +333,7 @@ def experiment(
     korgis_identity: dict = {}
     requested_openai: list[str] = []
     requested_minicpm: list[str] = []
+    requested_clm: list[str] = []
     requested_korgis: list[str] = []
 
     if provider == "llm-monolithic":
@@ -343,6 +354,9 @@ def experiment(
         elif provider == "minicpm":
             decision_provider = _single_provider(provider, model, seed)
             requested_minicpm = [decision_provider.model]
+        elif provider == "clm":
+            decision_provider = _single_provider(provider, model, seed)
+            requested_clm = [decision_provider.model]
         elif provider == "korgis":
             if not model:
                 raise typer.BadParameter("--model is required for provider=korgis")
@@ -398,6 +412,7 @@ def experiment(
         },
         requested_openai_models=requested_openai,
         requested_minicpm_models=requested_minicpm,
+        requested_clm_models=requested_clm,
         requested_korgis_models=requested_korgis,
         korgis_identity=korgis_identity,
     )
@@ -411,7 +426,7 @@ def experiment(
 
 @app.command()
 def run(
-    provider: Annotated[str, typer.Option(help="jev, llm, minicpm, or llm-monolithic")],
+    provider: Annotated[str, typer.Option(help="jev, llm, minicpm, clm, or llm-monolithic")],
     output: Annotated[Path, typer.Option()] = DEFAULT_RAW,
     scaling_repeats: Annotated[int, typer.Option(min=1)] = 5,
     run_group: Annotated[
@@ -499,6 +514,10 @@ def compare_public(
         str | None,
         typer.Option(help="Comma-separated OpenAI model matrix. Defaults to OPENAI_MODELS."),
     ] = None,
+    include_openai: Annotated[
+        bool,
+        typer.Option(help="Include the OpenAI model matrix in this comparison."),
+    ] = True,
     include_minicpm: Annotated[
         bool,
         typer.Option(help="Also benchmark MiniCPM through the official ModelBest API."),
@@ -506,6 +525,14 @@ def compare_public(
     minicpm_model: Annotated[
         str | None,
         typer.Option(help="MiniCPM API model id. Defaults to MINICPM_MODEL."),
+    ] = None,
+    include_clm: Annotated[
+        bool,
+        typer.Option(help="Also benchmark CLM through its System One HTTP endpoint."),
+    ] = False,
+    clm_model: Annotated[
+        str | None,
+        typer.Option(help="CLM model/checkpoint name. Defaults to CLM_MODEL."),
     ] = None,
     include_local: Annotated[
         bool,
@@ -530,7 +557,7 @@ def compare_public(
         typer.Option(help="Allow jev-latest/jev-preview instead of a pinned Jev version."),
     ] = False,
 ) -> None:
-    """Run Jev, GPTs and optional MiniCPM/Korgis baselines on the public benchmark."""
+    """Run Jev, GPTs and optional MiniCPM/CLM/Korgis baselines on the public benchmark."""
     if profile not in PUBLIC_PROFILES:
         raise typer.BadParameter("profile must be budget, quick, standard, or full")
 
@@ -541,8 +568,9 @@ def compare_public(
             "Use --allow-moving-jev-model only for exploratory runs."
         )
 
-    model_matrix = _model_matrix(models)
+    model_matrix = _model_matrix(models) if include_openai else []
     minicpm_provider = MiniCPMProvider(model=minicpm_model) if include_minicpm else None
+    clm_provider = CLMProvider(model=clm_model) if include_clm else None
     local_matrix = _local_model_matrix(local_models) if include_local else []
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
@@ -587,6 +615,18 @@ def compare_public(
         )
         frames.append(_tag_run(frame, group, f"public-{profile}"))
 
+    if clm_provider is not None:
+        typer.echo(f"Running public {profile} benchmark: CLM ({clm_provider.model})...")
+        frame = run_public_classification(
+            clm_provider,
+            cache_dir=cache_dir,
+            routing_max_cases=sizes["routing"],
+            calibration_in_scope=sizes["in_scope"],
+            calibration_oos=sizes["oos"],
+            seed=seed,
+        )
+        frames.append(_tag_run(frame, group, f"public-{profile}"))
+
     if local_matrix:
         local_frames, korgis_identity = _run_korgis_public(
             models=local_matrix,
@@ -608,6 +648,10 @@ def compare_public(
         parameters={
             "profile": profile,
             "seed": seed,
+            "include_openai": include_openai,
+            "include_minicpm": minicpm_provider is not None,
+            "include_clm": clm_provider is not None,
+            "include_korgis": bool(local_matrix),
             "routing_cases": sizes["routing"],
             "calibration_in_scope": sizes["in_scope"],
             "calibration_oos": sizes["oos"],
@@ -618,14 +662,20 @@ def compare_public(
         requested_minicpm_models=(
             [minicpm_provider.model] if minicpm_provider is not None else []
         ),
+        requested_clm_models=(
+            [clm_provider.model] if clm_provider is not None else []
+        ),
         requested_korgis_models=local_matrix,
         korgis_identity=korgis_identity,
     )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
-    typer.echo(f"GPT models: {', '.join(model_matrix)}")
+    if model_matrix:
+        typer.echo(f"GPT models: {', '.join(model_matrix)}")
     if minicpm_provider is not None:
         typer.echo(f"MiniCPM API model: {minicpm_provider.model}")
+    if clm_provider is not None:
+        typer.echo(f"CLM model: {clm_provider.model}")
     if local_matrix:
         typer.echo(f"Korgis models: {', '.join(local_matrix)}")
     typer.echo(f"Manifest: {manifest}")
