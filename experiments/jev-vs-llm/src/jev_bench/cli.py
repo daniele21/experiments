@@ -648,6 +648,10 @@ def compare_public(
         parameters={
             "profile": profile,
             "seed": seed,
+            "include_openai": include_openai,
+            "include_minicpm": minicpm_provider is not None,
+            "include_clm": clm_provider is not None,
+            "include_korgis": bool(local_matrix),
             "routing_cases": sizes["routing"],
             "calibration_in_scope": sizes["in_scope"],
             "calibration_oos": sizes["oos"],
