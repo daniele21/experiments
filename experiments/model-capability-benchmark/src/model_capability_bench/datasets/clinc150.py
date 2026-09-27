@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
-
 from benchmark_core import (
     DatasetLoadContext,
     DatasetLoadResult,
     DatasetSpec,
     Sample,
     fingerprint_values,
+    load_clinc_rows,
     seeded_random,
     sha256_file,
 )
@@ -29,40 +28,19 @@ class Clinc150OosDataset:
 
     def load(self, context: DatasetLoadContext) -> DatasetLoadResult:
         path = single_cached_source(self.spec, context)
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise TypeError("CLINC150 data root must be an object")
-
-        raw = payload.get(self.spec.split)
-        if not isinstance(raw, list):
-            raise TypeError(
-                f"CLINC150 source has no list split {self.spec.split!r}"
-            )
-
-        exclude_terms = tuple(
-            term.lower()
-            for term in require_string_list(
-                self.spec.options.get("exclude_terms"),
-                context=f"dataset {self.spec.dataset_id!r} exclude_terms",
-            )
+        exclude_terms = require_string_list(
+            self.spec.options.get("exclude_terms"),
+            context=f"dataset {self.spec.dataset_id!r} exclude_terms",
         )
         expected_label = require_text(
             self.spec.options.get("expected_label"),
             context=f"dataset {self.spec.dataset_id!r} expected_label",
         )
-
-        candidates: list[tuple[int, str, str]] = []
-        for source_index, item in enumerate(raw):
-            if not isinstance(item, list) or len(item) < 2:
-                continue
-            text = str(item[0]).strip()
-            source_label = str(item[1]).strip()
-            if not text:
-                continue
-            normalized = text.lower()
-            if any(term in normalized for term in exclude_terms):
-                continue
-            candidates.append((source_index, text, source_label))
+        candidates = load_clinc_rows(
+            path,
+            split=self.spec.split,
+            exclude_terms=exclude_terms,
+        )
 
         rng = seeded_random(context.seed)
         rng.shuffle(candidates)
@@ -94,7 +72,9 @@ class Clinc150OosDataset:
             available_count=len(candidates),
             source_checksums={"source": sha256_file(path)},
             metadata={
-                "upstream_split_count": len(raw),
+                "upstream_split_count": len(
+                    load_clinc_rows(path, split=self.spec.split)
+                ),
                 "filtered_count": len(candidates),
                 "filter": "exclude_terms",
             },
