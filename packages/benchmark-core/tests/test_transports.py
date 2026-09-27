@@ -121,3 +121,40 @@ def test_json_http_transport_exposes_typed_auth_failure() -> None:
     inference_error = inference_error_from_exception(error.value)
     assert inference_error.kind == "authentication"
     assert inference_error.details["status_code"] == 401
+
+
+
+def test_json_http_transport_rejects_invalid_json() -> None:
+    transport = JsonHttpTransport(
+        TransportPolicy(max_retries=0, timeout_seconds=10),
+        opener=lambda request, timeout: _FakeResponse("not-json"),
+    )
+
+    with pytest.raises(TransportError) as error:
+        transport.request("GET", "http://example.test")
+
+    assert error.value.kind == "invalid_response"
+    assert error.value.retryable is False
+    assert error.value.detail == "not-json"
+
+
+def test_json_http_transport_normalizes_timeout() -> None:
+    calls = 0
+
+    def opener(request, *, timeout):
+        nonlocal calls
+        calls += 1
+        raise TimeoutError("slow provider")
+
+    transport = JsonHttpTransport(
+        TransportPolicy(max_retries=1, timeout_seconds=5),
+        opener=opener,
+    )
+
+    with pytest.raises(TransportError) as error:
+        transport.request("GET", "http://example.test")
+
+    assert calls == 2
+    assert error.value.kind == "timeout"
+    assert error.value.retryable is True
+    assert str(error.value) == "slow provider"
