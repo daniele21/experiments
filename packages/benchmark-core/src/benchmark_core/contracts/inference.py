@@ -76,7 +76,7 @@ class InferenceRequest:
         if not self.request_id.strip():
             raise ValueError("request_id must not be empty")
         if self.input is None and not self.messages and not self.content:
-            raise ValueError("an inference request requires input, messages, or content")
+            raise ValueError("an inference request requires input or messages, or multimodal content")
 
 
 @dataclass(frozen=True)
