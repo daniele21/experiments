@@ -16,6 +16,7 @@ from benchmark_core import (
     inference_error_from_exception,
 )
 from cairosvg import svg2png
+from cairosvg import svg2png
 
 
 def _media_url(part: ContentPart) -> str:
