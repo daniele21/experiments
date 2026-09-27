@@ -33,10 +33,11 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from benchmark_core import load_registry
+from benchmark_core import RegistryError, load_registry
 from benchmark_core.config import (
     ConfigError,
     load_yaml_mapping,
+    load_yaml_section,
     parse_csv_selection,
 )
 
@@ -52,8 +53,12 @@ def load_config(config_path: Path) -> dict[str, Any]:
 
 
 def load_registry_models(registry_path: Path) -> dict[str, dict[str, Any]]:
-    """Expose the typed shared registry in the legacy interactive-menu shape."""
-    bundle = load_registry(registry_path)
+    """Expose typed models while preserving the historical models-only wrapper."""
+    try:
+        bundle = load_registry(registry_path)
+    except RegistryError:
+        return load_yaml_section(registry_path, "models")
+
     result: dict[str, dict[str, Any]] = {}
     for key, spec in bundle.models.items():
         result[key] = {
