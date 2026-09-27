@@ -37,6 +37,7 @@ jobs:
           ../../packages/benchmark-core/tests
           src
           tests/test_reporting.py
+          tests/test_reporting_cli.py
           tests/test_unified_runner.py
           tests/test_runner_manifest.py
 
@@ -51,5 +52,6 @@ jobs:
         run: >
           uv run pytest
           tests/test_reporting.py
+          tests/test_reporting_cli.py
           tests/test_unified_runner.py
           tests/test_runner_manifest.py
