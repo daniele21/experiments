@@ -1,6 +1,6 @@
 # MCB-2B — Config and Runner Primitives
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — frozen/config-runner gate green (22/22 focused tests) and full Jev characterization suite green (51/51).
 
 MCB-2B continues the shared-core extraction after MCB-2A, focusing on medium-coupling
 utilities that are already duplicated across the local Korgis and CLM matrix runners.
@@ -121,7 +121,7 @@ It also does not replace the Jev task `if/elif` dispatch; that belongs to MCB-4.
 - [x] local and CLM matrix runners use the shared arm boundary;
 - [x] local and CLM summaries share one record-level implementation;
 - [x] benchmark-core remains independent from Jev;
-- [ ] frozen dependency sync passes;
-- [ ] focused MCB-2B tests pass;
-- [ ] MCB-1 core-contract gate remains green;
-- [ ] full Jev characterization suite remains green.
+- [x] frozen dependency sync passes;
+- [x] focused MCB-2B tests pass (22/22);
+- [x] MCB-1 core-contract gate remains green;
+- [x] full Jev characterization suite remains green (51/51).
