@@ -79,12 +79,22 @@ class RegistryBundle:
                 continue
             if family is not None and model.family != family:
                 continue
-            if max_parameters_b is not None:
-                if model.parameters_b is None or model.parameters_b > max_parameters_b:
-                    continue
-            if quantization is not None:
-                if model.artifact is None or model.artifact.quantization != quantization:
-                    continue
+            if (
+                max_parameters_b is not None
+                and (
+                    model.parameters_b is None
+                    or model.parameters_b > max_parameters_b
+                )
+            ):
+                continue
+            if (
+                quantization is not None
+                and (
+                    model.artifact is None
+                    or model.artifact.quantization != quantization
+                )
+            ):
+                continue
             selected.append(resolved)
 
         return selected
