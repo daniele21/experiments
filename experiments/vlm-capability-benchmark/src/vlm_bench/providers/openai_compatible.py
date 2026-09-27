@@ -6,8 +6,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from cairosvg import svg2png
-
 from benchmark_core import (
     ContentPart,
     InferenceError,
@@ -17,6 +15,7 @@ from benchmark_core import (
     TokenUsage,
     inference_error_from_exception,
 )
+from cairosvg import svg2png
 
 
 def _media_url(part: ContentPart) -> str:
