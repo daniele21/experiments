@@ -52,7 +52,7 @@ jobs:
 
       - name: Config runner focused tests
         run: >
-          uv run --frozen pytest
+          uv run --frozen pytest --rootdir .
           ../../packages/benchmark-core/tests
           tests/test_clm_runner.py
           tests/test_shared_config_runner_bridge.py
