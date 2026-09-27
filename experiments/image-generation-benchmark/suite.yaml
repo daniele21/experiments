@@ -1,0 +1,12 @@
+suite:
+  id: imagegen-core-v1
+  version: "1"
+  prompt_suite: prompt_suites/core_v1.yaml
+  profiles:
+    - smoke
+    - budget
+
+task_requirements:
+  text_to_image:
+    text_input: true
+    image_output: true
