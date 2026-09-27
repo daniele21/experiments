@@ -16,55 +16,15 @@ import logging
 import os
 import time
 import uuid
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
-
-from jev_bench.benchmark_data import (
-    DEFAULT_CACHE,
-    balanced_banking77_cases,
-    banking77_question,
-    calibration_public_cases,
-    prepare_public_data,
-)
-from jev_bench.cli import (
-    PUBLIC_PROFILES,
-    _record_manifest,
-    _tag_run,
-    append_results,
-    build_report,
-)
-from jev_bench.datasets import (
-    calibration_cases,
-    expense_cases,
-    expense_questions,
-    routing_cases,
-    routing_questions,
-    support_cases,
-    support_questions,
-)
-from jev_bench.models import BenchmarkCase, QuestionSpec
+from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
+from jev_bench.cli import _record_manifest, _tag_run, append_results, build_report
 from jev_bench.providers.korgis import KorgisProvider
-from jev_bench.runner import (
-    _expense_action,
-    _rows_for_case,
-    _support_action,
-    run_scaling,
-    run_workflow,
-)
-
+from .experiment_execution import run_single_experiment
 from .korgis_manager import KorgisManager
 
 logger = logging.getLogger(__name__)
@@ -148,12 +108,14 @@ class ExperimentOrchestrator:
             for exp_name in experiments:
                 t0 = time.perf_counter()
                 try:
-                    frame = self._run_single_experiment(
+                    frame = run_single_experiment(
                         exp_name=exp_name,
                         provider=provider,
                         model_name=model,
                         dataset=dataset,
                         profile=profile,
+                        cache_dir=self.cache_dir,
+                        seed=self.seed,
                     )
                     elapsed = time.perf_counter() - t0
 
@@ -222,135 +184,3 @@ class ExperimentOrchestrator:
             "report_html": str(self.report_html),
             "output_csv": str(self.output_csv),
         }
-
-    def _run_single_experiment(
-        self,
-        exp_name: str,
-        provider: KorgisProvider,
-        model_name: str,
-        dataset: str,
-        profile: str,
-    ) -> pd.DataFrame:
-        clean_exp = exp_name.strip().lower().replace("_", "-")
-
-        if dataset == "public":
-            sizes = PUBLIC_PROFILES[profile]
-            if clean_exp == "routing":
-                cases = balanced_banking77_cases(
-                    self.cache_dir,
-                    max_cases=sizes["routing"],
-                    seed=self.seed,
-                    experiment="01-routing-public",
-                )
-                questions = [banking77_question(self.cache_dir, include_other=False)]
-                rows = self._run_cases_with_progress(
-                    "01-routing-public", provider, cases, questions, model_name,
-                )
-                return pd.DataFrame(rows)
-            elif clean_exp == "calibration":
-                cases = calibration_public_cases(
-                    self.cache_dir,
-                    in_scope_cases=sizes["in_scope"],
-                    oos_cases=sizes["oos"],
-                    seed=self.seed,
-                )
-                questions = [banking77_question(self.cache_dir, include_other=True)]
-                rows = self._run_cases_with_progress(
-                    "02-calibration-public", provider, cases, questions, model_name,
-                )
-                return pd.DataFrame(rows)
-            else:
-                raise ValueError(
-                    f"Public dataset tier supports only 'routing' and 'calibration', got '{clean_exp}'."
-                )
-
-        # Smoke experiments
-        if clean_exp == "routing":
-            rows = self._run_cases_with_progress(
-                "01-routing", provider, routing_cases(), routing_questions(), model_name,
-            )
-        elif clean_exp == "calibration":
-            rows = self._run_cases_with_progress(
-                "02-calibration", provider, calibration_cases(), routing_questions(), model_name,
-            )
-        elif clean_exp == "scaling":
-            rows = run_scaling(provider)
-        elif clean_exp == "workflow":
-            rows = run_workflow("04-workflow", provider, expense_cases(), expense_questions(), _expense_action)
-        elif clean_exp == "agent":
-            rows = run_workflow("05-hybrid-agent", provider, support_cases(), support_questions(), _support_action)
-        else:
-            raise ValueError(f"Unknown experiment '{clean_exp}'.")
-
-        return pd.DataFrame(rows)
-
-    def _run_cases_with_progress(
-        self,
-        experiment: str,
-        provider: KorgisProvider,
-        cases: Sequence[BenchmarkCase],
-        questions: Sequence[QuestionSpec],
-        model_name: str,
-    ) -> list[dict]:
-        """Execute benchmark cases while displaying a live progress bar and per-case details."""
-        rows: list[dict] = []
-        total = len(cases)
-        correct_count = 0
-        valid_count = 0
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[bold cyan]{task.fields[model]}[/]"),
-            TextColumn("[bold yellow]{task.fields[exp]}[/]"),
-            BarColumn(bar_width=25),
-            TaskProgressColumn(),
-            TextColumn("•"),
-            TimeElapsedColumn(),
-            TextColumn("•"),
-            TimeRemainingColumn(),
-            TextColumn("[dim]({task.fields[status]})[/dim]"),
-            console=console,
-            transient=False,
-        ) as progress:
-            task = progress.add_task(
-                "run",
-                total=total,
-                model=model_name,
-                exp=experiment,
-                status="initializing...",
-            )
-
-            for idx, case in enumerate(cases, start=1):
-                result = provider.evaluate(case.state, questions)
-                case_rows = _rows_for_case(experiment, case, questions, result, primary=True)
-                rows.extend(case_rows)
-
-                is_valid = bool(result.valid)
-                is_correct = any(r.get("correct") for r in case_rows)
-                if is_valid:
-                    valid_count += 1
-                if is_correct:
-                    correct_count += 1
-
-                actual_val = case_rows[0].get("actual") if case_rows else None
-                exp_val = case_rows[0].get("expected") if case_rows else None
-                if is_correct:
-                    badge = f"[bold green]✓[/bold green] [green]correct[/green] (ans: [bold]{actual_val}[/bold])"
-                elif is_valid:
-                    badge = f"[bold red]✗[/bold red] [yellow]mismatch[/yellow] (got: [bold]{actual_val}[/bold], exp: [bold]{exp_val}[/bold])"
-                else:
-                    badge = f"[bold red]✗ invalid[/bold red] ({result.error})"
-
-                # Print clean verbose output for each evaluated case
-                progress.console.print(
-                    f"  [{idx:>3}/{total}] {badge} • [dim]{case.case_id}[/dim] • [cyan]{result.latency_ms:.0f}ms[/cyan]"
-                )
-
-                acc = (correct_count / idx) * 100
-                progress.update(
-                    task,
-                    advance=1,
-                    status=f"acc: {acc:.1f}% | lat: {result.latency_ms:.0f}ms",
-                )
-
-        return rows
