@@ -8,6 +8,11 @@ from typing import Any
 
 from benchmark_core import parse_csv_selection, preflight_models, to_jsonable
 
+from model_capability_bench.reporting import (
+    load_benchmark_report,
+    load_reporting_config,
+    write_report,
+)
 from model_capability_bench.runner import CapabilityRunner, EvidenceStore, RunnerConfig
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
@@ -58,6 +63,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate suite composition and provider environment.",
     )
     validate.add_argument("--models", default="all")
+
+    report = sub.add_parser(
+        "report",
+        help="Render a persisted run without invoking models or providers.",
+    )
+    report.add_argument("--run-dir", type=Path, required=True)
+    report.add_argument("--html", type=Path)
+    report.add_argument("--json", type=Path)
 
     sub.add_parser("models", help="List configured models.")
     sub.add_parser("tasks", help="List configured tasks.")
@@ -118,6 +131,27 @@ def _catalog_payload(bundle, command: str) -> Any:
 def main() -> int:
     args = build_parser().parse_args()
     root = args.root.resolve()
+
+    if args.command == "report":
+        reporting_config = load_reporting_config(root)
+        run_dir = args.run_dir.resolve()
+        report = load_benchmark_report(run_dir, reporting_config)
+        outputs = write_report(
+            report,
+            reporting_config,
+            run_dir,
+            html_path=args.html.resolve() if args.html is not None else None,
+            json_path=args.json.resolve() if args.json is not None else None,
+        )
+        _json(
+            {
+                "run_id": report.run_id,
+                "html_path": outputs.html_path,
+                "json_path": outputs.json_path,
+            }
+        )
+        return 0
+
     bundle = load_capability_suite(root)
     defaults = load_runner_defaults(root)
 
@@ -193,7 +227,22 @@ def main() -> int:
         summary=summary,
         output_dir=output_dir,
     )
-    _json(summary)
+    reporting_config = load_reporting_config(root)
+    report = load_benchmark_report(output_dir, reporting_config)
+    outputs = write_report(
+        report,
+        reporting_config,
+        output_dir,
+    )
+    _json(
+        {
+            "summary": summary,
+            "report": {
+                "html_path": outputs.html_path,
+                "json_path": outputs.json_path,
+            },
+        }
+    )
     return 0 if summary.failed_cases == 0 and summary.model_failures == 0 else 1
 
 
