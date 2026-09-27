@@ -8,6 +8,11 @@ from typing import Any
 
 from openai import OpenAI
 
+from benchmark_core.transports import (
+    create_openai_compatible_client,
+    resolve_transport_policy,
+)
+
 from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
@@ -30,14 +35,17 @@ class MiniCPMProvider(DecisionProvider):
             raise ValueError("Set MINICPM_API_KEY before running MiniCPM API benchmarks")
 
         self.base_url = os.getenv("MINICPM_BASE_URL", "https://api.modelbest.cn/v1").rstrip("/")
-        max_retries = int(os.getenv("BENCHMARK_MAX_RETRIES", "0"))
-        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=60,
+        )
         self.max_tokens = int(os.getenv("MINICPM_MAX_OUTPUT_TOKENS", "2048"))
-        self.client = OpenAI(
+        self.client = create_openai_compatible_client(
+            OpenAI,
+            policy=policy,
             base_url=self.base_url,
             api_key=api_key,
-            max_retries=max_retries,
-            timeout=timeout,
         )
 
     @staticmethod
