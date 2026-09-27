@@ -5,9 +5,11 @@ from benchmark_core.config import (
     parse_csv_selection,
 )
 from benchmark_core.contracts import (
+    AggregateMetricRecord,
     ArtifactSpec,
     DeploymentMode,
     ErrorKind,
+    EvaluationRecord,
     GenerationConfig,
     InferenceError,
     InferenceMessage,
@@ -18,6 +20,7 @@ from benchmark_core.contracts import (
     MetricResult,
     ModelSpec,
     ProviderSpec,
+    RawInferenceRecord,
     RunContext,
     RunManifest,
     RuntimeSpec,
@@ -27,18 +30,27 @@ from benchmark_core.contracts import (
 )
 from benchmark_core.manifests import write_environment_manifest
 from benchmark_core.persistence import append_csv_records
+from benchmark_core.pricing import (
+    TokenPrices,
+    estimate_token_cost_usd,
+    load_pricing_snapshot,
+    pricing_snapshot_metadata,
+)
 from benchmark_core.providers import InferenceProvider
 from benchmark_core.reporting import summarize_records
+from benchmark_core.reproducibility import fingerprint_values, seeded_random
 from benchmark_core.run_identity import RunIdentity, create_run_identity
 from benchmark_core.runner import ArmExecution, BenchmarkArm, execute_arm
 
 __all__ = [
+    "AggregateMetricRecord",
     "ArmExecution",
     "ArtifactSpec",
     "BenchmarkArm",
     "ConfigError",
     "DeploymentMode",
     "ErrorKind",
+    "EvaluationRecord",
     "GenerationConfig",
     "InferenceError",
     "InferenceMessage",
@@ -50,19 +62,26 @@ __all__ = [
     "MetricResult",
     "ModelSpec",
     "ProviderSpec",
+    "RawInferenceRecord",
     "RunContext",
     "RunIdentity",
     "RunManifest",
     "RuntimeSpec",
     "Sample",
     "TaskResult",
+    "TokenPrices",
     "TokenUsage",
     "append_csv_records",
     "create_run_identity",
+    "estimate_token_cost_usd",
     "execute_arm",
+    "fingerprint_values",
+    "load_pricing_snapshot",
     "load_yaml_mapping",
     "load_yaml_section",
     "parse_csv_selection",
+    "pricing_snapshot_metadata",
+    "seeded_random",
     "summarize_records",
     "write_environment_manifest",
 ]
