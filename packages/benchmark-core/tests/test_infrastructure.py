@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from benchmark_core.manifests import write_environment_manifest
+from benchmark_core.persistence import append_csv_records
 from benchmark_core.run_identity import create_run_identity
 
 
@@ -58,3 +59,27 @@ def test_environment_manifest_preserves_legacy_envelope(tmp_path: Path) -> None:
         "runner_location": "ci",
         "suite": "public-budget",
     }
+
+
+
+def test_csv_persistence_appends_rows_and_extends_schema(tmp_path: Path) -> None:
+    path = tmp_path / "results.csv"
+
+    append_csv_records(
+        [{"case_id": "first", "correct": True}],
+        path,
+        fieldnames=["case_id", "correct"],
+    )
+    append_csv_records(
+        [{"case_id": "second", "correct": False, "latency_ms": 12.5}],
+        path,
+        fieldnames=["case_id", "correct", "latency_ms"],
+    )
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+
+    assert lines == [
+        "case_id,correct,latency_ms",
+        "first,True,",
+        "second,False,12.5",
+    ]
