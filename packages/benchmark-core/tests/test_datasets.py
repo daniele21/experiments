@@ -15,6 +15,9 @@ from benchmark_core import (
     DatasetSpec,
     Sample,
     fingerprint_values,
+    load_banking77_categories,
+    load_banking77_rows,
+    load_clinc_rows,
     load_dataset_profiles,
     load_dataset_specs,
     sha256_file,
@@ -174,3 +177,59 @@ def test_sha256_file_is_stable(tmp_path: Path) -> None:
         "8c3cb8033cc033a205a6a5eee499f12d"
         "dbed1515feb56171435c10537131d0ae"
     )
+
+
+
+def test_public_classification_parsers_are_shared_and_strict(tmp_path: Path) -> None:
+    categories = tmp_path / "categories.json"
+    categories.write_text(
+        '["card_arrival", "cash_withdrawal"]',
+        encoding="utf-8",
+    )
+    banking = tmp_path / "test.csv"
+    banking.write_text(
+        "text,category\n"
+        "Where is my card?,card_arrival\n"
+        "Cash issue,cash_withdrawal\n",
+        encoding="utf-8",
+    )
+    clinc = tmp_path / "data_full.json"
+    clinc.write_text(
+        '{"oos_test":[["Weather tomorrow","weather"],'
+        '["My bank balance","banking"],["Play jazz","music"]]}',
+        encoding="utf-8",
+    )
+
+    assert load_banking77_categories(categories) == (
+        "card_arrival",
+        "cash_withdrawal",
+    )
+    assert load_banking77_rows(banking) == [
+        (0, "Where is my card?", "card_arrival"),
+        (1, "Cash issue", "cash_withdrawal"),
+    ]
+    assert load_clinc_rows(
+        clinc,
+        split="oos_test",
+        exclude_terms=("bank",),
+    ) == [
+        (0, "Weather tomorrow", "weather"),
+        (2, "Play jazz", "music"),
+    ]
+
+
+def test_public_classification_parsers_reject_invalid_shapes(tmp_path: Path) -> None:
+    categories = tmp_path / "categories.json"
+    categories.write_text('["duplicate", "duplicate"]', encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicates"):
+        load_banking77_categories(categories)
+
+    banking = tmp_path / "test.csv"
+    banking.write_text("wrong,header\ntext,label\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="header"):
+        load_banking77_rows(banking)
+
+    clinc = tmp_path / "data_full.json"
+    clinc.write_text('{"train":[]}', encoding="utf-8")
+    with pytest.raises(TypeError, match="oos_test"):
+        load_clinc_rows(clinc, split="oos_test")
