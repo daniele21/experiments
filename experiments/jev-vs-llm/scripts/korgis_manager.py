@@ -46,16 +46,16 @@ def _free_port(port: int) -> None:
                     os.kill(pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-    except Exception:
-        pass
+    except (subprocess.CalledProcessError, OSError) as exc:
+        logger.debug("Port cleanup skipped for %s: %s", port, exc)
 
 
 def _clean_lingering_llama_servers() -> None:
     """Terminate any orphan llama-server processes left from previous interrupted runs."""
     try:
         subprocess.run(["pkill", "-9", "llama-server"], stderr=subprocess.DEVNULL, check=False)
-    except Exception:
-        pass
+    except OSError as exc:
+        logger.debug("llama-server cleanup skipped: %s", exc)
 
 
 class KorgisManager:
@@ -94,7 +94,13 @@ class KorgisManager:
             with urllib.request.urlopen(req, timeout=2.0) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return bool(data.get("ok"))
-        except Exception:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            json.JSONDecodeError,
+            OSError,
+            AttributeError,
+        ):
             return False
 
     def wait_for_healthy(self, max_wait: float = 45.0, poll_interval: float = 1.0) -> bool:
@@ -210,7 +216,12 @@ class KorgisManager:
                 data = json.loads(resp.read().decode("utf-8"))
                 logger.info("Model '%s' unloaded.", model_key)
                 return data
-        except Exception as exc:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            json.JSONDecodeError,
+            OSError,
+        ) as exc:
             logger.warning("Unload request for '%s' returned: %s", model_key, exc)
             return {"ok": False, "error": str(exc)}
 
@@ -226,7 +237,13 @@ class KorgisManager:
                         if item.get(k):
                             keys.add(str(item[k]))
                 return keys
-        except Exception:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            json.JSONDecodeError,
+            OSError,
+            AttributeError,
+        ):
             return set()
 
     def stop_server(self) -> None:
@@ -239,8 +256,8 @@ class KorgisManager:
                 time.sleep(1.0)
                 if self.process.poll() is None:
                     os.killpg(os.getpgid(pid), signal.SIGKILL)
-            except Exception:
-                pass
+            except OSError as exc:
+                logger.debug("Korgis process-group cleanup returned: %s", exc)
             self.process = None
             self.started_by_us = False
 
@@ -260,5 +277,5 @@ class KorgisManager:
         try:
             content = self.log_path.read_text(encoding="utf-8", errors="replace").splitlines()
             return "\n".join(content[-lines:])
-        except Exception as exc:
+        except OSError as exc:
             return f"Error reading log: {exc}"
