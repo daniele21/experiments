@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from benchmark_core.transports import JsonHttpResponse, TransportPolicy
 
 from jev_bench.models import QuestionSpec
