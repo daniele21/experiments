@@ -664,7 +664,7 @@ Per i modelli locali mantenere campi distinti per:
 
 ---
 
-## MCB-9 — Migrazione di `jev-vs-llm` al core definitivo
+## MCB-9 — Migrazione di `jev-vs-llm` al core definitivo — IMPLEMENTED, CI PENDING
 
 ### Obiettivo
 
@@ -681,9 +681,12 @@ Rimuovere duplicazioni transitorie create durante la migrazione.
 
 ### Definition of Done
 
-- un solo implementation path per telemetry/manifests/persistence condivisi;
-- vecchi comandi Jev documentati o sostituiti con migration path chiaro;
-- risultati Jev pre/post migration compatibili sui regression fixtures.
+- [x] un solo implementation path per telemetry/manifests/persistence condivisi;
+- [x] dataset source/parsing e model/runtime registry consolidati nel core condiviso;
+- [x] vecchi comandi Jev mantenuti e migration path locale documentato;
+- [x] generic Jev task adapter disponibile senza spostare bounded-decision semantics nel core;
+- [ ] risultati Jev pre/post migration confermati dai regression fixtures sulla HEAD finale;
+- [ ] gate cumulativi verdi sulla HEAD finale.
 
 ---
 
