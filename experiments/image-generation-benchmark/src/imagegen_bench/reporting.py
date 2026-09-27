@@ -216,7 +216,7 @@ data-prompt-id="{escape(prompt_id)}">
 </section>"""
         )
 
-    metadata_json = json.dumps(pair_metadata).replace("</", "<\/")
+    metadata_json = json.dumps(pair_metadata).replace("</", r"<\/")
     script = f"""<script>
 const pairMetadata = {metadata_json};
 function exportVotes() {{
