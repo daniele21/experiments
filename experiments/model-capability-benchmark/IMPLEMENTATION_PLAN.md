@@ -285,7 +285,7 @@ Korgis può vivere inizialmente come runtime adapter condiviso senza forzare alt
 
 ---
 
-## MCB-3 — Model e runtime registry unificato
+## MCB-3 — Model e runtime registry unificato ✅ COMPLETE
 
 ### Obiettivo
 
@@ -332,9 +332,11 @@ runtimes:
 
 ### Definition of Done
 
-- lo stesso runner risolve almeno un modello Korgis e un modello API;
-- runtime e modello sono entità separate;
-- configurazioni mancanti falliscono in preflight, prima di iniziare il benchmark.
+- [x] lo stesso resolver/CLI risolve almeno un modello Korgis e un modello API;
+- [x] runtime, provider e modello sono entità separate;
+- [x] configurazioni mancanti falliscono in preflight, prima di iniziare il benchmark;
+- [x] il registry riusa anche le ModelCapabilities multimodali del core condiviso;
+- [x] nessun secret o path macchina è committato nel nuovo registry.
 
 ---
 
@@ -901,7 +903,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 ### Extensibility
 
-- [ ] MCB-3 model/runtime registry
+- [x] MCB-3 model/runtime registry
 - [ ] MCB-4 task registry
 - [ ] MCB-5 dataset registry
 
