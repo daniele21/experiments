@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from benchmark_core import CapabilityMetricSpec
 
 from model_capability_bench.runner.aggregation import reduce_metric
