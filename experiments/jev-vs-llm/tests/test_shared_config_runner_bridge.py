@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from benchmark_core.config import parse_csv_selection
+
 from scripts.run_local_matrix import load_config, load_registry_models
 
 
