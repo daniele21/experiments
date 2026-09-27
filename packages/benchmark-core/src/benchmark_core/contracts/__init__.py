@@ -9,6 +9,11 @@ from benchmark_core.contracts.inference import (
     MessageRole,
     TokenUsage,
 )
+from benchmark_core.contracts.records import (
+    AggregateMetricRecord,
+    EvaluationRecord,
+    RawInferenceRecord,
+)
 from benchmark_core.contracts.registry import (
     ArtifactSpec,
     DeploymentMode,
@@ -20,9 +25,11 @@ from benchmark_core.contracts.registry import (
 from benchmark_core.contracts.run import RunContext, RunManifest
 
 __all__ = [
+    "AggregateMetricRecord",
     "ArtifactSpec",
     "DeploymentMode",
     "ErrorKind",
+    "EvaluationRecord",
     "GenerationConfig",
     "InferenceError",
     "InferenceMessage",
@@ -33,6 +40,7 @@ __all__ = [
     "MetricResult",
     "ModelSpec",
     "ProviderSpec",
+    "RawInferenceRecord",
     "RunContext",
     "RunManifest",
     "RuntimeSpec",
