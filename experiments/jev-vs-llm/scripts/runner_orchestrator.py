@@ -20,10 +20,10 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from rich.console import Console
-
 from benchmark_core.reporting import summarize_records
 from benchmark_core.runner import BenchmarkArm, execute_arm
+from rich.console import Console
+
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.cli import _record_manifest, _tag_run, append_results, build_report
 from jev_bench.providers.korgis import KorgisProvider
@@ -92,7 +92,7 @@ class ExperimentOrchestrator:
             # 1. Activate model in Korgis
             try:
                 self.korgis.activate_model(model)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate one model activation failure
                 logger.error("Failed to activate model '%s': %s", model, exc)
                 summary_records.append({
                     "model": model,
@@ -111,7 +111,11 @@ class ExperimentOrchestrator:
             for exp_name in experiments:
                 arm = BenchmarkArm(model_key=model, task_id=exp_name)
 
-                def run_and_persist() -> pd.DataFrame:
+                def run_and_persist(
+                    exp_name: str = exp_name,
+                    provider: KorgisProvider = provider,
+                    model: str = model,
+                ) -> pd.DataFrame:
                     frame = run_single_experiment(
                         exp_name=exp_name,
                         provider=provider,
