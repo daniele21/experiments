@@ -4,7 +4,6 @@ from pathlib import Path
 
 from imagegen_bench.planning import build_run_plan
 
-
 ROOT = Path(__file__).parents[1]
 
 
