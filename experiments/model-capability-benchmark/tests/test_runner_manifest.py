@@ -73,4 +73,5 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         "profiles.yaml",
         "suite.yaml",
         "runner.yaml",
+        "reporting.yaml",
     }
