@@ -11,21 +11,6 @@ from benchmark_core.config import (
     load_yaml_section,
     parse_csv_selection,
 )
-from benchmark_core.datasets import (
-    BenchmarkDataset,
-    CacheMode,
-    DatasetFactory,
-    DatasetLoadContext,
-    DatasetLoadResult,
-    DatasetPluginRegistry,
-    DatasetProfileSpec,
-    DatasetRegistry,
-    DatasetRegistryError,
-    DatasetSpec,
-    ensure_cached_url,
-    load_dataset_profiles,
-    load_dataset_specs,
-)
 from benchmark_core.contracts import (
     AggregateMetricRecord,
     ArtifactSpec,
@@ -55,6 +40,21 @@ from benchmark_core.contracts import (
     Sample,
     TaskResult,
     TokenUsage,
+)
+from benchmark_core.datasets import (
+    BenchmarkDataset,
+    CacheMode,
+    DatasetFactory,
+    DatasetLoadContext,
+    DatasetLoadResult,
+    DatasetPluginRegistry,
+    DatasetProfileSpec,
+    DatasetRegistry,
+    DatasetRegistryError,
+    DatasetSpec,
+    ensure_cached_url,
+    load_dataset_profiles,
+    load_dataset_specs,
 )
 from benchmark_core.manifests import write_environment_manifest
 from benchmark_core.persistence import append_csv_records
@@ -111,6 +111,10 @@ __all__ = [
     "BenchmarkDataset",
     "BenchmarkTask",
     "CacheMode",
+    "CapabilityMismatchError",
+    "ConfigError",
+    "ContentPart",
+    "ContentPartKind",
     "DatasetFactory",
     "DatasetLoadContext",
     "DatasetLoadResult",
@@ -119,10 +123,6 @@ __all__ = [
     "DatasetRegistry",
     "DatasetRegistryError",
     "DatasetSpec",
-    "CapabilityMismatchError",
-    "ConfigError",
-    "ContentPart",
-    "ContentPartKind",
     "DeploymentMode",
     "ErrorKind",
     "EvaluationRecord",
