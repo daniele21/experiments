@@ -62,21 +62,49 @@ export CLM_TEMPERATURE=1.0
 
 ## BANKING77
 
-Run the exact same public routing harness used by the other providers:
+The recommended entry point is the autonomous runner used by
+[`RUN_EXPERIMENTS.md`](RUN_EXPERIMENTS.md). It performs CLM health/model
+preflight, prepares the public data, prints per-case progress, writes cumulative
+raw rows, records one manifest and builds the HTML report.
+
+The first 77-case BANKING77 pass is simply:
 
 ```bash
-uv run jev-bench prepare-data
+uv run python scripts/run_clm_matrix.py
+```
 
+Equivalent explicit form:
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+```
+
+For the 770-case standard profile:
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
+  --dataset public \
+  --profile standard
+```
+
+The lower-level single-experiment CLI remains available:
+
+```bash
 uv run jev-bench experiment routing \
   --provider clm \
   --dataset public \
   --profile standard
 ```
 
-For an exploratory 77-case pass use `--profile budget`. For publication-grade
-evidence prefer `standard` or `full`, pin the CLM checkpoint/model identity,
-record the runner location, and run every directly compared system against the
-same profile and seed.
+For publication-grade evidence prefer `standard` or `full`, pin the CLM
+checkpoint/model identity, record the runner location, and run every directly
+compared system against the same profile and seed.
 
 ## Combined public comparison
 
