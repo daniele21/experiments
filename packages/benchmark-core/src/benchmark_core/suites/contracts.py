@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dataclass_field
 from typing import Any, Literal
 
 from benchmark_core.contracts import GenerationConfig
@@ -30,7 +30,7 @@ class CapabilityMetricSpec:
     reducer: str
     field: str | None = None
     primary: bool = False
-    options: Mapping[str, Any] = field(default_factory=dict)
+    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -96,7 +96,7 @@ class CapabilitySpec:
     description: str | None = None
     tags: tuple[str, ...] = ()
     context_bindings: tuple[CapabilityContextBinding, ...] = ()
-    options: Mapping[str, Any] = field(default_factory=dict)
+    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.capability_id.strip():
@@ -131,7 +131,7 @@ class BenchmarkSuiteSpec:
     generation: GenerationConfig
     capabilities: tuple[CapabilitySpec, ...]
     description: str | None = None
-    options: Mapping[str, Any] = field(default_factory=dict)
+    options: Mapping[str, Any] = dataclass_field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for field_name, value in (
