@@ -233,7 +233,16 @@ def reduce_metric(
     if reducer == "sum":
         return None if not values else sum(values)
     if reducer == "rate":
-        return None if not values else sum(bool(value) for value in values) / len(values)
+        rate_values = [
+            float(value)
+            for value in raw_values
+            if isinstance(value, bool | int | float)
+        ]
+        return (
+            None
+            if not rate_values
+            else sum(rate_values) / len(rate_values)
+        )
     if reducer == "p50":
         return _percentile(values, 0.50)
     if reducer == "p95":
