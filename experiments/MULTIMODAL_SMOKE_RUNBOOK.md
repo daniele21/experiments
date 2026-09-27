@@ -213,8 +213,8 @@ The first real smoke is accepted when:
    (8 cases for GPT/Gemini, 12 for the optional GPT/Gemini/Qwen three-arm smoke);
 2. the run manifest records every resolved model ID, runtime/provider identity and generation config;
 3. `report.html` renders every selected provider side by side;
-4. `blind_review.html` does not expose provider/model identity;
-5. `blind_key.json` contains the reversible A/B mapping;
+4. `blind_review.html` does not expose provider/model identity and covers every unique selected-model pair per prompt;
+5. `blind_key.json` contains the reversible A/B mapping for every pair;
 6. failures remain inspectable rather than disappearing from the report/evidence.
 
 ### VLM
