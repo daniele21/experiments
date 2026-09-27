@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import socket
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping
@@ -90,7 +89,7 @@ class JsonHttpTransport:
                     status_code=exc.code,
                     detail=detail,
                 ) from exc
-            except (TimeoutError, socket.timeout) as exc:
+            except TimeoutError as exc:
                 if attempt + 1 < attempts:
                     continue
                 raise TransportError(
