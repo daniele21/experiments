@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from pathlib import Path
 
 import pandas as pd
@@ -15,7 +15,6 @@ from jev_bench.datasets import (
 from jev_bench.manifest import write_manifest
 from jev_bench.models import BenchmarkCase, Decision, ProviderResult, QuestionSpec
 from jev_bench.runner import _rows_for_case, append_results, run_all
-
 
 REQUIRED_RESULT_COLUMNS = {
     "experiment",
