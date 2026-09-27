@@ -154,6 +154,7 @@ def generate_blind_review(run_dir: Path, output_path: Path) -> Path:
 
     sections: list[str] = []
     pair_metadata: list[dict[str, str]] = []
+    blind_key: list[dict[str, str]] = []
     for prompt_id in sorted(by_prompt):
         model_rows = by_prompt[prompt_id]
         if first_model not in model_rows or second_model not in model_rows:
@@ -175,6 +176,12 @@ def generate_blind_review(run_dir: Path, output_path: Path) -> Path:
         prompt = row_a.get("prompt", "")
         category = row_a.get("category", "")
         pair_metadata.append(
+            {
+                "pair_id": pair.pair_id,
+                "prompt_id": prompt_id,
+            }
+        )
+        blind_key.append(
             {
                 "pair_id": pair.pair_id,
                 "prompt_id": prompt_id,
@@ -247,6 +254,10 @@ function exportVotes() {{
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         _page("Blind image comparison", body, script=script),
+        encoding="utf-8",
+    )
+    output_path.with_name("blind_key.json").write_text(
+        json.dumps({"pairs": blind_key}, indent=2, sort_keys=True),
         encoding="utf-8",
     )
     return output_path
