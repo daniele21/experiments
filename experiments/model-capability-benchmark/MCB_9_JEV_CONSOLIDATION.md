@@ -1,6 +1,6 @@
 # MCB-9 — Jev consolidation on benchmark-core
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused MCB-9, full Jev regression and cumulative benchmark gates are green.
 
 ## Goal
 
@@ -189,6 +189,6 @@ No migration requires copying local artifact paths into the experiments reposito
 - [x] legacy and generic Jev paths share bounded-decision correctness semantics;
 - [x] Jev-specific evaluators/workflows/reporting remain isolated in Jev;
 - [x] migration path for existing local commands is documented;
-- [ ] focused MCB-9 CI passes;
-- [ ] full Jev characterization/regression suite remains green;
-- [ ] cumulative MCB/VLM/image-generation gates remain green.
+- [x] focused MCB-9 CI passes;
+- [x] full Jev characterization/regression suite remains green;
+- [x] cumulative MCB/VLM/image-generation gates remain green.
