@@ -54,7 +54,7 @@ def estimate_token_cost_usd(
 def load_pricing_snapshot(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f"Pricing snapshot must be a JSON object: {path}")
+        raise TypeError(f"Pricing snapshot must be a JSON object: {path}")
     return payload
 
 
