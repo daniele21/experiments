@@ -12,6 +12,8 @@ from benchmark_core import (
     TaskResult,
     TaskSpec,
 )
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 
 class StructuredOutputTask:
@@ -38,6 +40,12 @@ class StructuredOutputTask:
                 f"Sample {sample.sample_id!r} metadata {metadata_key!r} "
                 "must contain a response schema"
             )
+        try:
+            Draft202012Validator.check_schema(schema)
+        except SchemaError as exc:
+            raise ValueError(
+                f"Sample {sample.sample_id!r} contains an invalid response schema"
+            ) from exc
         return schema
 
     def build_request(
@@ -70,8 +78,13 @@ class StructuredOutputTask:
         prediction = inference.normalized_output
         expected_mapping = expected if isinstance(expected, Mapping) else None
         prediction_mapping = prediction if isinstance(prediction, Mapping) else None
+        schema = self._response_schema(sample)
 
-        schema_valid = bool(inference.valid and prediction_mapping is not None)
+        schema_valid = bool(
+            inference.valid
+            and prediction_mapping is not None
+            and Draft202012Validator(schema).is_valid(prediction_mapping)
+        )
         expected_fields = set(expected_mapping or {})
         predicted_fields = set(prediction_mapping or {})
         matching_fields = (

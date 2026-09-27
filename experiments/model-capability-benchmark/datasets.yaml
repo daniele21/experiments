@@ -74,3 +74,28 @@ datasets:
     cache_mode: repository
     options:
       path: data/structured-output-controlled-v1.yaml
+
+
+  qa-abstention-controlled-v1:
+    version: "1"
+    adapter: controlled-yaml
+    source: repository-authored
+    revision: v1
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "1"
+    cache_mode: repository
+    options:
+      path: data/qa-abstention-controlled-v1.yaml
+
+  math-reasoning-controlled-v1:
+    version: "1"
+    adapter: controlled-yaml
+    source: repository-authored
+    revision: v1
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "1"
+    cache_mode: repository
+    options:
+      path: data/math-reasoning-controlled-v1.yaml

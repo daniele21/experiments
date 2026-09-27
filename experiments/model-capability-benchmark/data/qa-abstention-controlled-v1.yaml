@@ -1,0 +1,51 @@
+cases:
+  - sample_id: qa-001
+    input:
+      context: "The Atlas project launched in March 2026 and is led by Elena."
+      question: "Who leads the Atlas project?"
+    expected: {answer: "Elena", answerable: true}
+  - sample_id: qa-002
+    input:
+      context: "The Atlas project launched in March 2026 and is led by Elena."
+      question: "What is the project's annual budget?"
+    expected: {answer: "", answerable: false}
+  - sample_id: qa-003
+    input:
+      context: "The warehouse opens at 07:30 and closes at 19:00 from Monday to Friday."
+      question: "What time does the warehouse open?"
+    expected: {answer: "07:30", answerable: true}
+  - sample_id: qa-004
+    input:
+      context: "The warehouse opens at 07:30 and closes at 19:00 from Monday to Friday."
+      question: "Is the warehouse open on Sunday?"
+    expected: {answer: "", answerable: false}
+  - sample_id: qa-005
+    input:
+      context: "Product X weighs 2.4 kg and is available in black and silver."
+      question: "How much does Product X weigh?"
+    expected: {answer: "2.4 kg", answerable: true}
+  - sample_id: qa-006
+    input:
+      context: "Product X weighs 2.4 kg and is available in black and silver."
+      question: "What is Product X made of?"
+    expected: {answer: "", answerable: false}
+  - sample_id: qa-007
+    input:
+      context: "The meeting starts at 14:00 in room B12 and lasts 45 minutes."
+      question: "Where is the meeting?"
+    expected: {answer: "room B12", answerable: true}
+  - sample_id: qa-008
+    input:
+      context: "The meeting starts at 14:00 in room B12 and lasts 45 minutes."
+      question: "Who is attending the meeting?"
+    expected: {answer: "", answerable: false}
+  - sample_id: qa-009
+    input:
+      context: "The train departs Milan at 08:10 and arrives in Rome at 11:15."
+      question: "When does the train arrive in Rome?"
+    expected: {answer: "11:15", answerable: true}
+  - sample_id: qa-010
+    input:
+      context: "The train departs Milan at 08:10 and arrives in Rome at 11:15."
+      question: "What platform does the train leave from?"
+    expected: {answer: "", answerable: false}
