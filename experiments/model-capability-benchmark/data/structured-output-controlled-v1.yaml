@@ -1,0 +1,184 @@
+cases:
+  - sample_id: invoice-basic
+    input: "Invoice from Acme Srl totals EUR 125.40."
+    expected:
+      vendor: "Acme Srl"
+      amount: 125.4
+      currency: "EUR"
+    response_schema:
+      type: object
+      properties:
+        vendor: {type: string}
+        amount: {type: number}
+        currency: {type: string}
+      required: [vendor, amount, currency]
+      additionalProperties: false
+
+  - sample_id: membership
+    input: "Giulia Bianchi is 31 years old and is an active member."
+    expected:
+      name: "Giulia Bianchi"
+      age: 31
+      active_member: true
+    response_schema:
+      type: object
+      properties:
+        name: {type: string}
+        age: {type: integer}
+        active_member: {type: boolean}
+      required: [name, age, active_member]
+      additionalProperties: false
+
+  - sample_id: conference
+    input: "The AI Summit is in Milan on 2026-11-04 with 850 expected attendees."
+    expected:
+      event: "AI Summit"
+      city: "Milan"
+      date: "2026-11-04"
+      attendees: 850
+    response_schema:
+      type: object
+      properties:
+        event: {type: string}
+        city: {type: string}
+        date: {type: string}
+        attendees: {type: integer}
+      required: [event, city, date, attendees]
+      additionalProperties: false
+
+  - sample_id: support-ticket
+    input: "Production login is down. Mark this technical ticket as high priority and escalate it."
+    expected:
+      category: "technical"
+      priority: "high"
+      escalate: true
+    response_schema:
+      type: object
+      properties:
+        category: {type: string}
+        priority: {type: string}
+        escalate: {type: boolean}
+      required: [category, priority, escalate]
+      additionalProperties: false
+
+  - sample_id: product
+    input: "SKU KB-44 costs 89.90 euros and is currently in stock."
+    expected:
+      sku: "KB-44"
+      price: 89.9
+      in_stock: true
+    response_schema:
+      type: object
+      properties:
+        sku: {type: string}
+        price: {type: number}
+        in_stock: {type: boolean}
+      required: [sku, price, in_stock]
+      additionalProperties: false
+
+  - sample_id: refund
+    input: "A 42.00 EUR payment to Coffee Lab was fully refunded."
+    expected:
+      merchant: "Coffee Lab"
+      amount: 42.0
+      refunded: true
+    response_schema:
+      type: object
+      properties:
+        merchant: {type: string}
+        amount: {type: number}
+        refunded: {type: boolean}
+      required: [merchant, amount, refunded]
+      additionalProperties: false
+
+  - sample_id: train-trip
+    input: "Travel from Milan to Rome with one intermediate stop."
+    expected:
+      origin: "Milan"
+      destination: "Rome"
+      stops: 1
+    response_schema:
+      type: object
+      properties:
+        origin: {type: string}
+        destination: {type: string}
+        stops: {type: integer}
+      required: [origin, destination, stops]
+      additionalProperties: false
+
+  - sample_id: meeting
+    input: "The roadmap review lasts 45 minutes and will be held remotely."
+    expected:
+      title: "roadmap review"
+      duration_minutes: 45
+      remote: true
+    response_schema:
+      type: object
+      properties:
+        title: {type: string}
+        duration_minutes: {type: integer}
+        remote: {type: boolean}
+      required: [title, duration_minutes, remote]
+      additionalProperties: false
+
+  - sample_id: sensor
+    input: "Sensor A12 reports 27.5 C, status warning, with an alert enabled."
+    expected:
+      sensor_id: "A12"
+      temperature_c: 27.5
+      status: "warning"
+      alert: true
+    response_schema:
+      type: object
+      properties:
+        sensor_id: {type: string}
+        temperature_c: {type: number}
+        status: {type: string}
+        alert: {type: boolean}
+      required: [sensor_id, temperature_c, status, alert]
+      additionalProperties: false
+
+  - sample_id: document
+    input: "The document is in Italian, has 18 pages, and is not confidential."
+    expected:
+      language: "Italian"
+      pages: 18
+      confidential: false
+    response_schema:
+      type: object
+      properties:
+        language: {type: string}
+        pages: {type: integer}
+        confidential: {type: boolean}
+      required: [language, pages, confidential]
+      additionalProperties: false
+
+  - sample_id: order
+    input: "Order ORD-91 contains 3 items with a total value of 74.50 EUR."
+    expected:
+      order_id: "ORD-91"
+      items: 3
+      total: 74.5
+    response_schema:
+      type: object
+      properties:
+        order_id: {type: string}
+        items: {type: integer}
+        total: {type: number}
+      required: [order_id, items, total]
+      additionalProperties: false
+
+  - sample_id: contact
+    input: "Contact luca@example.com on +39 02 555 0101. The contact has been verified."
+    expected:
+      email: "luca@example.com"
+      phone: "+39 02 555 0101"
+      verified: true
+    response_schema:
+      type: object
+      properties:
+        email: {type: string}
+        phone: {type: string}
+        verified: {type: boolean}
+      required: [email, phone, verified]
+      additionalProperties: false
