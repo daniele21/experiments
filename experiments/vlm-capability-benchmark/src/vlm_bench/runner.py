@@ -18,7 +18,6 @@ from vlm_bench.planning import VLMRunPlan
 from vlm_bench.provider_factory import create_vlm_provider
 from vlm_bench.tasks import build_ui_grounding_request, evaluate_ui_grounding
 
-
 ProviderFactory = Callable[[ResolvedVLMModel, Mapping[str, str]], Any]
 
 
