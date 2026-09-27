@@ -17,8 +17,9 @@ Foundation implemented:
 - smoke/budget profiles;
 - dedicated unit CI.
 
-The first real-model vertical slice will compare GPT image and Gemini image on text
-rendering and compositionality. Qwen-Image-2.1 and editing are independent follow-up slices.
+The first real-model vertical slice compares GPT image and Gemini image on text rendering and
+compositionality. A third Qwen-Image-2.1 arm is now wired through Korgis for local inference;
+image editing remains a separate follow-up slice.
 
 ## Development
 
@@ -83,5 +84,7 @@ uv run python scripts/run_benchmark.py \
 ```
 
 Remove `--dry-run` only after Korgis is resident and the API-provider credentials needed for
-the other selected arms are configured. The Qwen arm is recorded as
-`provider_id=korgis-image`; it is not mislabeled as an OpenAI provider.
+the other selected arms are configured. The Qwen arm is recorded as `provider_id=korgis-image`;
+it is not mislabeled as an OpenAI provider. The current Korgis baseline is the official BF16
+Diffusers pipeline, so benchmark reports should record it as a resource-heavy local baseline
+rather than implying lightweight Apple-local execution.
