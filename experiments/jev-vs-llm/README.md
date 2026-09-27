@@ -1350,6 +1350,16 @@ uv run jev-bench experiment routing \
   --profile standard
 ```
 
+### Jev + CLM-8B + Korgis without GPT baselines
+
+```bash
+uv run jev-bench compare-public \
+  --profile standard \
+  --no-include-openai \
+  --include-clm \
+  --include-local
+```
+
 ### Regenerate a report from existing raw rows
 
 ```bash
