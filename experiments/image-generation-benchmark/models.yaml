@@ -1,3 +1,43 @@
-# Concrete provider/model IDs are added together with verified adapters.
-# The prompt suite is intentionally provider-independent.
-models: {}
+providers:
+  openai-image:
+    type: openai-image
+    api_key_env: OPENAI_API_KEY
+  gemini-image:
+    type: gemini-image
+    api_key_env: GEMINI_API_KEY
+
+models:
+  openai-sunburst:
+    model_id: gpt-image-2.5-sunburst
+    provider: openai-image
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: true
+    generation:
+      output_format: png
+      size: 1024x1024
+      quality: high
+    benchmark_mapping:
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: quality
+
+  gemini-pro-image:
+    model_id: gemini-3-pro-image
+    provider: gemini-image
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: true
+      multi_image_input: true
+    generation:
+      response_format:
+        type: image
+        mime_type: image/png
+        aspect_ratio: "1:1"
+        image_size: "1K"
+    benchmark_mapping:
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: quality
