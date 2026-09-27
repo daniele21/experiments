@@ -15,6 +15,7 @@ from benchmark_core import (
     ModelSpec,
     Sample,
     TaskExecutionContext,
+    TaskMetricSpec,
     TaskPluginRegistry,
     TaskRegistry,
     TaskRegistryError,
@@ -241,7 +242,7 @@ def test_task_spec_requires_prompt_version_and_unique_metrics() -> None:
             metrics=(
                 # Duplicate metric names are ambiguous in aggregate reporting.
                 # Keep this contract fail-closed.
-                __import__("benchmark_core").TaskMetricSpec(name="accuracy"),
-                __import__("benchmark_core").TaskMetricSpec(name="accuracy"),
+                TaskMetricSpec(name="accuracy"),
+                TaskMetricSpec(name="accuracy"),
             ),
         )
