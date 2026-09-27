@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#f5f5f5"/>
+  <rect width="180" height="500" fill="#202124"/>
+  <text x="28" y="55" font-family="Arial" font-size="24" fill="white">Workspace</text>
+  <text x="28" y="115" font-family="Arial" font-size="18" fill="#dddddd">Projects</text>
+  <text x="28" y="155" font-family="Arial" font-size="18" fill="#dddddd">Teams</text>
+  <text x="28" y="455" font-family="Arial" font-size="18" fill="#dddddd">Settings</text>
+  <text x="220" y="80" font-family="Arial" font-size="32" fill="#202124">Projects</text>
+  <rect x="620" y="40" width="140" height="45" rx="8" fill="#202124"/>
+  <text x="638" y="69" font-family="Arial" font-size="17" fill="white">Create project</text>
+  <rect x="220" y="125" width="540" height="90" rx="10" fill="white" stroke="#cccccc"/>
+  <text x="245" y="175" font-family="Arial" font-size="19" fill="#333333">Website redesign</text>
+</svg>
