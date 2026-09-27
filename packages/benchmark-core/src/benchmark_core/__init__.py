@@ -64,6 +64,17 @@ from benchmark_core.reporting import summarize_records
 from benchmark_core.reproducibility import fingerprint_values, seeded_random
 from benchmark_core.run_identity import RunIdentity, create_run_identity
 from benchmark_core.runner import ArmExecution, BenchmarkArm, execute_arm
+from benchmark_core.tasks import (
+    BenchmarkTask,
+    TaskExecutionContext,
+    TaskFactory,
+    TaskMetricSpec,
+    TaskPluginRegistry,
+    TaskRegistry,
+    TaskRegistryError,
+    TaskSpec,
+    load_task_specs,
+)
 from benchmark_core.transports import (
     JsonHttpResponse,
     JsonHttpTransport,
@@ -82,6 +93,7 @@ __all__ = [
     "ArtifactStore",
     "ArtifactStoreError",
     "BenchmarkArm",
+    "BenchmarkTask",
     "CapabilityMismatchError",
     "ConfigError",
     "ContentPart",
@@ -117,7 +129,14 @@ __all__ = [
     "RunManifest",
     "RuntimeSpec",
     "Sample",
+    "TaskExecutionContext",
+    "TaskFactory",
+    "TaskMetricSpec",
+    "TaskPluginRegistry",
+    "TaskRegistry",
+    "TaskRegistryError",
     "TaskResult",
+    "TaskSpec",
     "TokenPrices",
     "TokenUsage",
     "TransportError",
@@ -132,6 +151,7 @@ __all__ = [
     "inference_error_from_exception",
     "load_pricing_snapshot",
     "load_registry",
+    "load_task_specs",
     "load_yaml_mapping",
     "load_yaml_section",
     "parse_csv_selection",

@@ -340,7 +340,7 @@ runtimes:
 
 ---
 
-## MCB-4 — Task registry e plugin protocol
+## MCB-4 — Task registry e plugin protocol ✅ COMPLETE
 
 ### Obiettivo
 
@@ -350,7 +350,6 @@ Eliminare la crescita lineare di `if/elif` nel runner.
 
 ```python
 class BenchmarkTask:
-    def load_samples(context): ...
     def build_request(sample, context): ...
     def evaluate(sample, inference, context): ...
 ```
@@ -375,7 +374,7 @@ TaskSpec
 loader + request builder + evaluator
 ```
 
-Il runner conosce il registry, non i singoli task.
+Il runner conosce il registry, non i singoli task. Il caricamento dataset è intenzionalmente escluso dal protocollo task e appartiene a MCB-5.
 
 ### Definition of Done
 
@@ -904,7 +903,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 ### Extensibility
 
 - [x] MCB-3 model/runtime registry
-- [ ] MCB-4 task registry
+- [x] MCB-4 task registry
 - [ ] MCB-5 dataset registry
 
 ### First product slice
