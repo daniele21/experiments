@@ -5,7 +5,6 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pandas as pd
-
 from benchmark_core.persistence import append_csv_records
 
 from jev_bench.benchmark_data import (
