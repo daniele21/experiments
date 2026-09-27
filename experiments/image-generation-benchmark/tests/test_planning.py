@@ -40,7 +40,7 @@ def test_qwen_local_plan_resolves_korgis_runtime() -> None:
     )
 
     [model] = plan.models
-    assert model.model_id == "qwen-image-2.1"
+    assert model.model_id == "qwen-image-2.1-mflux-q8"
     assert model.runtime_key == "korgis-image-local"
     assert model.provider_key == "korgis-image"
     assert model.provider_type == "korgis-image"
@@ -48,3 +48,5 @@ def test_qwen_local_plan_resolves_korgis_runtime() -> None:
     assert model.api_key_env == "KORGIS_API_KEY"
     assert model.generation["size"] == "1024x1024"
     assert model.generation["num_inference_steps"] == 40
+    assert model.benchmark_mapping["runtime"] == "mflux"
+    assert model.benchmark_mapping["quantization"] == "Q8"
