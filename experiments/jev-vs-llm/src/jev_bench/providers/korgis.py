@@ -12,6 +12,7 @@ from benchmark_core.transports import (
     create_openai_compatible_client,
     resolve_transport_policy,
 )
+from openai import OpenAI
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
