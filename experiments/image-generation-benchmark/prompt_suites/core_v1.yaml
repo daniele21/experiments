@@ -1,0 +1,190 @@
+prompt_suite:
+  id: core-v1
+  version: "1"
+  language: en
+
+prompts:
+  - prompt_id: text-001
+    category: text_rendering
+    difficulty: easy
+    prompt: 'A clean modern coffee shop storefront sign displaying exactly "CAFFÈ CENTRALE". Front-facing composition, daylight, highly legible typography.'
+    expectations:
+      exact_text: "CAFFÈ CENTRALE"
+    evaluators: [ocr_exact, ocr_character_similarity, human_pairwise]
+
+  - prompt_id: text-002
+    category: text_rendering
+    difficulty: easy
+    prompt: 'A minimal promotional poster with the exact headline "20% OFF TODAY" in large readable letters and no other text.'
+    expectations:
+      exact_text: "20% OFF TODAY"
+    negative_constraints: [extra_text]
+    evaluators: [ocr_exact, ocr_character_similarity, human_pairwise]
+
+  - prompt_id: text-003
+    category: text_rendering
+    difficulty: medium
+    prompt: 'A premium dark product card for a technology app. Display exactly the title "ClosedRoom" and the subtitle "Private meetings. Local AI." Both strings must be clearly readable.'
+    expectations:
+      exact_text:
+        - "ClosedRoom"
+        - "Private meetings. Local AI."
+    evaluators: [ocr_exact, ocr_character_similarity, human_pairwise]
+
+  - prompt_id: text-004
+    category: text_rendering
+    difficulty: medium
+    prompt: 'A realistic railway departure board with one highlighted row reading exactly "MILANO → ROMA 18:40". Keep all characters clearly readable.'
+    expectations:
+      exact_text: "MILANO → ROMA 18:40"
+    evaluators: [ocr_exact, ocr_character_similarity, human_pairwise]
+
+  - prompt_id: text-005
+    category: text_rendering
+    difficulty: hard
+    prompt: 'A clean restaurant menu card containing exactly these three lines and no other text: "ESPRESSO €1.50", "CAPPUCCINO €2.20", "CROISSANT €2.00".'
+    expectations:
+      exact_text:
+        - "ESPRESSO €1.50"
+        - "CAPPUCCINO €2.20"
+        - "CROISSANT €2.00"
+    negative_constraints: [extra_text]
+    evaluators: [ocr_exact, ocr_character_similarity, human_pairwise]
+
+  - prompt_id: comp-001
+    category: compositional
+    difficulty: easy
+    prompt: 'A red cube on the left of a blue sphere, isolated on a plain light background.'
+    expectations:
+      objects:
+        - {id: cube, type: cube, color: red, count: 1}
+        - {id: sphere, type: sphere, color: blue, count: 1}
+      relations:
+        - {type: left_of, subject: cube, object: sphere}
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: comp-002
+    category: compositional
+    difficulty: medium
+    prompt: 'A red cube on the left of a blue sphere, with one yellow triangle centered above both objects. Plain light background.'
+    expectations:
+      objects:
+        - {id: cube, type: cube, color: red, count: 1}
+        - {id: sphere, type: sphere, color: blue, count: 1}
+        - {id: triangle, type: triangle, color: yellow, count: 1}
+      relations:
+        - {type: left_of, subject: cube, object: sphere}
+        - {type: above, subject: triangle, object: cube}
+        - {type: above, subject: triangle, object: sphere}
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: comp-003
+    category: compositional
+    difficulty: medium
+    prompt: 'A minimalist wooden desk containing exactly three objects: a closed silver laptop, a green ceramic mug, and a black notebook. No phone, no plant.'
+    expectations:
+      objects:
+        - {id: laptop, type: laptop, color: silver, count: 1}
+        - {id: mug, type: mug, color: green, count: 1}
+        - {id: notebook, type: notebook, color: black, count: 1}
+    negative_constraints: [phone, plant]
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: comp-004
+    category: compositional
+    difficulty: hard
+    prompt: 'Exactly four balloons floating against a white background: two red balloons, one blue balloon, and one yellow balloon. No other balloons or objects.'
+    expectations:
+      objects:
+        - {id: red_balloon, type: balloon, color: red, count: 2}
+        - {id: blue_balloon, type: balloon, color: blue, count: 1}
+        - {id: yellow_balloon, type: balloon, color: yellow, count: 1}
+      total_object_count: 4
+    negative_constraints: [extra_objects]
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: comp-005
+    category: compositional
+    difficulty: hard
+    prompt: 'A small white table with a red apple under the table, a blue book on top of the table, and a yellow cup to the right of the book. No other objects.'
+    expectations:
+      objects:
+        - {id: apple, type: apple, color: red, count: 1}
+        - {id: book, type: book, color: blue, count: 1}
+        - {id: cup, type: cup, color: yellow, count: 1}
+        - {id: table, type: table, color: white, count: 1}
+      relations:
+        - {type: under, subject: apple, object: table}
+        - {type: on_top_of, subject: book, object: table}
+        - {type: right_of, subject: cup, object: book}
+    negative_constraints: [extra_objects]
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: photo-001
+    category: photorealism
+    difficulty: medium
+    prompt: 'Photorealistic editorial photograph of a small Italian café at 7 a.m., soft natural window light, subtle steam rising from an espresso, realistic materials and reflections.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: photo-002
+    category: photorealism
+    difficulty: medium
+    prompt: 'Photorealistic studio product photograph of a matte black wireless speaker on a pale stone pedestal, soft side lighting, realistic shadow and surface texture.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: photo-003
+    category: photorealism
+    difficulty: hard
+    prompt: 'Photorealistic evening street scene after rain in Milan, pedestrians with umbrellas, wet pavement reflections, believable storefront lighting, natural human anatomy.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: photo-004
+    category: photorealism
+    difficulty: hard
+    prompt: 'Photorealistic bright contemporary living room with oak flooring, cream sofa, one olive-green armchair and a large window. Natural proportions, realistic fabric and wood textures.'
+    expectations:
+      objects:
+        - {id: sofa, type: sofa, color: cream, count: 1}
+        - {id: armchair, type: armchair, color: olive-green, count: 1}
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: photo-005
+    category: photorealism
+    difficulty: hard
+    prompt: 'Photorealistic close-up of a chef plating fresh pasta in a professional kitchen, realistic hands, stainless steel surfaces, shallow depth of field, documentary photography.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: design-001
+    category: design
+    difficulty: medium
+    prompt: 'Clean editorial illustration about local AI: a laptop processing data privately on-device, simple geometric shapes, restrained composition, sophisticated technology magazine aesthetic.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: design-002
+    category: design
+    difficulty: medium
+    prompt: 'Minimal SaaS hero illustration for an analytics product, abstract charts and data cards, strong visual hierarchy, generous whitespace, polished contemporary product-design aesthetic.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: design-003
+    category: design
+    difficulty: hard
+    prompt: 'Editorial poster illustrating the contrast between cloud AI and local AI: two clearly distinct halves connected by a central data flow, conceptual but immediately understandable.'
+    evaluators: [human_pairwise]
+
+  - prompt_id: design-004
+    category: design
+    difficulty: hard
+    prompt: 'A sophisticated financial-market editorial illustration showing uncertainty, volatility and global interconnectedness without using text, logos, flags or currency symbols.'
+    negative_constraints: [text, logos, flags, currency_symbols]
+    evaluators: [constraint_check, human_pairwise]
+
+  - prompt_id: design-005
+    category: design
+    difficulty: hard
+    prompt: 'A clean isometric illustration of an AI agent workflow: user request enters on the left, passes through three distinct processing stages, and produces a final result on the right. No text labels.'
+    expectations:
+      process_stage_count: 3
+      flow_direction: left_to_right
+    negative_constraints: [text]
+    evaluators: [constraint_check, human_pairwise]
