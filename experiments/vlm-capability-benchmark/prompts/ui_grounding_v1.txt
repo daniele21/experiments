@@ -1,0 +1,12 @@
+You are given a screenshot of a user interface.
+
+User goal:
+{question}
+
+Identify the single UI element that should be clicked.
+Return only a JSON object with exactly these fields:
+- "target": the visible label or concise element name
+- "x": horizontal click coordinate normalized to [0, 1]
+- "y": vertical click coordinate normalized to [0, 1]
+
+Do not include markdown, explanations, or additional fields.
