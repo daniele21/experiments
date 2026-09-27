@@ -89,13 +89,13 @@ def test_quality_and_calibration_reducers() -> None:
             options={
                 "confidence_metric": "confidence",
                 "correctness_metric": "correct",
-                "bins": 2,
+                "bins": 10,
             },
         ),
         evidence,
     )
 
-    assert macro_f1 == pytest.approx(5 / 6)
+    assert macro_f1 == pytest.approx(7 / 9)
     assert oos == 1.0
     assert in_scope == pytest.approx(2 / 3)
     assert ece == pytest.approx(0.30)
