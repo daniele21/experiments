@@ -85,3 +85,52 @@ def test_banking_subset_is_reproducible_for_same_seed(tmp_path: Path):
         (case.case_id, case.state, case.expected, case.metadata)
         for case in second
     ]
+
+
+def test_banking_subset_preserves_historical_seeded_order(tmp_path: Path):
+    cache = tmp_path / "cache"
+    _write_fixture(cache)
+
+    cases = balanced_banking77_cases(cache, max_cases=4, seed=7)
+
+    assert [
+        (case.case_id, case.state, case.expected["intent"])
+        for case in cases
+    ] == [
+        ("banking77-card_arrival-1", "where is my card 0", "card_arrival"),
+        (
+            "banking77-cash_withdrawal-1",
+            "cash withdrawal issue 0",
+            "cash_withdrawal",
+        ),
+        (
+            "banking77-cash_withdrawal-0",
+            "cash withdrawal issue 2",
+            "cash_withdrawal",
+        ),
+        ("banking77-card_arrival-0", "where is my card 2", "card_arrival"),
+    ]
+
+
+def test_public_dataset_revisions_come_from_catalog(tmp_path: Path):
+    cache = tmp_path / "cache"
+    _write_fixture(cache)
+
+    banking = balanced_banking77_cases(cache, max_cases=1, seed=1)
+    calibration = calibration_public_cases(
+        cache,
+        in_scope_cases=1,
+        oos_cases=1,
+        seed=1,
+    )
+
+    assert banking[0].metadata["dataset_revision"] == (
+        "9d081458ff52e53cf7e848f414e6e9344e4e6696"
+    )
+    clinc = next(
+        case for case in calibration
+        if case.metadata["difficulty"] == "out_of_scope"
+    )
+    assert clinc.metadata["dataset_revision"] == (
+        "48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e"
+    )
