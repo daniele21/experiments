@@ -384,7 +384,7 @@ Il runner conosce il registry, non i singoli task. Il caricamento dataset è int
 
 ---
 
-## MCB-5 — Dataset registry e dataset adapters
+## MCB-5 — Dataset registry e dataset adapters ✅ COMPLETE
 
 ### Obiettivo
 
@@ -442,9 +442,12 @@ I singoli task possono fare override dichiarativi.
 
 ### Definition of Done
 
-- BANKING77 passa attraverso il nuovo dataset registry;
-- sampling deterministico verificato;
-- aggiungere un dataset non richiede modificare il runner.
+- [x] BANKING77 passa attraverso il nuovo dataset registry;
+- [x] sampling deterministico e class-balanced verificato;
+- [x] CLINC150 OOS passa da un adapter versionato e configurato;
+- [x] source checksums e selection fingerprint sono persistibili come provenance;
+- [x] profili smoke/budget/standard/full sono configurazione;
+- [x] aggiungere un dataset non richiede modificare il runner.
 
 ---
 
@@ -904,7 +907,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 - [x] MCB-3 model/runtime registry
 - [x] MCB-4 task registry
-- [ ] MCB-5 dataset registry
+- [x] MCB-5 dataset registry
 
 ### First product slice
 
@@ -951,14 +954,13 @@ Il workstream è concluso quando:
 
 ---
 
-# 14. Primo prossimo passo
+# 14. Prossimo passo
 
-Partire da **MCB-0**, non dalla creazione immediata dei nuovi dataset.
+Con MCB-0…5 chiusi, la foundation è pronta. Il prossimo blocco è **MCB-6 — capability suite**:
 
-La priorità iniziale è proteggere `jev-vs-llm` con characterization tests e classificare i moduli esistenti in:
+- comporre task + dataset + metriche in una suite dichiarativa;
+- chiudere il primo slice su BANKING77 intent classification e structured-output;
+- aggiungere OOS/calibration usando BANKING77 + CLINC150;
+- preparare QA/abstention e reasoning come capability successive.
 
-- **generic → extract**;
-- **Jev-specific → keep**;
-- **generic after adaptation → refactor then extract**.
-
-Solo dopo questa classificazione va introdotto il package `benchmark-core`. In questo modo il nuovo filone nasce riusando infrastruttura verificata invece di duplicarla o destabilizzare l'esperimento esistente.
+Il runner unificato model × task × dataset viene poi materializzato in MCB-7 sulla base di questi contratti già stabilizzati.
