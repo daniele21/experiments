@@ -26,7 +26,7 @@ def _load_manifest(run_dir: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"manifest file not found: {path}")
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError("manifest root must be an object")
+        raise TypeError("manifest root must be an object")
     return payload
 
 
@@ -140,7 +140,7 @@ def generate_blind_review(run_dir: Path, output_path: Path) -> Path:
     manifest = _load_manifest(run_dir)
     parameters = manifest.get("parameters")
     if not isinstance(parameters, dict):
-        raise ValueError("manifest parameters must be an object")
+        raise TypeError("manifest parameters must be an object")
 
     model_keys = manifest.get("requested_models", {}).get("model_keys", [])
     if not isinstance(model_keys, list) or len(model_keys) != 2:
