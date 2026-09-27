@@ -1,5 +1,10 @@
+from benchmark_core.suites.context import (
+    CapabilityContextError,
+    resolve_capability_context,
+)
 from benchmark_core.suites.contracts import (
     BenchmarkSuiteSpec,
+    CapabilityContextBinding,
     CapabilityMetricSpec,
     CapabilitySpec,
     MetricReducer,
@@ -14,6 +19,8 @@ from benchmark_core.suites.validation import (
 
 __all__ = [
     "BenchmarkSuiteSpec",
+    "CapabilityContextBinding",
+    "CapabilityContextError",
     "CapabilityMetricSpec",
     "CapabilitySpec",
     "MetricReducer",
@@ -22,5 +29,6 @@ __all__ = [
     "SuiteConfigError",
     "SuiteValidationError",
     "load_suite_spec",
+    "resolve_capability_context",
     "validate_suite",
 ]
