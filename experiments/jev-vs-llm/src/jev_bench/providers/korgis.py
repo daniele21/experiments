@@ -3,11 +3,15 @@ from __future__ import annotations
 import json
 import os
 import time
-import urllib.error
-import urllib.request
 from collections.abc import Sequence
 from typing import Any
 
+from benchmark_core.transports import (
+    JsonHttpTransport,
+    TransportPolicy,
+    create_openai_compatible_client,
+    resolve_transport_policy,
+)
 from openai import OpenAI
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
@@ -26,6 +30,9 @@ class KorgisController:
         self.api_base = (base_url or os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1")).rstrip("/")
         self.root = self.api_base.removesuffix("/v1")
         self.timeout = timeout or float(os.getenv("KORGIS_CONTROL_TIMEOUT_SECONDS", "360"))
+        self.transport = JsonHttpTransport(
+            TransportPolicy(max_retries=0, timeout_seconds=self.timeout)
+        )
 
     def _request(
         self,
@@ -33,15 +40,11 @@ class KorgisController:
         path: str,
         payload: dict[str, Any] | None = None,
     ) -> Any:
-        body = json.dumps(payload).encode("utf-8") if payload is not None else None
-        request = urllib.request.Request(
+        return self.transport.request(
+            method,
             f"{self.root}{path}",
-            data=body,
-            headers={"Content-Type": "application/json"},
-            method=method,
-        )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
-            return json.loads(response.read().decode("utf-8"))
+            payload=payload,
+        ).body
 
     def health(self) -> dict[str, Any]:
         return self._request("GET", "/health")
@@ -105,14 +108,22 @@ class KorgisProvider(DecisionProvider):
         self.base_url = (
             base_url or os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1")
         ).rstrip("/")
-        timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=60,
+        )
+        policy = TransportPolicy(
+            max_retries=0,
+            timeout_seconds=policy.timeout_seconds,
+        )
         self.seed = seed
         self.max_tokens = int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", "2048"))
-        self.client = OpenAI(
+        self.client = create_openai_compatible_client(
+            OpenAI,
+            policy=policy,
             base_url=self.base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
-            max_retries=0,
-            timeout=timeout,
         )
 
     @staticmethod

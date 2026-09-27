@@ -237,7 +237,7 @@ Non eliminare ancora `DecisionProvider`.
 
 ---
 
-## MCB-2 — Estrazione di `benchmark-core` 🚧 IN PROGRESS
+## MCB-2 — Estrazione di `benchmark-core` ✅ COMPLETE
 
 ### Obiettivo
 
@@ -245,7 +245,7 @@ Spostare nel package condiviso solo componenti già dimostrati generici.
 
 ### Prima estrazione
 
-MCB-2A ha estratto manifest, run identity/tagging e persistence CSV. MCB-2B ha aggiunto config loading, matrix-arm execution e summary primitives. MCB-2C ha aggiunto pricing hooks, reproducibility/fingerprinting e i record generici raw/evaluation/aggregate. Resta principalmente la tranche transport + error/retry/timeout policy prima della chiusura complessiva di MCB-2.
+MCB-2A ha estratto manifest, run identity/tagging e persistence CSV. MCB-2B ha aggiunto config loading, matrix-arm execution e summary primitives. MCB-2C ha aggiunto pricing hooks, reproducibility/fingerprinting e i record generici raw/evaluation/aggregate. MCB-2D ha completato l'estrazione con transport policy, JSON HTTP transport, error normalization e OpenAI-compatible client construction. MCB-2 è quindi chiuso.
 
 - manifest; ✅ MCB-2A
 - run identity;
@@ -261,10 +261,10 @@ MCB-2A ha estratto manifest, run identity/tagging e persistence CSV. MCB-2B ha a
 
 Dopo regression test:
 
-- OpenAI-compatible transport;
-- generic OpenAI transport;
-- runtime-independent error normalization;
-- common retry/timeout policy se effettivamente condivisibile;
+- OpenAI-compatible transport; ✅ MCB-2D
+- generic OpenAI transport/client construction; ✅ MCB-2D
+- runtime-independent error normalization; ✅ MCB-2D
+- common retry/timeout policy; ✅ MCB-2D
 - common cost hooks. ✅ MCB-2C
 
 ### Da non estrarre prematuramente
@@ -897,7 +897,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 - [x] MCB-0 characterization tests
 - [x] MCB-1 generic contracts
-- [ ] MCB-2 benchmark-core extraction
+- [x] MCB-2 benchmark-core extraction
 
 ### Extensibility
 
