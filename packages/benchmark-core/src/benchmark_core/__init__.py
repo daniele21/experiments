@@ -1,4 +1,9 @@
-from benchmark_core.config import ConfigError, load_yaml_mapping, load_yaml_section, parse_csv_selection
+from benchmark_core.config import (
+    ConfigError,
+    load_yaml_mapping,
+    load_yaml_section,
+    parse_csv_selection,
+)
 from benchmark_core.contracts import (
     ArtifactSpec,
     DeploymentMode,
@@ -53,11 +58,11 @@ __all__ = [
     "TaskResult",
     "TokenUsage",
     "append_csv_records",
+    "create_run_identity",
     "execute_arm",
     "load_yaml_mapping",
     "load_yaml_section",
     "parse_csv_selection",
-    "create_run_identity",
     "summarize_records",
     "write_environment_manifest",
 ]
