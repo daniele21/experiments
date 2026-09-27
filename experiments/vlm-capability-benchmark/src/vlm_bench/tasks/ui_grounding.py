@@ -73,7 +73,7 @@ def build_ui_grounding_request(
 def parse_ui_grounding_prediction(value: Any) -> UIGroundingPrediction:
     payload = json.loads(value) if isinstance(value, str) else value
     if not isinstance(payload, dict):
-        raise ValueError("UI grounding prediction must be a JSON object")
+        raise TypeError("UI grounding prediction must be a JSON object")
     target = payload.get("target")
     if not isinstance(target, str) or not target.strip():
         raise ValueError("UI grounding prediction requires target")
@@ -95,7 +95,7 @@ def evaluate_ui_grounding(
         raise ValueError(f"{case.sample_id}: grounding truth is incomplete")
     try:
         parsed = parse_ui_grounding_prediction(prediction)
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         return TaskResult(
             task_id=case.task,
             sample_id=case.sample_id,
