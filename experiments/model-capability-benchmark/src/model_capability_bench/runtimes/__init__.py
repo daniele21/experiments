@@ -1,7 +1,7 @@
 from model_capability_bench.runtimes.external import ExternalProviderRuntime
 from model_capability_bench.runtimes.factory import (
     RuntimeFactoryError,
-    RuntimeResolver,
+    RegistryRuntimeResolver,
 )
 from model_capability_bench.runtimes.korgis import (
     KorgisControlClient,
@@ -13,5 +13,5 @@ __all__ = [
     "KorgisControlClient",
     "KorgisManagedRuntime",
     "RuntimeFactoryError",
-    "RuntimeResolver",
+    "RegistryRuntimeResolver",
 ]
