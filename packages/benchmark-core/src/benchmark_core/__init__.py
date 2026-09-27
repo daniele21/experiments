@@ -19,7 +19,10 @@ from benchmark_core.contracts import (
     TaskResult,
     TokenUsage,
 )
+from benchmark_core.manifests import write_environment_manifest
+from benchmark_core.persistence import append_csv_records
 from benchmark_core.providers import InferenceProvider
+from benchmark_core.run_identity import RunIdentity, create_run_identity
 
 __all__ = [
     "ArtifactSpec",
@@ -37,9 +40,13 @@ __all__ = [
     "ModelSpec",
     "ProviderSpec",
     "RunContext",
+    "RunIdentity",
     "RunManifest",
     "RuntimeSpec",
     "Sample",
     "TaskResult",
     "TokenUsage",
+    "append_csv_records",
+    "create_run_identity",
+    "write_environment_manifest",
 ]

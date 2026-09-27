@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
 import pandas as pd
 import typer
+
+from benchmark_core.run_identity import create_run_identity
 
 from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
 from jev_bench.costs import pricing_metadata
@@ -81,12 +82,17 @@ def _local_model_matrix(value: str | None = None) -> list[str]:
 
 
 def _tag_run(frame: pd.DataFrame, run_group: str, suite: str) -> pd.DataFrame:
+    identity = create_run_identity(
+        run_group=run_group,
+        suite=suite,
+        runner_location=_runner_location(),
+    )
     frame = frame.copy()
-    frame["run_id"] = str(uuid.uuid4())
-    frame["run_group"] = run_group
-    frame["suite"] = suite
-    frame["run_timestamp_utc"] = datetime.now(UTC).isoformat()
-    frame["runner_location"] = _runner_location()
+    frame["run_id"] = identity.run_id
+    frame["run_group"] = identity.run_group
+    frame["suite"] = identity.suite
+    frame["run_timestamp_utc"] = identity.run_timestamp_utc
+    frame["runner_location"] = identity.runner_location
     return frame
 
 

@@ -237,7 +237,7 @@ Non eliminare ancora `DecisionProvider`.
 
 ---
 
-## MCB-2 — Estrazione di `benchmark-core`
+## MCB-2 — Estrazione di `benchmark-core` 🚧 IN PROGRESS
 
 ### Obiettivo
 
@@ -245,14 +245,16 @@ Spostare nel package condiviso solo componenti già dimostrati generici.
 
 ### Prima estrazione
 
-- manifest;
+MCB-2A ha già estratto e validato manifest, run identity/tagging e persistence CSV condivisa. Restano gli altri componenti elencati prima della chiusura complessiva di MCB-2.
+
+- manifest; ✅ MCB-2A
 - run identity;
-- common telemetry;
-- persistence primitives;
+- common telemetry; ✅ contract condiviso, wiring progressivo
+- persistence primitives; ✅ MCB-2A
 - common report data model;
 - common model/provider config loading;
 - utilities per seed/reproducibility;
-- generic provider protocol;
+- generic provider protocol; ✅ MCB-1
 - generic runner primitives.
 
 ### Seconda estrazione

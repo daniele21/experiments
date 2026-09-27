@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from benchmark_core.persistence import append_csv_records
+
 from jev_bench.benchmark_data import (
     DEFAULT_CACHE,
     balanced_banking77_cases,
@@ -370,11 +372,12 @@ def run_public_classification(
 
 
 def append_results(frame: pd.DataFrame, output: Path) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
-    if output.exists():
-        existing = pd.read_csv(output)
-        frame = pd.concat([existing, frame], ignore_index=True)
-    frame.to_csv(output, index=False)
+    """Compatibility wrapper over the shared record-oriented CSV persistence."""
+    append_csv_records(
+        frame.to_dict(orient="records"),
+        output,
+        fieldnames=[str(column) for column in frame.columns],
+    )
 
 
 EXPENSE_POLICY = """
