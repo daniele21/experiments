@@ -36,5 +36,8 @@ jobs:
           tests/test_characterization_contracts.py
           tests/test_public_data.py
 
+      - name: Install dashboard dependencies
+        run: npm ci --prefix dashboard
+
       - name: Full unit test suite
         run: uv run pytest
