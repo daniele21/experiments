@@ -34,7 +34,12 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from benchmark_core.config import load_yaml_mapping, load_yaml_section, parse_csv_selection
+from benchmark_core.config import (
+    ConfigError,
+    load_yaml_mapping,
+    load_yaml_section,
+    parse_csv_selection,
+)
 from scripts.korgis_manager import KorgisManager
 from scripts.runner_orchestrator import ExperimentOrchestrator
 
@@ -151,10 +156,13 @@ def main() -> int:
     if args.interactive or (not args.models and sys.stdin.isatty() and not cfg.get("default_models")):
         chosen_models = prompt_interactive_selection(available_models)
     elif args.models:
-        chosen_models = parse_csv_selection(
-            args.models,
-            available=list(available_models.keys()),
-        )
+        try:
+            chosen_models = parse_csv_selection(
+                args.models,
+                available=list(available_models.keys()),
+            )
+        except ConfigError:
+            chosen_models = []
     else:
         chosen_models = list(cfg.get("default_models") or available_models.keys())
 
