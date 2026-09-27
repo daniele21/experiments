@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import json
 import os
 import time
-import urllib.error
-import urllib.request
 from collections.abc import Sequence
 from typing import Any
+
+from benchmark_core.transports import JsonHttpTransport, resolve_transport_policy
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
@@ -34,7 +33,13 @@ class CLMProvider(DecisionProvider):
             base_url or os.getenv("CLM_BASE_URL", "http://127.0.0.1:8700")
         ).rstrip("/")
         self.api_key = os.getenv("CLM_API_KEY")
-        self.timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
+        self.transport_policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=60,
+        )
+        self.timeout = self.transport_policy.timeout_seconds
+        self.transport = JsonHttpTransport(self.transport_policy)
         self.temperature = (
             float(os.getenv("CLM_TEMPERATURE", "1.0"))
             if temperature is None
@@ -82,23 +87,19 @@ class CLMProvider(DecisionProvider):
         return probabilities
 
     def _post(self, payload: dict[str, Any]) -> tuple[dict[str, Any], float | None]:
-        headers = {"Content-Type": "application/json"}
+        headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        request = urllib.request.Request(
+        response = self.transport.request(
+            "POST",
             f"{self.base_url}/v1/systemone",
-            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            payload=payload,
             headers=headers,
-            method="POST",
         )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                body = json.loads(response.read().decode("utf-8"))
-                header = response.headers.get("X-CLM-Latency-Ms")
-                return body, float(header) if header is not None else None
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"CLM HTTP {exc.code}: {detail}") from exc
+        if not isinstance(response.body, dict):
+            raise TypeError("CLM response body must be a JSON object")
+        header = response.headers.get("X-CLM-Latency-Ms")
+        return response.body, float(header) if header is not None else None
 
     def evaluate(self, state: Any, questions: Sequence[QuestionSpec]) -> ProviderResult:
         started = time.perf_counter()
