@@ -73,9 +73,14 @@ def _metric(raw: Any, *, task_id: str, index: int) -> TaskMetricSpec:
         context=f"task {task_id!r} metric {index}",
     )
     options = data.get("options") or {}
+    primary = data.get("primary", False)
+    if not isinstance(primary, bool):
+        raise TaskRegistryError(
+            f"task {task_id!r} metric {index} primary must be boolean"
+        )
     return TaskMetricSpec(
         name=str(data.get("name") or ""),
-        primary=bool(data.get("primary", False)),
+        primary=primary,
         options=dict(_mapping(options, context=f"task {task_id!r} metric options")),
     )
 
