@@ -1,6 +1,6 @@
 # MCB-5 — Dataset Registry and Dataset Adapters
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused dataset gate green and all cumulative MCB/VLM/image-generation gates green.
 
 ## Goal
 
@@ -225,6 +225,6 @@ This prevents a task catalog change from silently referring to a missing dataset
 - [x] public dataset tests require no network access;
 - [x] task-compatible dataset IDs are cross-validated;
 - [x] dataset inspection/load CLI exists;
-- [ ] focused MCB-5 CI passes;
-- [ ] previous MCB/VLM/image-generation gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused MCB-5 CI passes;
+- [x] previous MCB/VLM/image-generation gates remain green;
+- [x] full Jev characterization suite remains green.
