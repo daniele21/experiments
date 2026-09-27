@@ -5,6 +5,8 @@ profiles:
       banking77: 77
       clinc150-oos: 50
       structured-output-controlled-v1: null
+      qa-abstention-controlled-v1: null
+      math-reasoning-controlled-v1: null
 
   budget:
     max_cases: 100
