@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from itertools import combinations
 from typing import Literal
 
 PairwiseChoice = Literal["A", "B", "tie"]
@@ -46,4 +47,26 @@ def build_blind_pair(
         prompt_id=prompt_id,
         model_for_a=model_for_a,
         model_for_b=model_for_b,
+    )
+
+
+
+def build_blind_pairs(
+    *,
+    prompt_id: str,
+    model_keys: list[str] | tuple[str, ...],
+    seed: int,
+) -> tuple[BlindPair, ...]:
+    """Build every unique pair for a prompt with deterministic blind A/B assignment."""
+    normalized = tuple(sorted({str(model).strip() for model in model_keys if str(model).strip()}))
+    if len(normalized) < 2:
+        raise ValueError("blind comparison requires at least two different models")
+    return tuple(
+        build_blind_pair(
+            prompt_id=prompt_id,
+            first_model=first_model,
+            second_model=second_model,
+            seed=seed,
+        )
+        for first_model, second_model in combinations(normalized, 2)
     )
