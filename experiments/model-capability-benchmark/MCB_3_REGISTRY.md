@@ -1,6 +1,6 @@
 # MCB-3 — Unified Model / Runtime / Provider Registry
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused registry gate green (10/10), VLM/image-generation gates green, and full Jev characterization suite green (52/52).
 
 ## Goal
 
@@ -81,6 +81,7 @@ A model declares:
 - family;
 - parameter count;
 - artifact metadata;
+- multimodal capabilities (`text_input`, `image_input`, `image_output`, editing, multi-image);
 - tags;
 - model metadata.
 
@@ -209,6 +210,7 @@ registry resolution path.
 - [x] committed registry has no machine-specific model paths;
 - [x] one Korgis model and one API model resolve through the same path;
 - [x] registry inspection/preflight CLI exists;
-- [ ] focused MCB-3 CI passes;
-- [ ] previous MCB gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused MCB-3 CI passes (10/10);
+- [x] previous MCB gates remain green;
+- [x] VLM and image-generation benchmark gates remain green;
+- [x] full Jev characterization suite remains green (52/52).
