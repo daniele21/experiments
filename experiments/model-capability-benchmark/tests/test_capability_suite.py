@@ -11,6 +11,7 @@ from benchmark_core import (
     TaskExecutionContext,
     resolve_capability_context,
 )
+
 from model_capability_bench import load_capability_suite
 
 ROOT = Path(__file__).resolve().parents[1]
