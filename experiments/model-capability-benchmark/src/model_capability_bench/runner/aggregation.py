@@ -231,7 +231,7 @@ def reduce_metric(
     if reducer == "mean" or reducer == "brier":
         return None if not values else sum(values) / len(values)
     if reducer == "sum":
-        return sum(values)
+        return None if not values else sum(values)
     if reducer == "rate":
         return None if not values else sum(bool(value) for value in values) / len(values)
     if reducer == "p50":
