@@ -136,5 +136,6 @@ class Banking77Dataset:
             metadata={
                 "sampling": self.spec.options.get("sampling"),
                 "class_count": len(categories),
+                "labels": categories,
             },
         )
