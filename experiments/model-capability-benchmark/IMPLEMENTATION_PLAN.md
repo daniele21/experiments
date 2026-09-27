@@ -538,11 +538,11 @@ Metriche:
 - [x] OOS/calibration compone BANKING77 + CLINC150 tramite capability context binding;
 - [x] structured output usa validazione JSON Schema reale;
 - [x] QA e reasoning usano dataset controlled versionati;
-- [ ] l'esecuzione multi-model/multi-task con un solo comando viene completata in MCB-7, che possiede esplicitamente la responsabilità del unified runner.
+- [x] l'esecuzione multi-model/multi-task con un solo comando è implementata in MCB-7.
 
 ---
 
-## MCB-7 — Unified matrix runner
+## MCB-7 — Unified matrix runner ✅ IMPLEMENTED
 
 ### Obiettivo
 
@@ -598,10 +598,14 @@ aggregate/report
 
 ### Definition of Done
 
-- local e API model passano dallo stesso matrix runner;
-- risultati sono resumable;
-- gli errori sono tipizzati;
-- non esistono branch specifici per model family nel loop principale.
+- [x] local e API model passano dallo stesso matrix runner;
+- [x] risultati sono resumable tramite semantic case identity e attempt journal;
+- [x] gli errori/failure stage sono separati da wrong/invalid answers;
+- [x] non esistono branch specifici per model family nel loop principale;
+- [x] raw inference, evaluation, aggregates, events e manifest sono persistiti;
+- [x] provider OpenAI-compatible, OpenAI Responses e lifecycle Korgis sono registry-driven;
+- [x] fake E2E multi-model, resume, retry, provider/runtime e CLI sono coperti in CI;
+- [ ] controlled E2E con Korgis reale + API reale: pending environmental validation, non per-commit CI.
 
 ---
 
@@ -917,9 +921,9 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 - [x] BANKING77 via generic task
 - [x] structured-output task
-- [ ] one local + one API runtime
-- [ ] generic matrix runner
-- [ ] raw evidence + manifest
+- [x] one local + one API runtime
+- [x] generic matrix runner
+- [x] raw evidence + manifest
 - [ ] minimal comparative report
 
 ### Capability expansion
@@ -934,7 +938,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 ### Consolidation
 
 - [ ] capability matrix dashboard
-- [ ] resume/failure hardening
+- [x] resume/failure hardening
 - [ ] local resource telemetry
 - [ ] Jev migration cleanup
 - [ ] documentation/tutorial for adding model/task/dataset/provider
@@ -960,13 +964,17 @@ Il workstream è concluso quando:
 
 # 14. Prossimo passo
 
-Con MCB-0…6 chiusi, la configurazione completa del benchmark è stabilizzata. Il prossimo
-blocco è **MCB-7 — unified matrix runner**:
+MCB-0…7 hanno ora stabilizzato contratti, registries, capability suite e unified runner.
 
-- consumare direttamente il matrix plan MCB-6;
-- costruire runtime/provider adapter dal registry MCB-3;
-- caricare dataset MCB-5 e capability context;
-- eseguire build_request → infer → evaluate senza branch task/model-specifici;
-- persistere raw inference, evaluation e aggregate evidence incrementalmente;
-- supportare resume e failure isolation;
-- chiudere il primo E2E con un modello Korgis e un modello API sugli stessi task.
+Il prossimo blocco di sviluppo è **MCB-8 — reporting e capability matrix**:
+
+- leggere esclusivamente gli evidence artifact MCB-7;
+- produrre una vista model × capability senza overall score opaco;
+- mostrare primary metric, validity, latency p50/p95, token e cost quando noto;
+- mantenere drill-down ai singoli case/attempt;
+- distinguere API fee, costo sconosciuto e resource cost locale;
+- preparare un report comparativo minimale prima della migrazione MCB-9.
+
+In parallelo, quando sono disponibili un Korgis locale reale e credenziali API, eseguire
+il controlled E2E documentato in `MCB_7_UNIFIED_RUNNER.md` e conservare i relativi
+evidence artifact come validazione ambientale.

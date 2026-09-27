@@ -6,6 +6,14 @@ from model_capability_bench.datasets import (
     build_dataset_plugins,
     build_dataset_registry,
 )
+from model_capability_bench.runner import (
+    CapabilityRunner,
+    EvidenceStore,
+    ModelRuntime,
+    RunnerConfig,
+    RunnerSummary,
+    RuntimeResolver,
+)
 from model_capability_bench.suite import (
     CapabilityMatrixArm,
     CapabilitySuiteBundle,
@@ -25,12 +33,18 @@ __all__ = [
     "Banking77Dataset",
     "CalibratedIntentClassificationTask",
     "CapabilityMatrixArm",
+    "CapabilityRunner",
     "CapabilitySuiteBundle",
     "Clinc150OosDataset",
     "ControlledYamlDataset",
+    "EvidenceStore",
     "IntentClassificationTask",
     "MathematicalReasoningTask",
+    "ModelRuntime",
     "QaAbstentionTask",
+    "RunnerConfig",
+    "RunnerSummary",
+    "RuntimeResolver",
     "StructuredOutputControlledDataset",
     "StructuredOutputTask",
     "build_dataset_plugins",
