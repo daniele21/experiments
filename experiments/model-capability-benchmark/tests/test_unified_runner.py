@@ -138,7 +138,6 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     root = tmp_path / "evidence"
     assert len(read_jsonl_records(root / "raw.jsonl")) == 64
     assert len(read_jsonl_records(root / "evaluation.jsonl")) == 64
-    assert len(read_jsonl_records(root / "report_index.jsonl")) == 12
     assert len(read_jsonl_records(root / "aggregates.jsonl")) == 34
     report_index = read_jsonl_records(root / "report_index.jsonl")
     assert len(report_index) == 6
@@ -154,6 +153,7 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     assert resumed.aggregate_count == 34
     assert len(read_jsonl_records(root / "raw.jsonl")) == 64
     assert len(read_jsonl_records(root / "evaluation.jsonl")) == 64
+    assert len(read_jsonl_records(root / "report_index.jsonl")) == 12
 
 
 def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
