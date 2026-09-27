@@ -9,7 +9,6 @@ from imagegen_bench.config import ResolvedImageModel
 from imagegen_bench.planning import build_run_plan
 from imagegen_bench.runner import execute_run_plan
 
-
 ROOT = Path(__file__).parents[1]
 
 
