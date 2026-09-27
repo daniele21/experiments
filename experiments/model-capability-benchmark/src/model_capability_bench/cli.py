@@ -85,7 +85,7 @@ def _catalog_payload(bundle, command: str) -> Any:
             {
                 "task_id": task.spec.task_id,
                 "version": task.spec.version,
-                "evaluator": task.spec.evaluator,
+                "evaluator": task.spec.evaluator_id,
                 "evaluator_version": task.spec.evaluator_version,
                 "datasets": list(task.spec.compatible_datasets),
             }
