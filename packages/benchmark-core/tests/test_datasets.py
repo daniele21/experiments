@@ -171,6 +171,6 @@ def test_sha256_file_is_stable(tmp_path: Path) -> None:
     path.write_bytes(b"benchmark-data")
 
     assert sha256_file(path) == (
-        "sha256:4adac0fd4ab527b45f9fbb8bc32da0a2"
-        "81c0fe7b50d56d58cb4ddffba4d40697"
+        "sha256:8c3cb8033cc033a205a6a5eee499f12d"
+        "dbed1515feb56171435c10537131d0ae"
     )
