@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import html
 import json
-from collections.abc import Mapping
 from typing import Any
 
 from model_capability_bench.reporting.config import ReportingConfig
