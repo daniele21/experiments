@@ -1,0 +1,4 @@
+profile:
+  id: smoke
+  seed: 42
+  max_cases_per_task: 2
