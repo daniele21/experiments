@@ -63,9 +63,9 @@ uv run python scripts/run_benchmark.py \
   --dry-run
 ```
 
-The current Korgis Qwen Image baseline is the official BF16 Diffusers pipeline. It is
-resource-heavy and must not be described as a lightweight Apple-local profile until a separate
-quantized/MFlux runtime is integrated and validated.
+The Qwen arm uses Korgis model `qwen-image-2.1-mflux-q8`, backed by the pre-quantized MFlux
+Q8 checkpoint. Record it as a quantized Apple/MLX-oriented profile, not as a proven memory-fit
+or performance claim; representative hardware evidence is still separate.
 
 ### Real API smoke
 
@@ -236,6 +236,6 @@ Only after both vertical slices are accepted:
 - run the full image-generation v1 prompt suite;
 - add repeated generations for stochastic robustness;
 - validate the Qwen-Image-2.1 local arm on representative hardware;
-- add a quantized MFlux/MLX Qwen-Image-2.1 runtime for lighter Apple-local inference;
+- collect representative Apple Silicon evidence for the MFlux Q8 Qwen-Image-2.1 runtime;
 - add image editing/preservation experiments;
 - aggregate blind human votes without collapsing capabilities into a single opaque score.

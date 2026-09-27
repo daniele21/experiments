@@ -71,7 +71,7 @@ Do not share `blind_key.json` with reviewers before voting is complete.
 ## Add the local Qwen Image 2.1 arm through Korgis
 
 Korgis owns local model download, residency and inference. Start the
-`qwen-image-2.1` runtime in Korgis, then point the benchmark at its local API:
+`qwen-image-2.1-mflux-q8` runtime in Korgis, then point the benchmark at its local API:
 
 ```bash
 export KORGIS_BASE_URL="http://127.0.0.1:1235"
@@ -85,6 +85,7 @@ uv run python scripts/run_benchmark.py \
 
 Remove `--dry-run` only after Korgis is resident and the API-provider credentials needed for
 the other selected arms are configured. The Qwen arm is recorded as `provider_id=korgis-image`;
-it is not mislabeled as an OpenAI provider. The current Korgis baseline is the official BF16
-Diffusers pipeline, so benchmark reports should record it as a resource-heavy local baseline
-rather than implying lightweight Apple-local execution.
+it is not mislabeled as an OpenAI provider. The local arm resolves to the MFlux Q8 checkpoint and records `runtime=mflux` plus
+`quantization=Q8` in its benchmark mapping. This is a quantized Apple/MLX-oriented profile,
+but benchmark reports must not infer real-device memory fit or performance until those values
+are measured on representative hardware.
