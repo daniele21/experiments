@@ -1,0 +1,53 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from benchmark_core import load_registry, preflight_models
+
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = ROOT / "models.yaml"
+
+
+def test_committed_registry_resolves_local_and_api_models() -> None:
+    registry = load_registry(REGISTRY)
+
+    local = registry.resolve("qwen3.5-2b-q4km")
+    api = registry.resolve("gpt-5.6-luna")
+
+    assert local.runtime.deployment == "local"
+    assert local.runtime.lifecycle == "managed"
+    assert local.provider.provider_key == "korgis"
+    assert local.effective_model_id == "qwen3.5-2b-q4km"
+    assert local.model.artifact is not None
+    assert local.model.artifact.quantization == "Q4_K_M"
+
+    assert api.runtime.deployment == "api"
+    assert api.provider.provider_key == "openai"
+    assert api.effective_model_id == "gpt-5.6-luna"
+
+
+def test_committed_registry_preflight_is_selection_scoped() -> None:
+    registry = load_registry(REGISTRY)
+
+    local = registry.select(model_keys=["qwen3.5-2b-q4km"])
+    local_preflight = preflight_models(
+        registry,
+        local,
+        {"KORGIS_BASE_URL": "http://127.0.0.1:1235/v1"},
+    )
+    assert local_preflight.ok
+
+    api = registry.select(model_keys=["gpt-5.6-luna"])
+    api_preflight = preflight_models(registry, api, {})
+    assert api_preflight.ok is False
+    assert [issue.env_var for issue in api_preflight.issues] == ["OPENAI_API_KEY"]
+
+
+def test_committed_registry_contains_no_machine_specific_paths_or_secrets() -> None:
+    text = REGISTRY.read_text(encoding="utf-8")
+
+    assert "/Users/" not in text
+    assert "\\\\" not in text
+    assert "api_key:" not in text
+    assert "password:" not in text
+    assert "secret:" not in text
