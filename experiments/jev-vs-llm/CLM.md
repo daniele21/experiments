@@ -85,6 +85,7 @@ same profile and seed.
 ```bash
 uv run jev-bench compare-public \
   --profile standard \
+  --no-include-openai \
   --include-clm
 ```
 
