@@ -1,6 +1,6 @@
 # MCB-2C — Pricing, Reproducibility and Evidence Records
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — focused pricing/reproducibility gate green (24/24) and full Jev characterization suite green (51/51).
 
 MCB-2C extracts the remaining low/medium-coupling primitives needed before transport
 refactoring: token pricing math, deterministic selection/fingerprinting, and the generic
@@ -156,7 +156,7 @@ Prompt construction, bounded decision parsing and Jev question semantics must re
 - [x] selection fingerprinting exists with a golden contract;
 - [x] raw/evaluation/aggregate record contracts exist;
 - [x] leaderboard/dashboard-specific policy remains outside benchmark-core;
-- [ ] focused Ruff/compile checks pass;
-- [ ] pricing and public-data compatibility tests pass;
-- [ ] MCB-1/2A/2B gates remain green;
-- [ ] full Jev characterization suite remains green.
+- [x] focused Ruff/compile checks pass;
+- [x] pricing and public-data compatibility tests pass (24/24 focused suite);
+- [x] MCB-1/2A/2B gates remain green;
+- [x] full Jev characterization suite remains green (51/51).
