@@ -7,7 +7,6 @@ from pathlib import Path
 
 from imagegen_bench.reporting import generate_blind_review, generate_identified_report
 
-
 _TINY_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZkqsAAAAASUVORK5CYII="
 )
