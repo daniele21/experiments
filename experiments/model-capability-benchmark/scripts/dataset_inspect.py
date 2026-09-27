@@ -6,6 +6,7 @@ from pathlib import Path
 
 from benchmark_core import DatasetLoadContext, load_dataset_profiles
 from benchmark_core.config import parse_csv_selection
+
 from model_capability_bench import build_dataset_registry
 
 ROOT = Path(__file__).resolve().parents[1]
