@@ -175,7 +175,7 @@ Congelare il comportamento osservabile attuale di `jev-vs-llm` prima della refac
 
 ---
 
-## MCB-1 — Definizione dei contratti generici
+## MCB-1 — Definizione dei contratti generici ✅ COMPLETE
 
 ### Obiettivo
 
@@ -894,7 +894,7 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 ### Foundation
 
 - [x] MCB-0 characterization tests
-- [ ] MCB-1 generic contracts
+- [x] MCB-1 generic contracts
 - [ ] MCB-2 benchmark-core extraction
 
 ### Extensibility
