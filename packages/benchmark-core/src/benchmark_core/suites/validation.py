@@ -42,13 +42,15 @@ def validate_suite(
             tasks.validate_dataset(capability.task_id, dataset_id)
 
         for metric in capability.metrics:
+            task_metric_name = metric.field or metric.name
             if (
-                metric.source in {"task_metric", "evaluation"}
-                and metric.name not in declared_task_metrics
+                metric.source == "task_metric"
+                and task_metric_name not in declared_task_metrics
             ):
                 raise SuiteValidationError(
-                    f"Capability {capability.capability_id!r} metric {metric.name!r} "
-                    f"is not declared by task {capability.task_id!r}"
+                    f"Capability {capability.capability_id!r} task metric "
+                    f"{task_metric_name!r} is not declared by task "
+                    f"{capability.task_id!r}"
                 )
 
         resolved.append(ResolvedCapability(spec=capability, profile=profile))
