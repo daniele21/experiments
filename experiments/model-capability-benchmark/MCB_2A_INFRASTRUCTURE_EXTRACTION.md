@@ -1,6 +1,6 @@
 # MCB-2A — Shared Infrastructure Extraction
 
-Status: **IMPLEMENTED; CI validation pending**.
+Status: **COMPLETE** — frozen install/import gate green, focused MCB-2 tests green (14/14), and full Jev characterization suite green (49/49).
 
 MCB-2A is the first production-code extraction from `jev-vs-llm` into
 `packages/benchmark-core`.
@@ -125,6 +125,6 @@ MCB-2A is complete when:
 - [x] CSV persistence implementation is shared;
 - [x] Jev compatibility wrappers preserve public/internal call sites;
 - [x] benchmark-core remains independent from Jev;
-- [ ] `uv sync --frozen` succeeds;
-- [ ] focused core/infrastructure tests pass;
-- [ ] full MCB-0 characterization suite remains green.
+- [x] `uv sync --frozen` succeeds;
+- [x] focused core/infrastructure tests pass (14/14);
+- [x] full MCB-0 characterization suite remains green (49/49).
