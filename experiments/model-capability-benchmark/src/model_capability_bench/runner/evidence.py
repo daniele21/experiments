@@ -187,6 +187,13 @@ class EvidenceStore:
     def append_aggregate(self, record: dict[str, Any]) -> None:
         append_jsonl_record(record, self.aggregates_path)
 
+    def failed_states(self) -> list[dict[str, Any]]:
+        return [
+            state
+            for state in self._latest_state.values()
+            if state.get("status") == "failed"
+        ]
+
     def completed_evidence(self) -> list[dict[str, Any]]:
         completed = {
             (
