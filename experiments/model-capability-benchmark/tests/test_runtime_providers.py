@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import ClassVar
 
 import pytest
 from benchmark_core import InferenceRequest
@@ -13,7 +14,7 @@ ROOT = __import__("pathlib").Path(__file__).resolve().parents[1]
 
 
 class _FakeOpenAI:
-    instances: list["_FakeOpenAI"] = []
+    instances: ClassVar[list[_FakeOpenAI]] = []
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -142,7 +143,7 @@ class _FakeProvider:
 
 
 class _FakeControl:
-    instances: list["_FakeControl"] = []
+    instances: ClassVar[list[_FakeControl]] = []
 
     def __init__(self, *, base_url: str, timeout_seconds: float):
         self.base_url = base_url
