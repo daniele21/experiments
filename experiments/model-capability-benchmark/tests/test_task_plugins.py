@@ -29,9 +29,21 @@ def test_task_catalog_builds_without_runner_task_branches() -> None:
     registry = build_task_registry(TASKS)
 
     assert registry.summary() == {
-        "tasks": 2,
-        "task_ids": ["intent-classification", "structured-output"],
-        "plugins": ["intent-classification", "structured-output"],
+        "tasks": 5,
+        "task_ids": [
+            "calibrated-intent-classification",
+            "intent-classification",
+            "mathematical-reasoning",
+            "qa-abstention",
+            "structured-output",
+        ],
+        "plugins": [
+            "calibrated-intent-classification",
+            "intent-classification",
+            "mathematical-reasoning",
+            "qa-abstention",
+            "structured-output",
+        ],
     }
 
 
