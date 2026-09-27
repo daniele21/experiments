@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from benchmark_core.transports import JsonHttpResponse, TransportPolicy
+
 from jev_bench.models import QuestionSpec
 from jev_bench.providers.clm import CLMProvider
 
@@ -140,3 +142,48 @@ def test_clm_provider_fails_closed_on_missing_answer():
     assert result.valid is False
     assert result.answers == {}
     assert "answer ids mismatch" in (result.error or "")
+
+
+
+def test_clm_provider_uses_shared_transport_policy_and_auth(monkeypatch):
+    monkeypatch.setenv("BENCHMARK_MAX_RETRIES", "2")
+    monkeypatch.setenv("BENCHMARK_TIMEOUT_SECONDS", "17")
+    monkeypatch.setenv("CLM_API_KEY", "secret-token")
+
+    provider = CLMProvider(base_url="http://clm.test")
+    captured = {}
+
+    class _Transport:
+        policy = TransportPolicy(max_retries=2, timeout_seconds=17)
+
+        def request(self, method, url, *, payload=None, headers=None):
+            captured.update(
+                {
+                    "method": method,
+                    "url": url,
+                    "payload": payload,
+                    "headers": headers,
+                }
+            )
+            return JsonHttpResponse(
+                body={"answers": {}, "model": "clm-latest"},
+                headers={"X-CLM-Latency-Ms": "4.5"},
+                status_code=200,
+            )
+
+    provider.transport = _Transport()
+    body, latency = provider._post({"state": "fixture"})
+
+    assert provider.transport_policy == TransportPolicy(
+        max_retries=2,
+        timeout_seconds=17,
+    )
+    assert provider.timeout == 17
+    assert captured == {
+        "method": "POST",
+        "url": "http://clm.test/v1/systemone",
+        "payload": {"state": "fixture"},
+        "headers": {"Authorization": "Bearer secret-token"},
+    }
+    assert body["model"] == "clm-latest"
+    assert latency == 4.5
