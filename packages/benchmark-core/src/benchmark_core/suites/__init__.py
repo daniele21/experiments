@@ -7,6 +7,7 @@ from benchmark_core.suites.contracts import (
     CapabilityContextBinding,
     CapabilityMetricSpec,
     CapabilitySpec,
+    ContextSource,
     MetricReducer,
     MetricSource,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "CapabilityContextError",
     "CapabilityMetricSpec",
     "CapabilitySpec",
+    "ContextSource",
     "MetricReducer",
     "MetricSource",
     "ResolvedCapability",
