@@ -1,0 +1,7 @@
+profile:
+  id: smoke
+  seed: 42
+  categories:
+    text_rendering: 2
+    compositional: 2
+  outputs_per_prompt: 1
