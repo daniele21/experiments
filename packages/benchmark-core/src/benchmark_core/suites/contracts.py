@@ -7,6 +7,19 @@ from typing import Any, Literal
 from benchmark_core.contracts import GenerationConfig
 
 MetricSource = Literal["task_metric", "evaluation", "inference"]
+MetricReducer = Literal[
+    "mean",
+    "sum",
+    "rate",
+    "macro_f1",
+    "in_scope_accuracy",
+    "oos_detection",
+    "ece",
+    "brier",
+    "p50",
+    "p95",
+    "invalid_rate",
+]
 
 
 @dataclass(frozen=True)
@@ -21,8 +34,22 @@ class CapabilityMetricSpec:
     def __post_init__(self) -> None:
         if not self.name.strip():
             raise ValueError("metric name must not be empty")
-        if not self.reducer.strip():
-            raise ValueError("metric reducer must not be empty")
+        if self.source not in {"task_metric", "evaluation", "inference"}:
+            raise ValueError(f"Unsupported metric source: {self.source}")
+        if self.reducer not in {
+            "mean",
+            "sum",
+            "rate",
+            "macro_f1",
+            "in_scope_accuracy",
+            "oos_detection",
+            "ece",
+            "brier",
+            "p50",
+            "p95",
+            "invalid_rate",
+        }:
+            raise ValueError(f"Unsupported metric reducer: {self.reducer}")
         if self.field is not None and not self.field.strip():
             raise ValueError("metric field must not be empty")
 
