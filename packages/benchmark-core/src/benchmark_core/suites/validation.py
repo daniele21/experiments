@@ -41,6 +41,17 @@ def validate_suite(
             datasets.get(dataset_id)
             tasks.validate_dataset(capability.task_id, dataset_id)
 
+        for binding in capability.context_bindings:
+            if (
+                binding.source == "dataset_metadata"
+                and binding.dataset_id not in capability.dataset_ids
+            ):
+                raise SuiteValidationError(
+                    f"Capability {capability.capability_id!r} context "
+                    f"{binding.key!r} references dataset {binding.dataset_id!r} "
+                    "outside the capability dataset set"
+                )
+
         for metric in capability.metrics:
             task_metric_name = metric.field or metric.name
             if (
