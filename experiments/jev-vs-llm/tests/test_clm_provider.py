@@ -82,6 +82,46 @@ def test_clm_provider_maps_noul_to_existing_harness_semantics():
     assert result.answers["urgent"].predicted_probability == 0.8
 
 
+
+def test_clm_provider_accepts_banking77_sized_choice_space():
+    provider = CLMProvider()
+    criteria = {f"intent_{index}": f"Banking intent {index}" for index in range(77)}
+    probabilities = {key: 0.2 / 76 for key in criteria}
+    probabilities["intent_42"] = 0.8
+
+    def fake_post(payload):
+        assert len(payload["questions"]["intent"]["criteria"]) == 77
+        return (
+            {
+                "model": "clm-latest",
+                "answers": {
+                    "intent": {
+                        "type": "choice",
+                        "choice": "intent_42",
+                        "confidence": 0.79,
+                        "probabilities": probabilities,
+                    }
+                },
+                "usage": {},
+            },
+            None,
+        )
+
+    provider._post = fake_post
+    question = QuestionSpec(
+        id="intent",
+        type="choice",
+        instructions="Classify the banking request.",
+        criteria=criteria,
+    )
+
+    result = provider.evaluate("Where is my transfer?", [question])
+
+    assert result.valid is True
+    assert len(result.answers["intent"].probabilities) == 77
+    assert result.answers["intent"].value == "intent_42"
+    assert result.answers["intent"].predicted_probability == pytest.approx(0.8)
+
 def test_clm_provider_fails_closed_on_missing_answer():
     provider = CLMProvider()
     provider._post = lambda payload: (
