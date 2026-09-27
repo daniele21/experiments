@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from jev_bench.models import QuestionSpec
 from jev_bench.providers.clm import CLMProvider
 
@@ -74,8 +76,9 @@ def test_clm_provider_maps_noul_to_existing_harness_semantics():
 
     assert result.valid is True
     assert result.answers["urgent"].value == 0.8
-    assert result.answers["urgent"].probabilities == {"yes": 0.8, "no": 0.2}
-    assert result.answers["urgent"].confidence == 0.6000000000000001
+    assert result.answers["urgent"].probabilities["yes"] == pytest.approx(0.8)
+    assert result.answers["urgent"].probabilities["no"] == pytest.approx(0.2)
+    assert result.answers["urgent"].confidence == pytest.approx(0.6)
     assert result.answers["urgent"].predicted_probability == 0.8
 
 
