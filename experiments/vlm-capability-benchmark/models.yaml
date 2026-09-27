@@ -1,0 +1,3 @@
+# Concrete model/runtime entries are added only when their adapter is implemented
+# and verified. Keeping this registry empty prevents stale or speculative model IDs.
+models: {}

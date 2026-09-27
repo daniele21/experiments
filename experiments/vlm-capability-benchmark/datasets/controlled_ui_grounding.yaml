@@ -1,0 +1,22 @@
+dataset:
+  id: controlled-ui-grounding-v1
+  version: "1"
+  license: synthetic
+  coordinate_space: normalized_0_1
+
+cases:
+  - sample_id: ui-create-project-001
+    task: ui_grounding
+    asset: fixtures/create_project.svg
+    question: Where should I click to create a new project?
+    expected: Create project
+    target_label: Create project
+    target_box: [0.775, 0.08, 0.95, 0.17]
+
+  - sample_id: ui-settings-001
+    task: ui_grounding
+    asset: fixtures/settings.svg
+    question: Where should I click to open workspace settings?
+    expected: Settings
+    target_label: Settings
+    target_box: [0.025, 0.84, 0.20, 0.94]
