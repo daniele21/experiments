@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pandas as pd
-
 from benchmark_core.run_identity import RunIdentity
 
 from jev_bench import cli
