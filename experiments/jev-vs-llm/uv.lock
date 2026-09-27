@@ -120,10 +120,16 @@ wheels = [
 ]
 
 [[package]]
+name = "benchmark-core"
+version = "0.1.0"
+source = { editable = "../../packages/benchmark-core" }
+
+[[package]]
 name = "jev-bench"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "benchmark-core" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "openai" },
@@ -142,6 +148,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "benchmark-core", editable = "../../packages/benchmark-core" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "openai", specifier = ">=1.0" },
     { name = "pandas", specifier = ">=2.2" },
