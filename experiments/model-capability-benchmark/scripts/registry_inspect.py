@@ -59,6 +59,13 @@ def main() -> int:
                     if item.model.artifact is not None
                     else None
                 ),
+                "capabilities": {
+                    "text_input": item.model.capabilities.text_input,
+                    "image_input": item.model.capabilities.image_input,
+                    "image_output": item.model.capabilities.image_output,
+                    "image_editing": item.model.capabilities.image_editing,
+                    "multi_image_input": item.model.capabilities.multi_image_input,
+                },
                 "tags": list(item.model.tags),
             }
             for item in selected
