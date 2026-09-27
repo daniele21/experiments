@@ -34,3 +34,19 @@ Provider adapters must preserve the exact prompt, persist generated images throu
 preference.
 
 See `IMPLEMENTATION_PLAN.md` for the full workstream.
+
+## Dry-run the first comparison
+
+Resolve the exact model/prompt matrix without making provider calls:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+Remove `--dry-run` only after `OPENAI_API_KEY` and `GEMINI_API_KEY` are configured.
+The runner writes one run directory containing the manifest, incremental evidence CSV and
+content-addressed generated artifacts.

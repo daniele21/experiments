@@ -108,7 +108,16 @@ class GeminiImageProvider:
             )
 
 
-def create_gemini_image_client(*, api_key: str) -> Any:
+def create_gemini_image_client(*, api_key: str, policy: Any) -> Any:
     from google import genai
+    from google.genai import types
 
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(
+            timeout=int(policy.timeout_seconds * 1000),
+            retry_options=types.HttpRetryOptions(
+                attempts=policy.max_retries + 1,
+            ),
+        ),
+    )
