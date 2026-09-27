@@ -28,8 +28,7 @@ def canonical_task_name(experiment: str) -> str:
     """Normalize experiment tags like '01-routing-public' or '01-routing' to 'routing'."""
     clean = str(experiment).strip().lower()
     for prefix in ["01-", "02-", "03-", "04-", "05-"]:
-        if clean.startswith(prefix):
-            clean = clean[len(prefix):]
+        clean = clean.removeprefix(prefix)
     clean = clean.replace("-public", "").replace("_", "-")
     return clean
 
@@ -88,12 +87,12 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
     records = []
 
     for (provider, model, series), group in with_s.groupby(["provider", "model", "series"]):
-        valid = group[group["valid"] == True]  # noqa: E712
-        primary = valid[valid["primary_metric"].fillna(False) == True]  # noqa: E712
+        valid = group[group["valid"] == True]
+        primary = valid[valid["primary_metric"].fillna(False) == True]
         reqs = group.sort_values("case_id").drop_duplicates(
             ["experiment", "case_id", "provider", "model"]
         )
-        valid_reqs = reqs[reqs["valid"] == True]  # noqa: E712
+        valid_reqs = reqs[reqs["valid"] == True]
 
         costs = (
             valid_reqs["estimated_cost_usd"].dropna()
