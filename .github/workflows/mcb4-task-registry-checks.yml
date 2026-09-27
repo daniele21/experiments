@@ -49,7 +49,7 @@ jobs:
       - name: Task registry tests
         run: >
           uv run pytest
-          ../../packages/benchmark-core/tests/test_tasks.py
+          ../../packages/benchmark-core/tests/test_task_plugins.py
           tests/test_tasks.py
 
       - name: Inspect configured tasks
