@@ -110,9 +110,9 @@ class ExperimentOrchestrator:
             # 2. Run experiments for this model
             for exp_name in experiments:
                 arm = BenchmarkArm(model_key=model, task_id=exp_name)
-                execution = execute_arm(
-                    arm,
-                    lambda: run_single_experiment(
+
+                def run_and_persist() -> pd.DataFrame:
+                    frame = run_single_experiment(
                         exp_name=exp_name,
                         provider=provider,
                         model_name=model,
@@ -120,14 +120,16 @@ class ExperimentOrchestrator:
                         profile=profile,
                         cache_dir=self.cache_dir,
                         seed=self.seed,
-                    ),
-                )
+                    )
+                    tagged = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
+                    append_results(tagged, self.output_csv)
+                    return tagged
+
+                execution = execute_arm(arm, run_and_persist)
                 if execution.succeeded:
-                    frame = execution.value
-                    if not isinstance(frame, pd.DataFrame):
+                    tagged_frame = execution.value
+                    if not isinstance(tagged_frame, pd.DataFrame):
                         raise TypeError("benchmark arm did not return a DataFrame")
-                    tagged_frame = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
-                    append_results(tagged_frame, self.output_csv)
                     all_frames.append(tagged_frame)
 
                     summary = summarize_records(tagged_frame.to_dict(orient="records"))
@@ -149,7 +151,7 @@ class ExperimentOrchestrator:
                         f"| Latency: [cyan]{summary['avg_latency_ms']:.0f}ms[/]\n"
                     )
                 else:
-                    error = f"{execution.error_type}: {execution.error_message}"
+                    error = execution.error_message or "unknown execution error"
                     logger.error(
                         "Experiment '%s' on model '%s' failed: %s",
                         exp_name,
