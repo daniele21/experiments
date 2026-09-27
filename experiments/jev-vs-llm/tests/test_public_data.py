@@ -68,3 +68,20 @@ def test_full_calibration_matches_in_scope_to_filtered_oos(tmp_path: Path):
     assert len(oos) == 2
     assert len(in_scope) == 2
     assert all(case.expected["intent"] == "other" for case in oos)
+
+
+
+def test_banking_subset_is_reproducible_for_same_seed(tmp_path: Path):
+    cache = tmp_path / "cache"
+    _write_fixture(cache)
+
+    first = balanced_banking77_cases(cache, max_cases=4, seed=7)
+    second = balanced_banking77_cases(cache, max_cases=4, seed=7)
+
+    assert [
+        (case.case_id, case.state, case.expected, case.metadata)
+        for case in first
+    ] == [
+        (case.case_id, case.state, case.expected, case.metadata)
+        for case in second
+    ]
