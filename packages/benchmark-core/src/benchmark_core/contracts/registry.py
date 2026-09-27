@@ -35,7 +35,7 @@ class ModelCapabilities:
     image_editing: bool = False
     multi_image_input: bool = False
 
-    def missing(self, required: "ModelCapabilities") -> tuple[str, ...]:
+    def missing(self, required: ModelCapabilities) -> tuple[str, ...]:
         return tuple(
             name
             for name in (
