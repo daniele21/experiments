@@ -17,7 +17,7 @@ class RuntimeFactoryError(ValueError):
     """Raised when a configured runtime cannot be materialized."""
 
 
-class RuntimeResolver:
+class RegistryRuntimeResolver:
     def __init__(
         self,
         environ: Mapping[str, str],
