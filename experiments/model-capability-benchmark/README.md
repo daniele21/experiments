@@ -14,7 +14,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-3 unified model/runtime/provider registry: complete;
 - MCB-4 task plugin registry: complete;
 - MCB-5 dataset registry/adapters: complete;
-- MCB-6 five-capability suite: complete.
+- MCB-6 five-capability suite: complete;
+- MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending.
 
 ## Registry
 
@@ -107,8 +108,33 @@ uv run python scripts/suite_inspect.py \
   --capabilities all
 ```
 
+## Unified runner
+
+The `model-bench` CLI now executes the same capability matrix across local and API
+models:
+
+```bash
+uv run model-bench run \
+  --run-group capability-smoke \
+  --models qwen3.5-2b-q4km,gpt-5.6-luna \
+  --capabilities structured-output,mathematical-reasoning \
+  --profile smoke
+```
+
+The runner persists `state.jsonl`, `raw.jsonl`, `evaluation.jsonl`,
+`aggregates.jsonl`, `events.jsonl`, `environment.json` and
+`run_manifest.json` incrementally.
+
+Re-running the same semantic matrix resumes from completed case identities. Use
+`--retry-failures` to rerun only terminal failed cases.
+
+Korgis model residency is managed through its admin API; the Korgis server process itself
+is intentionally external to this benchmark.
+
+See `MCB_7_UNIFIED_RUNNER.md` for architecture, failure semantics and the controlled
+real-provider validation runbook.
+
 ## What comes next
 
-MCB-7 consumes this matrix plan in the unified model × capability × dataset runner,
-including incremental raw/evaluation evidence, aggregate reducers, failure isolation and
-resume support.
+MCB-8 adds the comparative capability-matrix reporting layer on top of the raw,
+evaluation and aggregate evidence now produced by MCB-7.
