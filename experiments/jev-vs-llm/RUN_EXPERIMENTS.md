@@ -218,6 +218,107 @@ uv run python scripts/run_local_matrix.py \
 
 ---
 
+## 4-bis. CLM-8B — Runner Autonomo sullo Stesso Harness
+
+CLM usa lo stesso executor per esperimento usato dal runner Korgis: stessi casi,
+stesse label, stesso seed, stesso schema di righe e stesso report. Cambia solo
+il provider.
+
+Il server CLM non viene avviato dal Mac: il reference runtime richiede Linux +
+NVIDIA per il pooling encoder Qwen3-8B. Lo script fa invece un **preflight**
+su `/health` e `/v1/models`, rifiuta runtime mock/unhealthy e poi avvia il
+benchmark.
+
+Se CLM gira su una macchina remota, crea prima il tunnel:
+
+```bash
+ssh -L 8700:localhost:8700 <gpu-host>
+```
+
+Poi, dalla root del benchmark:
+
+```bash
+cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+export CLM_BASE_URL=http://127.0.0.1:8700
+export CLM_MODEL=clm-latest
+```
+
+### A. Test consigliato iniziale — BANKING77 budget (77 casi)
+
+Il comando più corto è:
+
+```bash
+uv run python scripts/run_clm_matrix.py
+```
+
+I default sono già:
+
+```text
+model       = clm-latest
+experiments = routing
+dataset     = public
+profile     = budget
+seed        = 42
+```
+
+Forma esplicita equivalente:
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+```
+
+### B. BANKING77 standard — 770 casi
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
+  --dataset public \
+  --profile standard
+```
+
+### C. Routing + calibration pubblici
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments all \
+  --dataset public \
+  --profile budget
+```
+
+Su `public`, `all` significa solo `routing,calibration`, coerentemente con
+il runner locale.
+
+### D. Smoke completo sui 5 esperimenti
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments all \
+  --dataset smoke
+```
+
+### Output CLM
+
+Il runner salva automaticamente:
+
+```text
+results/raw/clm_results.csv
+results/clm_report.html
+results/manifests/<run-group>.json
+```
+
+Il manifest include modello CLM richiesto, modelli realmente serviti,
+temperatura, seed, dataset/profile e endpoint usato. La API key non viene
+persistita.
+
+---
+
 ## 5. Modalità Interattiva e Opzioni Avanzate
 
 ### Selezione Interattiva da Menu CLI

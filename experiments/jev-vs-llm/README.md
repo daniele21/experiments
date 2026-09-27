@@ -1343,12 +1343,18 @@ uv run jev-bench compare-public \
 
 ### CLM-8B only on BANKING77
 
+Recommended autonomous runner:
+
 ```bash
-uv run jev-bench experiment routing \
-  --provider clm \
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
   --dataset public \
   --profile standard
 ```
+
+For the first 77-case budget run, `uv run python scripts/run_clm_matrix.py`
+is enough because those are the defaults.
 
 ### Jev + CLM-8B + Korgis without GPT baselines
 
