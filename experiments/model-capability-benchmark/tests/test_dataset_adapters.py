@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from benchmark_core import DatasetLoadContext, load_dataset_profiles
+
 from model_capability_bench import build_dataset_registry, build_task_registry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,18 +21,13 @@ def _write_public_fixtures(cache_dir: Path) -> None:
         encoding="utf-8",
     )
     (banking / "test.csv").write_text(
-        "\n".join(
-            [
-                "text,category",
-                "Cash withdrawal one,cash_withdrawal",
-                "Cash withdrawal two,cash_withdrawal",
-                "Card payment one,card_payment",
-                "Card payment two,card_payment",
-                "Refund one,refund",
-                "Refund two,refund",
-            ]
-        )
-        + "\n",
+        "text,category\n"
+        "Cash withdrawal one,cash_withdrawal\n"
+        "Cash withdrawal two,cash_withdrawal\n"
+        "Card payment one,card_payment\n"
+        "Card payment two,card_payment\n"
+        "Refund one,refund\n"
+        "Refund two,refund\n",
         encoding="utf-8",
     )
 
