@@ -105,32 +105,37 @@ push or pull request events.
 
 ## 3. Qwen3-VL local smoke
 
-The first registered VLM baseline is:
+The benchmark model key remains `qwen3-vl-4b-instruct`, but local inference is owned by
+Korgis. The request model ID sent by the benchmark is the Korgis registry key:
 
 ```text
-Qwen/Qwen3-VL-4B-Instruct
+qwen3-vl-4b
 ```
 
-Qwen's model documentation exposes it through a vLLM OpenAI-compatible server. The benchmark
-adapter therefore remains generic rather than Qwen-specific.
+Korgis resolves that key to its registered MLX VLM artifact
+`mlx-community/Qwen3-VL-4B-Instruct-4bit`. The benchmark remains backend-agnostic and only
+depends on Korgis' OpenAI-compatible HTTP boundary.
 
-### Start the local server
+### Start Korgis
 
-Use a dedicated environment suitable for the target GPU:
+From the Korgis repository:
 
 ```bash
-pip install vllm
-vllm serve "Qwen/Qwen3-VL-4B-Instruct"
+uv sync --frozen --extra dev --extra vision
+uv run --frozen local-llm download qwen3-vl-4b
+uv run --frozen local-llm serve \
+  --model qwen3-vl-4b \
+  --enable-admin-api \
+  --no-download
 ```
 
-The default endpoint is:
+The default public endpoint is:
 
 ```text
-http://localhost:8000
+http://127.0.0.1:1235
 ```
 
-The same benchmark can target a remote OpenAI-compatible deployment by changing
-`VLM_BASE_URL`.
+The same benchmark can target another Korgis deployment by changing `KORGIS_BASE_URL`.
 
 ### Benchmark dry-run
 
@@ -140,7 +145,7 @@ In a separate shell:
 cd experiments/vlm-capability-benchmark
 uv sync --extra dev
 
-export VLM_BASE_URL="http://localhost:8000"
+export KORGIS_BASE_URL="http://127.0.0.1:1235"
 
 uv run python scripts/run_benchmark.py \
   --models qwen3-vl-4b-instruct \
@@ -195,7 +200,7 @@ The first real smoke is accepted when:
 
 The first real smoke is accepted when:
 
-1. both controlled UI cases reach the configured OpenAI-compatible endpoint;
+1. both controlled UI cases reach the configured Korgis OpenAI-compatible endpoint;
 2. input visual evidence is copied into the run directory with SHA-256 provenance;
 3. model output is parsed as `target/x/y` or recorded as a typed invalid result;
 4. click hit, target match and point distance are persisted separately;
