@@ -1,0 +1,46 @@
+tasks:
+  intent-classification:
+    version: "1"
+    plugin: intent-classification
+    evaluator: exact-label
+    evaluator_version: "1"
+    compatible_datasets:
+      - banking77
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: intent-classification-v1
+      version: "1"
+    metrics:
+      - name: accuracy
+        primary: true
+      - name: macro_f1
+    options:
+      instruction: >-
+        Classify the input into exactly one of the allowed labels and return only the
+        structured response requested by the schema.
+      output_field: label
+      labels_metadata_key: labels
+
+  structured-output:
+    version: "1"
+    plugin: structured-output
+    evaluator: exact-fields
+    evaluator_version: "1"
+    compatible_datasets:
+      - structured-output-controlled-v1
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: structured-output-v1
+      version: "1"
+    metrics:
+      - name: schema_valid_rate
+        primary: true
+      - name: field_accuracy
+      - name: hallucinated_fields
+    options:
+      instruction: >-
+        Extract the requested fields from the input and return a response that follows
+        the provided JSON schema exactly.
+      schema_metadata_key: response_schema
