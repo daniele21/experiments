@@ -11,9 +11,7 @@ from typing import Any
 
 def normalize_clm_base_url(value: str) -> str:
     """Return the CLM root URL even when a caller supplies a /v1 suffix."""
-    root = value.strip().rstrip("/")
-    if root.endswith("/v1"):
-        root = root[:-3]
+    root = value.strip().rstrip("/").removesuffix("/v1")
     if not root:
         raise ValueError("CLM base URL must not be empty")
     return root
@@ -58,7 +56,7 @@ class CLMEndpoint:
                 f"Cannot reach CLM endpoint {self.base_url}: {exc.reason}"
             ) from exc
         if not isinstance(payload, dict):
-            raise RuntimeError(f"CLM {path} did not return a JSON object")
+            raise TypeError(f"CLM {path} did not return a JSON object")
         return payload
 
     def preflight(self, requested_models: Sequence[str]) -> dict[str, Any]:
@@ -70,7 +68,7 @@ class CLMEndpoint:
         models_payload = self._get("/v1/models", timeout=min(self.timeout, 10.0))
         raw_models = models_payload.get("models")
         if not isinstance(raw_models, list):
-            raise RuntimeError("CLM /v1/models response has no models array")
+            raise TypeError("CLM /v1/models response has no models array")
 
         served = {
             str(item.get("name"))
