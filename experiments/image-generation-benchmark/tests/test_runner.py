@@ -37,6 +37,14 @@ class FakeImageProvider:
             normalized_output={"artifact_id": artifact.artifact_id},
             output_artifacts=(artifact,),
             latency_ms=1.0,
+            metadata={
+                "generation_options": {"size": "1024x1024"},
+                "korgis": {
+                    "runtime_key": "qwen-image-2.1-mflux-q8",
+                    "backend": "mflux_image",
+                    "generation": {"quantization_bits": 8},
+                },
+            },
         )
 
 
@@ -61,6 +69,9 @@ def test_runner_persists_incremental_evidence_artifacts_and_manifest(tmp_path) -
 
     assert len(rows) == 4
     assert all(row["valid"] for row in rows)
+    provider_metadata = json.loads(rows[0]["provider_metadata"])
+    assert provider_metadata["korgis"]["backend"] == "mflux_image"
+    assert provider_metadata["korgis"]["generation"]["quantization_bits"] == 8
     run_dirs = [path for path in tmp_path.iterdir() if path.is_dir()]
     assert len(run_dirs) == 1
     run_dir = run_dirs[0]

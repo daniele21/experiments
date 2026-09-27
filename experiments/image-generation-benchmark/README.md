@@ -32,7 +32,8 @@ uv run ruff check src tests
 
 Provider adapters must preserve the exact prompt, persist generated images through
 `benchmark-core` artifact primitives and keep automatic evidence separate from blind human
-preference.
+preference. Provider/runtime metadata is persisted in `evidence.csv`; the identified report
+surfaces runtime/backend/quantization provenance when supplied, while the blind report hides it.
 
 See `IMPLEMENTATION_PLAN.md` for the full workstream.
 
@@ -62,7 +63,7 @@ uv run python scripts/generate_report.py --run-dir results/<run-id>
 
 This creates:
 - `report.html`: identified side-by-side comparison by prompt;
-- `blind_review.html`: model-hidden A/B evaluation UI with vote export;
+- `blind_review.html`: model-hidden pairwise evaluation UI with vote export; for N selected models it generates every unique pair per prompt;
 - `blind_key.json`: separate A/B-to-model key for post-review analysis.
 
 Do not share `blind_key.json` with reviewers before voting is complete.
