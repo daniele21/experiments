@@ -3,13 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from benchmark_core import (
     GenerationConfig,
     InferenceResult,
     Sample,
     TaskExecutionContext,
 )
+
 from model_capability_bench import build_task_registry
 
 ROOT = Path(__file__).resolve().parents[1]
