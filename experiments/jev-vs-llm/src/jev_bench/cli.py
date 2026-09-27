@@ -514,6 +514,10 @@ def compare_public(
         str | None,
         typer.Option(help="Comma-separated OpenAI model matrix. Defaults to OPENAI_MODELS."),
     ] = None,
+    include_openai: Annotated[
+        bool,
+        typer.Option(help="Include the OpenAI model matrix in this comparison."),
+    ] = True,
     include_minicpm: Annotated[
         bool,
         typer.Option(help="Also benchmark MiniCPM through the official ModelBest API."),
@@ -564,7 +568,7 @@ def compare_public(
             "Use --allow-moving-jev-model only for exploratory runs."
         )
 
-    model_matrix = _model_matrix(models)
+    model_matrix = _model_matrix(models) if include_openai else []
     minicpm_provider = MiniCPMProvider(model=minicpm_model) if include_minicpm else None
     clm_provider = CLMProvider(model=clm_model) if include_clm else None
     local_matrix = _local_model_matrix(local_models) if include_local else []
@@ -662,7 +666,8 @@ def compare_public(
     )
     build_report(output, html, run_group=group)
     typer.echo(f"Comparison group: {group}")
-    typer.echo(f"GPT models: {', '.join(model_matrix)}")
+    if model_matrix:
+        typer.echo(f"GPT models: {', '.join(model_matrix)}")
     if minicpm_provider is not None:
         typer.echo(f"MiniCPM API model: {minicpm_provider.model}")
     if clm_provider is not None:
