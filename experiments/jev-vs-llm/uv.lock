@@ -123,6 +123,14 @@ wheels = [
 name = "benchmark-core"
 version = "0.1.0"
 source = { editable = "../../packages/benchmark-core" }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyyaml", specifier = ">=6.0.3" },
+]
 
 [[package]]
 name = "jev-bench"
