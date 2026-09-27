@@ -8,6 +8,7 @@ from benchmark_core.config import load_yaml_mapping
 from benchmark_core.contracts import GenerationConfig
 from benchmark_core.suites.contracts import (
     BenchmarkSuiteSpec,
+    CapabilityContextBinding,
     CapabilityMetricSpec,
     CapabilitySpec,
 )
@@ -67,10 +68,53 @@ def _metric(raw: Any, *, capability_id: str, index: int) -> CapabilityMetricSpec
     )
 
 
+def _context_binding(
+    key: str,
+    raw: Any,
+    *,
+    capability_id: str,
+) -> CapabilityContextBinding:
+    data = _mapping(
+        raw,
+        context=f"capability {capability_id!r} context {key!r}",
+    )
+    _reject_unknown(
+        data,
+        allowed={"source", "dataset", "dataset_id", "field", "value", "append"},
+        context=f"capability {capability_id!r} context {key!r}",
+    )
+    append_raw = data.get("append") or []
+    if not isinstance(append_raw, list):
+        raise SuiteConfigError(
+            f"capability {capability_id!r} context {key!r} append must be a list"
+        )
+    return CapabilityContextBinding(
+        key=key,
+        source=str(data.get("source") or ""),
+        dataset_id=(
+            str(data.get("dataset") or data.get("dataset_id"))
+            if data.get("dataset") is not None or data.get("dataset_id") is not None
+            else None
+        ),
+        field=str(data["field"]) if data.get("field") is not None else None,
+        value=data.get("value"),
+        append=tuple(append_raw),
+    )
+
+
 def _capability(capability_id: str, raw: Mapping[str, Any]) -> CapabilitySpec:
     _reject_unknown(
         raw,
-        allowed={"task", "task_id", "datasets", "metrics", "description", "tags", "options"},
+        allowed={
+            "task",
+            "task_id",
+            "datasets",
+            "metrics",
+            "description",
+            "tags",
+            "context",
+            "options",
+        },
         context=f"capability {capability_id!r}",
     )
     metrics_raw = raw.get("metrics")
@@ -80,6 +124,11 @@ def _capability(capability_id: str, raw: Mapping[str, Any]) -> CapabilitySpec:
     if not isinstance(tags_raw, list):
         raise SuiteConfigError(f"capability {capability_id!r} tags must be a list")
     options = raw.get("options") or {}
+    context_raw = raw.get("context") or {}
+    context = _mapping(
+        context_raw,
+        context=f"capability {capability_id!r} context",
+    )
     return CapabilitySpec(
         capability_id=capability_id,
         task_id=str(raw.get("task") or raw.get("task_id") or ""),
@@ -95,6 +144,14 @@ def _capability(capability_id: str, raw: Mapping[str, Any]) -> CapabilitySpec:
             str(raw["description"]) if raw.get("description") is not None else None
         ),
         tags=tuple(str(tag) for tag in tags_raw),
+        context_bindings=tuple(
+            _context_binding(
+                str(key),
+                value,
+                capability_id=capability_id,
+            )
+            for key, value in context.items()
+        ),
         options=dict(
             _mapping(options, context=f"capability {capability_id!r} options")
         ),
