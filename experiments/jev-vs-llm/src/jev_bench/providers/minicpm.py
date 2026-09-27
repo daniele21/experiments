@@ -6,8 +6,6 @@ import time
 from collections.abc import Sequence
 from typing import Any
 
-from openai import OpenAI
-
 from benchmark_core.transports import (
     create_openai_compatible_client,
     resolve_transport_policy,
