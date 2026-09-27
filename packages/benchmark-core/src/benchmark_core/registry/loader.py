@@ -40,6 +40,10 @@ def _provider(key: str, raw: Mapping[str, Any]) -> ProviderSpec:
         api_key_env=(
             str(raw["api_key_env"]) if raw.get("api_key_env") is not None else None
         ),
+        required_env=_tuple_of_strings(
+            raw.get("required_env"),
+            context=f"provider {key!r} required_env",
+        ),
         options=_options(raw.get("options"), context=f"provider {key!r} options"),
     )
 
@@ -79,6 +83,11 @@ def _model(key: str, raw: Mapping[str, Any]) -> ModelSpec:
         model_key=key,
         model_id=str(raw.get("model_id") or ""),
         runtime_key=str(raw.get("runtime") or raw.get("runtime_key") or ""),
+        runtime_model_id=(
+            str(raw["runtime_model_id"])
+            if raw.get("runtime_model_id") is not None
+            else None
+        ),
         family=str(raw["family"]) if raw.get("family") is not None else None,
         parameters_b=(
             float(raw["parameters_b"]) if raw.get("parameters_b") is not None else None
