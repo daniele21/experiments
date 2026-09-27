@@ -107,6 +107,11 @@ def execute_run_plan(
                         dict(model.generation),
                         sort_keys=True,
                     ),
+                    "provider_metadata": json.dumps(
+                        dict(result.metadata),
+                        sort_keys=True,
+                        default=str,
+                    ),
                 }
             else:
                 row = {
@@ -128,6 +133,7 @@ def execute_run_plan(
                         dict(model.generation),
                         sort_keys=True,
                     ),
+                    "provider_metadata": "{}",
                 }
             rows.append(row)
             append_csv_records([row], evidence_path)
