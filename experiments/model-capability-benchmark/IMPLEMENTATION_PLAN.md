@@ -451,7 +451,7 @@ I singoli task possono fare override dichiarativi.
 
 ---
 
-## MCB-6 — Prima capability suite
+## MCB-6 — Prima capability suite ✅ COMPLETE
 
 ### Obiettivo
 
@@ -532,9 +532,13 @@ Metriche:
 
 ### Definition of Done
 
-- almeno 4 capability differenti;
-- almeno 3 dataset/task family indipendenti;
-- stesso comando può valutare più modelli su più task.
+- [x] 5 capability differenti: classification, OOS/calibration, structured output, QA/abstention, reasoning;
+- [x] almeno 3 dataset/task family indipendenti;
+- [x] local e API model attraversano lo stesso suite planner e la stessa matrice dichiarativa;
+- [x] OOS/calibration compone BANKING77 + CLINC150 tramite capability context binding;
+- [x] structured output usa validazione JSON Schema reale;
+- [x] QA e reasoning usano dataset controlled versionati;
+- [ ] l'esecuzione multi-model/multi-task con un solo comando viene completata in MCB-7, che possiede esplicitamente la responsabilità del unified runner.
 
 ---
 
@@ -911,8 +915,8 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 ### First product slice
 
-- [ ] BANKING77 via generic task
-- [ ] structured-output task
+- [x] BANKING77 via generic task
+- [x] structured-output task
 - [ ] one local + one API runtime
 - [ ] generic matrix runner
 - [ ] raw evidence + manifest
@@ -920,9 +924,9 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 
 ### Capability expansion
 
-- [ ] calibration/OOS
-- [ ] QA + abstention
-- [ ] reasoning
+- [x] calibration/OOS
+- [x] QA + abstention
+- [x] reasoning
 - [ ] summarization
 - [ ] extraction
 - [ ] tool/function calling
@@ -956,11 +960,13 @@ Il workstream è concluso quando:
 
 # 14. Prossimo passo
 
-Con MCB-0…5 chiusi, la foundation è pronta. Il prossimo blocco è **MCB-6 — capability suite**:
+Con MCB-0…6 chiusi, la configurazione completa del benchmark è stabilizzata. Il prossimo
+blocco è **MCB-7 — unified matrix runner**:
 
-- comporre task + dataset + metriche in una suite dichiarativa;
-- chiudere il primo slice su BANKING77 intent classification e structured-output;
-- aggiungere OOS/calibration usando BANKING77 + CLINC150;
-- preparare QA/abstention e reasoning come capability successive.
-
-Il runner unificato model × task × dataset viene poi materializzato in MCB-7 sulla base di questi contratti già stabilizzati.
+- consumare direttamente il matrix plan MCB-6;
+- costruire runtime/provider adapter dal registry MCB-3;
+- caricare dataset MCB-5 e capability context;
+- eseguire build_request → infer → evaluate senza branch task/model-specifici;
+- persistere raw inference, evaluation e aggregate evidence incrementalmente;
+- supportare resume e failure isolation;
+- chiudere il primo E2E con un modello Korgis e un modello API sugli stessi task.
