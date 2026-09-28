@@ -62,7 +62,7 @@ A convenient local layout is:
 └── korgis/
 ```
 
-The suite auto-discovers sibling repositories named `korgis` or `local-llm-server`. If yours lives elsewhere, pass `--korgis-repo` or set `KORGIS_REPO`.
+The suite auto-discovers sibling repositories named `korgis` or `local-llm-server`. If yours lives elsewhere, pass `--korgis-repo` or set `KORGIS_REPO`. Korgis remains the owner of model paths and artifacts; the experiment only inspects the Korgis inventory and starts already-local runtimes.
 
 From this experiment directory, the normal workflow is one command:
 
@@ -85,7 +85,9 @@ validate realistic dataset
         ↓
 resolve Korgis repository
         ↓
-ensure configured model artifacts
+inspect local Korgis model inventory (no network)
+        ↓
+fail clearly if a configured artifact is missing
         ↓
 for each model
     start a fresh Korgis process on :12435
@@ -109,11 +111,23 @@ uv run redact-bench suite \
   --models nemotron-nano-4b,qwen3.5-4b-q4km
 ```
 
-The default suite ensures model artifacts through Korgis. To require already-downloaded models instead:
+The suite is **offline-by-default**: it never downloads model artifacts during a normal benchmark run.
+
+Inspect the configured model matrix first:
 
 ```bash
-uv run redact-bench suite --no-ensure-models
+uv run redact-bench models
 ```
+
+This prints each model as `local` or `missing`, together with the Korgis backend and resolved local path.
+
+If a configured model is missing, `suite` stops before starting inference and lists the missing artifacts. Only when you explicitly want Korgis to provision missing artifacts from the network should you run:
+
+```bash
+uv run redact-bench suite --download-missing
+```
+
+Even in that mode, only models reported as missing are passed to `local-llm download`. Already-local models are never re-downloaded.
 
 After a completed suite:
 

@@ -13,7 +13,8 @@ from redact_bench.provider import DEFAULT_MODELS, KorgisController, KorgisUnavai
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
 from redact_bench.history_dashboard import write_history_dashboard
-from redact_bench.suite import run_managed_suite
+from redact_bench.korgis_process import inspect_korgis_models, resolve_korgis_repo
+from redact_bench.suite import load_suite_config, run_managed_suite
 
 app = typer.Typer(no_args_is_help=True)
 ROOT = Path(__file__).resolve().parents[2]
@@ -197,6 +198,33 @@ def check_realistic_dataset(
 
 
 
+@app.command("models")
+def models_status(
+    config: Path = typer.Option(ROOT / "config/suite.yaml"),
+    korgis_repo: Path | None = typer.Option(
+        None,
+        help="Path to Korgis. Auto-detected when omitted.",
+    ),
+) -> None:
+    """Show configured benchmark models and whether Korgis has them locally."""
+    suite_config = load_suite_config(config, root=ROOT)
+    try:
+        repo = resolve_korgis_repo(korgis_repo, experiment_root=ROOT)
+        inventory = inspect_korgis_models(repo, list(suite_config.models))
+    except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Korgis: {repo}")
+    for model in suite_config.models:
+        item = inventory[model]
+        state = "local" if item["downloaded"] else "missing"
+        typer.echo(
+            f"{model}: {state} | backend={item.get('backend')} | "
+            f"path={item.get('path')}"
+        )
+
+
 @app.command("suite")
 def suite(
     config: Path = typer.Option(ROOT / "config/suite.yaml"),
@@ -208,10 +236,13 @@ def suite(
         None,
         help="Optional comma-separated model override. Defaults to config/suite.yaml.",
     ),
-    ensure_models: bool | None = typer.Option(
+    download_missing: bool | None = typer.Option(
         None,
-        "--ensure-models/--no-ensure-models",
-        help="Override whether Korgis should ensure model artifacts before the run.",
+        "--download-missing/--no-download-missing",
+        help=(
+            "Allow network downloads only for configured models that are missing "
+            "from the local Korgis inventory. Default: disabled."
+        ),
     ),
 ) -> None:
     """Run the managed Korgis -> quality -> latency -> history -> dashboard workflow."""
@@ -224,7 +255,7 @@ def suite(
             experiment_root=ROOT,
             korgis_repo=korgis_repo,
             model_override=selected,
-            ensure_models_override=ensure_models,
+            download_missing_override=download_missing,
         )
     except (ValueError, RuntimeError, TimeoutError, FileNotFoundError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)

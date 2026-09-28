@@ -16,8 +16,8 @@ from redact_bench.history import append_history, build_history_entry
 from redact_bench.history_dashboard import write_history_dashboard
 from redact_bench.korgis_process import (
     ManagedKorgis,
-    ensure_korgis_models,
     korgis_git_sha,
+    prepare_korgis_models,
     resolve_korgis_repo,
 )
 from redact_bench.realistic_dataset import validate_realistic_dataset
@@ -37,7 +37,7 @@ class SuiteConfig:
     latency_case_ids: tuple[str, ...]
     latency_warmups: int
     latency_repeats: int
-    ensure_models: bool
+    download_missing_models: bool
     korgis_startup_timeout_seconds: float
 
 
@@ -76,7 +76,12 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         latency_case_ids=tuple(str(value) for value in latency["case_ids"]),
         latency_warmups=int(latency.get("warmups", 5)),
         latency_repeats=int(latency.get("repeats", 30)),
-        ensure_models=bool(suite.get("ensure_models", True)),
+        download_missing_models=bool(
+            suite.get(
+                "download_missing_models",
+                suite.get("ensure_models", False),
+            )
+        ),
         korgis_startup_timeout_seconds=float(
             suite.get("korgis_startup_timeout_seconds", 600)
         ),
@@ -118,16 +123,16 @@ def run_managed_suite(
     experiment_root: Path,
     korgis_repo: str | Path | None = None,
     model_override: list[str] | None = None,
-    ensure_models_override: bool | None = None,
+    download_missing_override: bool | None = None,
 ) -> Path:
     config = load_suite_config(config_path, root=experiment_root)
     models = tuple(model_override) if model_override else config.models
     if not models:
         raise ValueError("At least one model is required")
-    ensure_models = (
-        config.ensure_models
-        if ensure_models_override is None
-        else ensure_models_override
+    download_missing = (
+        config.download_missing_models
+        if download_missing_override is None
+        else download_missing_override
     )
 
     validation = validate_realistic_dataset(config.dataset)
@@ -159,8 +164,13 @@ def run_managed_suite(
     _write_status(status_path, {**base_status, "status": "preparing"})
 
     try:
-        if ensure_models:
-            ensure_korgis_models(resolved_korgis, list(models))
+        model_inventory = prepare_korgis_models(
+            resolved_korgis,
+            list(models),
+            download_missing=download_missing,
+        )
+        base_status["model_inventory"] = model_inventory
+        _write_status(status_path, {**base_status, "status": "preparing"})
 
         quality_runs: list[Path] = []
         latency_runs: list[Path] = []
