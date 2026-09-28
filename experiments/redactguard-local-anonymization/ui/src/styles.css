@@ -183,6 +183,12 @@ code {
   font-size: 10px;
 }
 
+.run-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .pill {
   flex: 0 0 auto;
   border-radius: 999px;
@@ -192,6 +198,12 @@ code {
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.pill--partial {
+  background: var(--risk-soft);
+  color: var(--risk);
+  border: 1px solid color-mix(in srgb, var(--risk) 28%, transparent);
 }
 
 .content {
@@ -252,6 +264,25 @@ code {
   color: var(--muted);
   font-size: 9px;
   font-weight: 500;
+}
+
+.partial-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--risk) 24%, var(--border));
+  border-radius: 12px;
+  background: var(--risk-soft);
+  padding: 11px 13px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.partial-banner strong {
+  flex: 0 0 auto;
+  color: var(--risk);
+  font-size: 11px;
 }
 
 .run-context {
