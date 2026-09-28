@@ -181,6 +181,28 @@ uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
 uv run redact-bench compare --dataset data/realistic
 ```
 
+`compare` shows live progress on an interactive terminal, including model/warmup status,
+completed cases, percentage, last case, last inference latency, elapsed time, ETA and
+provider errors. Progress is written to stderr so stdout remains the final run path for
+scripts and shell composition.
+
+Example:
+
+```text
+Run: 20260928T...
+Dataset: realistic — 120 cases
+Models: 3
+Results: results/20260928T...
+
+[1/3 nemotron-nano-4b] Cases 17/120 [███░░░░░░░░░░░░░░░░░] 14% | Last: invoice_017 | Latency: 2.8s | Elapsed: 00:48 | ETA: 04:50 | Errors: 0
+```
+
+For CI or intentionally quiet runs:
+
+```bash
+uv run redact-bench compare --dataset data/realistic --no-progress
+```
+
 `compare --dataset` accepts either the committed JSONL smoke dataset or the committed realistic dataset directory. The loader strips structural metadata markers, verifies the frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is required.
 
 Only `data/realistic/originals/` is ignored by Git; download those original binaries from Drive only for extraction/end-to-end work.
