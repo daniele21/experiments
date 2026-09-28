@@ -12,7 +12,7 @@ from pathlib import Path
 from redact_bench.datasets import load_dataset
 from redact_bench.metrics import EVALUATION_SCHEMA, aggregate_detailed, score_case
 from redact_bench.preflight import contract_failed_summary, run_model_preflight
-from redact_bench.profiles import load_contract_metadata
+from redact_bench.profiles import contract_snapshot_sha256, load_contract_metadata
 from redact_bench.progress import NullProgress, ProgressReporter
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
@@ -48,6 +48,7 @@ def run_compare(
 
     cases = load_dataset(dataset_path)
     contract = load_contract_metadata(profiles_path)
+    contract_digest = contract_snapshot_sha256(profiles_path)
     reporter = progress or NullProgress()
     reporter.run_started(
         run_id=run_id,
@@ -174,6 +175,7 @@ def run_compare(
             "output_schema": contract.get("output_schema"),
             "chunk_max_chars": contract.get("chunk_max_chars"),
             "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
+            "snapshot_sha256": contract_digest,
             "scope": "prompt + minimal output schema + segmented value-to-source-span contract",
         },
         "preflight": {
@@ -236,6 +238,7 @@ def run_latency(
 
     all_cases = load_dataset(dataset_path)
     contract = load_contract_metadata(profiles_path)
+    contract_digest = contract_snapshot_sha256(profiles_path)
     selected_ids = case_ids or ["g01", "g04", "h05", "f01", "l02"]
     by_id = {case.case_id: case for case in all_cases}
     cases = [by_id[case_id] for case_id in selected_ids if case_id in by_id]
@@ -323,6 +326,7 @@ def run_latency(
             "output_schema": contract.get("output_schema"),
             "chunk_max_chars": contract.get("chunk_max_chars"),
             "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
+            "snapshot_sha256": contract_digest,
         },
         "preflight": {
             "enabled": preflight,
