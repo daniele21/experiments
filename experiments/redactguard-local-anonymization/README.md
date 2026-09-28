@@ -123,6 +123,43 @@ open results/dashboard.html
 
 The dashboard is static and local. It shows the latest comparison, PII-type breakdown and an append-only history of previous suites with links to detailed quality and latency reports.
 
+
+### Interactive React dashboard
+
+For day-to-day exploration, the recommended UI is the React dashboard under
+[`ui/`](ui/). Unlike the legacy generated `results/dashboard.html`, it does not depend
+on `history.jsonl` and also discovers ordinary `compare` runs such as
+`results/<run-id>/`.
+
+Install the frontend dependencies once:
+
+```bash
+npm --prefix ui install
+```
+
+Then launch it from the experiment root:
+
+```bash
+uv run redact-bench ui
+```
+
+Open `http://127.0.0.1:5173`.
+
+The UI reads `results/` dynamically through the local Vite server and refreshes the run
+index every five seconds. No export/rebuild step is required. It supports direct benchmark
+runs plus managed suite layouts under either `results/suite/` or `results/suites/`.
+
+The dashboard includes:
+
+- run selector with automatic discovery of newly completed runs;
+- recall, leakage, precision, zero-leak and latency KPI cards;
+- recall-vs-latency trade-off chart across models;
+- per-PII-type recall / precision / leakage chart;
+- all-model comparison table;
+- model-specific failure explorer;
+- benchmark, Korgis and host provenance.
+
+
 A suite writes:
 
 ```text
