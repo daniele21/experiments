@@ -18,3 +18,4 @@ korgis/*
 korgis
 experiments/*/data/documents/generated/
 experiments/*/data/realistic/originals/
+experiments/*/results/history.jsonl

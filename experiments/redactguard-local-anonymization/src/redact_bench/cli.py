@@ -11,6 +11,8 @@ from redact_bench.documents import load_document_manifest
 from redact_bench.provider import DEFAULT_MODELS, KorgisController, KorgisUnavailableError
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
+from redact_bench.history_dashboard import write_history_dashboard
+from redact_bench.suite import run_managed_suite
 
 app = typer.Typer(no_args_is_help=True)
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,7 +21,10 @@ ROOT = Path(__file__).resolve().parents[2]
 def _exit_korgis_unavailable(exc: KorgisUnavailableError) -> None:
     typer.echo(f"ERROR: {exc}", err=True)
     typer.echo("", err=True)
-    typer.echo("Start Korgis in a separate terminal:", err=True)
+    typer.echo("For the managed benchmark flow, run:", err=True)
+    typer.echo("  uv run redact-bench suite", err=True)
+    typer.echo("", err=True)
+    typer.echo("For manual Korgis operation, start it from the Korgis repository:", err=True)
     typer.echo(
         "  uv run --frozen local-llm serve "
         "--model nemotron-nano-4b --enable-admin-api --no-download",
@@ -182,3 +187,51 @@ def check_realistic_dataset(
         f"{summary['spans']} gold spans OK"
     )
     typer.echo(f"by_type: {summary['by_type']}")
+
+
+
+@app.command("suite")
+def suite(
+    config: Path = typer.Option(ROOT / "config/suite.yaml"),
+    korgis_repo: Path | None = typer.Option(
+        None,
+        help="Path to the Korgis repository. Auto-detected when omitted.",
+    ),
+    models: str | None = typer.Option(
+        None,
+        help="Optional comma-separated model override. Defaults to config/suite.yaml.",
+    ),
+    ensure_models: bool | None = typer.Option(
+        None,
+        "--ensure-models/--no-ensure-models",
+        help="Override whether Korgis should ensure model artifacts before the run.",
+    ),
+) -> None:
+    """Run the managed Korgis -> quality -> latency -> history -> dashboard workflow."""
+    selected = None
+    if models:
+        selected = [item.strip() for item in models.split(",") if item.strip()]
+    try:
+        output = run_managed_suite(
+            config_path=config,
+            experiment_root=ROOT,
+            korgis_repo=korgis_repo,
+            model_override=selected,
+            ensure_models_override=ensure_models,
+        )
+    except (ValueError, RuntimeError, TimeoutError, FileNotFoundError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"suite: {output}")
+    typer.echo(f"dashboard: {ROOT / 'results/dashboard.html'}")
+
+
+@app.command("dashboard")
+def dashboard(
+    history: Path = typer.Option(ROOT / "results/history.jsonl"),
+    output: Path = typer.Option(ROOT / "results/dashboard.html"),
+) -> None:
+    """Rebuild the append-only benchmark history dashboard."""
+    path = write_history_dashboard(history, output)
+    typer.echo(str(path))

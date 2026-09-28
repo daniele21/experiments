@@ -16,7 +16,7 @@ from redact_bench.report import write_html
 
 KORGIS_REPOSITORY = "daniele21/korgis"
 KORGIS_TESTED_REF = "dev"
-KORGIS_TESTED_SHA = "26a161dc0ef89a133c7a076d3a31544a274c1469"
+KORGIS_TESTED_SHA = "eadd5dca94417dd037a5d43650377b349875ab17"
 REDACTGUARD_REPOSITORY = "daniele21/redact-guard"
 REDACTGUARD_CONTRACT_SHA = "70ea5ed4fbbd7182010cc04eb756f636791c5947"
 
@@ -92,7 +92,7 @@ def run_compare(
         "korgis": {
             "repository": KORGIS_REPOSITORY,
             "tested_ref": KORGIS_TESTED_REF,
-            "tested_sha": KORGIS_TESTED_SHA,
+            "tested_sha": os.getenv("KORGIS_SOURCE_SHA", KORGIS_TESTED_SHA),
             "base_url": os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1"),
             "runtime_identity": identities,
         },
@@ -205,7 +205,7 @@ def run_latency(
         "korgis": {
             "repository": KORGIS_REPOSITORY,
             "tested_ref": KORGIS_TESTED_REF,
-            "tested_sha": KORGIS_TESTED_SHA,
+            "tested_sha": os.getenv("KORGIS_SOURCE_SHA", KORGIS_TESTED_SHA),
             "base_url": os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1"),
             "runtime_identity": identities,
         },
