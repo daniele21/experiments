@@ -11,6 +11,7 @@ from pathlib import Path
 
 from redact_bench.datasets import load_dataset
 from redact_bench.metrics import aggregate_detailed, score_case
+from redact_bench.progress import NullProgress, ProgressReporter
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
 
@@ -35,6 +36,7 @@ def run_compare(
     profiles_path: str,
     results_dir: str,
     warmups: int = 1,
+    progress: ProgressReporter | None = None,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -43,23 +45,43 @@ def run_compare(
     output.mkdir(parents=True, exist_ok=True)
 
     cases = load_dataset(dataset_path)
+    reporter = progress or NullProgress()
+    reporter.run_started(
+        run_id=run_id,
+        dataset=Path(dataset_path).name,
+        cases=len(cases),
+        models=models,
+        output=str(output),
+    )
     summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
 
-    for model in models:
+    for model_index, model in enumerate(models, start=1):
+        reporter.model_started(model=model, index=model_index, total=len(models))
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
 
-        for case in cases[: min(warmups, len(cases))]:
+        warmup_cases = cases[: min(warmups, len(cases))]
+        reporter.warmups_started(model=model, total=len(warmup_cases))
+        for warmup_index, case in enumerate(warmup_cases, start=1):
             provider.evaluate(case)
+            reporter.warmup_completed(
+                model=model,
+                completed=warmup_index,
+                total=len(warmup_cases),
+            )
 
         model_rows = []
         raw_path = output / f"{model.replace('/', '_')}.jsonl"
+        errors = 0
+        reporter.cases_started(model=model, total=len(cases))
         with raw_path.open("w", encoding="utf-8") as raw_file:
-            for case in cases:
+            for case_index, case in enumerate(cases, start=1):
                 result = provider.evaluate(case)
+                if not result.valid:
+                    errors += 1
                 row = score_case(case, result)
                 model_rows.append(row)
                 all_rows.append(row)
@@ -79,7 +101,22 @@ def run_compare(
                     )
                     + "\n"
                 )
+                raw_file.flush()
+                reporter.case_completed(
+                    model=model,
+                    completed=case_index,
+                    total=len(cases),
+                    case_id=case.case_id,
+                    latency_ms=result.latency_ms,
+                    errors=errors,
+                )
         summaries[model] = aggregate_detailed(model_rows)
+        reporter.model_completed(
+            model=model,
+            completed=len(model_rows),
+            total=len(cases),
+            errors=errors,
+        )
 
     manifest = {
         "run_id": run_id,
@@ -129,6 +166,7 @@ def run_compare(
         json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     write_html(output / "report.html", summaries, manifest)
+    reporter.run_completed()
     return output
 
 
