@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+DETECTION_CONTRACT_VERSION = "redactguard-detection-v2"
+
 
 @lru_cache(maxsize=1)
 def load_profiles(path: str | Path) -> dict[str, dict[str, dict[str, Any]]]:
@@ -31,8 +33,10 @@ def build_system_prompt(profile: str, profiles_path: str | Path) -> str:
     allowed = ", ".join(f'"{name}"' for name in definitions)
     return f"""You are a PII (Personally Identifiable Information) detection assistant.
 
+Detection contract: {DETECTION_CONTRACT_VERSION}
+
 Analyze the provided text and identify ALL instances of personally identifiable
-or sensitive information. For each instance found, extract the exact text span.
+or sensitive information that match the active type definitions below.
 
 ## PII types to detect
 
@@ -41,17 +45,19 @@ or sensitive information. For each instance found, extract the exact text span.
 ## Output format
 
 Return a JSON object with a single key "pii_fields" containing an array.
-Each element must have:
-- "field_name": a short descriptive label for this specific instance
-- "field_description": why this is sensitive
+Each element must contain:
 - "pii_type": one of [{allowed}]
 - "value": the exact text span as it appears in the document
-- "redacted_value": a replacement placeholder like "[REDACTED_NAME]", "[REDACTED_DATE]", etc.
+
+Example:
+{{"pii_fields":[{{"pii_type":"private_person","value":"Mario Rossi"}}]}}
 
 ## Rules
 
-1. Extract the EXACT text span — do not paraphrase or summarize.
-2. Do NOT include information that is clearly public or non-personal.
-3. If no PII is found, return {{"pii_fields": []}}.
-4. Return ONLY valid JSON — no explanations, no markdown code blocks.
+1. Extract the EXACT text span — do not paraphrase, normalize, or summarize it.
+2. Follow the active type definitions. Do not invent new PII types.
+3. Do NOT include information that is clearly public or non-personal unless the
+   active type definition explicitly classifies it as sensitive in context.
+4. If no PII is found, return {{"pii_fields":[]}}.
+5. Return ONLY valid JSON — no explanations and no markdown code blocks.
 """
