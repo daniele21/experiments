@@ -183,6 +183,7 @@ def run_document_compare(
     model_summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     preflights: dict[str, dict] = {}
+    inference_settings: dict[str, dict] = {}
     all_rows: list[dict] = []
 
     runnable_alignments = [
@@ -195,6 +196,7 @@ def run_document_compare(
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+        inference_settings[model] = dict(provider.execution_settings)
         model_preflight = run_model_preflight(provider)
         preflights[model] = model_preflight
 
@@ -275,6 +277,8 @@ def run_document_compare(
     manifest = {
         "run_id": run_id,
         "kind": "document-end-to-end",
+        "benchmark_mode": "redactguard-fidelity-e2e",
+        "execution_unit": "extracted-page-with-v2-segmentation",
         "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
@@ -308,6 +312,7 @@ def run_document_compare(
             "enabled": True,
             "models": preflights,
         },
+        "inference_settings": inference_settings,
         "host": {
             "system": platform.system(),
             "machine": platform.machine(),
