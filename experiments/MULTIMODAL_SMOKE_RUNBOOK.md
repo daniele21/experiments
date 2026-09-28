@@ -32,9 +32,11 @@ The `smoke` profile selects:
 
 The baseline paid smoke is 4 prompts × 2 models = 8 generated images.
 
-When the local Korgis image runtime is available, add `qwen-image-2.1-local`. The three-arm
-smoke is then 4 prompts × 3 models = 12 generated images. Keep the local arm separate from the
-paid GitHub smoke workflow because it requires a resident local Korgis runtime.
+When local Korgis image runtimes are available, `qwen-image-2.1-local` adds MFlux Q8 and
+`qwen-image-2.1-local-gguf-q4km` adds stable-diffusion.cpp GGUF Q4_K_M. The three-arm smoke
+with one local arm is 12 images; the four-arm smoke with both local runtimes is 16 images.
+Keep local arms separate from the paid GitHub smoke workflow because they require resident
+Korgis runtimes.
 
 ### Local dry-run
 
@@ -63,9 +65,10 @@ uv run python scripts/run_benchmark.py \
   --dry-run
 ```
 
-The Qwen arm uses Korgis model `qwen-image-2.1-mflux-q8`, backed by the pre-quantized MFlux
-Q8 checkpoint. Record it as a quantized Apple/MLX-oriented profile, not as a proven memory-fit
-or performance claim; representative hardware evidence is still separate.
+The MFlux arm uses Korgis model `qwen-image-2.1-mflux-q8`. The optional GGUF arm uses
+`qwen-image-2.1-gguf-q4km`, a three-artifact stable-diffusion.cpp bundle with Q4_K_M
+denoiser, Qwen3-VL text encoder and Qwen Image 2.1 VAE. Record artifact/runtime provenance
+without inferring peak memory or performance from file size.
 
 ### Real API smoke
 
@@ -214,7 +217,7 @@ The report overlays the expected target box and predicted click point and shows:
 The first real smoke is accepted when:
 
 1. all selected model/prompt cases produce persisted artifacts or typed provider failures
-   (8 cases for GPT/Gemini, 12 for the optional GPT/Gemini/Qwen three-arm smoke);
+   (8 cases for GPT/Gemini, 12 with one local Qwen arm, 16 with both local Qwen runtimes);
 2. the run manifest records every resolved model ID, runtime/provider identity and generation config;
 3. the React comparison view renders every selected provider side by side;
 4. the React blind-review view does not expose provider/model identity and covers every unique selected-model pair per prompt;
@@ -240,6 +243,6 @@ Only after both vertical slices are accepted:
 - run the full image-generation v1 prompt suite;
 - add repeated generations for stochastic robustness;
 - validate the Qwen-Image-2.1 local arm on representative hardware;
-- collect representative Apple Silicon evidence for the MFlux Q8 Qwen-Image-2.1 runtime;
+- collect representative Apple Silicon evidence for both MFlux Q8 and GGUF Q4_K_M Qwen-Image-2.1 runtimes;
 - add image editing/preservation experiments;
 - aggregate blind human votes without collapsing capabilities into a single opaque score.
