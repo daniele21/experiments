@@ -22,7 +22,7 @@ from redact_bench.documents import (
 from redact_bench.metrics import EVALUATION_SCHEMA, aggregate, score_case
 from redact_bench.models import InferenceResult
 from redact_bench.preflight import run_model_preflight
-from redact_bench.profiles import load_contract_metadata
+from redact_bench.profiles import contract_snapshot_sha256, load_contract_metadata
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.runner import (
     KORGIS_REPOSITORY,
@@ -180,6 +180,7 @@ def run_document_compare(
     controller = KorgisController()
     controller.health()
     contract = load_contract_metadata(profiles_path)
+    contract_digest = contract_snapshot_sha256(profiles_path)
     model_summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     preflights: dict[str, dict] = {}
@@ -306,6 +307,7 @@ def run_document_compare(
             "output_schema": contract.get("output_schema"),
             "chunk_max_chars": contract.get("chunk_max_chars"),
             "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
+            "snapshot_sha256": contract_digest,
             "scope": "Docling page extraction + detection-v2 segmented post-processing",
         },
         "preflight": {
