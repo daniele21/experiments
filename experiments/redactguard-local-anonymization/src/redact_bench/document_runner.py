@@ -19,42 +19,65 @@ from redact_bench.documents import (
     align_page_to_extraction,
     load_document_manifest,
 )
-from redact_bench.metrics import aggregate, score_case
+from redact_bench.metrics import EVALUATION_SCHEMA, aggregate, score_case
 from redact_bench.models import InferenceResult
+from redact_bench.preflight import run_model_preflight
+from redact_bench.profiles import load_contract_metadata
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.runner import (
     KORGIS_REPOSITORY,
     KORGIS_TESTED_REF,
     KORGIS_TESTED_SHA,
-    REDACTGUARD_CONTRACT_SHA,
     REDACTGUARD_REPOSITORY,
     _git_sha,
 )
 
 
 def _missing_extraction_score(alignment: PageAlignment, model: str, reason: str) -> dict:
+    gold_count = len(alignment.case.gold)
+    gold_chars = sum(span.end - span.start for span in alignment.case.gold)
     return {
         "case_id": alignment.case.case_id,
         "profile": alignment.case.profile,
+        "tags": list(alignment.case.tags),
         "model": model,
         "valid": False,
+        "quality_available": False,
+        "inference_status": reason,
+        "error_type": reason,
+        "http_status": None,
+        "finish_reason": None,
         "latency_ms": 0.0,
-        "gold_count": len(alignment.case.gold),
+        "gold_count": gold_count,
         "predicted_count": 0,
+        "raw_item_count": 0,
+        "resolved_item_count": 0,
+        "unresolved_item_count": 0,
         "tp": 0,
         "exact_tp": 0,
         "overlap_tp": 0,
         "fp": 0,
-        "fn": len(alignment.case.gold),
+        "fn": 0,
+        "pii_recall": None,
+        "precision": None,
+        "span_f1": None,
+        "exact_match_recall": None,
         "zero_leak": False,
-        "leaked_chars": sum(span.end - span.start for span in alignment.case.gold),
-        "gold_chars": sum(span.end - span.start for span in alignment.case.gold),
+        "leaked_chars": 0,
+        "gold_chars": gold_chars,
+        "leakage_rate": None,
         "overredacted_chars": 0,
-        "non_pii_chars": max(
-            1,
-            len(alignment.case.text)
-            - sum(span.end - span.start for span in alignment.case.gold),
-        ),
+        "non_pii_chars": max(1, len(alignment.case.text) - gold_chars),
+        "over_redaction_rate": None,
+        "system_tp": 0,
+        "system_fp": 0,
+        "system_fn": gold_count,
+        "system_leaked_chars": gold_chars,
+        "system_pii_recall": 0.0 if gold_count else 1.0,
+        "system_leakage_rate": 1.0 if gold_chars else 0.0,
+        "by_type": {},
+        "false_negatives": [],
+        "false_positives": [],
         "input_tokens": None,
         "output_tokens": None,
         "error": reason,
@@ -156,8 +179,10 @@ def run_document_compare(
 
     controller = KorgisController()
     controller.health()
+    contract = load_contract_metadata(profiles_path)
     model_summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
+    preflights: dict[str, dict] = {}
     all_rows: list[dict] = []
 
     runnable_alignments = [
@@ -170,8 +195,12 @@ def run_document_compare(
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+        model_preflight = run_model_preflight(provider)
+        preflights[model] = model_preflight
 
         for alignment in runnable_alignments[: min(warmups, len(runnable_alignments))]:
+            if not model_preflight["passed"]:
+                break
             provider.evaluate(alignment.case)
 
         model_quality_rows: list[dict] = []
@@ -197,7 +226,20 @@ def run_document_compare(
                         "error": score["error"],
                     }
                 else:
-                    result: InferenceResult = provider.evaluate(alignment.case)
+                    if model_preflight["passed"]:
+                        result: InferenceResult = provider.evaluate(alignment.case)
+                    else:
+                        result = InferenceResult(
+                            case_id=alignment.case.case_id,
+                            model=model,
+                            valid=False,
+                            latency_ms=0.0,
+                            findings=[],
+                            raw_content="",
+                            error=model_preflight.get("error"),
+                            status="preflight_failed",
+                            error_type=model_preflight.get("error_type"),
+                        )
                     score = score_case(alignment.case, result)
                     model_quality_rows.append(score)
                     result_dict = result.to_dict()
@@ -233,6 +275,7 @@ def run_document_compare(
     manifest = {
         "run_id": run_id,
         "kind": "document-end-to-end",
+        "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "document_manifest": str(Path(manifest_path)),
@@ -253,9 +296,17 @@ def run_document_compare(
             "runtime_identity": identities,
         },
         "redactguard_contract": {
-            "repository": REDACTGUARD_REPOSITORY,
-            "source_sha": REDACTGUARD_CONTRACT_SHA,
-            "scope": "Docling page extraction + prompt taxonomy + deterministic post-processing",
+            "repository": contract.get("repository", REDACTGUARD_REPOSITORY),
+            "source_sha": contract.get("ref"),
+            "version": contract.get("contract_version"),
+            "output_schema": contract.get("output_schema"),
+            "chunk_max_chars": contract.get("chunk_max_chars"),
+            "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
+            "scope": "Docling page extraction + detection-v2 segmented post-processing",
+        },
+        "preflight": {
+            "enabled": True,
+            "models": preflights,
         },
         "host": {
             "system": platform.system(),
@@ -264,6 +315,10 @@ def run_document_compare(
         },
     }
 
+    (output / "preflight.json").write_text(
+        json.dumps(preflights, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     (output / "metrics.json").write_text(
         json.dumps(
             {"extraction": extraction_summary, "models": model_summaries},
