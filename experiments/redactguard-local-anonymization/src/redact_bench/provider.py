@@ -11,7 +11,11 @@ from openai import OpenAI
 
 from redact_bench.models import Case, Finding, InferenceResult
 from redact_bench.postprocess import resolve_model_payload
-from redact_bench.profiles import build_system_prompt, load_profiles
+from redact_bench.profiles import (
+    build_system_prompt,
+    load_contract_metadata,
+    load_profiles,
+)
 from redact_bench.segmentation import TextSegment, segment_text
 
 
@@ -102,15 +106,30 @@ class KorgisRedactProvider:
             "KORGIS_BASE_URL",
             "http://127.0.0.1:1235/v1",
         ).rstrip("/")
+        contract = load_contract_metadata(profiles_path)
         self.max_tokens = int(
-            os.getenv("REDACT_BENCH_MAX_OUTPUT_TOKENS", "4096")
+            os.getenv(
+                "REDACT_BENCH_MAX_OUTPUT_TOKENS",
+                str(contract.get("max_output_tokens", 4096)),
+            )
         )
         self.chunk_max_chars = int(
-            os.getenv("REDACT_BENCH_CHUNK_MAX_CHARS", "4000")
+            os.getenv(
+                "REDACT_BENCH_CHUNK_MAX_CHARS",
+                str(contract.get("chunk_max_chars", 4000)),
+            )
         )
         self.chunk_overlap_chars = int(
-            os.getenv("REDACT_BENCH_CHUNK_OVERLAP_CHARS", "256")
+            os.getenv(
+                "REDACT_BENCH_CHUNK_OVERLAP_CHARS",
+                str(contract.get("chunk_overlap_chars", 256)),
+            )
         )
+        self.execution_settings = {
+            "max_output_tokens": self.max_tokens,
+            "chunk_max_chars": self.chunk_max_chars,
+            "chunk_overlap_chars": self.chunk_overlap_chars,
+        }
         self.client = OpenAI(
             base_url=base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
