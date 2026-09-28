@@ -32,8 +32,9 @@ uv run ruff check src tests
 
 Provider adapters must preserve the exact prompt, persist generated images through
 `benchmark-core` artifact primitives and keep automatic evidence separate from blind human
-preference. Provider/runtime metadata is persisted in `evidence.csv`; the identified report
-surfaces runtime/backend/quantization provenance when supplied, while the blind report hides it.
+preference. Provider/runtime metadata is persisted in `evidence.csv`. The React dashboard reads
+the run filesystem dynamically, surfaces runtime/backend/quantization provenance in the identified
+comparison and hides identity in blind review.
 
 See `IMPLEMENTATION_PLAN.md` for the full workstream.
 
@@ -53,20 +54,33 @@ Remove `--dry-run` only after `OPENAI_API_KEY` and `GEMINI_API_KEY` are configur
 The runner writes one run directory containing the manifest, incremental evidence CSV and
 content-addressed generated artifacts.
 
-## Generate visual reports
+## Explore runs in the React dashboard
 
-After a completed run:
+The UI is a dynamic React/Vite application. It does not generate per-run HTML files.
 
 ```bash
-uv run python scripts/generate_report.py --run-dir results/<run-id>
+cd ui
+npm install
+npm run dev
 ```
 
-This creates:
-- `report.html`: identified side-by-side comparison by prompt;
-- `blind_review.html`: model-hidden pairwise evaluation UI with vote export; for N selected models it generates every unique pair per prompt;
-- `blind_key.json`: separate A/B-to-model key for post-review analysis.
+By default it reads `../results` and opens on `http://127.0.0.1:5173`.
 
-Do not share `blind_key.json` with reviewers before voting is complete.
+To point it at another result root:
+
+```bash
+IMAGEGEN_RESULTS_ROOT=/absolute/path/to/results npm run dev
+```
+
+The dashboard:
+- discovers new run directories automatically and refreshes every few seconds;
+- compares every selected model side by side per prompt;
+- filters by category and model;
+- shows latency, validity and provider/runtime/backend/quantization provenance;
+- exposes a blind-review tab with every unique model pair for each prompt;
+- stores in-progress blind votes locally in the browser and exports them as JSON.
+
+The browser never needs a regenerated `report.html` or `blind_review.html`.
 
 
 ## Add the local Qwen Image 2.1 arm through Korgis
