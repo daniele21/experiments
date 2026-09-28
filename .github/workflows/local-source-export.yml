@@ -1,0 +1,17 @@
+name: Temporary source export
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/local-source-export.yml"
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-main
+          path: .
+          include-hidden-files: true
+          retention-days: 1
