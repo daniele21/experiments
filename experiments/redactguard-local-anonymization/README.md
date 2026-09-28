@@ -79,7 +79,7 @@ Start only an anchor model; the benchmark activates the requested models sequent
 uv run --frozen local-llm serve   --model nemotron-nano-4b   --enable-admin-api   --no-download
 ```
 
-In a second terminal:
+Keep the Korgis process running in its terminal. In a second terminal:
 
 ```bash
 cd experiments/redactguard-local-anonymization
@@ -87,6 +87,8 @@ uv sync --extra dev
 uv run redact-bench check-korgis
 uv run redact-bench check-data
 ```
+
+`compare`, `latency` and `documents` do **not** start Korgis themselves. If no server is listening at `KORGIS_BASE_URL` (default `http://127.0.0.1:1235/v1`), the CLI exits before the benchmark and prints the Korgis startup command instead of an internal urllib traceback.
 
 ## Realistic test dataset
 

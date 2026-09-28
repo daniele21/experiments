@@ -8,7 +8,7 @@ from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
-from redact_bench.provider import DEFAULT_MODELS, KorgisController
+from redact_bench.provider import DEFAULT_MODELS, KorgisController, KorgisUnavailableError
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
 
@@ -16,13 +16,37 @@ app = typer.Typer(no_args_is_help=True)
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _exit_korgis_unavailable(exc: KorgisUnavailableError) -> None:
+    typer.echo(f"ERROR: {exc}", err=True)
+    typer.echo("", err=True)
+    typer.echo("Start Korgis in a separate terminal:", err=True)
+    typer.echo(
+        "  uv run --frozen local-llm serve "
+        "--model nemotron-nano-4b --enable-admin-api --no-download",
+        err=True,
+    )
+    typer.echo("", err=True)
+    typer.echo("Then verify it from this experiment:", err=True)
+    typer.echo("  uv run redact-bench check-korgis", err=True)
+    typer.echo("", err=True)
+    typer.echo(
+        "If Korgis uses another address, set KORGIS_BASE_URL, e.g. "
+        "http://127.0.0.1:1235/v1",
+        err=True,
+    )
+    raise typer.Exit(code=2)
+
+
 @app.command("check-korgis")
 def check_korgis() -> None:
     """Verify the external current Korgis server and print available registry evidence."""
     controller = KorgisController()
-    health = controller.health()
-    registry = controller.registry()
-    identity = controller.identity()
+    try:
+        health = controller.health()
+        registry = controller.registry()
+        identity = controller.identity()
+    except KorgisUnavailableError as exc:
+        _exit_korgis_unavailable(exc)
     typer.echo(f"health: {health}")
     typer.echo(f"registry: {registry}")
     typer.echo(f"identity: {identity}")
@@ -45,13 +69,16 @@ def compare(
     warmups: int = typer.Option(1, min=0),
 ) -> None:
     selected = [item.strip() for item in models.split(",") if item.strip()]
-    output = run_compare(
-        models=selected,
-        dataset_path=str(dataset),
-        profiles_path=str(profiles),
-        results_dir=str(results_dir),
-        warmups=warmups,
-    )
+    try:
+        output = run_compare(
+            models=selected,
+            dataset_path=str(dataset),
+            profiles_path=str(profiles),
+            results_dir=str(results_dir),
+            warmups=warmups,
+        )
+    except KorgisUnavailableError as exc:
+        _exit_korgis_unavailable(exc)
     typer.echo(str(output))
 
 
@@ -68,15 +95,18 @@ def latency(
     """Run a dedicated repeated latency suite without changing quality scoring."""
     selected = [item.strip() for item in models.split(",") if item.strip()]
     latency_cases = [item.strip() for item in case_ids.split(",") if item.strip()]
-    output = run_latency(
-        models=selected,
-        dataset_path=str(dataset),
-        profiles_path=str(profiles),
-        results_dir=str(results_dir),
-        warmups=warmups,
-        repeats=repeats,
-        case_ids=latency_cases,
-    )
+    try:
+        output = run_latency(
+            models=selected,
+            dataset_path=str(dataset),
+            profiles_path=str(profiles),
+            results_dir=str(results_dir),
+            warmups=warmups,
+            repeats=repeats,
+            case_ids=latency_cases,
+        )
+    except KorgisUnavailableError as exc:
+        _exit_korgis_unavailable(exc)
     typer.echo(str(output))
 
 
@@ -118,15 +148,18 @@ def documents(
 ) -> None:
     """Run PDF -> Docling -> Korgis -> RedactGuard post-processing end to end."""
     selected = [item.strip() for item in models.split(",") if item.strip()]
-    output = run_document_compare(
-        models=selected,
-        manifest_path=str(manifest),
-        profiles_path=str(profiles),
-        fixtures_dir=str(fixtures_dir),
-        results_dir=str(results_dir),
-        generate_fixtures=generate_fixtures,
-        warmups=warmups,
-    )
+    try:
+        output = run_document_compare(
+            models=selected,
+            manifest_path=str(manifest),
+            profiles_path=str(profiles),
+            fixtures_dir=str(fixtures_dir),
+            results_dir=str(results_dir),
+            generate_fixtures=generate_fixtures,
+            warmups=warmups,
+        )
+    except KorgisUnavailableError as exc:
+        _exit_korgis_unavailable(exc)
     typer.echo(str(output))
 
 
