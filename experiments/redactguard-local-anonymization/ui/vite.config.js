@@ -9,6 +9,7 @@ const UI_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_ROOT = path.resolve(UI_ROOT, "../results");
 const SUITE_CONTAINERS = ["suite", "suites"];
 const RESERVED_JSONL = new Set(["history.jsonl"]);
+const CURRENT_SCHEMA = "redactguard-evaluation-v3";
 
 async function readJson(filePath, fallback = null) {
   try {
@@ -96,27 +97,49 @@ function percentile(values, q) {
 function aggregatePartial(rows) {
   if (!rows.length) return null;
 
+  const isV3 = rows.some(
+    (row) =>
+      Object.prototype.hasOwnProperty.call(row, "inference_status") ||
+      Object.prototype.hasOwnProperty.call(row, "quality_available"),
+  );
   const validRows = rows.filter((row) => row.valid);
-  const sum = (key) => rows.reduce((total, row) => total + Number(row[key] ?? 0), 0);
-  const tp = sum("tp");
-  const fp = sum("fp");
-  const fn = sum("fn");
-  const exactTp = sum("exact_tp");
-  const goldCount = sum("gold_count");
-  const predictedCount = sum("predicted_count");
-  const goldChars = sum("gold_chars");
-  const leakedChars = sum("leaked_chars");
-  const overredactedChars = sum("overredacted_chars");
-  const nonPiiChars = sum("non_pii_chars");
-  const latencies = validRows
-    .map((row) => Number(row.latency_ms))
-    .filter((value) => Number.isFinite(value));
-  const recall = ratio(tp, tp + fn, 1);
-  const precision = ratio(tp, tp + fp, 1);
-  const spanF1 = precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
+  const qualityRows = isV3 ? validRows : rows;
+  const sum = (source, key) =>
+    source.reduce((total, row) => total + Number(row[key] ?? 0), 0);
+
+  const tp = sum(qualityRows, "tp");
+  const fp = sum(qualityRows, "fp");
+  const fn = sum(qualityRows, "fn");
+  const exactTp = sum(qualityRows, "exact_tp");
+  const qualityGoldCount = sum(qualityRows, "gold_count");
+  const totalGoldCount = sum(rows, "gold_count");
+  const predictedCount = sum(qualityRows, "predicted_count");
+  const qualityGoldChars = sum(qualityRows, "gold_chars");
+  const leakedChars = sum(qualityRows, "leaked_chars");
+  const overredactedChars = sum(qualityRows, "overredacted_chars");
+  const nonPiiChars = sum(qualityRows, "non_pii_chars");
+  const qualityAvailable = !isV3 || validRows.length > 0;
+  const recall = qualityAvailable ? ratio(tp, tp + fn, 1) : null;
+  const precision = qualityAvailable
+    ? ratio(tp, tp + fp, isV3 ? null : 1)
+    : null;
+  const spanF1 =
+    precision === null || recall === null
+      ? null
+      : precision + recall
+        ? (2 * precision * recall) / (precision + recall)
+        : 0;
+
+  const systemTp = isV3 ? sum(rows, "system_tp") : tp;
+  const systemFp = isV3 ? sum(rows, "system_fp") : fp;
+  const systemFn = isV3 ? sum(rows, "system_fn") : fn;
+  const systemGoldChars = sum(rows, "gold_chars");
+  const systemLeakedChars = isV3 ? sum(rows, "system_leaked_chars") : leakedChars;
+  const systemRecall = ratio(systemTp, systemTp + systemFn, 1);
+  const systemLeakage = ratio(systemLeakedChars, systemGoldChars);
 
   const byTypeCounters = new Map();
-  for (const row of rows) {
+  for (const row of qualityRows) {
     for (const [piiType, values] of Object.entries(row.by_type ?? {})) {
       const current = byTypeCounters.get(piiType) ?? {
         gold_count: 0,
@@ -139,15 +162,21 @@ function aggregatePartial(rows) {
   const byType = {};
   for (const [piiType, counts] of [...byTypeCounters.entries()].sort()) {
     const typeRecall = ratio(counts.tp, counts.tp + counts.fn, 1);
-    const typePrecision = ratio(counts.tp, counts.tp + counts.fp, 1);
+    const typePrecision = ratio(
+      counts.tp,
+      counts.tp + counts.fp,
+      isV3 ? null : 1,
+    );
     byType[piiType] = {
       ...counts,
       pii_recall: typeRecall,
       precision: typePrecision,
       span_f1:
-        typePrecision + typeRecall
-          ? (2 * typePrecision * typeRecall) / (typePrecision + typeRecall)
-          : 0,
+        typePrecision === null
+          ? null
+          : typePrecision + typeRecall
+            ? (2 * typePrecision * typeRecall) / (typePrecision + typeRecall)
+            : 0,
       exact_match_recall: ratio(counts.exact_tp, counts.gold_count, 1),
       leakage_rate: ratio(counts.leaked_chars, counts.gold_chars),
     };
@@ -156,38 +185,67 @@ function aggregatePartial(rows) {
   const failures = rows
     .filter(
       (row) =>
+        !row.valid ||
         Number(row.fn ?? 0) ||
         Number(row.fp ?? 0) ||
         Number(row.leaked_chars ?? 0) ||
         Number(row.overredacted_chars ?? 0) ||
+        Number(row.unresolved_item_count ?? 0) ||
         row.error,
     )
     .map((row) => ({
       case_id: row.case_id,
       profile: row.profile,
-      pii_recall: row.pii_recall,
-      precision: row.precision,
-      leakage_rate: row.leakage_rate,
+      quality_available: isV3 ? Boolean(row.valid) : true,
+      inference_status: row.inference_status ?? (row.valid ? "success" : "legacy_failure"),
+      error_type: row.error_type ?? null,
+      pii_recall: row.valid || !isV3 ? row.pii_recall : null,
+      precision: row.valid || !isV3 ? row.precision : null,
+      leakage_rate: row.valid || !isV3 ? row.leakage_rate : null,
+      system_pii_recall: row.system_pii_recall ?? row.pii_recall,
+      system_leakage_rate: row.system_leakage_rate ?? row.leakage_rate,
       over_redaction_rate: row.over_redaction_rate,
-      fn: row.fn,
-      fp: row.fp,
-      failures: row.valid ? 0 : 1,
-      false_negatives: row.false_negatives ?? [],
-      false_positives: row.false_positives ?? [],
+      fn: row.valid || !isV3 ? row.fn : 0,
+      fp: row.valid || !isV3 ? row.fp : 0,
+      system_fn: row.system_fn ?? row.fn ?? 0,
+      inference_failures: row.valid ? 0 : 1,
+      unresolved_item_count: row.unresolved_item_count ?? 0,
+      false_negatives: row.valid || !isV3 ? row.false_negatives ?? [] : [],
+      false_positives: row.valid || !isV3 ? row.false_positives ?? [] : [],
       error: row.error ?? null,
-    }))
-    .sort(
-      (left, right) =>
-        Number(right.leakage_rate ?? 0) - Number(left.leakage_rate ?? 0) ||
-        Number(right.fn ?? 0) - Number(left.fn ?? 0) ||
-        Number(right.fp ?? 0) - Number(left.fp ?? 0),
-    );
+    }));
+
+  const latencies = validRows
+    .map((row) => Number(row.latency_ms))
+    .filter((value) => Number.isFinite(value));
+  const rawItems = sum(validRows, "raw_item_count");
+  const resolvedItems = sum(validRows, "resolved_item_count");
+  const unresolvedItems = sum(validRows, "unresolved_item_count");
+  const statuses = {};
+  for (const row of rows) {
+    const status = row.inference_status ?? (row.valid ? "success" : "legacy_failure");
+    statuses[status] = (statuses[status] ?? 0) + 1;
+  }
 
   const micro = {
+    status: isV3 && !validRows.length ? "no_valid_inference" : "ok",
+    quality_available: qualityAvailable,
     cases: rows.length,
+    evaluated_cases: isV3 ? validRows.length : rows.length,
+    inference_failures: rows.length - validRows.length,
+    inference_success_rate: ratio(validRows.length, rows.length),
+    evaluated_case_coverage: isV3 ? ratio(validRows.length, rows.length) : 1,
     valid_output_rate: ratio(validRows.length, rows.length),
-    gold_count: goldCount,
+    contract_valid_rate: ratio(validRows.length, rows.length),
+    truncation_rate: ratio(statuses.truncated_output ?? 0, rows.length),
+    inference_statuses: statuses,
+    gold_count: totalGoldCount,
+    quality_gold_count: qualityGoldCount,
     predicted_count: predictedCount,
+    raw_item_count: rawItems,
+    resolved_item_count: resolvedItems,
+    unresolved_item_count: unresolvedItems,
+    span_resolution_rate: rawItems ? resolvedItems / rawItems : qualityAvailable ? 1 : null,
     tp,
     exact_tp: exactTp,
     fp,
@@ -195,26 +253,50 @@ function aggregatePartial(rows) {
     pii_recall: recall,
     precision,
     span_f1: spanF1,
-    exact_match_recall: ratio(exactTp, goldCount, 1),
-    leakage_rate: ratio(leakedChars, goldChars),
-    zero_leak_document_rate: ratio(
-      rows.filter((row) => Boolean(row.zero_leak)).length,
-      rows.length,
-    ),
-    over_redaction_rate: ratio(overredactedChars, nonPiiChars),
+    exact_match_recall: qualityAvailable
+      ? ratio(exactTp, qualityGoldCount, 1)
+      : null,
+    leakage_rate: qualityAvailable
+      ? ratio(leakedChars, qualityGoldChars)
+      : null,
+    zero_leak_document_rate: qualityAvailable
+      ? ratio(
+          qualityRows.filter((row) => Boolean(row.zero_leak)).length,
+          qualityRows.length,
+        )
+      : null,
+    over_redaction_rate: qualityAvailable
+      ? ratio(overredactedChars, nonPiiChars)
+      : null,
     leaked_chars: leakedChars,
-    gold_chars: goldChars,
+    gold_chars: qualityGoldChars,
     overredacted_chars: overredactedChars,
     non_pii_chars: nonPiiChars,
     latency_p50_ms: percentile(latencies, 0.5),
     latency_p95_ms: percentile(latencies, 0.95),
     latency_p99_ms: percentile(latencies, 0.99),
     failures: rows.length - validRows.length,
+    system_tp: systemTp,
+    system_fp: systemFp,
+    system_fn: systemFn,
+    system_pii_recall: systemRecall,
+    system_leakage_rate: systemLeakage,
+    system_zero_leak_document_rate: ratio(
+      rows.filter(
+        (row) =>
+          row.valid &&
+          Number(row.system_fn ?? row.fn ?? 0) === 0 &&
+          Number(row.system_leaked_chars ?? row.leaked_chars ?? 0) === 0,
+      ).length,
+      rows.length,
+    ),
   };
 
   return {
     ...micro,
-    evaluation_schema: "redactguard-evaluation-v2-partial",
+    evaluation_schema: isV3
+      ? `${CURRENT_SCHEMA}-partial`
+      : "redactguard-evaluation-v2-partial",
     micro,
     macro: {},
     by_type: byType,
@@ -229,6 +311,7 @@ async function readPartialEvidence(directory) {
   const files = await listModelJsonlFiles(directory);
   const byModel = {};
   const completedCasesByModel = {};
+  const schemaByModel = {};
 
   for (const file of files) {
     const entries = await readJsonLines(path.join(directory, file));
@@ -244,9 +327,16 @@ async function readPartialEvidence(directory) {
 
     byModel[model] = scoredRows;
     completedCasesByModel[model] = scoredRows.length;
+    schemaByModel[model] = scoredRows.some(
+      (row) =>
+        Object.prototype.hasOwnProperty.call(row, "inference_status") ||
+        Object.prototype.hasOwnProperty.call(row, "quality_available"),
+    )
+      ? `${CURRENT_SCHEMA}-partial`
+      : "redactguard-evaluation-v2-partial";
   }
 
-  return { byModel, completedCasesByModel };
+  return { byModel, completedCasesByModel, schemaByModel };
 }
 
 async function summarizeRun(directory, metadata = {}) {
@@ -254,7 +344,7 @@ async function summarizeRun(directory, metadata = {}) {
   const metrics = await readJson(path.join(directory, "metrics.json"));
   const complete = Boolean(manifest && metrics);
   const partial = complete
-    ? { byModel: {}, completedCasesByModel: {} }
+    ? { byModel: {}, completedCasesByModel: {}, schemaByModel: {} }
     : await readPartialEvidence(directory);
   const partialModels = Object.keys(partial.byModel);
 
@@ -266,6 +356,12 @@ async function summarizeRun(directory, metadata = {}) {
     : metrics
       ? Object.keys(metrics)
       : partialModels;
+
+  const evaluationSchema =
+    manifest?.evaluation_schema ??
+    partial.schemaByModel?.[partialModels[0]] ??
+    null;
+  const legacy = !String(evaluationSchema ?? "").startsWith(CURRENT_SCHEMA);
 
   return {
     key,
@@ -282,6 +378,9 @@ async function summarizeRun(directory, metadata = {}) {
     pairedLatencyKey: metadata.pairedLatencyKey ?? null,
     status: complete ? "complete" : "incomplete",
     completedCasesByModel: partial.completedCasesByModel,
+    evaluationSchema,
+    contractVersion: manifest?.redactguard_contract?.version ?? null,
+    legacy,
   };
 }
 
@@ -337,7 +436,7 @@ async function loadRunFromSummary(summary) {
   const manifest = await readJson(path.join(directory, "manifest.json"), {});
   const storedFailures = await readJson(path.join(directory, "failures.json"));
   const partial = storedMetrics
-    ? { byModel: {} }
+    ? { byModel: {}, completedCasesByModel: {}, schemaByModel: {} }
     : await readPartialEvidence(directory);
 
   const metrics = storedMetrics ?? Object.fromEntries(
@@ -366,7 +465,8 @@ async function loadRunFromSummary(summary) {
     };
   }
 
-  return { summary, manifest, metrics, failures, latency };
+  const preflight = await readJson(path.join(directory, "preflight.json"), {});
+  return { summary, manifest, metrics, failures, latency, preflight };
 }
 
 async function loadRun(key) {
@@ -388,8 +488,14 @@ function evidenceCases(summary, model, metrics) {
 
 async function buildOverview() {
   const runs = await discoverRuns();
-  const completeByModel = new Map();
-  const partialByModel = new Map();
+  const bestByModel = new Map();
+
+  function candidateTier(run) {
+    if (!run.legacy && run.status === "complete") return 0;
+    if (!run.legacy && run.status === "incomplete") return 1;
+    if (run.legacy && run.status === "complete") return 2;
+    return 3;
+  }
 
   for (const run of runs) {
     if (run.kind === "latency") continue;
@@ -403,34 +509,30 @@ async function buildOverview() {
         metrics,
         failures: detail.failures?.[model] ?? [],
         latencyMetrics: detail.latency?.metrics?.[model] ?? null,
+        preflight: detail.preflight?.[model] ?? metrics?.preflight ?? null,
       };
-
-      if (run.status === "complete") {
-        if (!completeByModel.has(model)) completeByModel.set(model, candidate);
-      } else if (!partialByModel.has(model)) {
-        partialByModel.set(model, candidate);
+      const current = bestByModel.get(model);
+      if (!current || candidateTier(run) < candidateTier(current.run)) {
+        bestByModel.set(model, candidate);
       }
     }
   }
 
-  const modelNames = [...new Set([
-    ...completeByModel.keys(),
-    ...partialByModel.keys(),
-  ])].sort();
-
+  const modelNames = [...bestByModel.keys()].sort();
   const metrics = {};
   const failures = {};
   const latencyMetrics = {};
   const evidence = {};
 
   for (const model of modelNames) {
-    const candidate = completeByModel.get(model) ?? partialByModel.get(model);
+    const candidate = bestByModel.get(model);
     if (!candidate) continue;
 
     metrics[model] = candidate.metrics;
     failures[model] = candidate.failures;
     if (candidate.latencyMetrics) latencyMetrics[model] = candidate.latencyMetrics;
 
+    const modelMicro = candidate.metrics?.micro ?? candidate.metrics ?? {};
     evidence[model] = {
       runKey: candidate.run.key,
       runId: candidate.run.runId,
@@ -440,7 +542,19 @@ async function buildOverview() {
       dataset: candidate.run.dataset,
       source: candidate.run.source,
       cases: evidenceCases(candidate.run, model, candidate.metrics),
+      evaluatedCases: modelMicro.evaluated_cases ?? null,
       latencySource: candidate.latencyMetrics ? "dedicated" : "quality-run",
+      evaluationSchema: candidate.run.evaluationSchema,
+      contractVersion: candidate.run.contractVersion,
+      legacy: candidate.run.legacy,
+      contractStatus:
+        modelMicro.status === "contract_failed"
+          ? "failed"
+          : candidate.run.legacy
+            ? "legacy"
+            : "passed",
+      qualityAvailable: modelMicro.quality_available ?? !candidate.run.legacy,
+      preflight: candidate.preflight,
     };
   }
 
@@ -463,6 +577,10 @@ async function buildOverview() {
         : "complete",
       completeModels: statuses.filter((item) => item.status === "complete").length,
       partialModels: statuses.filter((item) => item.status === "incomplete").length,
+      legacyModels: statuses.filter((item) => item.legacy).length,
+      contractFailedModels: statuses.filter(
+        (item) => item.contractStatus === "failed",
+      ).length,
       sourceRuns: new Set(statuses.map((item) => item.runKey)).size,
       datasets,
     },
