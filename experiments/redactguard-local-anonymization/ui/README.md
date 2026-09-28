@@ -9,9 +9,14 @@ rebuilding a static dashboard.
 It discovers:
 
 - direct runs in `results/<run-id>/`;
+- incomplete/interrupted direct runs that only contain per-model JSONL evidence;
 - managed suites in both `results/suite/<suite-id>/` and
   `results/suites/<suite-id>/`;
 - paired `quality/` and `latency/` outputs when both are present.
+
+Incomplete runs are labelled `partial`. Their provisional metrics are recomputed from
+the completed scored JSONL rows, so evidence is still inspectable even when the Python
+process stopped before writing `manifest.json` and `metrics.json`.
 
 ## Run
 
