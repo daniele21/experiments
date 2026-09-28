@@ -47,3 +47,21 @@ The run index refreshes every five seconds. Selecting a run loads its current
 
 The dashboard intentionally stays read-only. Benchmark execution remains owned by the
 Python CLI; the React app only visualizes evidence already written under `results/`.
+
+
+## Unified overview
+
+The dashboard opens on **All models**, a cross-run comparison assembled dynamically from
+the result folders.
+
+For each model the overview selects:
+
+1. the newest completed quality benchmark, when one exists;
+2. otherwise, the newest partial JSONL evidence.
+
+The table always exposes the source run, completion status and case count so partial
+evidence cannot be mistaken for a completed benchmark. The scatter plot and all-model
+comparison therefore allow models produced by separate benchmark invocations to be viewed
+together while preserving provenance.
+
+The selected run pages remain available in the sidebar for drill-down.
