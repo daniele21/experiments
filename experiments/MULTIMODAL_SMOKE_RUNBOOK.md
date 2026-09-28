@@ -6,7 +6,7 @@ This runbook covers the first controlled real-model smoke runs for:
 2. VLM understanding: Qwen3-VL-4B-Instruct on controlled UI grounding.
 
 The smoke runs are intentionally small. They validate the complete path from configuration to
-provider inference, artifact persistence, evaluation and HTML reporting before broader suites
+provider inference, artifact persistence, evaluation and dynamic React exploration before broader suites
 are executed.
 
 ## 1. Common rules
@@ -85,23 +85,27 @@ uv run python scripts/run_benchmark.py \
   --output-dir results
 ```
 
-The command returns the output root. Identify the created run directory and generate both
-reports:
+The command returns the output root. Keep the benchmark running or completed, then open the
+dynamic React dashboard in another shell:
 
 ```bash
-uv run python scripts/generate_report.py --run-dir results/<run-id>
+cd ui
+npm install
+npm run dev
 ```
 
 Inspect:
 
+- the run selector;
+- the identified comparison tab;
+- runtime/provider/quantization provenance;
+- the blind-review tab;
 - `evidence.csv`;
 - `manifest.json`;
-- `report.html`;
-- `blind_review.html`;
-- `blind_key.json`;
 - `artifacts/<model-key>/...`.
 
-Keep `blind_key.json` separate from reviewers until blind voting is complete.
+The dashboard reads the result filesystem dynamically; no per-run HTML regeneration is required.
+Blind votes are kept in browser local storage until exported as JSON.
 
 ### GitHub manual smoke
 
@@ -212,10 +216,10 @@ The first real smoke is accepted when:
 1. all selected model/prompt cases produce persisted artifacts or typed provider failures
    (8 cases for GPT/Gemini, 12 for the optional GPT/Gemini/Qwen three-arm smoke);
 2. the run manifest records every resolved model ID, runtime/provider identity and generation config;
-3. `report.html` renders every selected provider side by side;
-4. `blind_review.html` does not expose provider/model identity and covers every unique selected-model pair per prompt;
-5. `blind_key.json` contains the reversible A/B mapping for every pair;
-6. failures remain inspectable rather than disappearing from the report/evidence.
+3. the React comparison view renders every selected provider side by side;
+4. the React blind-review view does not expose provider/model identity and covers every unique selected-model pair per prompt;
+5. blind votes export as JSON without requiring static HTML generation;
+6. failures remain inspectable rather than disappearing from the UI/evidence.
 
 ### VLM
 
