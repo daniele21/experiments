@@ -88,8 +88,26 @@ function RunList({ runs, selectedKey, onSelect }) {
     );
   }
 
+  const uniqueModels = new Set(runs.flatMap((run) => run.models ?? [])).size;
+
   return (
     <div className="run-list">
+      <button
+        type="button"
+        className={selectedKey === "__overview__" ? "run-item overview-item active" : "run-item overview-item"}
+        onClick={() => onSelect("__overview__")}
+      >
+        <div className="run-item__top">
+          <strong>All models</strong>
+          <span className="pill pill--overview">overview</span>
+        </div>
+        <span>Unified latest evidence</span>
+        <div className="run-item__meta">
+          <span>cross-run</span>
+          <span>{uniqueModels} model{uniqueModels === 1 ? "" : "s"}</span>
+        </div>
+      </button>
+      <div className="run-list__divider" />
       {runs.map((run, index) => (
         <button
           type="button"
@@ -221,27 +239,40 @@ function PiiChart({ summary }) {
 
 function ModelTable({ detail }) {
   const models = detail?.summary?.models ?? [];
+  const unified = Boolean(detail?.evidence);
   return (
     <div className="table-scroll">
       <table className="comparison-table">
         <thead>
           <tr>
             <th>Model</th>
+            {unified ? <th>Status</th> : null}
+            {unified ? <th>Cases</th> : null}
             <th>Recall</th>
             <th>Leakage</th>
             <th>Precision</th>
             <th>Zero leak</th>
             <th>p50</th>
             <th>p95</th>
+            {unified ? <th>Source run</th> : null}
           </tr>
         </thead>
         <tbody>
           {models.map((model) => {
             const summary = micro(detail.metrics?.[model]);
             const latency = micro(detail.latency?.metrics?.[model]);
+            const evidence = detail.evidence?.[model];
             return (
               <tr key={model}>
                 <td className="model-name">{model}</td>
+                {unified ? (
+                  <td className="status-cell">
+                    <span className={evidence?.status === "complete" ? "status-badge status-badge--complete" : "status-badge status-badge--partial"}>
+                      {evidence?.status === "complete" ? "complete" : "partial"}
+                    </span>
+                  </td>
+                ) : null}
+                {unified ? <td>{evidence?.cases ?? "—"}</td> : null}
                 <td>
                   <span>{formatPercent(summary.pii_recall)}</span>
                   <MiniBar value={summary.pii_recall} />
@@ -257,6 +288,12 @@ function ModelTable({ detail }) {
                 <td>{formatPercent(summary.zero_leak_document_rate)}</td>
                 <td>{formatMs(latency.latency_p50_ms ?? summary.latency_p50_ms)}</td>
                 <td>{formatMs(latency.latency_p95_ms ?? summary.latency_p95_ms)}</td>
+                {unified ? (
+                  <td className="source-run-cell">
+                    <strong>{evidence?.suiteId || evidence?.runId || "—"}</strong>
+                    <small>{formatDate(evidence?.createdAt)}</small>
+                  </td>
+                ) : null}
               </tr>
             );
           })}
@@ -331,7 +368,7 @@ function FailureExplorer({ failures }) {
 
 export default function App() {
   const [runs, setRuns] = useState([]);
-  const [selectedKey, setSelectedKey] = useState(null);
+  const [selectedKey, setSelectedKey] = useState("__overview__");
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
   const [loadingRuns, setLoadingRuns] = useState(true);
@@ -347,8 +384,9 @@ export default function App() {
       const nextRuns = payload.runs ?? [];
       setRuns(nextRuns);
       setSelectedKey((current) => {
+        if (current === "__overview__") return current;
         if (current && nextRuns.some((run) => run.key === current)) return current;
-        return nextRuns[0]?.key ?? null;
+        return "__overview__";
       });
       setLastRefresh(new Date());
       setError(null);
@@ -375,7 +413,12 @@ export default function App() {
     const controller = new AbortController();
     setLoadingDetail(true);
 
-    fetch(`/api/run?key=${encodeURIComponent(selectedKey)}`, {
+    const endpoint =
+      selectedKey === "__overview__"
+        ? "/api/overview"
+        : `/api/run?key=${encodeURIComponent(selectedKey)}`;
+
+    fetch(endpoint, {
       cache: "no-store",
       signal: controller.signal,
     })
@@ -407,7 +450,18 @@ export default function App() {
   const currentSummary = detail?.metrics?.[selectedModel] ?? null;
   const currentMicro = micro(currentSummary);
   const currentLatency = micro(detail?.latency?.metrics?.[selectedModel]);
-  const selectedRun = detail?.summary ?? runs.find((run) => run.key === selectedKey);
+  const selectedRun =
+    detail?.summary ??
+    (selectedKey === "__overview__"
+      ? {
+          key: "__overview__",
+          runId: "Unified overview",
+          models: [],
+          source: "overview",
+          status: "complete",
+        }
+      : runs.find((run) => run.key === selectedKey));
+  const selectedEvidence = detail?.evidence?.[selectedModel] ?? null;
   const failures = detail?.failures?.[selectedModel] ?? [];
 
   const latencyP50 = currentLatency.latency_p50_ms ?? currentMicro.latency_p50_ms;
@@ -443,11 +497,17 @@ export default function App() {
         <header className="topbar">
           <div>
             <div className="kicker">Benchmark results</div>
-            <h1>{selectedRun?.suiteId || selectedRun?.runId || "No run selected"}</h1>
+            <h1>
+              {selectedRun?.source === "overview"
+                ? "Unified model overview"
+                : selectedRun?.suiteId || selectedRun?.runId || "No run selected"}
+            </h1>
             <p>
-              {selectedRun
-                ? `${shortDataset(selectedRun.dataset)} · ${formatDate(selectedRun.createdAt)}`
-                : "Run a benchmark to populate the dashboard."}
+              {selectedRun?.source === "overview"
+                ? "Latest complete evidence per model, with partial evidence used only as fallback."
+                : selectedRun
+                  ? `${shortDataset(selectedRun.dataset)} · ${formatDate(selectedRun.createdAt)}`
+                  : "Run a benchmark to populate the dashboard."}
             </p>
           </div>
           <button type="button" className="refresh-button" onClick={loadRuns}>
@@ -458,7 +518,9 @@ export default function App() {
 
         {error ? <div className="error-banner">{error}</div> : null}
 
-        {!selectedRun ? (
+        {loadingDetail ? (
+          <div className="loading-panel">Loading benchmark data…</div>
+        ) : !selectedRun ? (
           <div className="empty-state large">
             <strong>No benchmark results found</strong>
             <span>
@@ -466,11 +528,19 @@ export default function App() {
               export step is required.
             </span>
           </div>
-        ) : loadingDetail || !detail ? (
+        ) : !detail ? (
           <div className="loading-panel">Loading benchmark data…</div>
         ) : (
           <>
-            {selectedRun.status === "incomplete" ? (
+            {selectedRun.source === "overview" ? (
+              <div className="overview-banner">
+                <strong>Unified evidence</strong>
+                <span>
+                  Each model uses its newest completed benchmark when available. Models without a
+                  completed benchmark use the newest partial JSONL evidence and are labelled clearly.
+                </span>
+              </div>
+            ) : selectedRun.status === "incomplete" ? (
               <div className="partial-banner">
                 <strong>Partial run</strong>
                 <span>
@@ -481,32 +551,55 @@ export default function App() {
             ) : null}
 
             <section className="run-context">
-              <div>
-                <span className="eyebrow">Source</span>
-                <strong>{selectedRun.source === "suite" ? "Managed suite" : "Benchmark run"}</strong>
-              </div>
-              <div>
-                <span className="eyebrow">Models</span>
-                <strong>{selectedRun.models.length}</strong>
-              </div>
-              <div>
-                <span className="eyebrow">
-                  {selectedRun.status === "incomplete" ? "Completed cases" : "Cases"}
-                </span>
-                <strong>
-                  {selectedRun.status === "incomplete"
-                    ? selectedRun.completedCasesByModel?.[selectedModel] ??
-                      selectedRun.cases ??
-                      "—"
-                    : selectedRun.cases ?? "—"}
-                </strong>
-              </div>
-              <div>
-                <span className="eyebrow">Status</span>
-                <strong>
-                  {selectedRun.status === "incomplete" ? "Partial evidence" : "Complete"}
-                </strong>
-              </div>
+              {selectedRun.source === "overview" ? (
+                <>
+                  <div>
+                    <span className="eyebrow">Models</span>
+                    <strong>{selectedRun.models.length}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Complete</span>
+                    <strong>{selectedRun.completeModels ?? 0}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Partial fallback</span>
+                    <strong>{selectedRun.partialModels ?? 0}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Source runs</span>
+                    <strong>{selectedRun.sourceRuns ?? 0}</strong>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <span className="eyebrow">Source</span>
+                    <strong>{selectedRun.source === "suite" ? "Managed suite" : "Benchmark run"}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Models</span>
+                    <strong>{selectedRun.models.length}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">
+                      {selectedRun.status === "incomplete" ? "Completed cases" : "Cases"}
+                    </span>
+                    <strong>
+                      {selectedRun.status === "incomplete"
+                        ? selectedRun.completedCasesByModel?.[selectedModel] ??
+                          selectedRun.cases ??
+                          "—"
+                        : selectedRun.cases ?? "—"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Status</span>
+                    <strong>
+                      {selectedRun.status === "incomplete" ? "Partial evidence" : "Complete"}
+                    </strong>
+                  </div>
+                </>
+              )}
             </section>
 
             <section className="section-heading model-picker-row">
@@ -586,7 +679,9 @@ export default function App() {
                   <span className="kicker">All models</span>
                   <h2>Model comparison</h2>
                 </div>
-                {detail.latency ? (
+                {detail.evidence ? (
+                  <span className="panel-note">latest evidence per model</span>
+                ) : detail.latency ? (
                   <span className="panel-note">dedicated latency suite</span>
                 ) : (
                   <span className="panel-note">quality-run latency</span>
@@ -609,24 +704,43 @@ export default function App() {
             </section>
 
             <section className="manifest-strip">
-              <span>
-                <strong>Benchmark commit</strong>
-                {detail.manifest.benchmark_commit ?? "—"}
-              </span>
-              <span>
-                <strong>Korgis</strong>
-                {detail.manifest.korgis?.tested_sha ??
-                  detail.manifest.korgis?.source_sha ??
-                  "—"}
-              </span>
-              <span>
-                <strong>Host</strong>
-                {detail.manifest.host
-                  ? [detail.manifest.host.system, detail.manifest.host.machine]
-                      .filter(Boolean)
-                      .join(" · ")
-                  : "—"}
-              </span>
+              {detail.evidence ? (
+                <>
+                  <span>
+                    <strong>Selected model evidence</strong>
+                    {selectedEvidence?.suiteId || selectedEvidence?.runId || "—"}
+                  </span>
+                  <span>
+                    <strong>Dataset</strong>
+                    {shortDataset(selectedEvidence?.dataset)}
+                  </span>
+                  <span>
+                    <strong>Evidence date</strong>
+                    {formatDate(selectedEvidence?.createdAt)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    <strong>Benchmark commit</strong>
+                    {detail.manifest.benchmark_commit ?? "—"}
+                  </span>
+                  <span>
+                    <strong>Korgis</strong>
+                    {detail.manifest.korgis?.tested_sha ??
+                      detail.manifest.korgis?.source_sha ??
+                      "—"}
+                  </span>
+                  <span>
+                    <strong>Host</strong>
+                    {detail.manifest.host
+                      ? [detail.manifest.host.system, detail.manifest.host.machine]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : "—"}
+                  </span>
+                </>
+              )}
             </section>
           </>
         )}
