@@ -40,14 +40,23 @@ def _quality_view(summary: dict) -> dict:
     micro = summary.get("micro", summary)
     macro = summary.get("macro", {})
     return {
+        "status": micro.get("status"),
+        "quality_available": micro.get("quality_available"),
         "micro_recall": micro.get("pii_recall"),
         "macro_recall": macro.get("pii_recall"),
+        "system_recall": micro.get("system_pii_recall"),
         "micro_leakage": micro.get("leakage_rate"),
         "macro_leakage": macro.get("leakage_rate"),
+        "system_leakage": micro.get("system_leakage_rate"),
         "micro_precision": micro.get("precision"),
         "macro_precision": macro.get("precision"),
         "zero_leak_documents": micro.get("zero_leak_document_rate"),
-        "valid_output_rate": micro.get("valid_output_rate"),
+        "inference_success_rate": micro.get("inference_success_rate"),
+        "contract_valid_rate": micro.get("contract_valid_rate"),
+        "truncation_rate": micro.get("truncation_rate"),
+        "span_resolution_rate": micro.get("span_resolution_rate"),
+        "evaluated_cases": micro.get("evaluated_cases"),
+        "cases": micro.get("cases"),
         "quality_p50_ms": micro.get("latency_p50_ms"),
         "quality_p95_ms": micro.get("latency_p95_ms"),
         "by_type": summary.get("by_type", {}),
@@ -88,12 +97,15 @@ def build_history_entry(
         }
 
     return {
-        "schema_version": "redactguard-suite-history-v1",
+        "schema_version": "redactguard-suite-history-v2",
         "suite_id": suite_id,
         "created_at": quality_manifest.get("created_at"),
         "dataset_id": dataset_id,
         "models": models,
         "benchmark_commit": quality_manifest.get("benchmark_commit"),
+        "evaluation_schema": quality_manifest.get("evaluation_schema"),
+        "redactguard_contract": quality_manifest.get("redactguard_contract"),
+        "preflight": quality_manifest.get("preflight"),
         "host": quality_manifest.get("host"),
         "runtime_strategy": "restart_per_model",
         "korgis": {
