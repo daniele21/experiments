@@ -1,17 +1,31 @@
-name: Temporary source export
+name: Temporary local deps export
 on:
   push:
     branches: [main]
     paths:
       - ".github/workflows/local-source-export.yml"
 jobs:
-  export:
+  deps:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/redactguard-local-anonymization
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install uv
+      - run: uv sync --extra dev
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm --prefix ui install --no-audit --no-fund
       - uses: actions/upload-artifact@v4
         with:
-          name: source-main
-          path: .
+          name: local-ci-deps
+          path: |
+            experiments/redactguard-local-anonymization/.venv
+            experiments/redactguard-local-anonymization/ui/node_modules
           include-hidden-files: true
           retention-days: 1
