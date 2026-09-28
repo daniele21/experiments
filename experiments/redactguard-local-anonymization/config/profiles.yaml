@@ -3,6 +3,7 @@ source:
   ref: 2c6ec6a50ef0523bf1aedeecd38da84cff4d7704
   contract_version: redactguard-detection-v2
   output_schema: minimal-pii-type-value-v1
+  max_output_tokens: 4096
   chunk_max_chars: 4000
   chunk_overlap_chars: 256
   prompt_builder: anonimizer/services/prompt_builder.py
