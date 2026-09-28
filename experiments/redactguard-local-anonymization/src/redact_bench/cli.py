@@ -8,6 +8,7 @@ from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
+from redact_bench.progress import TerminalProgress
 from redact_bench.provider import DEFAULT_MODELS, KorgisController, KorgisUnavailableError
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
@@ -72,6 +73,11 @@ def compare(
     profiles: Path = typer.Option(ROOT / "config/profiles.yaml"),
     results_dir: Path = typer.Option(ROOT / "results"),
     warmups: int = typer.Option(1, min=0),
+    progress: bool = typer.Option(
+        True,
+        "--progress/--no-progress",
+        help="Show live model/case progress on stderr.",
+    ),
 ) -> None:
     selected = [item.strip() for item in models.split(",") if item.strip()]
     try:
@@ -81,6 +87,7 @@ def compare(
             profiles_path=str(profiles),
             results_dir=str(results_dir),
             warmups=warmups,
+            progress=TerminalProgress() if progress else None,
         )
     except KorgisUnavailableError as exc:
         _exit_korgis_unavailable(exc)
