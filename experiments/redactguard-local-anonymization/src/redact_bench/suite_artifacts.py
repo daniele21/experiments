@@ -38,6 +38,7 @@ def combine_model_runs(
     failures: dict[str, list] = {}
     rows: list[dict] = []
     identities: dict[str, dict | None] = {}
+    preflights: dict[str, dict] = {}
 
     for path, manifest in zip(run_dirs, manifests, strict=True):
         run_models = list(manifest.get("models", []))
@@ -59,6 +60,13 @@ def combine_model_runs(
             .get("runtime_identity", {})
             .get(model)
         )
+        preflight_path = path / "preflight.json"
+        if preflight_path.exists():
+            preflights.update(_read_json(preflight_path))
+        else:
+            manifest_preflight = manifest.get("preflight", {}).get("models", {})
+            if isinstance(manifest_preflight, dict):
+                preflights.update(manifest_preflight)
 
         raw_path = path / f"{model.replace('/', '_')}.jsonl"
         if raw_path.exists():
@@ -71,10 +79,15 @@ def combine_model_runs(
     combined["models"] = models
     combined["runtime_strategy"] = "restart_per_model"
     combined.setdefault("korgis", {})["runtime_identity"] = identities
+    combined["preflight"] = {
+        "enabled": bool(first_manifest.get("preflight", {}).get("enabled", True)),
+        "models": preflights,
+    }
 
     _write_json(output / "manifest.json", combined)
     _write_json(output / "metrics.json", metrics)
     _write_json(output / "rows.json", rows)
+    _write_json(output / "preflight.json", preflights)
     if failures:
         _write_json(output / "failures.json", failures)
     write_html(output / "report.html", metrics, combined)
