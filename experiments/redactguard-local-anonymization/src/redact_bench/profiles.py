@@ -9,9 +9,23 @@ import yaml
 DETECTION_CONTRACT_VERSION = "redactguard-detection-v2"
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=4)
+def load_profile_snapshot(path: str | Path) -> dict[str, Any]:
+    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        raise ValueError("profiles.yaml must contain a mapping")
+    return payload
+
+
+def load_contract_metadata(path: str | Path) -> dict[str, Any]:
+    source = load_profile_snapshot(path).get("source", {})
+    if not isinstance(source, dict):
+        raise ValueError("profiles.yaml source metadata must be a mapping")
+    return dict(source)
+
+
 def load_profiles(path: str | Path) -> dict[str, dict[str, dict[str, Any]]]:
-    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    payload = load_profile_snapshot(path)
     profiles = payload.get("profiles", {})
     if not isinstance(profiles, dict):
         raise ValueError("profiles.yaml has no profiles mapping")
