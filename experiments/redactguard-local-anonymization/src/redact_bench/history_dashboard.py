@@ -23,26 +23,40 @@ def _latest_table(entry: dict) -> str:
     for model, payload in entry.get("models", {}).items():
         quality = payload["quality"]
         latency = payload["latency"]
+        contract_status = (
+            "FAILED"
+            if quality.get("status") == "contract_failed"
+            else "PASS"
+            if entry.get("evaluation_schema") == "redactguard-evaluation-v3"
+            else "LEGACY"
+        )
+        evaluated = (
+            f"{quality.get('evaluated_cases', '—')}/"
+            f"{quality.get('cases', '—')}"
+        )
         rows.append(
             "<tr>"
             f"<td>{_esc(model)}</td>"
+            f"<td>{_esc(contract_status)}</td>"
+            f"<td>{_esc(evaluated)}</td>"
             f"<td>{_pct(quality.get('micro_recall'))}</td>"
-            f"<td>{_pct(quality.get('macro_recall'))}</td>"
+            f"<td>{_pct(quality.get('system_recall'))}</td>"
             f"<td>{_pct(quality.get('micro_leakage'))}</td>"
-            f"<td>{_pct(quality.get('macro_leakage'))}</td>"
+            f"<td>{_pct(quality.get('system_leakage'))}</td>"
             f"<td>{_pct(quality.get('micro_precision'))}</td>"
-            f"<td>{_pct(quality.get('zero_leak_documents'))}</td>"
-            f"<td>{_ms(latency.get('p50_ms'))}</td>"
+            f"<td>{_pct(quality.get('inference_success_rate'))}</td>"
+            f"<td>{_pct(quality.get('truncation_rate'))}</td>"
             f"<td>{_ms(latency.get('p95_ms'))}</td>"
             "</tr>"
         )
     return (
-        "<table><thead><tr><th>Model</th><th>Micro recall</th>"
-        "<th>Macro recall</th><th>Micro leakage</th><th>Macro leakage</th>"
-        "<th>Precision</th><th>Zero-leak docs</th><th>Latency p50 ms</th>"
-        "<th>Latency p95 ms</th></tr></thead><tbody>"
+        "<div class='scroll'><table><thead><tr><th>Model</th><th>Contract</th>"
+        "<th>Evaluated</th><th>Quality recall</th><th>System recall</th>"
+        "<th>Quality leakage</th><th>System leakage</th><th>Precision</th>"
+        "<th>Inference success</th><th>Truncation</th><th>Latency p95 ms</th>"
+        "</tr></thead><tbody>"
         + "".join(rows)
-        + "</tbody></table>"
+        + "</tbody></table></div>"
     )
 
 
@@ -52,20 +66,29 @@ def _history_table(entries: list[dict]) -> str:
         suite_id = entry["suite_id"]
         quality_link = f"suites/{suite_id}/quality/report.html"
         latency_link = f"suites/{suite_id}/latency/report.html"
+        schema = entry.get("evaluation_schema")
         for model, payload in entry.get("models", {}).items():
             quality = payload["quality"]
             latency = payload["latency"]
+            contract_status = (
+                "FAILED"
+                if quality.get("status") == "contract_failed"
+                else "PASS"
+                if schema == "redactguard-evaluation-v3"
+                else "LEGACY"
+            )
             rows.append(
                 "<tr>"
                 f"<td>{_esc(entry.get('created_at'))}</td>"
                 f"<td>{_esc(suite_id)}</td>"
                 f"<td>{_esc(model)}</td>"
+                f"<td>{_esc(contract_status)}</td>"
                 f"<td>{_pct(quality.get('micro_recall'))}</td>"
-                f"<td>{_pct(quality.get('macro_recall'))}</td>"
+                f"<td>{_pct(quality.get('system_recall'))}</td>"
                 f"<td>{_pct(quality.get('micro_leakage'))}</td>"
-                f"<td>{_pct(quality.get('macro_leakage'))}</td>"
+                f"<td>{_pct(quality.get('system_leakage'))}</td>"
                 f"<td>{_pct(quality.get('micro_precision'))}</td>"
-                f"<td>{_ms(latency.get('p50_ms'))}</td>"
+                f"<td>{_pct(quality.get('inference_success_rate'))}</td>"
                 f"<td>{_ms(latency.get('p95_ms'))}</td>"
                 f"<td><a href='{_esc(quality_link)}'>quality</a> · "
                 f"<a href='{_esc(latency_link)}'>latency</a></td>"
@@ -73,9 +96,9 @@ def _history_table(entries: list[dict]) -> str:
             )
     return (
         "<div class='scroll'><table><thead><tr><th>Run</th><th>Suite</th>"
-        "<th>Model</th><th>Micro recall</th><th>Macro recall</th>"
-        "<th>Micro leakage</th><th>Macro leakage</th><th>Precision</th>"
-        "<th>p50 ms</th><th>p95 ms</th><th>Details</th></tr></thead><tbody>"
+        "<th>Model</th><th>Contract</th><th>Quality recall</th><th>System recall</th>"
+        "<th>Quality leakage</th><th>System leakage</th><th>Precision</th>"
+        "<th>Inference success</th><th>p95 ms</th><th>Details</th></tr></thead><tbody>"
         + "".join(rows)
         + "</tbody></table></div>"
     )
@@ -146,8 +169,9 @@ a{{color:inherit}}
 </head>
 <body>
 <h1>RedactGuard benchmark history</h1>
-<p class="note">Each suite manages Korgis, runs every model in a fresh runtime process,
-executes quality and repeated latency, appends one immutable history entry, and rebuilds this dashboard.</p>
+<p class="note">Evaluation v3 separates model quality from system effectiveness.
+Contract failures are quality N/A, not artificial 0% recall. Legacy suites remain visible
+for diagnosis but should be rerun before cross-model conclusions.</p>
 <div class="cards">
 <div class="card"><strong>Latest suite</strong><span>{_esc(suite_id)}</span></div>
 <div class="card"><strong>Dataset</strong><span>{_esc(latest.get('dataset_id'))}</span></div>
