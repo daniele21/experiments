@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#ffffff"/>
+  <rect width="180" height="500" fill="#1f2937"/>
+  <text x="28" y="55" font-family="Arial" font-size="24" fill="white">Workspace</text>
+  <text x="28" y="115" font-family="Arial" font-size="18" fill="#dddddd">Dashboard</text>
+  <text x="28" y="155" font-family="Arial" font-size="18" fill="#dddddd">Projects</text>
+  <rect x="20" y="420" width="140" height="50" rx="8" fill="#374151"/>
+  <text x="42" y="452" font-family="Arial" font-size="18" fill="white">Settings</text>
+  <text x="225" y="80" font-family="Arial" font-size="32" fill="#111827">Dashboard</text>
+  <rect x="225" y="125" width="250" height="120" rx="12" fill="#f3f4f6"/>
+  <text x="250" y="175" font-family="Arial" font-size="20" fill="#111827">Recent activity</text>
+</svg>

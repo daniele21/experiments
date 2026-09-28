@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Reproducible Jev vs LLM decision benchmark"
 requires-python = ">=3.11"
 dependencies = [
+  "benchmark-core",
   "numpy>=2.0",
   "openai>=1.0",
   "pandas>=2.2",
@@ -12,6 +13,9 @@ dependencies = [
   "typer>=0.16",
   "pyyaml>=6.0.3",
 ]
+
+[tool.uv.sources]
+benchmark-core = { path = "../../packages/benchmark-core", editable = true }
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.12"]
@@ -30,4 +34,4 @@ packages = ["src/jev_bench"]
 line-length = 100
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", ".", "../../packages/benchmark-core/src"]

@@ -1,0 +1,70 @@
+name: Image generation paid smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid_run:
+        description: Type RUN to execute the paid 8-image smoke benchmark
+        required: true
+        type: string
+
+jobs:
+  paid-image-smoke:
+    if: ${{ inputs.confirm_paid_run == 'RUN' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/image-generation-benchmark
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      - name: Sync benchmark
+        run: uv sync --extra dev
+
+      - name: Validate credentials
+        shell: bash
+        run: |
+          test -n "$OPENAI_API_KEY" || { echo "OPENAI_API_KEY is missing"; exit 1; }
+          test -n "$GEMINI_API_KEY" || { echo "GEMINI_API_KEY is missing"; exit 1; }
+
+      - name: Resolve smoke matrix
+        run: |
+          uv run python scripts/run_benchmark.py \
+            --models openai-sunburst,gemini-pro-image \
+            --profile smoke \
+            --output-dir results \
+            --dry-run
+
+      - name: Run paid smoke
+        run: |
+          uv run python scripts/run_benchmark.py \
+            --models openai-sunburst,gemini-pro-image \
+            --profile smoke \
+            --output-dir results
+
+      - name: Generate reports
+        shell: bash
+        run: |
+          RUN_DIR="$(find results -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+          test -n "$RUN_DIR" || { echo "Run directory not found"; exit 1; }
+          uv run python scripts/generate_report.py --run-dir "$RUN_DIR"
+
+      - name: Upload smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagegen-paid-smoke
+          path: experiments/image-generation-benchmark/results/
+          if-no-files-found: error

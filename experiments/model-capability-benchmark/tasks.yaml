@@ -1,0 +1,122 @@
+tasks:
+  intent-classification:
+    version: "1"
+    plugin: intent-classification
+    evaluator: exact-label
+    evaluator_version: "1"
+    compatible_datasets:
+      - banking77
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: intent-classification-v1
+      version: "1"
+    metrics:
+      - name: accuracy
+        primary: true
+      - name: macro_f1
+    options:
+      instruction: >-
+        Classify the input into exactly one of the allowed labels and return only the
+        structured response requested by the schema.
+      output_field: label
+      labels_metadata_key: labels
+
+  structured-output:
+    version: "1"
+    plugin: structured-output
+    evaluator: exact-fields
+    evaluator_version: "1"
+    compatible_datasets:
+      - structured-output-controlled-v1
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: structured-output-v1
+      version: "1"
+    metrics:
+      - name: schema_valid_rate
+        primary: true
+      - name: field_accuracy
+      - name: hallucinated_fields
+    options:
+      instruction: >-
+        Extract the requested fields from the input and return a response that follows
+        the provided JSON schema exactly.
+      schema_metadata_key: response_schema
+
+
+  calibrated-intent-classification:
+    version: "1"
+    plugin: calibrated-intent-classification
+    evaluator: top-label-calibration
+    evaluator_version: "1"
+    compatible_datasets:
+      - banking77
+      - clinc150-oos
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: calibrated-intent-classification-v1
+      version: "1"
+    metrics:
+      - name: accuracy
+      - name: correct
+      - name: confidence
+      - name: oos_correct
+      - name: brier_correctness_component
+        primary: true
+    options:
+      instruction: >-
+        Classify the input into exactly one allowed label. If none of the in-scope labels
+        applies, choose the out-of-scope label. Return the selected label and a calibrated
+        confidence between 0 and 1 for that selected label.
+      output_field: label
+      confidence_field: confidence
+      labels_metadata_key: labels
+      oos_label: other
+
+  qa-abstention:
+    version: "1"
+    plugin: qa-abstention
+    evaluator: qa-answerability
+    evaluator_version: "1"
+    compatible_datasets:
+      - qa-abstention-controlled-v1
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: qa-abstention-v1
+      version: "1"
+    metrics:
+      - name: exact_match
+        primary: true
+      - name: answerability_accuracy
+      - name: parse_valid
+    options:
+      instruction: >-
+        Answer the question using only the supplied context. If the answer is not
+        supported by the context, set abstain to true and return an empty answer.
+        Return only the requested structured object.
+
+  mathematical-reasoning:
+    version: "1"
+    plugin: mathematical-reasoning
+    evaluator: final-answer
+    evaluator_version: "1"
+    compatible_datasets:
+      - math-reasoning-controlled-v1
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: mathematical-reasoning-v1
+      version: "1"
+    metrics:
+      - name: final_answer_accuracy
+        primary: true
+      - name: parse_valid
+    options:
+      instruction: >-
+        Solve the problem and return only the final answer in the requested structured
+        field. Do not include private chain-of-thought or intermediate reasoning.
+      output_field: answer

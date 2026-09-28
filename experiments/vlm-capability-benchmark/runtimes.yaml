@@ -1,0 +1,14 @@
+providers:
+  korgis-openai-compatible:
+    type: openai-compatible
+    base_url_env: KORGIS_BASE_URL
+    api_key_env: KORGIS_API_KEY
+
+runtimes:
+  korgis-local:
+    provider: korgis-openai-compatible
+    deployment: local
+    lifecycle: external
+    transport:
+      max_retries: 2
+      timeout_seconds: 120

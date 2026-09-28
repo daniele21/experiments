@@ -1,0 +1,181 @@
+suite:
+  id: capability-core
+  version: "1"
+  description: >-
+    Core text-model capability suite spanning classification, calibration/OOS,
+    structured output, QA with abstention, and mathematical reasoning.
+  default_profile: smoke
+
+  generation:
+    temperature: 0.0
+    max_output_tokens: 256
+    seed: 42
+
+  capabilities:
+    intent-classification:
+      task: intent-classification
+      datasets:
+        - banking77
+      description: BANKING77 intent classification with strict structured labels.
+      tags: [classification, banking77]
+      metrics:
+        - name: accuracy
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: macro_f1
+          source: evaluation
+          reducer: macro_f1
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p50_ms
+          source: inference
+          reducer: p50
+          field: latency_ms
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+        - name: output_tokens_mean
+          source: inference
+          reducer: mean
+          field: usage.output_tokens
+        - name: estimated_cost_usd
+          source: inference
+          reducer: sum
+          field: estimated_cost_usd
+
+    oos-calibration:
+      task: calibrated-intent-classification
+      datasets:
+        - banking77
+        - clinc150-oos
+      description: >-
+        Top-label calibration and out-of-scope discrimination across BANKING77
+        and filtered CLINC150 OOS prompts.
+      tags: [classification, calibration, oos]
+      context:
+        labels:
+          source: dataset_metadata
+          dataset: banking77
+          field: labels
+      metrics:
+        - name: oos_detection_rate
+          source: evaluation
+          reducer: oos_detection
+          primary: true
+          options:
+            oos_label: other
+        - name: in_scope_accuracy
+          source: evaluation
+          reducer: in_scope_accuracy
+          options:
+            oos_label: other
+        - name: ece_top_label
+          source: evaluation
+          reducer: ece
+          options:
+            confidence_metric: confidence
+            correctness_metric: correct
+            bins: 10
+        - name: brier_correctness
+          source: task_metric
+          reducer: mean
+          field: brier_correctness_component
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+
+    structured-output:
+      task: structured-output
+      datasets:
+        - structured-output-controlled-v1
+      description: Strict JSON-object extraction against per-sample schemas.
+      tags: [structured-output, extraction]
+      metrics:
+        - name: schema_valid_rate
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: field_accuracy
+          source: task_metric
+          reducer: mean
+        - name: hallucinated_fields
+          source: task_metric
+          reducer: mean
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+        - name: estimated_cost_usd
+          source: inference
+          reducer: sum
+          field: estimated_cost_usd
+
+    qa-abstention:
+      task: qa-abstention
+      datasets:
+        - qa-abstention-controlled-v1
+      description: Context-grounded QA with explicit abstention on unanswerable questions.
+      tags: [qa, abstention]
+      metrics:
+        - name: exact_match
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: answerability_accuracy
+          source: task_metric
+          reducer: mean
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+
+    mathematical-reasoning:
+      task: mathematical-reasoning
+      datasets:
+        - math-reasoning-controlled-v1
+      description: Final-answer-only mathematical reasoning without chain-of-thought scoring.
+      tags: [reasoning, math]
+      metrics:
+        - name: final_answer_accuracy
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+        - name: output_tokens_mean
+          source: inference
+          reducer: mean
+          field: usage.output_tokens
+        - name: estimated_cost_usd
+          source: inference
+          reducer: sum
+          field: estimated_cost_usd

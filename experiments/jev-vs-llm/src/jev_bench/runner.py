@@ -5,6 +5,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pandas as pd
+from benchmark_core.persistence import append_csv_records
 
 from jev_bench.benchmark_data import (
     DEFAULT_CACHE,
@@ -23,6 +24,7 @@ from jev_bench.datasets import (
     support_cases,
     support_questions,
 )
+from jev_bench.decision_task import decision_correct
 from jev_bench.models import BenchmarkCase, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
 
@@ -33,16 +35,9 @@ def _serialize_state(state: object) -> str:
     return json.dumps(state, ensure_ascii=False, sort_keys=True, default=str)
 
 
-def _binary_prediction(value: str | float) -> int:
-    return int(float(value) >= 0.5)
-
-
 def _correct(expected: str | float, actual: str | float, question: QuestionSpec) -> bool:
-    if question.type == "noul":
-        return _binary_prediction(actual) == _binary_prediction(expected)
-    if question.type == "score":
-        return abs(float(actual) - float(expected)) <= 0.5
-    return str(actual) == str(expected)
+    """Compatibility wrapper around the single Jev bounded-decision semantics."""
+    return decision_correct(expected, actual, question)
 
 
 def _rows_for_case(
@@ -376,11 +371,12 @@ def run_public_classification(
 
 
 def append_results(frame: pd.DataFrame, output: Path) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
-    if output.exists():
-        existing = pd.read_csv(output)
-        frame = pd.concat([existing, frame], ignore_index=True)
-    frame.to_csv(output, index=False)
+    """Compatibility wrapper over the shared record-oriented CSV persistence."""
+    append_csv_records(
+        frame.to_dict(orient="records"),
+        output,
+        fieldnames=[str(column) for column in frame.columns],
+    )
 
 
 EXPENSE_POLICY = """

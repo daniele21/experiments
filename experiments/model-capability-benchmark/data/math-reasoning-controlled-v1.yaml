@@ -1,0 +1,31 @@
+cases:
+  - sample_id: math-001
+    input: "A box has 18 red balls and 7 blue balls. How many balls are there in total?"
+    expected: "25"
+  - sample_id: math-002
+    input: "A train travels 180 km in 3 hours at constant speed. What is its speed in km/h?"
+    expected: "60"
+  - sample_id: math-003
+    input: "A product costs 80 euros and receives a 25% discount. What is the final price in euros?"
+    expected: "60"
+  - sample_id: math-004
+    input: "What is 17 multiplied by 6?"
+    expected: "102"
+  - sample_id: math-005
+    input: "If 5 notebooks cost 22.50 euros, what is the cost of one notebook in euros?"
+    expected: "4.5"
+  - sample_id: math-006
+    input: "A rectangle is 8 cm long and 5 cm wide. What is its area in square centimeters?"
+    expected: "40"
+  - sample_id: math-007
+    input: "There are 48 seats split equally across 6 rows. How many seats are in each row?"
+    expected: "8"
+  - sample_id: math-008
+    input: "A value increases from 50 to 65. What is the percentage increase?"
+    expected: "30"
+  - sample_id: math-009
+    input: "What is the arithmetic mean of 4, 8, 10, and 14?"
+    expected: "9"
+  - sample_id: math-010
+    input: "A tank is 3/4 full and has capacity 120 liters. How many liters are in the tank?"
+    expected: "90"

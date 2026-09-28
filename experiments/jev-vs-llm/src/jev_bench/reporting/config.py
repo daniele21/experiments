@@ -114,8 +114,8 @@ def load_reporting_config() -> dict[str, Any]:
                 data = yaml.safe_load(f)
                 if isinstance(data, dict):
                     return data
-        except Exception:
-            pass
+        except (OSError, yaml.YAMLError):
+            return _DEFAULT_CONFIG
     return _DEFAULT_CONFIG
 
 

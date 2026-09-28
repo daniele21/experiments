@@ -190,8 +190,7 @@ def canonical_task_name(experiment: str) -> str:
     """Normalize experiment tags like '01-routing-public' or '01-routing' to 'routing'."""
     clean = str(experiment).strip().lower()
     for prefix in ["01-", "02-", "03-", "04-", "05-"]:
-        if clean.startswith(prefix):
-            clean = clean[len(prefix):]
+        clean = clean.removeprefix(prefix)
     clean = clean.replace("-public", "").replace("_", "-")
     return clean
 
@@ -293,7 +292,7 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
         reqs = group.sort_values("case_id").drop_duplicates(
             ["experiment", "case_id", "provider", "model"]
         )
-        valid_reqs = reqs[reqs["valid"] == True]  # noqa: E712
+        valid_reqs = reqs[reqs["valid"] == True]
 
         # Effective accuracy: evaluated on ALL primary metric requests (invalid choices count as incorrect)
         primary_all = group[group["primary_metric"].fillna(False) == True]

@@ -16,58 +16,21 @@ import logging
 import os
 import time
 import uuid
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from benchmark_core.reporting import summarize_records
+from benchmark_core.runner import BenchmarkArm, execute_arm
 from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
 
-from jev_bench.benchmark_data import (
-    DEFAULT_CACHE,
-    balanced_banking77_cases,
-    banking77_question,
-    calibration_public_cases,
-    prepare_public_data,
-)
-from jev_bench.cli import (
-    PUBLIC_PROFILES,
-    _record_manifest,
-    _tag_run,
-    append_results,
-    build_report,
-)
-from jev_bench.datasets import (
-    calibration_cases,
-    expense_cases,
-    expense_questions,
-    routing_cases,
-    routing_questions,
-    support_cases,
-    support_questions,
-)
-from jev_bench.models import BenchmarkCase, QuestionSpec
-from jev_bench.progress import run_cases_with_progress
+from jev_bench.benchmark_data import DEFAULT_CACHE, prepare_public_data
+from jev_bench.cli import _record_manifest, _tag_run, append_results, build_report
 from jev_bench.providers.base import DecisionProvider
 from jev_bench.providers.jev import JevProvider
 from jev_bench.providers.korgis import KorgisProvider
-from jev_bench.runner import (
-    _expense_action,
-    _rows_for_case,
-    _support_action,
-    run_scaling,
-    run_workflow,
-)
 
+from .experiment_execution import run_single_experiment
 from .korgis_manager import KorgisManager
 
 logger = logging.getLogger(__name__)
@@ -143,7 +106,7 @@ class ExperimentOrchestrator:
                 # 1. Activate model in Korgis
                 try:
                     self.korgis.activate_model(model)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - isolate one model activation failure
                     logger.error("Failed to activate model '%s': %s", model, exc)
                     summary_records.append({
                         "model": model,
@@ -161,53 +124,68 @@ class ExperimentOrchestrator:
 
             # 2. Run experiments for this model
             for exp_name in experiments:
-                t0 = time.perf_counter()
-                try:
-                    frame = self._run_single_experiment(
+                arm = BenchmarkArm(model_key=model, task_id=exp_name)
+
+                def run_and_persist(
+                    exp_name: str = exp_name,
+                    provider: KorgisProvider = provider,
+                    model: str = model,
+                ) -> pd.DataFrame:
+                    frame = run_single_experiment(
                         exp_name=exp_name,
                         provider=provider,
                         model_name=model,
                         dataset=dataset,
                         profile=profile,
+                        cache_dir=self.cache_dir,
+                        seed=self.seed,
                     )
-                    elapsed = time.perf_counter() - t0
+                    tagged = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
+                    tagged["thinking_mode"] = "on" if self.enable_thinking else "off"
+                    tagged["dataset_type"] = dataset
+                    append_results(tagged, self.output_csv)
+                    return tagged
 
-                    tagged_frame = _tag_run(frame, group_id, f"{dataset}-{exp_name}")
-                    tagged_frame["thinking_mode"] = "on" if self.enable_thinking else "off"
-                    tagged_frame["dataset_type"] = dataset
-                    append_results(tagged_frame, self.output_csv)
+                execution = execute_arm(arm, run_and_persist)
+                if execution.succeeded:
+                    tagged_frame = execution.value
+                    if not isinstance(tagged_frame, pd.DataFrame):
+                        raise TypeError("benchmark arm did not return a DataFrame")
                     all_frames.append(tagged_frame)
 
-                    # Compute quick metrics for model summary
-                    valid_cases = int(tagged_frame["valid"].sum()) if "valid" in tagged_frame else 0
-                    total_cases = len(tagged_frame)
-                    correct_cases = int(tagged_frame["correct"].sum()) if "correct" in tagged_frame else 0
-                    accuracy = (correct_cases / total_cases * 100) if total_cases > 0 else 0.0
-                    avg_lat = float(tagged_frame["latency_ms"].mean()) if "latency_ms" in tagged_frame else 0.0
-
+                    summary = summarize_records(tagged_frame.to_dict(orient="records"))
                     summary_records.append({
                         "model": model,
                         "experiment": exp_name,
                         "status": "SUCCESS",
-                        "total_cases": total_cases,
-                        "valid_cases": valid_cases,
-                        "accuracy_pct": round(accuracy, 1),
-                        "avg_latency_ms": round(avg_lat, 1),
-                        "duration_s": round(elapsed, 1),
+                        "total_cases": summary["total_cases"],
+                        "valid_cases": summary["valid_cases"],
+                        "accuracy_pct": summary["accuracy_pct"],
+                        "avg_latency_ms": summary["avg_latency_ms"],
+                        "duration_s": round(execution.elapsed_s, 1),
                     })
                     console.print(
-                        f"\n[bold green]✓ Done {model}[/] on [bold yellow]{exp_name}[/] in [cyan]{elapsed:.1f}s[/] "
-                        f"| Acc: [bold]{accuracy:.1f}%[/] | Valid: [bold]{valid_cases}/{total_cases}[/] | Latency: [cyan]{avg_lat:.0f}ms[/]\n"
+                        f"\n[bold green]✓ Done {model}[/] on [bold yellow]{exp_name}[/] "
+                        f"in [cyan]{execution.elapsed_s:.1f}s[/] "
+                        f"| Acc: [bold]{summary['accuracy_pct']:.1f}%[/] "
+                        f"| Valid: [bold]{summary['valid_cases']}/{summary['total_cases']}[/] "
+                        f"| Latency: [cyan]{summary['avg_latency_ms']:.0f}ms[/]\n"
                     )
-                except Exception as exc:
-                    logger.error("Experiment '%s' on model '%s' failed: %s", exp_name, model, exc)
+                else:
+                    error = execution.error_message or "unknown execution error"
+                    logger.error(
+                        "Experiment '%s' on model '%s' failed: %s",
+                        exp_name,
+                        model,
+                        error,
+                    )
                     summary_records.append({
                         "model": model,
                         "experiment": exp_name,
                         "status": "ERROR_EXECUTION",
-                        "error": str(exc),
+                        "error": error,
                     })
-                    console.print(f"[bold red]✗ Failed {model} on {exp_name}:[/] {exc}")
+                    console.print(f"[bold red]✗ Failed {model} on {exp_name}:[/] {error}")
 
             # 3. Unload model to completely free VRAM/RAM before next model
             if not is_jev and idx < total_models:
@@ -244,83 +222,3 @@ class ExperimentOrchestrator:
             "report_html": str(self.report_html),
             "output_csv": str(self.output_csv),
         }
-
-    def _run_single_experiment(
-        self,
-        exp_name: str,
-        provider: DecisionProvider,
-        model_name: str,
-        dataset: str,
-        profile: str,
-    ) -> pd.DataFrame:
-        clean_exp = exp_name.strip().lower().replace("_", "-")
-
-        if dataset == "public":
-            sizes = PUBLIC_PROFILES[profile]
-            if clean_exp == "routing":
-                cases = balanced_banking77_cases(
-                    self.cache_dir,
-                    max_cases=sizes["routing"],
-                    seed=self.seed,
-                    experiment="01-routing-public",
-                )
-                questions = [banking77_question(self.cache_dir, include_other=False)]
-                rows = self._run_cases_with_progress(
-                    "01-routing-public", provider, cases, questions, model_name,
-                )
-                return pd.DataFrame(rows)
-            elif clean_exp == "calibration":
-                cases = calibration_public_cases(
-                    self.cache_dir,
-                    in_scope_cases=sizes["in_scope"],
-                    oos_cases=sizes["oos"],
-                    seed=self.seed,
-                )
-                questions = [banking77_question(self.cache_dir, include_other=True)]
-                rows = self._run_cases_with_progress(
-                    "02-calibration-public", provider, cases, questions, model_name,
-                )
-                return pd.DataFrame(rows)
-            else:
-                raise ValueError(
-                    f"Public dataset tier supports only 'routing' and 'calibration', got '{clean_exp}'."
-                )
-
-        # Smoke experiments
-        if clean_exp == "routing":
-            rows = self._run_cases_with_progress(
-                "01-routing", provider, routing_cases(), routing_questions(), model_name,
-            )
-        elif clean_exp == "calibration":
-            rows = self._run_cases_with_progress(
-                "02-calibration", provider, calibration_cases(), routing_questions(), model_name,
-            )
-        elif clean_exp == "scaling":
-            rows = run_scaling(provider)
-        elif clean_exp == "workflow":
-            rows = run_workflow("04-workflow", provider, expense_cases(), expense_questions(), _expense_action)
-        elif clean_exp == "agent":
-            rows = run_workflow("05-hybrid-agent", provider, support_cases(), support_questions(), _support_action)
-        else:
-            raise ValueError(f"Unknown experiment '{clean_exp}'.")
-
-        return pd.DataFrame(rows)
-
-    def _run_cases_with_progress(
-        self,
-        experiment: str,
-        provider: DecisionProvider,
-        cases: Sequence[BenchmarkCase],
-        questions: Sequence[QuestionSpec],
-        model_name: str,
-    ) -> list[dict]:
-        """Execute benchmark cases while displaying a live progress bar and per-case details."""
-        return run_cases_with_progress(
-            experiment=experiment,
-            provider=provider,
-            cases=cases,
-            questions=questions,
-            model_name=model_name,
-            console=console,
-            row_builder=_rows_for_case,
-        )

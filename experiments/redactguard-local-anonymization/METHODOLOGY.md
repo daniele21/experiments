@@ -60,6 +60,40 @@ Docling runs once per document set, not once per model. This prevents extraction
 
 The report never collapses extraction and model behavior into one opaque score. The end-to-end metrics are shown alongside their components.
 
+## Evaluation aggregation v2
+
+Model quality is reported through complementary views rather than one opaque score.
+
+### Micro metrics
+
+Micro metrics pool all gold and predicted spans before computing recall, precision, F1 and leakage. They answer:
+
+> Across every annotated PII occurrence in the dataset, how much did the model detect or leak?
+
+Micro metrics are useful for total privacy exposure, but large documents can dominate them.
+
+### Macro metrics
+
+Macro metrics first compute quality per document, then give every document equal weight. They answer:
+
+> How consistently does the model perform across different documents?
+
+Macro recall, precision, F1, leakage and over-redaction must be read alongside micro metrics. A large gap between micro and macro metrics is evidence that performance is concentrated in a subset of the corpus.
+
+### Diagnostic breakdowns
+
+Every comparison run also records:
+
+- quality by PII type;
+- quality by RedactGuard profile;
+- quality by document;
+- exact-match recall in addition to overlap-tolerant span recall;
+- false-negative span examples;
+- unmatched prediction examples;
+- dataset concentration, including the largest document's share of gold spans.
+
+The report does not rank models or collapse these views into a single weighted score. Model-selection or product acceptance criteria must be defined separately and versioned with the benchmark protocol.
+
 ## Output robustness
 
 A model request is valid only when:

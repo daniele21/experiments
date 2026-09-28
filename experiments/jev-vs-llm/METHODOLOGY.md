@@ -5,10 +5,11 @@ This document defines the benchmark protocol. The small datasets committed with 
 ## Benchmark arms
 
 1. **Jev workflow** — independent typed questions (`Choice`, `Noul`, `Score`) evaluated against one shared state, then deterministic code combines answers.
-2. **LLM workflow** — semantically equivalent decomposed questions, returned through strict Structured Outputs, then the same deterministic code combines answers.
-3. **LLM monolithic** — for experiments 04/05 only, the whole policy is supplied to the LLM and it chooses the final action directly.
+2. **CLM workflow** — the same typed questions are replayed through CLM-8B's TypeSafe-compatible System One endpoint and scored contrastively.
+3. **LLM workflow** — semantically equivalent decomposed questions, returned through strict Structured Outputs, then the same deterministic code combines answers.
+4. **LLM monolithic** — for experiments 04/05 only, the whole policy is supplied to the LLM and it chooses the final action directly.
 
-The third arm is essential: it separates the gain from **workflow decomposition** from the gain attributable to the **decision-model architecture**.
+The monolithic arm separates the gain from **workflow decomposition** from the gain attributable to a **decision-model architecture**. CLM adds a second decision-native architecture that is open-weight and self-hosted rather than autoregressive.
 
 ## Primary metrics
 
@@ -33,7 +34,9 @@ For benchmark-grade runs:
 5. Run at least 30 measured repeats for each scaling point.
 6. Execute the providers sequentially for the default latency benchmark; a separate throughput benchmark can test concurrency later.
 7. Report failed requests; do not silently remove them.
-8. The harness normalizes both provider SDKs with `BENCHMARK_MAX_RETRIES=0` by default and the same request timeout. This measures single-attempt latency and exposes provider errors instead of hiding them behind retries. Change these settings only as an explicit separate experiment.
+8. The harness normalizes provider requests with `BENCHMARK_MAX_RETRIES=0` by default and the same request timeout. This measures single-attempt latency and exposes provider errors instead of hiding them behind retries. Change these settings only as an explicit separate experiment.
+9. For CLM, distinguish **cold action-cache** latency from **warm action-cache** latency. BANKING77 reuses the same 77 candidates, so mixing the first uncached request into a warm-cache claim is misleading.
+10. When CLM exposes `X-CLM-Latency-Ms`, retain it as server-side diagnostic evidence while keeping client-observed wall-clock latency as the common benchmark metric.
 
 Client-observed latency includes network distance. That is intentional for user-experience measurements, but infrastructure/model latency should be measured separately when provider-side timing becomes available.
 
@@ -43,7 +46,7 @@ Client-observed latency includes network distance. That is intentional for user-
 
 Public benchmark: BANKING77 official test split, 77 intents (closed-set customer intent routing). The benchmark supports four deterministic class-balanced profiles: `budget` (1 example/class = 77 cases), `quick` (2 examples/class = 154 cases), `standard` (10 examples/class = 770 cases), and `full` (all 3,080 official test examples).
 
-Report: accuracy (with Wilson 95% CI), macro-F1 across all 77 classes, valid-output rate (JSON schema compliance), p50/p95/p99 latency, cost/token consumption, and top confusion pairs.
+Report: accuracy (with Wilson 95% CI), macro-F1 across all 77 classes, valid-output rate (JSON schema compliance), p50/p95/p99 latency, and cost/token consumption. For CLM also report cold vs warm cache latency because the 77 intent candidate embeddings are reusable across cases.
 
 ## Experiment 02 — calibration / abstention
 
@@ -123,6 +126,23 @@ MiniCPM is measured as a remote API provider through the official ModelBest Open
 MiniCPM is not represented as a local GGUF/Korgis model. Any future self-hosted MiniCPM experiment must be registered and labelled separately from the official API baseline.
 
 If MiniCPM pricing is not present in the dated pricing snapshot, the harness records cost as unknown rather than assuming zero.
+
+## CLM-8B baseline
+
+CLM is measured through the reference TypeSafe-compatible `POST /v1/systemone` HTTP boundary. The harness sends the same state and typed question contract used for Jev and does not translate CLM into an autoregressive generation task.
+
+The reference CLM-8B stack uses Qwen3-8B as a last-token pooling encoder plus the released contrastive projection head. The benchmark records the served CLM model/checkpoint name, temperature and runner location. A publication-grade run should additionally record the exact CLM repository revision, checkpoint identity, encoder identity and GPU hardware in the run notes.
+
+CLM returns the full Choice distribution, so selected-answer probability is taken directly from that distribution. For Noul, the harness maps the returned truth probability to the existing yes/no representation. Self-hosted provider API fee is recorded as zero; GPU hardware, energy and amortisation remain outside the cost model.
+
+BANKING77 is a repeated-candidate workload. CLM's action-vector cache can reuse the 77 intent descriptions after the first request. Therefore:
+
+- cold-cache latency and warm-cache latency are separate measurements;
+- cache warm-up must not be silently discarded or mixed into a differently labelled result;
+- the common client-observed latency remains the cross-provider metric;
+- server-side `X-CLM-Latency-Ms` may be retained for diagnostics.
+
+See [`CLM.md`](CLM.md) for the reference serving commands.
 
 ## Local Korgis baseline
 

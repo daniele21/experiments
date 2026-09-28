@@ -6,6 +6,7 @@ A reproducible benchmark for comparing **bounded decision systems** across diffe
 - **OpenAI GPT workflow models** for the same decomposed decisions;
 - **OpenAI GPT monolithic baselines** for workflow/agent final actions;
 - **MiniCPM through its official ModelBest API** using an API key;
+- **CLM-8B** through the reference TypeSafe-compatible System One HTTP endpoint;
 - **Korgis local LLMs** served through the same OpenAI-compatible HTTP boundary.
 
 The goal is **not** to declare one universal winner. The benchmark is designed to answer a more useful question:
@@ -71,6 +72,22 @@ MiniCPM-V-4.6-1B
 ```
 
 The benchmark sends text-only bounded-decision prompts even though the model is multimodal. Override the model with `MINICPM_MODEL` or `--minicpm-model`. See [`MINICPM_API.md`](MINICPM_API.md).
+
+### CLM-8B contrastive decision model
+
+CLM-8B is integrated as a native typed decision provider through its official
+`POST /v1/systemone` endpoint. It receives the same `Choice`, `Noul` and
+`Score` semantics used by the shared harness, so BANKING77 cases, labels,
+sampling and metrics stay unchanged.
+
+For BANKING77 this creates a particularly useful comparison: CLM scores the 77
+bounded intent candidates contrastively instead of generating a class label
+autoregressively. Its action embeddings can be reused across requests, so cold
+and warm cache latency must be reported separately.
+
+The reference CLM stack uses a Qwen3-8B pooling encoder plus the released CLM
+projection head. See [`CLM.md`](CLM.md) for serving, remote-GPU setup and exact
+benchmark commands.
 
 ### Korgis local models
 
@@ -530,7 +547,7 @@ Korgis can also load one or more external YAML/JSON registry files through `LOCA
 Example:
 
 ```bash
-export LOCAL_LLM_REGISTRY_PATHS="/absolute/path/benchmark-models.yaml"
+export LOCAL_LLM_REGISTRY_PATHS="/path/to/local-korgis-models.yaml"
 
 uv run --frozen local-llm models
 uv run --frozen local-llm download my-model-4b-q4km
@@ -1321,12 +1338,38 @@ uv run jev-bench compare-public \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol
 ```
 
-### Jev + GPT + Korgis
+### Jev + GPT + CLM-8B + Korgis
 
 ```bash
 uv run jev-bench compare-public \
   --profile budget \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --include-clm \
+  --include-local
+```
+
+### CLM-8B only on BANKING77
+
+Recommended autonomous runner:
+
+```bash
+uv run python scripts/run_clm_matrix.py \
+  --models clm-latest \
+  --experiments routing \
+  --dataset public \
+  --profile standard
+```
+
+For the first 77-case budget run, `uv run python scripts/run_clm_matrix.py`
+is enough because those are the defaults.
+
+### Jev + CLM-8B + Korgis without GPT baselines
+
+```bash
+uv run jev-bench compare-public \
+  --profile standard \
+  --no-include-openai \
+  --include-clm \
   --include-local
 ```
 
@@ -1348,6 +1391,7 @@ uv run jev-bench report \
 - [x] GPT monolithic workflow/agent baseline
 - [x] MiniCPM official API provider via ModelBest API key
 - [x] Korgis OpenAI-compatible local provider
+- [x] CLM-8B TypeSafe-compatible System One provider
 - [x] Nemotron Nano 4B Q4_K_M local baseline
 - [x] Qwen3-VL 4B Instruct MLX 4-bit local baseline
 - [x] Experiment 01 — routing
@@ -1380,4 +1424,5 @@ uv run jev-bench report \
 - [`METHODOLOGY.md`](METHODOLOGY.md) — benchmark design, fairness and statistical protocol.
 - [`DATASETS.md`](DATASETS.md) — public dataset provenance and profiles.
 - [`LOCAL_MODELS.md`](LOCAL_MODELS.md) — Korgis/local-model setup and runtime semantics.
+- [`CLM.md`](CLM.md) — CLM-8B serving, remote-GPU setup, cache semantics and BANKING77 commands.
 - [`experiments/`](experiments/) — protocol and interpretation notes for experiments 01–05.

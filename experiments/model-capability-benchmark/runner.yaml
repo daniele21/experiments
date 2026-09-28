@@ -1,0 +1,7 @@
+runner:
+  output_root: results/runs
+  cache_dir: .cache/datasets
+  default_profile: smoke
+  default_seed: 42
+  resume: true
+  retry_failures: false

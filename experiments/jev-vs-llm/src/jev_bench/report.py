@@ -15,11 +15,9 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from jev_bench.reporting.data import (
-    compute_overview as _overview,
-    select_run_group as _select_run_group,
-    with_series as _with_series,
-)
+from jev_bench.reporting.data import compute_overview as _overview
+from jev_bench.reporting.data import select_run_group as _select_run_group
+from jev_bench.reporting.data import with_series as _with_series
 from jev_bench.reporting.export import build_benchmark_payload
 
 logger = logging.getLogger(__name__)
@@ -121,8 +119,11 @@ def build_report(
                 template_html = _TEMPLATE_DIST.read_text(encoding="utf-8")
                 rendered = _inject_payload_into_html(template_html, payload)
                 output_html.write_text(rendered, encoding="utf-8")
-        except Exception as exc:
-            logger.warning("Vite dashboard build returned: %s. Falling back to injected template.", exc)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+            logger.warning(
+                "Vite dashboard build returned: %s. Falling back to injected template.",
+                exc,
+            )
 
     if not output_html.exists():
         raise FileNotFoundError(
@@ -132,4 +133,4 @@ def build_report(
     logger.info("Decision benchmark dashboard updated at: %s", output_html)
 
 
-__all__ = ["build_report", "_select_run_group", "_with_series", "_overview"]
+__all__ = ["_overview", "_select_run_group", "_with_series", "build_report"]

@@ -1,10 +1,13 @@
 import json
 from types import SimpleNamespace
 
+import pandas as pd
+
 from jev_bench.cli import (
     DEFAULT_OPENAI_MODELS,
     _local_model_matrix,
     _model_matrix,
+    _record_manifest,
 )
 from jev_bench.models import QuestionSpec
 from jev_bench.providers.openai import OpenAIProvider
@@ -101,3 +104,29 @@ def test_openai_provider_sends_question_specific_choice_enum(monkeypatch):
     ]["anyOf"][0]
     assert answer["properties"]["value"]["enum"] == ["billing", "support"]
     assert result.valid is True
+
+
+def test_manifest_preserves_explicitly_empty_openai_matrix(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_write_manifest(path, **kwargs):
+        captured.update(kwargs)
+
+    monkeypatch.setattr("jev_bench.cli.write_manifest", fake_write_manifest)
+    monkeypatch.setattr("jev_bench.cli.MANIFEST_DIR", tmp_path)
+    monkeypatch.setenv("OPENAI_MODEL", "must-not-leak-into-manifest")
+
+    frame = pd.DataFrame(
+        [{"provider": "clm", "model": "clm-latest"}]
+    )
+    _record_manifest(
+        frame,
+        group="group",
+        suite="public-standard",
+        parameters={},
+        requested_openai_models=[],
+        requested_clm_models=["clm-latest"],
+    )
+
+    assert captured["requested_models"]["openai"] == []
+    assert captured["requested_models"]["clm"] == ["clm-latest"]

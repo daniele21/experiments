@@ -4,11 +4,15 @@ import json
 import os
 import re
 import time
-import urllib.error
-import urllib.request
 from collections.abc import Sequence
 from typing import Any
 
+from benchmark_core.transports import (
+    JsonHttpTransport,
+    TransportPolicy,
+    create_openai_compatible_client,
+    resolve_transport_policy,
+)
 from openai import OpenAI
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
@@ -28,6 +32,9 @@ class KorgisController:
         self.api_base = (base_url or os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1")).rstrip("/")
         self.root = self.api_base.removesuffix("/v1")
         self.timeout = timeout or float(os.getenv("KORGIS_CONTROL_TIMEOUT_SECONDS", "360"))
+        self.transport = JsonHttpTransport(
+            TransportPolicy(max_retries=0, timeout_seconds=self.timeout)
+        )
 
     def _request(
         self,
@@ -35,15 +42,11 @@ class KorgisController:
         path: str,
         payload: dict[str, Any] | None = None,
     ) -> Any:
-        body = json.dumps(payload).encode("utf-8") if payload is not None else None
-        request = urllib.request.Request(
+        return self.transport.request(
+            method,
             f"{self.root}{path}",
-            data=body,
-            headers={"Content-Type": "application/json"},
-            method=method,
-        )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
-            return json.loads(response.read().decode("utf-8"))
+            payload=payload,
+        ).body
 
     def health(self) -> dict[str, Any]:
         return self._request("GET", "/health")
@@ -113,16 +116,25 @@ class KorgisProvider(DecisionProvider):
         ).rstrip("/")
         env_thinking = os.getenv("KORGIS_ENABLE_THINKING", "false").lower() in {"true", "1", "yes"}
         self.enable_thinking = enable_thinking if enable_thinking is not None else env_thinking
-        default_timeout = "240" if self.enable_thinking else "60"
-        timeout = (
+        default_timeout = 240.0 if self.enable_thinking else 60.0
+        resolved_timeout = (
             timeout if timeout is not None
-            else float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", default_timeout))
+            else float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", str(default_timeout)))
+        )
+        policy = resolve_transport_policy(
+            os.environ,
+            default_max_retries=0,
+            default_timeout_seconds=resolved_timeout,
+        )
+        policy = TransportPolicy(
+            max_retries=0,
+            timeout_seconds=resolved_timeout,
         )
         self.seed = seed
-        default_tokens = "2048" if self.enable_thinking else "512"
+        default_tokens = 2048 if self.enable_thinking else 512
         self.max_tokens = (
             max_tokens if max_tokens is not None
-            else int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", default_tokens))
+            else int(os.getenv("KORGIS_MAX_OUTPUT_TOKENS", str(default_tokens)))
         )
         self.sampling = dict(sampling or {})
         supported = {
@@ -131,11 +143,11 @@ class KorgisProvider(DecisionProvider):
         }
         if unknown := self.sampling.keys() - supported:
             raise ValueError(f"Unsupported sampling parameters: {sorted(unknown)}")
-        self.client = OpenAI(
+        self.client = create_openai_compatible_client(
+            OpenAI,
+            policy=policy,
             base_url=self.base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
-            max_retries=0,
-            timeout=timeout,
         )
 
     @staticmethod

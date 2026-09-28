@@ -1,48 +1,60 @@
 from __future__ import annotations
 
-import csv
-import json
-import random
-import urllib.request
 from pathlib import Path
+
+from benchmark_core import (
+    DatasetLoadContext,
+    DatasetProfileSpec,
+    cached_source,
+    load_banking77_categories,
+    load_banking77_rows,
+    load_clinc_rows,
+    load_dataset_specs,
+    require_string_list,
+    seeded_random,
+    single_cached_source,
+)
 
 from jev_bench.models import BenchmarkCase, QuestionSpec
 
-BANKING77_REVISION = "9d081458ff52e53cf7e848f414e6e9344e4e6696"
-CLINC150_REVISION = "48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e"
-
-BANKING77_BASE = (
-    "https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/"
-    f"{BANKING77_REVISION}/banking_data"
-)
-BANKING77_TEST_URL = f"{BANKING77_BASE}/test.csv"
-BANKING77_CATEGORIES_URL = f"{BANKING77_BASE}/categories.json"
-CLINC150_FULL_URL = (
-    "https://raw.githubusercontent.com/clinc/oos-eval/"
-    f"{CLINC150_REVISION}/data/data_full.json"
-)
-
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATASET_CATALOG = PROJECT_ROOT / "datasets.yaml"
 DEFAULT_CACHE = Path("data/cache")
 
 
-def _download(url: str, target: Path) -> Path:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if target.exists() and target.stat().st_size > 0:
-        return target
-    request = urllib.request.Request(url, headers={"User-Agent": "jev-bench/0.1"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        target.write_bytes(response.read())
-    return target
+def _specs():
+    return load_dataset_specs(DATASET_CATALOG)
+
+
+def _context(cache_dir: Path) -> DatasetLoadContext:
+    return DatasetLoadContext(
+        cache_dir=cache_dir,
+        profile=DatasetProfileSpec(
+            profile_id="jev-public",
+            default_max_cases=None,
+        ),
+        seed=0,
+    )
 
 
 def prepare_public_data(cache_dir: Path = DEFAULT_CACHE) -> dict[str, Path]:
-    """Download canonical public evaluation data into a gitignored local cache."""
+    """Materialize pinned public data through the shared dataset source layer."""
+    specs = _specs()
+    context = _context(cache_dir)
+    banking = specs["banking77"]
+    clinc = specs["clinc150-oos"]
     return {
-        "banking77_test": _download(BANKING77_TEST_URL, cache_dir / "banking77" / "test.csv"),
-        "banking77_categories": _download(
-            BANKING77_CATEGORIES_URL, cache_dir / "banking77" / "categories.json"
+        "banking77_test": cached_source(
+            banking,
+            context,
+            file_key="test",
         ),
-        "clinc150_full": _download(CLINC150_FULL_URL, cache_dir / "clinc150" / "data_full.json"),
+        "banking77_categories": cached_source(
+            banking,
+            context,
+            file_key="categories",
+        ),
+        "clinc150_full": single_cached_source(clinc, context),
     }
 
 
@@ -52,26 +64,28 @@ def _humanize(label: str) -> str:
 
 def banking77_labels(cache_dir: Path = DEFAULT_CACHE) -> list[str]:
     paths = prepare_public_data(cache_dir)
-    labels = json.loads(paths["banking77_categories"].read_text(encoding="utf-8"))
-    if not isinstance(labels, list) or not all(isinstance(x, str) for x in labels):
-        raise ValueError("Unexpected BANKING77 categories format")
-    return labels
+    return list(load_banking77_categories(paths["banking77_categories"]))
 
 
-def banking77_question(cache_dir: Path = DEFAULT_CACHE, include_other: bool = False) -> QuestionSpec:
+def banking77_question(
+    cache_dir: Path = DEFAULT_CACHE,
+    include_other: bool = False,
+) -> QuestionSpec:
     labels = banking77_labels(cache_dir)
     criteria = {
         label: f"Banking support intent: {_humanize(label)}."
         for label in labels
     }
     if include_other:
-        criteria["other"] = "The request does not match any of the supported banking intents."
+        criteria["other"] = (
+            "The request does not match any of the supported banking intents."
+        )
     return QuestionSpec(
         id="intent",
         type="choice",
         instructions=(
-            "Classify the customer's request into the single best supported banking intent. "
-            "Use other only when none of the banking intents apply."
+            "Classify the customer's request into the single best supported "
+            "banking intent. Use other only when none of the banking intents apply."
             if include_other
             else "Classify the customer's request into the single best supported banking intent."
         ),
@@ -81,15 +95,10 @@ def banking77_question(cache_dir: Path = DEFAULT_CACHE, include_other: bool = Fa
 
 def _read_banking77(cache_dir: Path = DEFAULT_CACHE) -> list[tuple[str, str]]:
     path = prepare_public_data(cache_dir)["banking77_test"]
-    rows: list[tuple[str, str]] = []
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.reader(handle)
-        header = next(reader, None)
-        if header != ["text", "category"]:
-            raise ValueError(f"Unexpected BANKING77 header: {header}")
-        for text, category in reader:
-            rows.append((text, category))
-    return rows
+    return [
+        (text, category)
+        for _, text, category in load_banking77_rows(path)
+    ]
 
 
 def balanced_banking77_cases(
@@ -99,12 +108,14 @@ def balanced_banking77_cases(
     seed: int = 42,
     experiment: str = "01-routing",
 ) -> list[BenchmarkCase]:
+    specs = _specs()
+    revision = specs["banking77"].revision
     rows = _read_banking77(cache_dir)
     by_label: dict[str, list[str]] = {}
     for text, label in rows:
         by_label.setdefault(label, []).append(text)
 
-    rng = random.Random(seed)
+    rng = seeded_random(seed)
     for texts in by_label.values():
         rng.shuffle(texts)
 
@@ -124,8 +135,8 @@ def balanced_banking77_cases(
                     expected={"intent": label},
                     metadata={
                         "dataset": "banking77",
-                        "dataset_revision": BANKING77_REVISION,
-                        "source_split": "test",
+                        "dataset_revision": revision,
+                        "source_split": specs["banking77"].split,
                         "difficulty": "in_scope",
                         "benchmark_tier": "public",
                         "experiment_source": experiment,
@@ -145,30 +156,26 @@ def clinc_oos_cases(
     max_cases: int | None = 500,
     seed: int = 42,
 ) -> list[BenchmarkCase]:
+    specs = _specs()
+    spec = specs["clinc150-oos"]
     path = prepare_public_data(cache_dir)["clinc150_full"]
-    data = json.loads(path.read_text(encoding="utf-8"))
-    raw = data.get("oos_test")
-    if not isinstance(raw, list):
-        raise TypeError("CLINC150 data_full.json has no oos_test split")
+    exclude_terms = require_string_list(
+        spec.options.get("exclude_terms"),
+        context="dataset 'clinc150-oos' exclude_terms",
+    )
+    rows = load_clinc_rows(
+        path,
+        split=spec.split,
+        exclude_terms=exclude_terms,
+    )
 
-    finance_terms = {
-        "account", "atm", "bank", "banking", "balance", "card", "cash", "charge",
-        "credit", "currency", "debit", "deposit", "exchange", "fee", "finance",
-        "loan", "money", "payment", "refund", "top up", "transaction", "transfer",
-        "wire", "withdraw", "withdrawal",
-    }
-    rows = []
-    for item in raw:
-        if len(item) < 2:
-            continue
-        text = str(item[0])
-        normalized = text.lower()
-        if any(term in normalized for term in finance_terms):
-            continue
-        rows.append((text, str(item[1])))
-
-    rng = random.Random(seed)
-    rng.shuffle(rows)
+    shuffled = [
+        (text, source_label)
+        for _, text, source_label in rows
+    ]
+    rng = seeded_random(seed)
+    rng.shuffle(shuffled)
+    selected = shuffled if max_cases is None else shuffled[:max_cases]
     return [
         BenchmarkCase(
             case_id=f"clinc-oos-{idx}",
@@ -176,14 +183,14 @@ def clinc_oos_cases(
             expected={"intent": "other"},
             metadata={
                 "dataset": "clinc150",
-                "dataset_revision": CLINC150_REVISION,
-                "source_split": "oos_test",
+                "dataset_revision": spec.revision,
+                "source_split": spec.split,
                 "difficulty": "out_of_scope",
                 "benchmark_tier": "public",
                 "oos_filter": "conservative_non_finance",
             },
         )
-        for idx, (text, _) in enumerate(rows if max_cases is None else rows[:max_cases])
+        for idx, (text, _) in enumerate(selected)
     ]
 
 
@@ -203,5 +210,5 @@ def calibration_public_cases(
         experiment="02-calibration",
     )
     combined = inside + outside
-    random.Random(seed).shuffle(combined)
+    seeded_random(seed).shuffle(combined)
     return combined
