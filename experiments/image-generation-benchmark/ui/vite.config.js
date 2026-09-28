@@ -172,7 +172,9 @@ function combinations(values) {
 
 async function blindView(runId, reveal = false) {
   const run = await loadRun(runId);
-  const requested = run.manifest.requested_models?.model_keys ?? [];
+  const requested =
+    run.manifest.requested_models?.model_keys ??
+    [...new Set(run.rows.map((row) => row.model_key))];
   const seed = Number(run.manifest.parameters?.seed ?? 0);
   const byPrompt = new Map();
   for (const row of run.rows) {
@@ -214,54 +216,59 @@ function resultsApi() {
   return {
     name: "imagegen-results-api",
     configureServer(server) {
-      server.middlewares.use(async (request, response, next) => {
-        try {
-          const url = new URL(request.url, "http://localhost");
-          if (url.pathname === "/api/runs") {
-            sendJson(response, 200, { runs: await discoverRuns() });
-            return;
-          }
-          if (url.pathname === "/api/run") {
-            const run = url.searchParams.get("run");
-            sendJson(response, 200, await loadRun(run));
-            return;
-          }
-          if (url.pathname === "/api/blind") {
-            const run = url.searchParams.get("run");
-            sendJson(response, 200, await blindView(run, false));
-            return;
-          }
-          if (url.pathname === "/api/blind-key") {
-            const run = url.searchParams.get("run");
-            sendJson(response, 200, await blindView(run, true));
-            return;
-          }
-          if (url.pathname === "/api/artifact") {
-            const run = url.searchParams.get("run");
-            const artifact = safeArtifact(run, url.searchParams.get("path"));
-            const bytes = await fs.readFile(artifact);
-            const ext = path.extname(artifact).toLowerCase();
-            const mime = {
-              ".png": "image/png",
-              ".jpg": "image/jpeg",
-              ".jpeg": "image/jpeg",
-              ".webp": "image/webp",
-            }[ext] || "application/octet-stream";
-            response.statusCode = 200;
-            response.setHeader("Content-Type", mime);
-            response.setHeader("Cache-Control", "no-store");
-            response.end(bytes);
-            return;
-          }
-          next();
-        } catch (error) {
-          sendJson(response, 400, {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      });
+      server.middlewares.use(apiMiddleware);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(apiMiddleware);
     },
   };
+}
+
+async function apiMiddleware(request, response, next) {
+  try {
+    const url = new URL(request.url, "http://localhost");
+    if (url.pathname === "/api/runs") {
+      sendJson(response, 200, { runs: await discoverRuns() });
+      return;
+    }
+    if (url.pathname === "/api/run") {
+      const run = url.searchParams.get("run");
+      sendJson(response, 200, await loadRun(run));
+      return;
+    }
+    if (url.pathname === "/api/blind") {
+      const run = url.searchParams.get("run");
+      sendJson(response, 200, await blindView(run, false));
+      return;
+    }
+    if (url.pathname === "/api/blind-key") {
+      const run = url.searchParams.get("run");
+      sendJson(response, 200, await blindView(run, true));
+      return;
+    }
+    if (url.pathname === "/api/artifact") {
+      const run = url.searchParams.get("run");
+      const artifact = safeArtifact(run, url.searchParams.get("path"));
+      const bytes = await fs.readFile(artifact);
+      const ext = path.extname(artifact).toLowerCase();
+      const mime = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+      }[ext] || "application/octet-stream";
+      response.statusCode = 200;
+      response.setHeader("Content-Type", mime);
+      response.setHeader("Cache-Control", "no-store");
+      response.end(bytes);
+      return;
+    }
+    next();
+  } catch (error) {
+    sendJson(response, 400, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export default defineConfig({
