@@ -204,17 +204,6 @@ def run_compare(
     (output / "rows.json").write_text(
         json.dumps(all_rows, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    (output / "failures.json").write_text(
-        json.dumps(
-            {
-                model: summary.get("failure_analysis", [])
-                for model, summary in summaries.items()
-            },
-            indent=2,
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
     (output / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
     )
@@ -340,6 +329,17 @@ def run_latency(
     )
     (output / "rows.json").write_text(
         json.dumps(all_rows, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    (output / "failures.json").write_text(
+        json.dumps(
+            {
+                model: summary.get("failure_analysis", [])
+                for model, summary in summaries.items()
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
     )
     (output / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
