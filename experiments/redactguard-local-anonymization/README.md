@@ -158,6 +158,7 @@ The dashboard includes:
 - all-model comparison table;
 - model-specific failure explorer;
 - benchmark, Korgis and host provenance.
+- unified cross-run overview that places all models in one comparison, using the newest complete evidence per model and falling back to clearly labelled partial evidence when needed.
 
 
 A suite writes:
