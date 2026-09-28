@@ -191,6 +191,13 @@ def add_e2e_fields(score: dict, alignment: PageAlignment, document_id: str) -> d
     source_gold_count = alignment.source_gold_count
     extraction_missed = alignment.extraction_missed_count
 
+    model_tp = score.get("system_tp", score.get("tp", 0))
+    model_fn = score.get("system_fn", score.get("fn", 0))
+    model_leaked_chars = score.get(
+        "system_leaked_chars",
+        score.get("leaked_chars", 0),
+    )
+
     row.update(
         {
             "document_id": document_id,
@@ -199,12 +206,19 @@ def add_e2e_fields(score: dict, alignment: PageAlignment, document_id: str) -> d
             "extraction_missed_count": extraction_missed,
             "extraction_missed_chars": alignment.extraction_missed_chars,
             "extraction_text_similarity": alignment.extraction_text_similarity,
-            "e2e_tp": score["tp"],
-            "e2e_fn": score["fn"] + extraction_missed,
-            "e2e_leaked_chars": score["leaked_chars"] + alignment.extraction_missed_chars,
-            "e2e_gold_chars": score["gold_chars"] + alignment.extraction_missed_chars,
+            "e2e_tp": model_tp,
+            "e2e_fn": model_fn + extraction_missed,
+            "e2e_leaked_chars": (
+                model_leaked_chars + alignment.extraction_missed_chars
+            ),
+            "e2e_gold_chars": (
+                score.get("gold_chars", 0) + alignment.extraction_missed_chars
+            ),
             "e2e_zero_leak": bool(
-                score["zero_leak"] and extraction_missed == 0
+                score.get("valid", False)
+                and model_fn == 0
+                and model_leaked_chars == 0
+                and extraction_missed == 0
             ),
         }
     )
