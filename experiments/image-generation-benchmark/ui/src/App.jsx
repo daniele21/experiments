@@ -323,8 +323,10 @@ function BlindReview({ runId }) {
               run_id: runId,
               votes: Object.entries(votes).map(([key, choice]) => {
                 const separator = key.lastIndexOf(":");
+                const pairId = key.slice(0, separator);
                 return {
-                  pair_id: key.slice(0, separator),
+                  pair_id: pairId,
+                  prompt_id: pairs.find((pair) => pair.pair_id === pairId)?.prompt_id ?? null,
                   criterion: key.slice(separator + 1),
                   choice,
                 };
