@@ -145,6 +145,11 @@ def latency(
     warmups: int = typer.Option(5, min=0),
     repeats: int = typer.Option(30, min=1),
     case_ids: str = typer.Option("g01,g04,h05,f01,l02"),
+    preflight: bool = typer.Option(
+        True,
+        "--preflight/--no-preflight",
+        help="Require the model to satisfy the structured-output contract first.",
+    ),
 ) -> None:
     """Run a dedicated repeated latency suite without changing quality scoring."""
     selected = [item.strip() for item in models.split(",") if item.strip()]
@@ -158,6 +163,7 @@ def latency(
             warmups=warmups,
             repeats=repeats,
             case_ids=latency_cases,
+            preflight=preflight,
         )
     except KorgisUnavailableError as exc:
         _exit_korgis_unavailable(exc)
