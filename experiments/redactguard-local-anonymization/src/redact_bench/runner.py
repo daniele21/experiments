@@ -204,6 +204,17 @@ def run_compare(
     (output / "rows.json").write_text(
         json.dumps(all_rows, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+    (output / "failures.json").write_text(
+        json.dumps(
+            {
+                model: summary.get("failure_analysis", [])
+                for model, summary in summaries.items()
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     (output / "manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
     )
@@ -221,6 +232,7 @@ def run_latency(
     warmups: int = 5,
     repeats: int = 30,
     case_ids: list[str] | None = None,
+    preflight: bool = True,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -239,11 +251,27 @@ def run_latency(
     summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
+    preflights: dict[str, dict] = {}
 
     for model in models:
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+
+        if preflight:
+            model_preflight = run_model_preflight(provider)
+            preflights[model] = model_preflight
+            if not model_preflight["passed"]:
+                summaries[model] = contract_failed_summary(
+                    model_preflight,
+                    planned_cases=len(cases) * repeats,
+                )
+                raw_path = output / f"{model.replace('/', '_')}.jsonl"
+                raw_path.write_text(
+                    json.dumps({"preflight": model_preflight}, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                continue
 
         for _ in range(warmups):
             provider.evaluate(cases[0])
@@ -298,7 +326,15 @@ def run_latency(
             "chunk_max_chars": contract.get("chunk_max_chars"),
             "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
         },
+        "preflight": {
+            "enabled": preflight,
+            "models": preflights,
+        },
     }
+    (output / "preflight.json").write_text(
+        json.dumps(preflights, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     (output / "metrics.json").write_text(
         json.dumps(summaries, indent=2, ensure_ascii=False), encoding="utf-8"
     )
