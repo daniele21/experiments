@@ -55,6 +55,21 @@ function clamp(value, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value));
 }
 
+function contractState(summary, evidence, run) {
+  const values = micro(summary);
+  if (values.status === "contract_failed" || evidence?.contractStatus === "failed") {
+    return "failed";
+  }
+  if (evidence?.legacy || run?.legacy) return "legacy";
+  return "passed";
+}
+
+function contractLabel(state) {
+  if (state === "failed") return "FAILED";
+  if (state === "legacy") return "LEGACY";
+  return "PASS";
+}
+
 function MetricCard({ label, value, hint, tone = "neutral" }) {
   return (
     <div className={`metric-card metric-card--${tone}`}>
@@ -78,6 +93,14 @@ function MiniBar({ value, inverse = false }) {
   );
 }
 
+function StatusBadge({ state }) {
+  return (
+    <span className={`status-badge status-badge--${state}`}>
+      {contractLabel(state)}
+    </span>
+  );
+}
+
 function RunList({ runs, selectedKey, onSelect }) {
   if (!runs.length) {
     return (
@@ -94,20 +117,25 @@ function RunList({ runs, selectedKey, onSelect }) {
     <div className="run-list">
       <button
         type="button"
-        className={selectedKey === "__overview__" ? "run-item overview-item active" : "run-item overview-item"}
+        className={
+          selectedKey === "__overview__"
+            ? "run-item overview-item active"
+            : "run-item overview-item"
+        }
         onClick={() => onSelect("__overview__")}
       >
         <div className="run-item__top">
           <strong>All models</strong>
           <span className="pill pill--overview">overview</span>
         </div>
-        <span>Unified latest evidence</span>
+        <span>Unified best available evidence</span>
         <div className="run-item__meta">
           <span>cross-run</span>
           <span>{uniqueModels} model{uniqueModels === 1 ? "" : "s"}</span>
         </div>
       </button>
       <div className="run-list__divider" />
+
       {runs.map((run, index) => (
         <button
           type="button"
@@ -118,6 +146,7 @@ function RunList({ runs, selectedKey, onSelect }) {
           <div className="run-item__top">
             <strong>{run.suiteId || run.runId}</strong>
             <span className="run-badges">
+              {run.legacy ? <span className="pill pill--legacy">legacy</span> : null}
               {run.status === "incomplete" ? (
                 <span className="pill pill--partial">partial</span>
               ) : null}
@@ -141,6 +170,7 @@ function QualityLatencyChart({ detail }) {
     return Object.entries(detail.metrics ?? {})
       .map(([model, summary]) => {
         const quality = micro(summary);
+        if (quality.quality_available === false) return null;
         const dedicatedLatency = micro(detail.latency?.metrics?.[model]);
         const recall = percentValue(quality.pii_recall);
         const latency =
@@ -149,13 +179,22 @@ function QualityLatencyChart({ detail }) {
           quality.latency_p95_ms ??
           null;
         if (recall === null || latency === null) return null;
-        return { model, recall, latency: Number(latency) };
+        return {
+          model,
+          recall,
+          latency: Number(latency),
+          legacy: Boolean(detail.evidence?.[model]?.legacy),
+        };
       })
       .filter(Boolean);
   }, [detail]);
 
   if (!data.length) {
-    return <div className="chart-empty">No comparable recall/latency data for this run.</div>;
+    return (
+      <div className="chart-empty">
+        No valid quality + latency evidence is available for this selection.
+      </div>
+    );
   }
 
   return (
@@ -187,7 +226,10 @@ function QualityLatencyChart({ detail }) {
               ? [`${Number(value).toFixed(1)}%`, name]
               : [formatMs(value), "p95 latency"]
           }
-          labelFormatter={(_, payload) => payload?.[0]?.payload?.model ?? ""}
+          labelFormatter={(_, payload) => {
+            const item = payload?.[0]?.payload;
+            return item ? `${item.model}${item.legacy ? " · legacy" : ""}` : "";
+          }}
         />
         <Scatter name="Models" data={data} fill="var(--accent)" />
       </ScatterChart>
@@ -196,6 +238,7 @@ function QualityLatencyChart({ detail }) {
 }
 
 function PiiChart({ summary }) {
+  const values = micro(summary);
   const rows = useMemo(
     () =>
       Object.entries(summary?.by_type ?? {}).map(([type, metrics]) => ({
@@ -207,8 +250,12 @@ function PiiChart({ summary }) {
     [summary],
   );
 
-  if (!rows.length) {
-    return <div className="chart-empty">No PII-type breakdown in this run.</div>;
+  if (values.quality_available === false || !rows.length) {
+    return (
+      <div className="chart-empty">
+        No valid per-PII quality evidence is available for this model.
+      </div>
+    );
   }
 
   return (
@@ -231,7 +278,7 @@ function PiiChart({ summary }) {
         <Legend />
         <Bar dataKey="recall" name="Recall" fill="var(--accent)" radius={[0, 4, 4, 0]} />
         <Bar dataKey="precision" name="Precision" fill="var(--series-2)" radius={[0, 4, 4, 0]} />
-        <Bar dataKey="leakage" name="Leakage" fill="var(--risk)" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="leakage" name="Quality leakage" fill="var(--risk)" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -240,19 +287,23 @@ function PiiChart({ summary }) {
 function ModelTable({ detail }) {
   const models = detail?.summary?.models ?? [];
   const unified = Boolean(detail?.evidence);
+
   return (
     <div className="table-scroll">
       <table className="comparison-table">
         <thead>
           <tr>
             <th>Model</th>
-            {unified ? <th>Status</th> : null}
-            {unified ? <th>Cases</th> : null}
+            <th>Evidence</th>
+            <th>Contract</th>
+            <th>Evaluated</th>
             <th>Recall</th>
-            <th>Leakage</th>
+            <th>Quality leak</th>
+            <th>System leak</th>
             <th>Precision</th>
-            <th>Zero leak</th>
-            <th>p50</th>
+            <th>Success</th>
+            <th>Trunc.</th>
+            <th>Resolution</th>
             <th>p95</th>
             {unified ? <th>Source run</th> : null}
           </tr>
@@ -262,17 +313,31 @@ function ModelTable({ detail }) {
             const summary = micro(detail.metrics?.[model]);
             const latency = micro(detail.latency?.metrics?.[model]);
             const evidence = detail.evidence?.[model];
+            const state = contractState(detail.metrics?.[model], evidence, detail.summary);
+            const totalCases = summary.cases ?? evidence?.cases ?? "—";
+            const evaluatedCases =
+              summary.evaluated_cases ?? evidence?.evaluatedCases ?? (summary.quality_available ? totalCases : 0);
+
             return (
               <tr key={model}>
                 <td className="model-name">{model}</td>
-                {unified ? (
-                  <td className="status-cell">
-                    <span className={evidence?.status === "complete" ? "status-badge status-badge--complete" : "status-badge status-badge--partial"}>
-                      {evidence?.status === "complete" ? "complete" : "partial"}
-                    </span>
-                  </td>
-                ) : null}
-                {unified ? <td>{evidence?.cases ?? "—"}</td> : null}
+                <td className="status-cell">
+                  <span
+                    className={
+                      (evidence?.status ?? detail.summary?.status) === "incomplete"
+                        ? "status-badge status-badge--partial"
+                        : "status-badge status-badge--complete"
+                    }
+                  >
+                    {(evidence?.status ?? detail.summary?.status) === "incomplete"
+                      ? "partial"
+                      : "complete"}
+                  </span>
+                </td>
+                <td className="status-cell">
+                  <StatusBadge state={state} />
+                </td>
+                <td>{evaluatedCases}/{totalCases}</td>
                 <td>
                   <span>{formatPercent(summary.pii_recall)}</span>
                   <MiniBar value={summary.pii_recall} />
@@ -282,11 +347,13 @@ function ModelTable({ detail }) {
                   <MiniBar value={summary.leakage_rate} inverse />
                 </td>
                 <td>
-                  <span>{formatPercent(summary.precision)}</span>
-                  <MiniBar value={summary.precision} />
+                  <span>{formatPercent(summary.system_leakage_rate ?? summary.leakage_rate)}</span>
+                  <MiniBar value={summary.system_leakage_rate ?? summary.leakage_rate} inverse />
                 </td>
-                <td>{formatPercent(summary.zero_leak_document_rate)}</td>
-                <td>{formatMs(latency.latency_p50_ms ?? summary.latency_p50_ms)}</td>
+                <td>{formatPercent(summary.precision)}</td>
+                <td>{formatPercent(summary.inference_success_rate ?? summary.valid_output_rate)}</td>
+                <td>{formatPercent(summary.truncation_rate)}</td>
+                <td>{formatPercent(summary.span_resolution_rate)}</td>
                 <td>{formatMs(latency.latency_p95_ms ?? summary.latency_p95_ms)}</td>
                 {unified ? (
                   <td className="source-run-cell">
@@ -308,60 +375,92 @@ function FailureExplorer({ failures }) {
     return (
       <div className="empty-state">
         <strong>No recorded failures</strong>
-        <span>This model has no cases in the failure analysis for the selected run.</span>
+        <span>This model has no quality or inference failures in this evidence.</span>
       </div>
     );
   }
 
   return (
     <div className="failure-list">
-      {failures.slice(0, 20).map((failure, index) => (
-        <details key={`${failure.case_id ?? "case"}-${index}`}>
-          <summary>
-            <span>
-              <strong>{failure.case_id ?? "Unknown case"}</strong>
-              <small>
-                Recall {formatPercent(failure.pii_recall)} · Leakage{" "}
-                {formatPercent(failure.leakage_rate)}
-              </small>
-            </span>
-            <span className="failure-counts">
-              FN {failure.fn ?? 0} · FP {failure.fp ?? 0}
-            </span>
-          </summary>
-          <div className="failure-body">
-            <div>
-              <span className="eyebrow">Missed gold spans</span>
-              {(failure.false_negatives ?? []).length ? (
-                <ul>
-                  {failure.false_negatives.slice(0, 12).map((item, itemIndex) => (
-                    <li key={itemIndex}>
-                      <code>{item.pii_type ?? "PII"}</code> {item.value ?? ""}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted">None</p>
-              )}
+      {failures.slice(0, 20).map((failure, index) => {
+        const qualityAvailable = failure.quality_available !== false;
+        return (
+          <details key={`${failure.case_id ?? "case"}-${index}`}>
+            <summary>
+              <span>
+                <strong>{failure.case_id ?? "Unknown case"}</strong>
+                <small>
+                  {qualityAvailable
+                    ? `Recall ${formatPercent(failure.pii_recall)} · Quality leakage ${formatPercent(
+                        failure.leakage_rate,
+                      )}`
+                    : `Quality N/A · ${failure.inference_status ?? failure.error_type ?? "inference failure"}`}
+                </small>
+              </span>
+              <span className="failure-counts">
+                {qualityAvailable
+                  ? `FN ${failure.fn ?? 0} · FP ${failure.fp ?? 0}`
+                  : `System FN ${failure.system_fn ?? "—"}`}
+              </span>
+            </summary>
+
+            <div className="failure-diagnostics">
+              <span>
+                <strong>System leakage</strong>
+                {formatPercent(failure.system_leakage_rate)}
+              </span>
+              <span>
+                <strong>Unresolved items</strong>
+                {failure.unresolved_item_count ?? 0}
+              </span>
+              <span>
+                <strong>Status</strong>
+                {failure.inference_status ?? "success"}
+              </span>
             </div>
-            <div>
-              <span className="eyebrow">Unmatched predictions</span>
-              {(failure.false_positives ?? []).length ? (
-                <ul>
-                  {failure.false_positives.slice(0, 12).map((item, itemIndex) => (
-                    <li key={itemIndex}>
-                      <code>{item.pii_type ?? "PII"}</code> {item.value ?? ""}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted">None</p>
-              )}
-            </div>
-          </div>
-          {failure.error ? <p className="error-inline">{failure.error}</p> : null}
-        </details>
-      ))}
+
+            {qualityAvailable ? (
+              <div className="failure-body">
+                <div>
+                  <span className="eyebrow">Missed gold spans</span>
+                  {(failure.false_negatives ?? []).length ? (
+                    <ul>
+                      {failure.false_negatives.slice(0, 12).map((item, itemIndex) => (
+                        <li key={itemIndex}>
+                          <code>{item.pii_type ?? "PII"}</code> {item.value ?? ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="muted">None</p>
+                  )}
+                </div>
+                <div>
+                  <span className="eyebrow">Unmatched resolved predictions</span>
+                  {(failure.false_positives ?? []).length ? (
+                    <ul>
+                      {failure.false_positives.slice(0, 12).map((item, itemIndex) => (
+                        <li key={itemIndex}>
+                          <code>{item.pii_type ?? "PII"}</code> {item.value ?? ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="muted">None</p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {failure.error || failure.error_type ? (
+              <p className="error-inline">
+                {failure.error_type ? `${failure.error_type}: ` : ""}
+                {failure.error ?? ""}
+              </p>
+            ) : null}
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -412,7 +511,6 @@ export default function App() {
 
     const controller = new AbortController();
     setLoadingDetail(true);
-
     const endpoint =
       selectedKey === "__overview__"
         ? "/api/overview"
@@ -463,8 +561,17 @@ export default function App() {
       : runs.find((run) => run.key === selectedKey));
   const selectedEvidence = detail?.evidence?.[selectedModel] ?? null;
   const failures = detail?.failures?.[selectedModel] ?? [];
+  const selectedContractState = contractState(
+    currentSummary,
+    selectedEvidence,
+    selectedRun,
+  );
+  const selectedPreflight =
+    selectedEvidence?.preflight ??
+    detail?.preflight?.[selectedModel] ??
+    currentSummary?.preflight ??
+    null;
 
-  const latencyP50 = currentLatency.latency_p50_ms ?? currentMicro.latency_p50_ms;
   const latencyP95 = currentLatency.latency_p95_ms ?? currentMicro.latency_p95_ms;
 
   return (
@@ -504,7 +611,7 @@ export default function App() {
             </h1>
             <p>
               {selectedRun?.source === "overview"
-                ? "Latest complete evidence per model, with partial evidence used only as fallback."
+                ? "Current contract evidence is preferred; legacy runs remain visible only as diagnostic fallback."
                 : selectedRun
                   ? `${shortDataset(selectedRun.dataset)} · ${formatDate(selectedRun.createdAt)}`
                   : "Run a benchmark to populate the dashboard."}
@@ -524,8 +631,7 @@ export default function App() {
           <div className="empty-state large">
             <strong>No benchmark results found</strong>
             <span>
-              The UI reads completed and partial runs directly from <code>results/</code>. No
-              export step is required.
+              The UI reads completed and partial runs directly from <code>results/</code>.
             </span>
           </div>
         ) : !detail ? (
@@ -536,16 +642,34 @@ export default function App() {
               <div className="overview-banner">
                 <strong>Unified evidence</strong>
                 <span>
-                  Each model uses its newest completed benchmark when available. Models without a
-                  completed benchmark use the newest partial JSONL evidence and are labelled clearly.
+                  Per model: current complete evidence → current partial evidence → legacy complete
+                  → legacy partial. Source run and contract state always remain visible.
+                </span>
+              </div>
+            ) : null}
+
+            {selectedContractState === "failed" ? (
+              <div className="contract-banner">
+                <strong>Inference contract failed</strong>
+                <span>
+                  Model quality is intentionally N/A.{" "}
+                  {selectedPreflight?.error_type ?? selectedPreflight?.status ?? "See diagnostics below."}
+                </span>
+              </div>
+            ) : selectedContractState === "legacy" ? (
+              <div className="legacy-banner">
+                <strong>Legacy diagnostic evidence</strong>
+                <span>
+                  This run predates evaluation v3 and can conflate inference failures with model
+                  quality. Re-run the model before treating these values as canonical.
                 </span>
               </div>
             ) : selectedRun.status === "incomplete" ? (
               <div className="partial-banner">
                 <strong>Partial run</strong>
                 <span>
-                  This run did not reach final manifest/metrics generation. The dashboard is
-                  calculating provisional metrics directly from the JSONL cases already written.
+                  Metrics are computed from complete JSONL rows already written; provenance remains
+                  partial until the run writes its final manifest and metrics.
                 </span>
               </div>
             ) : null}
@@ -558,45 +682,37 @@ export default function App() {
                     <strong>{selectedRun.models.length}</strong>
                   </div>
                   <div>
-                    <span className="eyebrow">Complete</span>
-                    <strong>{selectedRun.completeModels ?? 0}</strong>
+                    <span className="eyebrow">Current contract</span>
+                    <strong>
+                      {selectedRun.models.length - (selectedRun.legacyModels ?? 0)}
+                    </strong>
                   </div>
                   <div>
-                    <span className="eyebrow">Partial fallback</span>
-                    <strong>{selectedRun.partialModels ?? 0}</strong>
+                    <span className="eyebrow">Legacy fallback</span>
+                    <strong>{selectedRun.legacyModels ?? 0}</strong>
                   </div>
                   <div>
-                    <span className="eyebrow">Source runs</span>
-                    <strong>{selectedRun.sourceRuns ?? 0}</strong>
+                    <span className="eyebrow">Contract failed</span>
+                    <strong>{selectedRun.contractFailedModels ?? 0}</strong>
                   </div>
                 </>
               ) : (
                 <>
                   <div>
-                    <span className="eyebrow">Source</span>
-                    <strong>{selectedRun.source === "suite" ? "Managed suite" : "Benchmark run"}</strong>
-                  </div>
-                  <div>
                     <span className="eyebrow">Models</span>
                     <strong>{selectedRun.models.length}</strong>
                   </div>
                   <div>
-                    <span className="eyebrow">
-                      {selectedRun.status === "incomplete" ? "Completed cases" : "Cases"}
-                    </span>
-                    <strong>
-                      {selectedRun.status === "incomplete"
-                        ? selectedRun.completedCasesByModel?.[selectedModel] ??
-                          selectedRun.cases ??
-                          "—"
-                        : selectedRun.cases ?? "—"}
-                    </strong>
+                    <span className="eyebrow">Cases</span>
+                    <strong>{selectedRun.cases ?? "—"}</strong>
                   </div>
                   <div>
-                    <span className="eyebrow">Status</span>
-                    <strong>
-                      {selectedRun.status === "incomplete" ? "Partial evidence" : "Complete"}
-                    </strong>
+                    <span className="eyebrow">Evaluation schema</span>
+                    <strong>{selectedRun.evaluationSchema ?? "legacy / unknown"}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Contract</span>
+                    <strong>{selectedRun.contractVersion ?? "legacy / unknown"}</strong>
                   </div>
                 </>
               )}
@@ -605,7 +721,7 @@ export default function App() {
             <section className="section-heading model-picker-row">
               <div>
                 <span className="kicker">Selected model</span>
-                <h2>Quality snapshot</h2>
+                <h2>Quality + inference snapshot</h2>
               </div>
               <label className="model-picker">
                 <span>Model</span>
@@ -624,29 +740,57 @@ export default function App() {
 
             <section className="metric-grid">
               <MetricCard
+                label="Contract"
+                value={contractLabel(selectedContractState)}
+                hint={
+                  selectedEvidence?.contractVersion ??
+                  selectedRun.contractVersion ??
+                  "diagnostic"
+                }
+                tone={selectedContractState === "passed" ? "positive" : "risk"}
+              />
+              <MetricCard
                 label="PII recall"
                 value={formatPercent(currentMicro.pii_recall)}
-                hint="micro"
+                hint="valid inference only"
                 tone="positive"
               />
               <MetricCard
-                label="Leakage"
+                label="Quality leakage"
                 value={formatPercent(currentMicro.leakage_rate)}
-                hint="lower is better"
+                hint="valid inference only"
+                tone="risk"
+              />
+              <MetricCard
+                label="System leakage"
+                value={formatPercent(
+                  currentMicro.system_leakage_rate ?? currentMicro.leakage_rate,
+                )}
+                hint="includes inference failures"
                 tone="risk"
               />
               <MetricCard
                 label="Precision"
                 value={formatPercent(currentMicro.precision)}
-                hint="micro"
+                hint="unresolved values count as FP in v3"
               />
               <MetricCard
-                label="Zero-leak docs"
-                value={formatPercent(currentMicro.zero_leak_document_rate)}
-                hint="documents"
+                label="Inference success"
+                value={formatPercent(
+                  currentMicro.inference_success_rate ?? currentMicro.valid_output_rate,
+                )}
+                hint="valid output contract"
               />
-              <MetricCard label="Latency p50" value={formatMs(latencyP50)} hint="client observed" />
-              <MetricCard label="Latency p95" value={formatMs(latencyP95)} hint="client observed" />
+              <MetricCard
+                label="Span resolution"
+                value={formatPercent(currentMicro.span_resolution_rate)}
+                hint="raw items → source spans"
+              />
+              <MetricCard
+                label="Latency p95"
+                value={formatMs(latencyP95)}
+                hint="valid inference only"
+              />
             </section>
 
             <section className="chart-grid">
@@ -656,7 +800,7 @@ export default function App() {
                     <span className="kicker">Trade-off</span>
                     <h2>Recall vs latency</h2>
                   </div>
-                  <span className="panel-note">higher / left is better</span>
+                  <span className="panel-note">valid quality evidence only</span>
                 </div>
                 <QualityLatencyChart detail={detail} />
               </article>
@@ -679,13 +823,9 @@ export default function App() {
                   <span className="kicker">All models</span>
                   <h2>Model comparison</h2>
                 </div>
-                {detail.evidence ? (
-                  <span className="panel-note">latest evidence per model</span>
-                ) : detail.latency ? (
-                  <span className="panel-note">dedicated latency suite</span>
-                ) : (
-                  <span className="panel-note">quality-run latency</span>
-                )}
+                <span className="panel-note">
+                  quality and system failures are separated
+                </span>
               </div>
               <ModelTable detail={detail} />
             </section>
@@ -704,43 +844,25 @@ export default function App() {
             </section>
 
             <section className="manifest-strip">
-              {detail.evidence ? (
-                <>
-                  <span>
-                    <strong>Selected model evidence</strong>
-                    {selectedEvidence?.suiteId || selectedEvidence?.runId || "—"}
-                  </span>
-                  <span>
-                    <strong>Dataset</strong>
-                    {shortDataset(selectedEvidence?.dataset)}
-                  </span>
-                  <span>
-                    <strong>Evidence date</strong>
-                    {formatDate(selectedEvidence?.createdAt)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span>
-                    <strong>Benchmark commit</strong>
-                    {detail.manifest.benchmark_commit ?? "—"}
-                  </span>
-                  <span>
-                    <strong>Korgis</strong>
-                    {detail.manifest.korgis?.tested_sha ??
-                      detail.manifest.korgis?.source_sha ??
-                      "—"}
-                  </span>
-                  <span>
-                    <strong>Host</strong>
-                    {detail.manifest.host
-                      ? [detail.manifest.host.system, detail.manifest.host.machine]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "—"}
-                  </span>
-                </>
-              )}
+              <span>
+                <strong>Evidence source</strong>
+                {selectedEvidence?.suiteId ||
+                  selectedEvidence?.runId ||
+                  selectedRun.suiteId ||
+                  selectedRun.runId ||
+                  "—"}
+              </span>
+              <span>
+                <strong>RedactGuard contract</strong>
+                {selectedEvidence?.contractVersion ||
+                  detail.manifest?.redactguard_contract?.version ||
+                  "legacy / unknown"}
+              </span>
+              <span>
+                <strong>Dataset / evidence date</strong>
+                {shortDataset(selectedEvidence?.dataset ?? selectedRun.dataset)} ·{" "}
+                {formatDate(selectedEvidence?.createdAt ?? selectedRun.createdAt)}
+              </span>
             </section>
           </>
         )}
