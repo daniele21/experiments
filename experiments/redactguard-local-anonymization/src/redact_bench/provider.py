@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import urllib.error
 import urllib.request
 from typing import Any
 
@@ -11,6 +12,17 @@ from openai import OpenAI
 from redact_bench.models import Case, InferenceResult
 from redact_bench.postprocess import findings_from_model_payload
 from redact_bench.profiles import build_system_prompt
+
+
+class KorgisUnavailableError(RuntimeError):
+    """Raised when the external Korgis control plane cannot be reached."""
+
+    def __init__(self, *, api_base: str, detail: str) -> None:
+        self.api_base = api_base
+        self.detail = detail
+        super().__init__(
+            f"Korgis is not reachable at {api_base}. {detail}"
+        )
 
 
 DEFAULT_MODELS = [
@@ -35,8 +47,17 @@ class KorgisController:
             method=method,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
-            return json.loads(response.read().decode())
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode())
+        except urllib.error.HTTPError:
+            raise
+        except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as exc:
+            reason = getattr(exc, "reason", exc)
+            raise KorgisUnavailableError(
+                api_base=self.api_base,
+                detail=f"{type(reason).__name__}: {reason}",
+            ) from exc
 
     def health(self) -> dict[str, Any]:
         return self._request("GET", "/health")
