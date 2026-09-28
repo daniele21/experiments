@@ -22,10 +22,17 @@ async function readJson(filePath, fallback = null) {
 async function readJsonLines(filePath) {
   try {
     const body = await fs.readFile(filePath, "utf8");
-    return body
-      .split("\n")
-      .filter((line) => line.trim())
-      .map((line) => JSON.parse(line));
+    const rows = [];
+    for (const line of body.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        rows.push(JSON.parse(line));
+      } catch {
+        // A process interrupted mid-write can leave one truncated trailing line.
+        // Preserve all complete JSONL evidence written before it.
+      }
+    }
+    return rows;
   } catch (error) {
     if (error?.code === "ENOENT") return [];
     throw error;
@@ -245,7 +252,10 @@ async function readPartialEvidence(directory) {
 async function summarizeRun(directory, metadata = {}) {
   const manifest = await readJson(path.join(directory, "manifest.json"));
   const metrics = await readJson(path.join(directory, "metrics.json"));
-  const partial = await readPartialEvidence(directory);
+  const complete = Boolean(manifest && metrics);
+  const partial = complete
+    ? { byModel: {}, completedCasesByModel: {} }
+    : await readPartialEvidence(directory);
   const partialModels = Object.keys(partial.byModel);
 
   if (!manifest && !metrics && !partialModels.length) return null;
@@ -256,7 +266,6 @@ async function summarizeRun(directory, metadata = {}) {
     : metrics
       ? Object.keys(metrics)
       : partialModels;
-  const complete = Boolean(manifest && metrics);
 
   return {
     key,
