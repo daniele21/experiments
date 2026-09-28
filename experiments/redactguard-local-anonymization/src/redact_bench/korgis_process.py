@@ -71,19 +71,105 @@ def korgis_git_sha(repo: Path) -> str | None:
         return None
 
 
-def run_korgis_cli(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def run_korgis_cli(
+    repo: Path,
+    *args: str,
+    capture_output: bool = False,
+) -> subprocess.CompletedProcess[str]:
     command = ["uv", "run", "--frozen", "local-llm", *args]
-    return subprocess.run(
-        command,
-        cwd=repo,
-        check=True,
-        text=True,
+    try:
+        return subprocess.run(
+            command,
+            cwd=repo,
+            check=True,
+            text=True,
+            capture_output=capture_output,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or "").strip() if capture_output else ""
+        suffix = f": {detail}" if detail else ""
+        raise RuntimeError(
+            f"Korgis command failed with exit code {exc.returncode}: "
+            + " ".join(command)
+            + suffix
+        ) from exc
+
+
+def inspect_korgis_models(repo: Path, models: list[str]) -> dict[str, dict]:
+    code = (
+        "import json,sys;"
+        "from local_llm_server import list_models;"
+        "wanted=set(sys.argv[1:]);"
+        "items=[{'key':m['key'],'downloaded':bool(m['downloaded']),"
+        "'path':str(m['path']),'source':m.get('source'),'backend':m.get('backend')} "
+        "for m in list_models() if m['key'] in wanted];"
+        "print(json.dumps(items))"
     )
+    command = ["uv", "run", "--frozen", "python", "-c", code, *models]
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=repo,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or "").strip()
+        raise RuntimeError(
+            "Could not inspect Korgis local model inventory"
+            + (f": {detail}" if detail else "")
+        ) from exc
+
+    items = json.loads(completed.stdout)
+    inventory = {str(item["key"]): item for item in items}
+
+    unknown = [model for model in models if model not in inventory]
+    if unknown:
+        raise ValueError(
+            "Models are not present in the active Korgis registry: "
+            + ", ".join(unknown)
+        )
+    return inventory
 
 
-def ensure_korgis_models(repo: Path, models: list[str]) -> None:
-    for model in models:
-        run_korgis_cli(repo, "download", model)
+def prepare_korgis_models(
+    repo: Path,
+    models: list[str],
+    *,
+    download_missing: bool = False,
+) -> dict[str, dict]:
+    inventory = inspect_korgis_models(repo, models)
+    missing = [
+        model
+        for model in models
+        if not bool(inventory[model].get("downloaded"))
+    ]
+
+    if missing and download_missing:
+        for model in missing:
+            run_korgis_cli(repo, "download", model)
+        inventory = inspect_korgis_models(repo, models)
+        missing = [
+            model
+            for model in models
+            if not bool(inventory[model].get("downloaded"))
+        ]
+
+    if missing:
+        details = "\n".join(
+            f"  - {model}: {inventory[model].get('path')}"
+            for model in missing
+        )
+        raise FileNotFoundError(
+            "Required Korgis model artifacts are not available locally:\n"
+            f"{details}\n"
+            "The managed suite does not download models by default. "
+            "Install/configure the artifacts in Korgis, or rerun with "
+            "--download-missing if you explicitly want network downloads."
+        )
+
+    return inventory
 
 
 class ManagedKorgis:
