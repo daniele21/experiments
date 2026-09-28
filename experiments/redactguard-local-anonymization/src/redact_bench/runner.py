@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from redact_bench.datasets import load_dataset
-from redact_bench.metrics import aggregate_detailed, score_case
+from redact_bench.metrics import EVALUATION_SCHEMA, aggregate_detailed, score_case
+from redact_bench.preflight import contract_failed_summary, run_model_preflight
 from redact_bench.progress import NullProgress, ProgressReporter
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
@@ -19,7 +20,8 @@ KORGIS_REPOSITORY = "daniele21/korgis"
 KORGIS_TESTED_REF = "dev"
 KORGIS_TESTED_SHA = "eadd5dca94417dd037a5d43650377b349875ab17"
 REDACTGUARD_REPOSITORY = "daniele21/redact-guard"
-REDACTGUARD_CONTRACT_SHA = "70ea5ed4fbbd7182010cc04eb756f636791c5947"
+REDACTGUARD_CONTRACT_SHA = "2c6ec6a50ef0523bf1aedeecd38da84cff4d7704"
+REDACTGUARD_CONTRACT_VERSION = "redactguard-detection-v2"
 
 
 def _git_sha() -> str | None:
@@ -37,6 +39,7 @@ def run_compare(
     results_dir: str,
     warmups: int = 1,
     progress: ProgressReporter | None = None,
+    preflight: bool = True,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -56,12 +59,39 @@ def run_compare(
     summaries: dict[str, dict] = {}
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
+    preflights: dict[str, dict] = {}
 
     for model_index, model in enumerate(models, start=1):
         reporter.model_started(model=model, index=model_index, total=len(models))
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+
+        if preflight:
+            model_preflight = run_model_preflight(provider)
+            preflights[model] = model_preflight
+            if not model_preflight["passed"]:
+                summaries[model] = contract_failed_summary(
+                    model_preflight,
+                    planned_cases=len(cases),
+                )
+                raw_path = output / f"{model.replace('/', '_')}.jsonl"
+                raw_path.write_text(
+                    json.dumps(
+                        {"preflight": model_preflight},
+                        ensure_ascii=False,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                reporter.cases_started(model=model, total=len(cases))
+                reporter.model_completed(
+                    model=model,
+                    completed=0,
+                    total=len(cases),
+                    errors=1,
+                )
+                continue
 
         warmup_cases = cases[: min(warmups, len(cases))]
         reporter.warmups_started(model=model, total=len(warmup_cases))
@@ -120,7 +150,7 @@ def run_compare(
 
     manifest = {
         "run_id": run_id,
-        "evaluation_schema": "redactguard-evaluation-v2",
+        "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "dataset": str(Path(dataset_path)),
@@ -136,7 +166,12 @@ def run_compare(
         "redactguard_contract": {
             "repository": REDACTGUARD_REPOSITORY,
             "source_sha": REDACTGUARD_CONTRACT_SHA,
-            "scope": "prompt taxonomy + model-value-to-source-span post-processing",
+            "version": REDACTGUARD_CONTRACT_VERSION,
+            "scope": "prompt + minimal output schema + value-to-source-span contract",
+        },
+        "preflight": {
+            "enabled": preflight,
+            "models": preflights,
         },
         "host": {
             "system": platform.system(),
@@ -145,6 +180,10 @@ def run_compare(
         },
         "warmups_per_model": warmups,
     }
+    (output / "preflight.json").write_text(
+        json.dumps(preflights, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
     (output / "metrics.json").write_text(
         json.dumps(summaries, indent=2, ensure_ascii=False), encoding="utf-8"
     )
@@ -232,7 +271,7 @@ def run_latency(
     manifest = {
         "run_id": run_id,
         "kind": "latency",
-        "evaluation_schema": "redactguard-evaluation-v2",
+        "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "dataset": str(Path(dataset_path)),
@@ -250,6 +289,7 @@ def run_latency(
         "redactguard_contract": {
             "repository": REDACTGUARD_REPOSITORY,
             "source_sha": REDACTGUARD_CONTRACT_SHA,
+            "version": REDACTGUARD_CONTRACT_VERSION,
         },
     }
     (output / "metrics.json").write_text(
