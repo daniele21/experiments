@@ -137,7 +137,7 @@ experiments/image-generation-benchmark/
 ├── src/
 ├── tests/
 ├── results/         # generated/gitignored
-└── reports/         # generated/gitignored
+└── ui/              # React/Vite dynamic benchmark explorer
 ```
 
 Configuration must own:
@@ -233,7 +233,7 @@ Provider adapter responsibilities:
 Provider adapter must not:
 - evaluate visual quality;
 - know prompt-suite semantics;
-- write report-specific HTML;
+- write benchmark-specific static HTML;
 - silently rewrite prompts.
 
 Capability declaration examples:
@@ -342,9 +342,9 @@ Recommended profiles:
 
 ---
 
-# 8. IMG-5 — Visual report
+# 8. IMG-5 — Dynamic React explorer
 
-The report is a primary product of this benchmark.
+The dynamic React explorer is a primary product of this benchmark. It reads run artifacts/evidence at runtime; per-run HTML generation is not part of the architecture.
 
 ## 8.1 Side-by-side gallery
 
@@ -352,13 +352,13 @@ For each prompt:
 - exact prompt;
 - expectations;
 - generated images;
-- model identity shown only in post-evaluation/report mode;
+- model identity shown only in identified comparison mode;
 - automatic metric badges;
 - latency/cost metadata.
 
 ## 8.2 Blind evaluation mode
 
-A separate view/export should show:
+A separate React tab/export should show:
 - prompt;
 - Image A;
 - Image B;
@@ -435,7 +435,7 @@ Outputs:
 - automatic OCR/constraint evidence;
 - manifest;
 - blind side-by-side comparison package/view;
-- visual report.
+- dynamic React visual explorer.
 
 This validates the benchmark before adding expensive/stochastic breadth.
 
@@ -467,7 +467,7 @@ After MM-0 artifact contracts are stable:
 - constraint evaluator;
 - human vote schema/randomization.
 
-### Stream D — Reporting
+### Stream D — React UI
 Can begin immediately from synthetic/fake image artifacts:
 - gallery;
 - blind pairwise layout;
@@ -513,7 +513,7 @@ Cheap:
 - fake provider artifact creation;
 - OCR normalization fixtures;
 - human-pair randomization tests;
-- report render tests.
+- React build + deterministic blind-contract tests.
 
 Controlled:
 - one real prompt per API provider.
@@ -534,7 +534,7 @@ Image-generation v1 is usable when:
 2. generated images are persisted as immutable artifacts;
 3. exact-text and compositional tasks have structured automatic evidence;
 4. subjective preference is collected blind and separately;
-5. side-by-side reports make differences visually obvious;
+5. the dynamic side-by-side React explorer makes differences visually obvious;
 6. failures can be inspected per prompt;
 7. adding Qwen-Image-2.1 requires a new adapter/config, not changes to the runner;
 8. no operational generation setting is hidden/hardcoded in Python.
