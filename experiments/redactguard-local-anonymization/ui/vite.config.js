@@ -292,6 +292,37 @@ function aggregatePartial(rows) {
     ),
   };
 
+  const byDocument = {};
+  for (const row of rows) {
+    if (!row.case_id) continue;
+    byDocument[row.case_id] = {
+      cases: 1,
+      valid_output_rate: row.valid ? 1 : 0,
+      gold_count: row.gold_count ?? 0,
+      predicted_count: row.predicted_count ?? 0,
+      tp: row.tp ?? 0,
+      exact_tp: row.exact_tp ?? 0,
+      fp: row.fp ?? 0,
+      fn: row.fn ?? 0,
+      pii_recall: row.pii_recall ?? ratio(row.tp, (row.tp ?? 0) + (row.fn ?? 0), 1),
+      precision: row.precision ?? ratio(row.tp, (row.tp ?? 0) + (row.fp ?? 0), 1),
+      span_f1: row.span_f1 ?? 0,
+      exact_match_recall: row.exact_match_recall ?? 0,
+      leakage_rate: row.leakage_rate ?? ratio(row.leaked_chars, row.gold_chars),
+      zero_leak_document_rate: row.zero_leak ? 1 : 0,
+      over_redaction_rate: row.over_redaction_rate ?? 0,
+      leaked_chars: row.leaked_chars ?? 0,
+      gold_chars: row.gold_chars ?? 0,
+      overredacted_chars: row.overredacted_chars ?? 0,
+      latency_p50_ms: row.latency_ms ?? null,
+      latency_p95_ms: row.latency_ms ?? null,
+      profile: row.profile ?? null,
+      tags: row.tags ?? [],
+      false_negatives: row.false_negatives ?? [],
+      false_positives: row.false_positives ?? [],
+    };
+  }
+
   return {
     ...micro,
     evaluation_schema: isV3
@@ -301,7 +332,7 @@ function aggregatePartial(rows) {
     macro: {},
     by_type: byType,
     by_profile: {},
-    by_document: {},
+    by_document: byDocument,
     dataset_balance: {},
     failure_analysis: failures,
   };
