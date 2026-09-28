@@ -9,9 +9,10 @@ from typing import Any
 
 from openai import OpenAI
 
-from redact_bench.models import Case, InferenceResult
+from redact_bench.models import Case, Finding, InferenceResult
 from redact_bench.postprocess import resolve_model_payload
 from redact_bench.profiles import build_system_prompt, load_profiles
+from redact_bench.segmentation import TextSegment, segment_text
 
 
 class KorgisUnavailableError(RuntimeError):
@@ -104,6 +105,12 @@ class KorgisRedactProvider:
         self.max_tokens = int(
             os.getenv("REDACT_BENCH_MAX_OUTPUT_TOKENS", "4096")
         )
+        self.chunk_max_chars = int(
+            os.getenv("REDACT_BENCH_CHUNK_MAX_CHARS", "4000")
+        )
+        self.chunk_overlap_chars = int(
+            os.getenv("REDACT_BENCH_CHUNK_OVERLAP_CHARS", "256")
+        )
         self.client = OpenAI(
             base_url=base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
@@ -112,6 +119,132 @@ class KorgisRedactProvider:
         )
 
     def evaluate(self, case: Case) -> InferenceResult:
+        """Evaluate one case using the same bounded segmentation as RedactGuard v2."""
+        segments = segment_text(
+            case.text,
+            max_chars=self.chunk_max_chars,
+            overlap_chars=self.chunk_overlap_chars,
+        )
+        if len(segments) == 1:
+            result = self._evaluate_segment(case, segments[0])
+            result.segment_count = 1
+            result.successful_segments = 1 if result.valid else 0
+            result.failed_segment_index = None if result.valid else 0
+            return result
+
+        total_latency_ms = 0.0
+        input_tokens: int | None = None
+        output_tokens: int | None = None
+        raw_item_count = 0
+        resolved_item_count = 0
+        unresolved_item_count = 0
+        findings: list[Finding] = []
+        seen: set[tuple[int, int, str]] = set()
+        raw_segments: list[dict[str, Any]] = []
+
+        for index, segment in enumerate(segments):
+            local_case = Case(
+                case_id=case.case_id,
+                profile=case.profile,
+                text=segment.text,
+                gold=(),
+                tags=case.tags,
+            )
+            result = self._evaluate_segment(local_case, segment)
+            total_latency_ms += result.latency_ms
+            input_tokens = _add_optional(input_tokens, result.input_tokens)
+            output_tokens = _add_optional(output_tokens, result.output_tokens)
+            raw_segments.append(
+                {
+                    "index": index,
+                    "start": segment.start,
+                    "end": segment.end,
+                    "status": result.status,
+                    "finish_reason": result.finish_reason,
+                    "content": result.raw_content,
+                    "error_type": result.error_type,
+                    "error": result.error,
+                }
+            )
+
+            if not result.valid:
+                return InferenceResult(
+                    case_id=case.case_id,
+                    model=self.model,
+                    valid=False,
+                    latency_ms=total_latency_ms,
+                    findings=[],
+                    raw_content=json.dumps(raw_segments, ensure_ascii=False),
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    error=(
+                        f"segment {index + 1}/{len(segments)}: {result.error}"
+                        if result.error
+                        else f"segment {index + 1}/{len(segments)} failed"
+                    ),
+                    status=result.status,
+                    error_type=result.error_type,
+                    http_status=result.http_status,
+                    finish_reason=result.finish_reason,
+                    raw_item_count=raw_item_count + result.raw_item_count,
+                    resolved_item_count=resolved_item_count + result.resolved_item_count,
+                    unresolved_item_count=(
+                        unresolved_item_count + result.unresolved_item_count
+                    ),
+                    segment_count=len(segments),
+                    successful_segments=index,
+                    failed_segment_index=index,
+                )
+
+            raw_item_count += result.raw_item_count
+            resolved_item_count += result.resolved_item_count
+            unresolved_item_count += result.unresolved_item_count
+            for finding in result.findings:
+                global_finding = Finding(
+                    pii_type=finding.pii_type,
+                    value=case.text[
+                        segment.start + finding.start : segment.start + finding.end
+                    ],
+                    start=segment.start + finding.start,
+                    end=segment.start + finding.end,
+                    field_name=finding.field_name,
+                    field_description=finding.field_description,
+                )
+                key = (
+                    global_finding.start,
+                    global_finding.end,
+                    global_finding.pii_type,
+                )
+                if key not in seen:
+                    seen.add(key)
+                    findings.append(global_finding)
+
+        return InferenceResult(
+            case_id=case.case_id,
+            model=self.model,
+            valid=True,
+            latency_ms=total_latency_ms,
+            findings=sorted(
+                findings,
+                key=lambda item: (item.start, item.end, item.pii_type),
+            ),
+            raw_content=json.dumps(raw_segments, ensure_ascii=False),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            status="success",
+            finish_reason="stop",
+            raw_item_count=raw_item_count,
+            resolved_item_count=resolved_item_count,
+            unresolved_item_count=unresolved_item_count,
+            segment_count=len(segments),
+            successful_segments=len(segments),
+        )
+
+    def _evaluate_segment(
+        self,
+        case: Case,
+        segment: TextSegment,
+    ) -> InferenceResult:
         started = time.perf_counter()
         content = ""
         finish_reason: str | None = None
@@ -129,7 +262,7 @@ class KorgisRedactProvider:
                             self.profiles_path,
                         ),
                     },
-                    {"role": "user", "content": case.text},
+                    {"role": "user", "content": segment.text},
                 ],
                 temperature=0,
                 max_tokens=self.max_tokens,
@@ -210,7 +343,7 @@ class KorgisRedactProvider:
                     output_tokens=output_tokens,
                 )
 
-            resolution = resolve_model_payload(case.text, payload)
+            resolution = resolve_model_payload(segment.text, payload)
             return InferenceResult(
                 case_id=case.case_id,
                 model=self.model,
@@ -309,4 +442,13 @@ class KorgisRedactProvider:
             error_type=error_type,
             http_status=http_status,
             finish_reason=finish_reason,
+            segment_count=1,
+            successful_segments=0,
+            failed_segment_index=0,
         )
+
+
+def _add_optional(current: int | None, value: int | None) -> int | None:
+    if value is None:
+        return current
+    return (current or 0) + int(value)
