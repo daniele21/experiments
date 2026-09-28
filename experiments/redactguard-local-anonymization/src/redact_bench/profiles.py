@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,10 @@ def load_contract_metadata(path: str | Path) -> dict[str, Any]:
     if not isinstance(source, dict):
         raise ValueError("profiles.yaml source metadata must be a mapping")
     return dict(source)
+
+
+def contract_snapshot_sha256(path: str | Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def load_profiles(path: str | Path) -> dict[str, dict[str, dict[str, Any]]]:
