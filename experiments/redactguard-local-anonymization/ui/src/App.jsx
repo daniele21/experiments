@@ -82,7 +82,7 @@ function RunList({ runs, selectedKey, onSelect }) {
   if (!runs.length) {
     return (
       <div className="empty-state compact">
-        <strong>No completed runs yet</strong>
+        <strong>No runs yet</strong>
         <span>Run the benchmark and this list will populate automatically.</span>
       </div>
     );
@@ -99,7 +99,12 @@ function RunList({ runs, selectedKey, onSelect }) {
         >
           <div className="run-item__top">
             <strong>{run.suiteId || run.runId}</strong>
-            {index === 0 ? <span className="pill">latest</span> : null}
+            <span className="run-badges">
+              {run.status === "incomplete" ? (
+                <span className="pill pill--partial">partial</span>
+              ) : null}
+              {index === 0 ? <span className="pill">latest</span> : null}
+            </span>
           </div>
           <span>{formatDate(run.createdAt)}</span>
           <div className="run-item__meta">
@@ -457,14 +462,24 @@ export default function App() {
           <div className="empty-state large">
             <strong>No benchmark results found</strong>
             <span>
-              The UI reads completed runs directly from <code>results/</code>. No export step is
-              required.
+              The UI reads completed and partial runs directly from <code>results/</code>. No
+              export step is required.
             </span>
           </div>
         ) : loadingDetail || !detail ? (
           <div className="loading-panel">Loading benchmark data…</div>
         ) : (
           <>
+            {selectedRun.status === "incomplete" ? (
+              <div className="partial-banner">
+                <strong>Partial run</strong>
+                <span>
+                  This run did not reach final manifest/metrics generation. The dashboard is
+                  calculating provisional metrics directly from the JSONL cases already written.
+                </span>
+              </div>
+            ) : null}
+
             <section className="run-context">
               <div>
                 <span className="eyebrow">Source</span>
@@ -475,12 +490,22 @@ export default function App() {
                 <strong>{selectedRun.models.length}</strong>
               </div>
               <div>
-                <span className="eyebrow">Cases</span>
-                <strong>{selectedRun.cases ?? "—"}</strong>
+                <span className="eyebrow">
+                  {selectedRun.status === "incomplete" ? "Completed cases" : "Cases"}
+                </span>
+                <strong>
+                  {selectedRun.status === "incomplete"
+                    ? selectedRun.completedCasesByModel?.[selectedModel] ??
+                      selectedRun.cases ??
+                      "—"
+                    : selectedRun.cases ?? "—"}
+                </strong>
               </div>
               <div>
-                <span className="eyebrow">Schema</span>
-                <strong>{detail.manifest.evaluation_schema ?? "—"}</strong>
+                <span className="eyebrow">Status</span>
+                <strong>
+                  {selectedRun.status === "incomplete" ? "Partial evidence" : "Complete"}
+                </strong>
               </div>
             </section>
 
