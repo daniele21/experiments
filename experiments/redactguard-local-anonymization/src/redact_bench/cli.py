@@ -11,7 +11,13 @@ from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.progress import TerminalProgress
-from redact_bench.provider import DEFAULT_MODELS, KorgisController, KorgisUnavailableError
+from redact_bench.preflight import run_model_preflight
+from redact_bench.provider import (
+    DEFAULT_MODELS,
+    KorgisController,
+    KorgisRedactProvider,
+    KorgisUnavailableError,
+)
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
 from redact_bench.history_dashboard import write_history_dashboard
@@ -68,6 +74,34 @@ def check_data(
     typer.echo(f"{len(cases)} cases OK")
 
 
+@app.command("preflight")
+def preflight(
+    models: str = typer.Option(",".join(DEFAULT_MODELS)),
+    profiles: Path = typer.Option(ROOT / "config/profiles.yaml"),
+) -> None:
+    """Verify each model can satisfy the RedactGuard inference contract."""
+    selected = [item.strip() for item in models.split(",") if item.strip()]
+    controller = KorgisController()
+    try:
+        controller.health()
+        for model in selected:
+            controller.activate(model)
+            result = run_model_preflight(
+                KorgisRedactProvider(model, str(profiles))
+            )
+            status = "PASS" if result["passed"] else "FAIL"
+            typer.echo(
+                f"{status} {model}: {result['status']} "
+                f"resolved={result['resolved_item_count']} "
+                f"raw={result['raw_item_count']} "
+                f"finish={result['finish_reason'] or '—'}"
+            )
+            if result.get("error"):
+                typer.echo(f"  {result['error']}", err=True)
+    except KorgisUnavailableError as exc:
+        _exit_korgis_unavailable(exc)
+
+
 @app.command("compare")
 def compare(
     models: str = typer.Option(",".join(DEFAULT_MODELS)),
@@ -80,6 +114,11 @@ def compare(
         "--progress/--no-progress",
         help="Show live model/case progress on stderr.",
     ),
+    preflight: bool = typer.Option(
+        True,
+        "--preflight/--no-preflight",
+        help="Gate model-quality scoring on a tiny structured-output preflight.",
+    ),
 ) -> None:
     selected = [item.strip() for item in models.split(",") if item.strip()]
     try:
@@ -90,6 +129,7 @@ def compare(
             results_dir=str(results_dir),
             warmups=warmups,
             progress=TerminalProgress() if progress else None,
+            preflight=preflight,
         )
     except KorgisUnavailableError as exc:
         _exit_korgis_unavailable(exc)
