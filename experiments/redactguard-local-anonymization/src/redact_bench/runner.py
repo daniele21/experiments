@@ -12,6 +12,7 @@ from pathlib import Path
 from redact_bench.datasets import load_dataset
 from redact_bench.metrics import EVALUATION_SCHEMA, aggregate_detailed, score_case
 from redact_bench.preflight import contract_failed_summary, run_model_preflight
+from redact_bench.profiles import load_contract_metadata
 from redact_bench.progress import NullProgress, ProgressReporter
 from redact_bench.provider import KorgisController, KorgisRedactProvider
 from redact_bench.report import write_html
@@ -20,8 +21,6 @@ KORGIS_REPOSITORY = "daniele21/korgis"
 KORGIS_TESTED_REF = "dev"
 KORGIS_TESTED_SHA = "eadd5dca94417dd037a5d43650377b349875ab17"
 REDACTGUARD_REPOSITORY = "daniele21/redact-guard"
-REDACTGUARD_CONTRACT_SHA = "2c6ec6a50ef0523bf1aedeecd38da84cff4d7704"
-REDACTGUARD_CONTRACT_VERSION = "redactguard-detection-v2"
 
 
 def _git_sha() -> str | None:
@@ -48,6 +47,7 @@ def run_compare(
     output.mkdir(parents=True, exist_ok=True)
 
     cases = load_dataset(dataset_path)
+    contract = load_contract_metadata(profiles_path)
     reporter = progress or NullProgress()
     reporter.run_started(
         run_id=run_id,
@@ -164,10 +164,13 @@ def run_compare(
             "runtime_identity": identities,
         },
         "redactguard_contract": {
-            "repository": REDACTGUARD_REPOSITORY,
-            "source_sha": REDACTGUARD_CONTRACT_SHA,
-            "version": REDACTGUARD_CONTRACT_VERSION,
-            "scope": "prompt + minimal output schema + value-to-source-span contract",
+            "repository": contract.get("repository", REDACTGUARD_REPOSITORY),
+            "source_sha": contract.get("ref"),
+            "version": contract.get("contract_version"),
+            "output_schema": contract.get("output_schema"),
+            "chunk_max_chars": contract.get("chunk_max_chars"),
+            "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
+            "scope": "prompt + minimal output schema + segmented value-to-source-span contract",
         },
         "preflight": {
             "enabled": preflight,
@@ -226,6 +229,7 @@ def run_latency(
     output.mkdir(parents=True, exist_ok=True)
 
     all_cases = load_dataset(dataset_path)
+    contract = load_contract_metadata(profiles_path)
     selected_ids = case_ids or ["g01", "g04", "h05", "f01", "l02"]
     by_id = {case.case_id: case for case in all_cases}
     cases = [by_id[case_id] for case_id in selected_ids if case_id in by_id]
@@ -287,9 +291,12 @@ def run_latency(
             "runtime_identity": identities,
         },
         "redactguard_contract": {
-            "repository": REDACTGUARD_REPOSITORY,
-            "source_sha": REDACTGUARD_CONTRACT_SHA,
-            "version": REDACTGUARD_CONTRACT_VERSION,
+            "repository": contract.get("repository", REDACTGUARD_REPOSITORY),
+            "source_sha": contract.get("ref"),
+            "version": contract.get("contract_version"),
+            "output_schema": contract.get("output_schema"),
+            "chunk_max_chars": contract.get("chunk_max_chars"),
+            "chunk_overlap_chars": contract.get("chunk_overlap_chars"),
         },
     }
     (output / "metrics.json").write_text(
