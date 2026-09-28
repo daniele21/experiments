@@ -39,6 +39,7 @@ def combine_model_runs(
     rows: list[dict] = []
     identities: dict[str, dict | None] = {}
     preflights: dict[str, dict] = {}
+    inference_settings: dict[str, dict] = {}
 
     for path, manifest in zip(run_dirs, manifests, strict=True):
         run_models = list(manifest.get("models", []))
@@ -68,6 +69,10 @@ def combine_model_runs(
             if isinstance(manifest_preflight, dict):
                 preflights.update(manifest_preflight)
 
+        model_settings = manifest.get("inference_settings", {}).get(model)
+        if isinstance(model_settings, dict):
+            inference_settings[model] = model_settings
+
         raw_path = path / f"{model.replace('/', '_')}.jsonl"
         if raw_path.exists():
             shutil.copy2(raw_path, output / raw_path.name)
@@ -83,6 +88,7 @@ def combine_model_runs(
         "enabled": bool(first_manifest.get("preflight", {}).get("enabled", True)),
         "models": preflights,
     }
+    combined["inference_settings"] = inference_settings
 
     _write_json(output / "manifest.json", combined)
     _write_json(output / "metrics.json", metrics)
