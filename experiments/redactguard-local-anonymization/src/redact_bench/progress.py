@@ -195,7 +195,7 @@ class TerminalProgress:
         if not self.interactive:
             return
         now = self.clock()
-        started = self._cases_started_at or now
+        started = self._cases_started_at if self._cases_started_at is not None else now
         elapsed = max(0.0, now - started)
         eta = (elapsed / completed) * (total - completed) if completed else 0.0
         percent = round((completed / total) * 100) if total else 100
@@ -218,7 +218,7 @@ class TerminalProgress:
         errors: int,
     ) -> None:
         now = self.clock()
-        started = self._model_started_at or now
+        started = self._model_started_at if self._model_started_at is not None else now
         elapsed = max(0.0, now - started)
         self._line(
             f"✓ {model} {completed}/{total} | Errors: {errors} "
