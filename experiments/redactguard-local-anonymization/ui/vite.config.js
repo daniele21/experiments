@@ -330,16 +330,15 @@ async function discoverRuns() {
   });
 }
 
-async function loadRun(key) {
-  const runs = await discoverRuns();
-  const summary = runs.find((item) => item.key === key);
-  if (!summary) return null;
-
+async function loadRunFromSummary(summary) {
+  const key = summary.key;
   const directory = path.resolve(RESULTS_ROOT, ...key.split("/"));
   const storedMetrics = await readJson(path.join(directory, "metrics.json"));
   const manifest = await readJson(path.join(directory, "manifest.json"), {});
   const storedFailures = await readJson(path.join(directory, "failures.json"));
-  const partial = await readPartialEvidence(directory);
+  const partial = storedMetrics
+    ? { byModel: {} }
+    : await readPartialEvidence(directory);
 
   const metrics = storedMetrics ?? Object.fromEntries(
     Object.entries(partial.byModel)
@@ -370,6 +369,111 @@ async function loadRun(key) {
   return { summary, manifest, metrics, failures, latency };
 }
 
+async function loadRun(key) {
+  const runs = await discoverRuns();
+  const summary = runs.find((item) => item.key === key);
+  if (!summary) return null;
+  return loadRunFromSummary(summary);
+}
+
+function evidenceCases(summary, model, metrics) {
+  return (
+    summary.completedCasesByModel?.[model] ??
+    metrics?.micro?.cases ??
+    metrics?.cases ??
+    summary.cases ??
+    null
+  );
+}
+
+async function buildOverview() {
+  const runs = await discoverRuns();
+  const completeByModel = new Map();
+  const partialByModel = new Map();
+
+  for (const run of runs) {
+    if (run.kind === "latency") continue;
+    const detail = await loadRunFromSummary(run);
+
+    for (const [model, metrics] of Object.entries(detail.metrics ?? {})) {
+      if (!metrics) continue;
+
+      const candidate = {
+        run,
+        metrics,
+        failures: detail.failures?.[model] ?? [],
+        latencyMetrics: detail.latency?.metrics?.[model] ?? null,
+      };
+
+      if (run.status === "complete") {
+        if (!completeByModel.has(model)) completeByModel.set(model, candidate);
+      } else if (!partialByModel.has(model)) {
+        partialByModel.set(model, candidate);
+      }
+    }
+  }
+
+  const modelNames = [...new Set([
+    ...completeByModel.keys(),
+    ...partialByModel.keys(),
+  ])].sort();
+
+  const metrics = {};
+  const failures = {};
+  const latencyMetrics = {};
+  const evidence = {};
+
+  for (const model of modelNames) {
+    const candidate = completeByModel.get(model) ?? partialByModel.get(model);
+    if (!candidate) continue;
+
+    metrics[model] = candidate.metrics;
+    failures[model] = candidate.failures;
+    if (candidate.latencyMetrics) latencyMetrics[model] = candidate.latencyMetrics;
+
+    evidence[model] = {
+      runKey: candidate.run.key,
+      runId: candidate.run.runId,
+      suiteId: candidate.run.suiteId,
+      createdAt: candidate.run.createdAt,
+      status: candidate.run.status,
+      dataset: candidate.run.dataset,
+      source: candidate.run.source,
+      cases: evidenceCases(candidate.run, model, candidate.metrics),
+      latencySource: candidate.latencyMetrics ? "dedicated" : "quality-run",
+    };
+  }
+
+  const statuses = Object.values(evidence);
+  const datasets = [...new Set(
+    statuses.map((item) => item.dataset).filter(Boolean),
+  )];
+
+  return {
+    summary: {
+      key: "__overview__",
+      runId: "Unified overview",
+      createdAt: runs[0]?.createdAt ?? null,
+      kind: "overview",
+      dataset: datasets.length === 1 ? datasets[0] : null,
+      models: modelNames,
+      source: "overview",
+      status: statuses.some((item) => item.status === "incomplete")
+        ? "mixed"
+        : "complete",
+      completeModels: statuses.filter((item) => item.status === "complete").length,
+      partialModels: statuses.filter((item) => item.status === "incomplete").length,
+      sourceRuns: new Set(statuses.map((item) => item.runKey)).size,
+      datasets,
+    },
+    manifest: {},
+    metrics,
+    failures,
+    latency: { metrics: latencyMetrics },
+    evidence,
+  };
+}
+
 function sendJson(response, status, payload) {
   response.statusCode = status;
   response.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -384,6 +488,11 @@ function resultsApi() {
 
       if (url.pathname === "/api/runs") {
         sendJson(response, 200, { runs: await discoverRuns() });
+        return;
+      }
+
+      if (url.pathname === "/api/overview") {
+        sendJson(response, 200, await buildOverview());
         return;
       }
 
