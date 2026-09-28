@@ -18,8 +18,8 @@ Foundation implemented:
 - dedicated unit CI.
 
 The first real-model vertical slice compares GPT image and Gemini image on text rendering and
-compositionality. A third Qwen-Image-2.1 arm is now wired through Korgis for local inference;
-image editing remains a separate follow-up slice.
+compositionality. Two Qwen-Image-2.1 local arms are available through Korgis: MFlux Q8 and
+stable-diffusion.cpp GGUF Q4_K_M. Image editing remains a separate follow-up slice.
 
 ## Development
 
@@ -104,3 +104,33 @@ it is not mislabeled as an OpenAI provider. The local arm resolves to the MFlux 
 `quantization=Q8` in its benchmark mapping. This is a quantized Apple/MLX-oriented profile,
 but benchmark reports must not infer real-device memory fit or performance until those values
 are measured on representative hardware.
+
+
+### Add the GGUF Q4_K_M local arm
+
+Keep the MFlux Q8 arm as a separate comparison. The GGUF arm resolves through Korgis to
+`qwen-image-2.1-gguf-q4km` and stable-diffusion.cpp:
+
+```bash
+export KORGIS_BASE_URL="http://127.0.0.1:1235"
+
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-local,qwen-image-2.1-local-gguf-q4km \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+For the full four-arm comparison:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local,qwen-image-2.1-local-gguf-q4km \
+  --profile smoke \
+  --output-dir results
+```
+
+The GGUF arm uses 1024×1024, 20 steps, CFG 6.0 and Euler sampling, while the MFlux arm keeps
+its own 40-step Q8 configuration. These are recorded as effective generation configurations
+rather than being forced into artificial parameter parity. The React UI shows
+`stable_diffusion_cpp_image` and `Q4_K_M` from Korgis runtime provenance.
