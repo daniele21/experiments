@@ -2,7 +2,7 @@
 
 Reproducible benchmark for measuring how local models perform as the **PII detection engine of RedactGuard** when served by **Korgis**, both on frozen text inputs and through the full **PDF → Docling → Korgis → RedactGuard post-processing** path.
 
-The benchmark does not embed Korgis and does not start a private inference engine. Korgis is an external local service reached only through its current public HTTP/control-plane contracts.
+The benchmark never embeds an inference engine. Korgis remains a separate repository/runtime reached through its public HTTP/control-plane contracts. The managed suite can launch and stop that external Korgis process for reproducible benchmark runs.
 
 ## What this experiment answers
 
@@ -25,7 +25,7 @@ This v0.1 is pinned to:
 
 - frozen RedactGuard detection contract source: `daniele21/redact-guard@70ea5ed4fbbd7182010cc04eb756f636791c5947`;
 - current RedactGuard Korgis integration baseline: `daniele21/redact-guard@b5ac4377b2947ccb954369c3df7cce1e13994df8` (`main`);
-- Korgis recent development baseline: `daniele21/korgis@26a161dc0ef89a133c7a076d3a31544a274c1469` (`dev`);
+- Korgis recent development baseline: `daniele21/korgis@eadd5dca94417dd037a5d43650377b349875ab17` (`dev`);
 - Korgis identity protocol: `local-llm-identity-v1`;
 - inference API: `POST /v1/chat/completions`;
 - lifecycle API: `/api/v1/models/activate`;
@@ -44,51 +44,131 @@ All four keys are present in the pinned Korgis registry:
 | `qwen3.5-4b-q4km` | Qwen3.5-4B | Q4_K_M | same-size model comparison |
 | `qwen3.5-9b-q4km` | Qwen3.5-9B | Q4_K_M | larger-local reference |
 
-## Setup
+## Managed benchmark suite
 
-Clone Korgis next to this repository and check out the tested revision:
+For normal use, **do not start `local-llm` from this experiment environment**. The `local-llm` executable belongs to the Korgis project, which has its own Python environment.
 
-```bash
-git clone https://github.com/daniele21/korgis.git
-cd korgis
-git checkout 26a161dc0ef89a133c7a076d3a31544a274c1469
+One-time prerequisites:
 
-python3 -m pip install "uv==0.8.13"
-uv sync --frozen --extra dev
+1. clone/update Korgis somewhere on the same machine;
+2. install `llama-server` when using the GGUF llama.cpp backend;
+3. install this experiment with `uv sync --extra dev`.
+
+A convenient local layout is:
+
+```text
+~/Personal/
+├── experiments/
+└── korgis/
 ```
 
-Install `llama-server` if it is not already available:
+The suite auto-discovers sibling repositories named `korgis` or `local-llm-server`. If yours lives elsewhere, pass `--korgis-repo` or set `KORGIS_REPO`.
+
+From this experiment directory, the normal workflow is one command:
 
 ```bash
-brew install llama.cpp
-command -v llama-server
+uv run redact-bench suite
 ```
 
-Download the model artifacts through **Korgis itself**:
+Or explicitly:
 
 ```bash
-uv run --frozen local-llm download nemotron-nano-4b
-uv run --frozen local-llm download nemotron-nano-4b-q8
-uv run --frozen local-llm download qwen3.5-4b-q4km
-uv run --frozen local-llm download qwen3.5-9b-q4km
+uv run redact-bench suite --korgis-repo ~/Personal/korgis
 ```
 
-Start only an anchor model; the benchmark activates the requested models sequentially:
+The suite configuration lives in [`config/suite.yaml`](config/suite.yaml). It defines the dataset, model matrix, dedicated Korgis endpoint and latency protocol.
 
-```bash
-uv run --frozen local-llm serve   --model nemotron-nano-4b   --enable-admin-api   --no-download
+The managed suite performs:
+
+```text
+validate realistic dataset
+        ↓
+resolve Korgis repository
+        ↓
+ensure configured model artifacts
+        ↓
+for each model
+    start a fresh Korgis process on :12435
+    run quality benchmark
+    run repeated latency benchmark
+    stop Korgis completely
+        ↓
+combine per-model evidence
+        ↓
+append results/history.jsonl
+        ↓
+rebuild results/dashboard.html
 ```
 
-Keep the Korgis process running in its terminal. In a second terminal:
+Each model gets a fresh Korgis process. This is deliberate: current Korgis `/activate` loads/selects another runtime but does not imply that previously resident runtimes have been unloaded. Restart-per-model prevents resident-model accumulation from contaminating memory state or model comparisons.
+
+To test only a subset:
 
 ```bash
-cd experiments/redactguard-local-anonymization
-uv sync --extra dev
+uv run redact-bench suite \
+  --models nemotron-nano-4b,qwen3.5-4b-q4km
+```
+
+The default suite ensures model artifacts through Korgis. To require already-downloaded models instead:
+
+```bash
+uv run redact-bench suite --no-ensure-models
+```
+
+After a completed suite:
+
+```bash
+open results/dashboard.html
+```
+
+The dashboard is static and local. It shows the latest comparison, PII-type breakdown and an append-only history of previous suites with links to detailed quality and latency reports.
+
+A suite writes:
+
+```text
+results/
+├── history.jsonl
+├── dashboard.html
+└── suites/
+    └── <suite-id>/
+        ├── suite.json
+        ├── logs/
+        │   ├── nemotron-nano-4b.log
+        │   └── ...
+        ├── quality/
+        │   ├── manifest.json
+        │   ├── metrics.json
+        │   ├── failures.json
+        │   ├── <model>.jsonl
+        │   └── report.html
+        └── latency/
+            ├── manifest.json
+            ├── metrics.json
+            ├── <model>.jsonl
+            └── report.html
+```
+
+`history.jsonl` is append-only: repeated suites never overwrite prior measurements. `suite.json` records lifecycle status and preserves a failure reason when a suite aborts.
+
+### Manual/advanced operation
+
+The lower-level `compare`, `latency` and `documents` commands still expect an already-running external Korgis server. They are useful for debugging, but the managed `suite` command is the recommended path for repeatable model comparison.
+
+If you intentionally operate Korgis yourself:
+
+```bash
+cd /path/to/korgis
+uv run --frozen local-llm serve \
+  --model nemotron-nano-4b \
+  --enable-admin-api \
+  --no-download
+```
+
+Then, from this experiment:
+
+```bash
 uv run redact-bench check-korgis
-uv run redact-bench check-data
 ```
-
-`compare`, `latency` and `documents` do **not** start Korgis themselves. If no server is listening at `KORGIS_BASE_URL` (default `http://127.0.0.1:1235/v1`), the CLI exits before the benchmark and prints the Korgis startup command instead of an internal urllib traceback.
 
 ## Realistic test dataset
 
