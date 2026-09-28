@@ -190,11 +190,11 @@ Example:
 
 ```text
 Run: 20260928T...
-Dataset: realistic — 120 cases
-Models: 3
+Dataset: realistic — 11 cases
+Models: 4
 Results: results/20260928T...
 
-[1/3 nemotron-nano-4b] Cases 17/120 [███░░░░░░░░░░░░░░░░░] 14% | Last: invoice_017 | Latency: 2.8s | Elapsed: 00:48 | ETA: 04:50 | Errors: 0
+[1/4 nemotron-nano-4b] Cases 4/11 [███████░░░░░░░░░░░░░] 36% | Last: contratto.pdf | Latency: 2.8s | Elapsed: 00:48 | ETA: 01:24 | Errors: 0
 ```
 
 For CI or intentionally quiet runs:
