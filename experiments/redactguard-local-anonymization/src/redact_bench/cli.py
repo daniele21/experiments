@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
+import subprocess
 
 import typer
 
@@ -242,3 +244,36 @@ def dashboard(
     """Rebuild the append-only benchmark history dashboard."""
     path = write_history_dashboard(history, output)
     typer.echo(str(path))
+
+
+@app.command("ui")
+def ui(
+    host: str = typer.Option("127.0.0.1", help="Host for the local React dashboard."),
+    port: int = typer.Option(5173, min=1, max=65535, help="Port for the local React dashboard."),
+) -> None:
+    """Launch the React dashboard that reads benchmark results dynamically."""
+    ui_dir = ROOT / "ui"
+    package_json = ui_dir / "package.json"
+    if not package_json.exists():
+        typer.echo(f"ERROR: UI package not found at {ui_dir}", err=True)
+        raise typer.Exit(code=2)
+    if shutil.which("npm") is None:
+        typer.echo("ERROR: npm is required to run the React dashboard.", err=True)
+        raise typer.Exit(code=2)
+    if not (ui_dir / "node_modules").exists():
+        typer.echo("UI dependencies are not installed.", err=True)
+        typer.echo("Run once:", err=True)
+        typer.echo("  npm --prefix ui install", err=True)
+        raise typer.Exit(code=2)
+
+    typer.echo(f"dashboard: http://{host}:{port}")
+    try:
+        completed = subprocess.run(
+            ["npm", "run", "dev", "--", "--host", host, "--port", str(port)],
+            cwd=ui_dir,
+            check=False,
+        )
+    except KeyboardInterrupt:
+        raise typer.Exit(code=130) from None
+    if completed.returncode != 0:
+        raise typer.Exit(code=completed.returncode)
