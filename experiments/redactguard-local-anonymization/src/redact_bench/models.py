@@ -45,7 +45,13 @@ class InferenceResult:
     input_tokens: int | None = None
     output_tokens: int | None = None
     error: str | None = None
+    status: str = "success"
+    error_type: str | None = None
+    http_status: int | None = None
+    finish_reason: str | None = None
+    raw_item_count: int = 0
+    resolved_item_count: int = 0
+    unresolved_item_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
-        data = asdict(self)
-        return data
+        return asdict(self)
