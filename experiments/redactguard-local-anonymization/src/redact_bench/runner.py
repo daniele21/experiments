@@ -60,12 +60,14 @@ def run_compare(
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
     preflights: dict[str, dict] = {}
+    inference_settings: dict[str, dict] = {}
 
     for model_index, model in enumerate(models, start=1):
         reporter.model_started(model=model, index=model_index, total=len(models))
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+        inference_settings[model] = dict(provider.execution_settings)
 
         if preflight:
             model_preflight = run_model_preflight(provider)
@@ -176,6 +178,7 @@ def run_compare(
             "enabled": preflight,
             "models": preflights,
         },
+        "inference_settings": inference_settings,
         "host": {
             "system": platform.system(),
             "machine": platform.machine(),
@@ -241,11 +244,13 @@ def run_latency(
     identities: dict[str, dict | None] = {}
     all_rows: list[dict] = []
     preflights: dict[str, dict] = {}
+    inference_settings: dict[str, dict] = {}
 
     for model in models:
         controller.activate(model)
         identities[model] = controller.model_identity(model)
         provider = KorgisRedactProvider(model, profiles_path)
+        inference_settings[model] = dict(provider.execution_settings)
 
         if preflight:
             model_preflight = run_model_preflight(provider)
@@ -319,6 +324,7 @@ def run_latency(
             "enabled": preflight,
             "models": preflights,
         },
+        "inference_settings": inference_settings,
     }
     (output / "preflight.json").write_text(
         json.dumps(preflights, indent=2, ensure_ascii=False),
