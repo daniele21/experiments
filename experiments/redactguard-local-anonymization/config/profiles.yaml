@@ -1,6 +1,6 @@
 source:
   repository: daniele21/redact-guard
-  ref: 2c6ec6a50ef0523bf1aedeecd38da84cff4d7704
+  ref: ab8855a3d644c479b00a4dc3e5d7b5f949f4f5b1
   contract_version: redactguard-detection-v2
   output_schema: minimal-pii-type-value-v1
   max_output_tokens: 4096
@@ -140,15 +140,15 @@ profiles:
       - Mario Rossi
       - intestatario conto
     private_email:
-      description: Email address identifying or contacting the account holder.
+      description: Email/contact address associated with an account holder, beneficiary, customer, supplier, or other protected financial record party; shared business addresses are included when they are the record contact field.
       examples:
       - m.rossi@email.com
     private_phone:
-      description: Phone or contact number for the account holder.
+      description: Phone/contact number associated with an account holder, beneficiary, customer, supplier, or other protected financial record party.
       examples:
       - +39 333 1234567
     private_address:
-      description: Postal address, residence, or domicile of the account holder.
+      description: Postal address or location field associated with an account holder, customer, supplier, beneficiary, or other protected financial record party.
       examples:
       - Via Garibaldi 22, Torino
     private_date:
@@ -158,8 +158,9 @@ profiles:
       - 01/04/2025
       - scadenza 31/12/2025
     account_number:
-      description: Bank account number, IBAN, credit card number, policy number, fiscal
-        code, or financial identifier.
+      description: Bank account, IBAN, card, policy, fiscal/tax/VAT, customer, invoice,
+        transaction, or record identifier when it identifies or links a protected financial
+        record, party, or account.
       examples:
       - IBAN IT60X0542811101000000123456
       - carta **** 4532
@@ -183,7 +184,8 @@ profiles:
       - Mario Bianchi
       - parte attrice
     private_email:
-      description: Email address identifying or contacting a party.
+      description: Email/contact address associated with a party or protected legal
+        record, including shared business addresses when they are the record contact field.
       examples:
       - avv.rossi@studio.it
       - segreteria@tribunale.it
@@ -202,8 +204,9 @@ profiles:
       - 10/03/2025
       - sottoscritto in data 15.01.2024
     account_number:
-      description: Fiscal code, VAT number, case number, contract ID, or document
-        reference.
+      description: Fiscal/tax/VAT identifier, case number, contract ID, filing number,
+        document reference, or comparable identifier that identifies or links a party
+        or protected legal record.
       examples:
       - 'CF: RSSMRA85M01H501Z'
       - P.IVA 12345678901
