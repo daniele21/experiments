@@ -222,6 +222,12 @@ code {
   color: var(--muted);
 }
 
+.pill--legacy {
+  background: #fff6df;
+  color: #9a6700;
+  border: 1px solid #ead7a0;
+}
+
 .content {
   width: 100%;
   max-width: 1500px;
@@ -283,7 +289,9 @@ code {
 }
 
 .overview-banner,
-.partial-banner {
+.partial-banner,
+.contract-banner,
+.legacy-banner {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -310,6 +318,28 @@ code {
 .overview-banner strong {
   flex: 0 0 auto;
   color: var(--accent);
+  font-size: 11px;
+}
+
+.contract-banner {
+  border-color: color-mix(in srgb, var(--risk) 34%, var(--border));
+  background: var(--risk-soft);
+}
+
+.contract-banner strong {
+  flex: 0 0 auto;
+  color: var(--risk);
+  font-size: 11px;
+}
+
+.legacy-banner {
+  border-color: #ead7a0;
+  background: #fffaf0;
+}
+
+.legacy-banner strong {
+  flex: 0 0 auto;
+  color: #9a6700;
   font-size: 11px;
 }
 
@@ -391,7 +421,7 @@ code {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -533,6 +563,21 @@ code {
   color: var(--risk);
 }
 
+.status-badge--passed {
+  background: var(--positive-soft);
+  color: var(--series-2);
+}
+
+.status-badge--failed {
+  background: var(--risk-soft);
+  color: var(--risk);
+}
+
+.status-badge--legacy {
+  background: #fff6df;
+  color: #9a6700;
+}
+
 .source-run-cell {
   min-width: 180px !important;
   text-align: left !important;
@@ -624,6 +669,29 @@ code {
   color: var(--risk);
   font-size: 11px;
   font-weight: 700;
+}
+
+.failure-diagnostics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.failure-diagnostics span {
+  display: grid;
+  gap: 2px;
+}
+
+.failure-diagnostics strong {
+  color: var(--text);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .failure-body {
@@ -740,7 +808,7 @@ code {
 
 @media (max-width: 1180px) {
   .metric-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .chart-grid {
@@ -900,5 +968,13 @@ code {
   .error-banner {
     border-color: #5b3039;
     color: #ffabb9;
+  }
+
+  .legacy-banner,
+  .pill--legacy,
+  .status-badge--legacy {
+    background: #332b18;
+    border-color: #5a4a22;
+    color: #f0c96a;
   }
 }
