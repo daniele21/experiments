@@ -152,6 +152,8 @@ def run_compare(
 
     manifest = {
         "run_id": run_id,
+        "benchmark_mode": "model-capability",
+        "execution_unit": "canonical-document-with-v2-segmentation",
         "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
@@ -297,6 +299,8 @@ def run_latency(
     manifest = {
         "run_id": run_id,
         "kind": "latency",
+        "benchmark_mode": "latency",
+        "execution_unit": "selected-case-with-v2-segmentation",
         "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
