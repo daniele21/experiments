@@ -445,7 +445,7 @@ export default function App() {
       });
 
     return () => controller.abort();
-  }, [selectedKey]);
+  }, [selectedKey, lastRefresh]);
 
   const currentSummary = detail?.metrics?.[selectedModel] ?? null;
   const currentMicro = micro(currentSummary);
