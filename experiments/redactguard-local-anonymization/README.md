@@ -8,14 +8,27 @@ The benchmark never embeds an inference engine. Korgis remains a separate reposi
 
 > Which local model / quantization gives RedactGuard the best privacy-quality-latency trade-off?
 
-Primary metrics are intentionally privacy-oriented:
+Evaluation v3 keeps **model quality** and **system effectiveness** separate.
+
+Quality metrics are computed only when the transport, structured-output contract and
+application parser all succeed:
 
 - PII recall;
 - character leakage rate;
 - zero-leak document rate;
 - precision and over-redaction;
-- valid JSON rate;
 - p50 / p95 / p99 client-observed inference latency.
+
+System metrics additionally expose the privacy consequence of inference failures:
+
+- inference success / contract-valid rate;
+- truncation rate;
+- span-resolution rate;
+- system recall;
+- system leakage.
+
+An invalid or truncated inference is therefore never displayed as artificial
+`0% recall / 100% precision`. Quality is `N/A`; system risk remains visible.
 
 The primary scoring unit is the **final RedactGuard span set after deterministic post-processing**, not merely the model's raw JSON.
 
@@ -23,8 +36,10 @@ The primary scoring unit is the **final RedactGuard span set after deterministic
 
 This v0.1 is pinned to:
 
-- frozen RedactGuard detection contract source: `daniele21/redact-guard@70ea5ed4fbbd7182010cc04eb756f636791c5947`;
-- current RedactGuard Korgis integration baseline: `daniele21/redact-guard@b5ac4377b2947ccb954369c3df7cce1e13994df8` (`main`);
+- RedactGuard detection-v2 contract snapshot: `daniele21/redact-guard@ab8855a3d644c479b00a4dc3e5d7b5f949f4f5b1`;
+- detection contract id: `redactguard-detection-v2`;
+- model-facing schema: minimal `pii_type + value`;
+- default inference budgets: 4,096 output tokens, 4,000 input characters per segment, 256-character overlap;
 - Korgis recent development baseline: `daniele21/korgis@eadd5dca94417dd037a5d43650377b349875ab17` (`dev`);
 - Korgis identity protocol: `local-llm-identity-v1`;
 - inference API: `POST /v1/chat/completions`;
@@ -206,7 +221,13 @@ Then, from this experiment:
 
 ```bash
 uv run redact-bench check-korgis
+uv run redact-bench preflight
 ```
+
+`preflight` activates each selected model and verifies that the Korgis/backend path can
+produce a valid RedactGuard v2 structured response before any dataset quality score is
+accepted. `compare` and `latency` run the same gate automatically unless explicitly
+disabled for diagnostics with `--no-preflight`.
 
 ## Realistic test dataset
 
@@ -241,7 +262,16 @@ For CI or intentionally quiet runs:
 uv run redact-bench compare --dataset data/realistic --no-progress
 ```
 
-`compare --dataset` accepts either the committed JSONL smoke dataset or the committed realistic dataset directory. The loader strips structural metadata markers, verifies the frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is required.
+`compare --dataset` accepts either the committed JSONL smoke dataset or the committed
+realistic dataset directory. The loader strips structural metadata markers, verifies the
+frozen SHA-256 and loads the exact annotated spans; no intermediate JSONL conversion is
+required.
+
+The `compare` command is explicitly a **model-capability** benchmark over canonical
+document text. Long inputs are split with the same deterministic segmentation contract
+used by RedactGuard v2, then findings are mapped back to global document offsets and
+de-duplicated. The separate `documents` benchmark is the **RedactGuard-fidelity E2E**
+path: PDF → Docling page → bounded RedactGuard inference segments → merged page result.
 
 Only `data/realistic/originals/` is ignored by Git; download those original binaries from Drive only for extraction/end-to-end work.
 
@@ -305,18 +335,42 @@ The document run writes the normal manifest/report plus `extraction.json`. The r
 2. **Model quality on extracted text** — what the LLM did given the text it actually received.
 3. **End-to-end privacy quality** — PII lost during extraction counts as a miss/leak, so parser failures cannot disappear from the final system score.
 
-## Evaluation v2
+## Evaluation v3
 
-Comparison runs expose both **micro** and **macro** quality:
+Evaluation v3 fixes the central ambiguity in the original benchmark.
 
-- micro: every annotated PII span contributes equally, so it represents total corpus exposure;
-- macro: every document contributes equally, so a large XLSX or repeated document cannot hide weak performance elsewhere;
-- by PII type: recall/precision/F1/leakage for each taxonomy category;
-- by document: recall, leakage, precision, over-redaction, zero-leak status and latency;
-- failure analysis: missed gold spans and unmatched predictions for the worst cases;
-- dataset balance: gold-span concentration by document and type.
+For each case, evidence is tracked through:
 
-Do not use micro recall alone as the model-selection criterion.
+```text
+transport
+  -> structured output / termination
+  -> JSON + schema validation
+  -> value-to-source span resolution
+  -> model-quality scoring
+  -> system-effectiveness scoring
+```
+
+**Model quality** is available only for valid inference cases. **System effectiveness**
+treats failed inference conservatively as unprotected source PII while preserving the
+failure cause.
+
+The result artifacts expose:
+
+- micro and macro model-quality metrics;
+- system recall and system leakage;
+- inference-success and evaluated-case coverage;
+- contract-valid and truncation rates;
+- raw → resolved model-item counts and span-resolution rate;
+- by-type and by-document metrics;
+- typed failure analysis;
+- per-model preflight evidence;
+- RedactGuard contract version + source revision;
+- effective per-model inference budgets.
+
+Historical v2 results remain discoverable in the React dashboard but are labelled
+`LEGACY` / diagnostic-only. Current v3 evidence is preferred automatically in the
+unified model overview.
+
 
 ## Run the comparison
 
@@ -348,15 +402,20 @@ results/<run-id>/
 └── report.html
 ```
 
-The manifest captures the exact Korgis runtime identity for every activated model. `metrics.json` uses `redactguard-evaluation-v2` and contains micro, macro, by-type, by-profile and by-document views. `failures.json` is a compact diagnostic index for false negatives, false positives and output failures.
+The manifest captures the exact Korgis runtime identity for every activated model. `metrics.json` uses `redactguard-evaluation-v3` and contains quality, system,
+micro/macro, by-type, by-profile and by-document views. `preflight.json` records the
+model/runtime contract gate. `failures.json` separates inference-contract failures from
+false negatives/false positives produced by valid inference.
 
 ## What is copied from RedactGuard
 
 The experiment freezes only the behavior needed to make results reproducible:
 
 1. built-in PII profile taxonomy, descriptions and examples;
-2. RedactGuard system-prompt contract;
-3. value-to-source-span post-processing semantics.
+2. RedactGuard detection-contract version and provenance;
+3. compact system-prompt/output contract;
+4. bounded segmentation settings;
+5. value-to-source-span post-processing semantics.
 
 It does **not** depend on the RedactGuard Python package at runtime and does not import Korgis code. This keeps both product repositories independently evolvable while making benchmark drift explicit.
 
@@ -370,4 +429,7 @@ The realistic heterogeneous model-only dataset is committed as a reproducible te
 
 RedactGuard `main` now uses Korgis as the external local runtime boundary and no longer owns an embedded `llama_cpp_server.py`, GGUF downloader, or private model lifecycle. The product integration baseline is `b5ac4377b2947ccb954369c3df7cce1e13994df8`.
 
-The benchmark deliberately keeps the earlier RedactGuard detection-contract SHA frozen because the migration changed runtime plumbing, not the benchmarked prompt/taxonomy/value-to-span semantics. This preserves reproducibility while keeping the product and experiment on the same Korgis architecture.
+The benchmark pins an explicit RedactGuard v2 contract snapshot in
+`config/profiles.yaml`. Updating product detection behavior requires an intentional
+snapshot refresh and a new benchmark run; historical evidence is never silently
+reinterpreted under a newer contract.
