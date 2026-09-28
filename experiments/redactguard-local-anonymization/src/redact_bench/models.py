@@ -52,6 +52,9 @@ class InferenceResult:
     raw_item_count: int = 0
     resolved_item_count: int = 0
     unresolved_item_count: int = 0
+    segment_count: int = 1
+    successful_segments: int = 1
+    failed_segment_index: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
