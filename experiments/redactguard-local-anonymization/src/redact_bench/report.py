@@ -43,29 +43,46 @@ def _overview_table(summaries: dict[str, dict]) -> str:
     for model, summary in summaries.items():
         micro = summary.get("micro", summary)
         macro = summary.get("macro", {})
+        preflight = summary.get("preflight") or {}
+        if micro.get("status") == "contract_failed":
+            contract = (
+                "<span class='bad'>CONTRACT FAILED</span>"
+                f"<br><small>{_esc(preflight.get('status') or 'unknown')}</small>"
+            )
+        else:
+            contract = "<span class='good'>PASS</span>"
+
+        evaluated = (
+            f"{_num(micro.get('evaluated_cases'))}/"
+            f"{_num(micro.get('cases'))}"
+        )
         rows.append(
             "<tr>"
             f"<td>{_esc(model)}</td>"
+            f"<td>{contract}</td>"
+            f"<td>{evaluated}</td>"
             f"<td>{_pct(micro.get('pii_recall'))}</td>"
             f"<td>{_pct(macro.get('pii_recall'))}</td>"
+            f"<td>{_pct(micro.get('system_pii_recall'))}</td>"
             f"<td>{_pct(micro.get('leakage_rate'))}</td>"
-            f"<td>{_pct(macro.get('leakage_rate'))}</td>"
+            f"<td>{_pct(micro.get('system_leakage_rate'))}</td>"
             f"<td>{_pct(micro.get('precision'))}</td>"
-            f"<td>{_pct(macro.get('precision'))}</td>"
-            f"<td>{_pct(micro.get('zero_leak_document_rate'))}</td>"
-            f"<td>{_pct(micro.get('valid_output_rate'))}</td>"
+            f"<td>{_pct(micro.get('contract_valid_rate'))}</td>"
+            f"<td>{_pct(micro.get('truncation_rate'))}</td>"
+            f"<td>{_pct(micro.get('span_resolution_rate'))}</td>"
             f"<td>{_ms(micro.get('latency_p50_ms'))}</td>"
             f"<td>{_ms(micro.get('latency_p95_ms'))}</td>"
             "</tr>"
         )
-    return """<table>
+    return """<div class="scroll"><table>
 <thead><tr>
-<th>Model</th><th>Micro recall</th><th>Macro recall</th>
-<th>Micro leakage</th><th>Macro leakage</th>
-<th>Micro precision</th><th>Macro precision</th>
-<th>Zero-leak docs</th><th>Valid output</th><th>p50 ms</th><th>p95 ms</th>
+<th>Model</th><th>Contract</th><th>Evaluated</th>
+<th>Micro recall</th><th>Macro recall</th><th>System recall</th>
+<th>Quality leakage</th><th>System leakage</th><th>Precision</th>
+<th>Contract valid</th><th>Truncation</th><th>Span resolution</th>
+<th>p50 ms</th><th>p95 ms</th>
 </tr></thead>
-<tbody>""" + "".join(rows) + "</tbody></table>"
+<tbody>""" + "".join(rows) + "</tbody></table></div>"
 
 
 def _dataset_balance(summaries: dict[str, dict]) -> str:
@@ -136,8 +153,9 @@ def _document_breakdown(summaries: dict[str, dict]) -> str:
         ordered = sorted(
             documents.items(),
             key=lambda item: (
-                item[1].get("leakage_rate", 0.0),
-                item[1].get("fn", 0),
+                item[1].get("inference_failures", 0),
+                item[1].get("system_leakage_rate") or 0.0,
+                item[1].get("system_fn", 0),
                 item[1].get("fp", 0),
             ),
             reverse=True,
@@ -149,21 +167,22 @@ def _document_breakdown(summaries: dict[str, dict]) -> str:
                 f"<td>{_esc(case_id)}</td>"
                 f"<td>{_esc(metrics.get('profile'))}</td>"
                 f"<td>{_num(metrics.get('gold_count_per_document'))}</td>"
+                f"<td>{_esc(metrics.get('representative_status') or 'success')}</td>"
                 f"<td>{_pct(metrics.get('pii_recall'))}</td>"
                 f"<td>{_pct(metrics.get('leakage_rate'))}</td>"
+                f"<td>{_pct(metrics.get('system_leakage_rate'))}</td>"
                 f"<td>{_pct(metrics.get('precision'))}</td>"
-                f"<td>{_pct(metrics.get('over_redaction_rate'))}</td>"
-                f"<td>{_pct(metrics.get('zero_leak_document_rate'))}</td>"
                 f"<td>{_num(metrics.get('fn'))}</td>"
                 f"<td>{_num(metrics.get('fp'))}</td>"
+                f"<td>{_num(metrics.get('unresolved_item_count'))}</td>"
                 f"<td>{_ms(metrics.get('latency_p50_ms'))}</td>"
                 "</tr>"
             )
     return """<div class="scroll"><table>
 <thead><tr>
-<th>Model</th><th>Document</th><th>Profile</th><th>Gold</th>
-<th>Recall</th><th>Leakage</th><th>Precision</th><th>Over-redaction</th>
-<th>Zero leak</th><th>FN</th><th>FP</th><th>p50 ms</th>
+<th>Model</th><th>Document</th><th>Profile</th><th>Gold</th><th>Inference</th>
+<th>Recall</th><th>Quality leakage</th><th>System leakage</th><th>Precision</th>
+<th>FN</th><th>FP</th><th>Unresolved</th><th>p50 ms</th>
 </tr></thead><tbody>""" + "".join(rows) + "</tbody></table></div>"
 
 
@@ -174,31 +193,46 @@ def _failure_analysis(summaries: dict[str, dict]) -> str:
         if not failures:
             blocks.append(
                 f"<section><h3>{_esc(model)}</h3>"
-                "<p class='muted'>No quality or output failures recorded.</p></section>"
+                "<p class='muted'>No quality or inference failures recorded.</p></section>"
             )
             continue
 
         details = []
         for failure in failures[:12]:
+            quality_available = bool(failure.get("quality_available"))
+            if quality_available:
+                quality_text = (
+                    f"recall {_pct(failure.get('pii_recall'))} · "
+                    f"leakage {_pct(failure.get('leakage_rate'))} · "
+                    f"FN {_num(failure.get('fn'))} · FP {_num(failure.get('fp'))}"
+                )
+            else:
+                quality_text = (
+                    "<span class='bad'>quality N/A</span> · "
+                    f"status {_esc(failure.get('inference_status') or 'failed')}"
+                )
+
             details.append(
                 "<details>"
                 "<summary>"
-                f"{_esc(failure['case_id'])} · "
-                f"recall {_pct(failure.get('pii_recall'))} · "
-                f"leakage {_pct(failure.get('leakage_rate'))} · "
-                f"FN {_num(failure.get('fn'))} · FP {_num(failure.get('fp'))}"
+                f"{_esc(failure['case_id'])} · {quality_text}"
                 "</summary>"
+                "<p>"
+                f"<strong>System leakage:</strong> {_pct(failure.get('system_leakage_rate'))} · "
+                f"<strong>Unresolved model items:</strong> {_num(failure.get('unresolved_item_count'))}"
+                "</p>"
                 "<div class='failure-grid'>"
-                "<div><h4>Missed gold spans</h4>"
+                "<div><h4>Missed gold spans (valid inference only)</h4>"
                 + _span_list(failure.get("false_negatives", []))
                 + "</div>"
-                "<div><h4>Unmatched predictions</h4>"
+                "<div><h4>Unmatched resolved predictions</h4>"
                 + _span_list(failure.get("false_positives", []))
                 + "</div>"
                 "</div>"
                 + (
-                    f"<p><strong>Error:</strong> {_esc(failure.get('error'))}</p>"
-                    if failure.get("error")
+                    f"<p><strong>Error:</strong> {_esc(failure.get('error_type') or '')} "
+                    f"{_esc(failure.get('error'))}</p>"
+                    if failure.get("error") or failure.get("error_type")
                     else ""
                 )
                 + "</details>"
@@ -238,15 +272,19 @@ summary{{cursor:pointer;font-weight:600}}
 .failure-grid{{display:grid;grid-template-columns:1fr 1fr;gap:24px}}
 section{{margin:28px 0}}
 .note{{border-left:4px solid #999;padding:8px 12px;background:#f7f7f7}}
+.good{{color:#087f5b;font-weight:700}}
+.bad{{color:#c92a2a;font-weight:700}}
+small{{opacity:.7}}
 @media(max-width:900px){{.grid,.failure-grid{{grid-template-columns:1fr}}}}
 </style>
 </head>
 <body>
 <h1>RedactGuard local anonymization benchmark</h1>
 <p class="note">
-Evaluation v2 reports both <strong>micro</strong> metrics (every gold span has equal weight)
-and <strong>macro</strong> metrics (every document has equal weight). Do not infer overall
-quality from micro recall alone when the dataset is imbalanced.
+Evaluation v3 separates <strong>model quality</strong> from <strong>system effectiveness</strong>.
+Quality metrics are computed only from cases with a valid inference/output contract.
+System recall/leakage conservatively includes inference failures. A contract failure is
+reported as quality N/A rather than as artificial 0% recall / 100% precision.
 </p>
 
 <h2>Model overview</h2>
@@ -262,7 +300,7 @@ quality from micro recall alone when the dataset is imbalanced.
 {_document_breakdown(summaries)}
 
 <h2>Failure analysis</h2>
-<p>Cases are ordered by leakage, then false negatives and false positives.</p>
+<p>Inference-contract failures are shown separately from valid model-quality failures.</p>
 {_failure_analysis(summaries)}
 
 <h2>Run manifest</h2>
