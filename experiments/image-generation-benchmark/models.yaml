@@ -51,3 +51,23 @@ models:
       intent: local-open-weight-q8
       runtime: mflux
       quantization: Q8
+
+  qwen-image-2.1-local-gguf-q4km:
+    model_id: qwen-image-2.1-gguf-q4km
+    runtime: korgis-image-local
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: false
+    generation:
+      output_format: png
+      size: 1024x1024
+      num_inference_steps: 20
+      guidance_scale: 6.0
+      sampling_method: euler
+    benchmark_mapping:
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: local-open-weight-q4
+      runtime: stable-diffusion.cpp
+      quantization: Q4_K_M
