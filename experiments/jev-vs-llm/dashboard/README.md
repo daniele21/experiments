@@ -1,4 +1,27 @@
-# React + TypeScript + Vite
+# Decision Benchmark Dashboard
+
+The dashboard always displays the latest recorded run for each provider, model,
+configuration, dataset and task. Smoke results are excluded from every view.
+Failed latest runs remain visible; they never fall back to an older successful run.
+
+The dataset selector offers **Overall** and one view per available dataset.
+Overall pools the selected runs (accuracy weighted by evaluated decisions), while
+dataset views recompute rankings, KPIs, charts and case details independently.
+Models may have different dataset coverage; included datasets and the latest run
+timestamp appear in the leaderboard. Thinking mode, model/quantization and recorded
+generation parameters distinguish configurations; unknown historical settings are
+not inferred from the current registry.
+
+Regenerate data and the standalone report from the experiment directory:
+
+```sh
+uv run jev-bench report --input-csv results/raw/local_results.csv --output-html results/local_report.html
+```
+
+`npm run dev` serves the interactive dashboard; `npm run build` produces a single
+HTML file in `dist/index.html` and updates `../results/local_report.html`.
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

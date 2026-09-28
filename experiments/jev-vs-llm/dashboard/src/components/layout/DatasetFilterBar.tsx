@@ -1,58 +1,51 @@
 import React from 'react';
-import { Database, Zap, Layers } from 'lucide-react';
+import { Database, Layers } from 'lucide-react';
 
-export type DatasetFilterKey = 'all' | 'public' | 'smoke';
+export type DatasetFilterKey = string;
 
 interface DatasetFilterBarProps {
   activeDataset: DatasetFilterKey;
   onSelectDataset: (key: DatasetFilterKey) => void;
-  counts: {
-    all: number;
-    public: number;
-    smoke: number;
-  };
+  datasets: Array<{ id: string; label: string; count: number }>;
+  total: number;
 }
 
 export const DatasetFilterBar: React.FC<DatasetFilterBarProps> = ({
   activeDataset,
   onSelectDataset,
-  counts,
+  datasets,
+  total,
 }) => {
   return (
     <div className="dataset-filter-bar">
       <div className="dataset-filter-label">
-        <span className="dataset-label-text">Dataset Tier:</span>
+        <span className="dataset-label-text">Latest runs · Dataset:</span>
       </div>
       <div className="dataset-filter-pills">
         <button
-          className={`dataset-pill-btn ${activeDataset === 'public' ? 'active' : ''}`}
-          onClick={() => onSelectDataset('public')}
-          title="Filter to standardized 77-class Banking77 benchmark runs (fair apples-to-apples comparison)"
-        >
-          <Database size={13} className="pill-icon" />
-          <span className="pill-title">Public Benchmark (Banking77)</span>
-          <span className="pill-count">{counts.public}</span>
-        </button>
-
-        <button
-          className={`dataset-pill-btn ${activeDataset === 'smoke' ? 'active' : ''}`}
-          onClick={() => onSelectDataset('smoke')}
-          title="Filter to 24-case local synthetic test runs"
-        >
-          <Zap size={13} className="pill-icon" />
-          <span className="pill-title">Smoke Test (24 cases)</span>
-          <span className="pill-count">{counts.smoke}</span>
-        </button>
-
-        <button
+          type="button"
           className={`dataset-pill-btn ${activeDataset === 'all' ? 'active' : ''}`}
           onClick={() => onSelectDataset('all')}
-          title="Display all model configurations across all evaluated datasets"
+          aria-pressed={activeDataset === 'all'}
+          title="Aggregate the latest run of each model configuration across benchmark datasets"
         >
           <Layers size={13} className="pill-icon" />
-          <span className="pill-title">All Runs</span>
-          <span className="pill-count">{counts.all}</span>
+          <span className="pill-title">Overall</span>
+          <span className="pill-count">{total}</span>
         </button>
+        {datasets.map((dataset) => (
+          <button
+            key={dataset.id}
+            type="button"
+            className={`dataset-pill-btn ${activeDataset === dataset.id ? 'active' : ''}`}
+            onClick={() => onSelectDataset(dataset.id)}
+            aria-pressed={activeDataset === dataset.id}
+          >
+            <Database size={13} className="pill-icon" />
+            <span className="pill-title">{dataset.label}</span>
+            <span className="pill-count">{dataset.count}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ declare global {
 
 export const App: React.FC = () => {
   // Load data from window injection if available, otherwise use static imported JSON
-  const data: BenchmarkPayload = useMemo(() => {
+  const sourceData: BenchmarkPayload = useMemo(() => {
     if (typeof window !== 'undefined' && window.__BENCHMARK_DATA__) {
       return window.__BENCHMARK_DATA__;
     }
@@ -52,45 +52,27 @@ export const App: React.FC = () => {
     }
   };
 
-  // Active dataset tier filter (all, public, smoke)
+  // Every view is computed from the same latest non-smoke run selection.
   const [activeDataset, setActiveDataset] = useState<DatasetFilterKey>('all');
+  const data = activeDataset === 'all'
+    ? sourceData
+    : sourceData.dataset_views?.[activeDataset] ?? sourceData;
 
   // Selected models filter
   const [selectedSeries, setSelectedSeries] = useState<Set<string>>(() => {
-    return new Set(data.models.map((m) => m.series));
+    return new Set(sourceData.models.map((m) => m.series));
   });
 
-  // Compute dataset counts
-  const datasetCounts = useMemo(() => {
-    const pub = data.leaderboard.filter((m) => m.dataset === 'public').length;
-    const smk = data.leaderboard.filter((m) => m.dataset === 'smoke').length;
-    return {
-      all: data.leaderboard.length,
-      public: pub,
-      smoke: smk,
-    };
-  }, [data.leaderboard]);
-
-  // Models filtered for the model chips bar
-  const activeModels = useMemo(() => {
-    if (activeDataset === 'all') return data.models;
-    return data.models.filter((m) => m.dataset === activeDataset);
-  }, [data.models, activeDataset]);
+  const activeModels = data.models;
 
   // Frontier view state ('both' | 'latency' | 'cost')
   const [frontierView, setFrontierView] = useState<'both' | 'latency' | 'cost'>('both');
 
   // Leaderboard filtered by dataset
-  const filteredLeaderboard = useMemo(() => {
-    if (activeDataset === 'all') return data.leaderboard;
-    return data.leaderboard.filter((m) => m.dataset === activeDataset);
-  }, [data.leaderboard, activeDataset]);
+  const filteredLeaderboard = data.leaderboard;
 
   // Overview filtered by dataset
-  const filteredOverview = useMemo(() => {
-    if (activeDataset === 'all') return data.overview;
-    return data.overview.filter((m) => m.dataset === activeDataset);
-  }, [data.overview, activeDataset]);
+  const filteredOverview = data.overview;
 
   const toggleSeries = (series: string) => {
     setSelectedSeries((prev) => {
@@ -149,7 +131,8 @@ export const App: React.FC = () => {
           <DatasetFilterBar
             activeDataset={activeDataset}
             onSelectDataset={setActiveDataset}
-            counts={datasetCounts}
+            datasets={sourceData.datasets ?? []}
+            total={sourceData.models.length}
           />
           <ModelFilterBar
             models={activeModels}
@@ -163,6 +146,14 @@ export const App: React.FC = () => {
       {/* 3. Tab Contents */}
       {activeTab === 'overview' && (
         <main className="overview-main">
+          <p className="section-subheadline">
+            {activeDataset === 'all'
+              ? 'Overall aggregates the latest available run per model configuration, dataset and task. Accuracy is weighted by evaluated decisions; dataset coverage may differ between models.'
+              : 'Latest available run per model configuration and task on this dataset.'}
+          </p>
+          {data.models.length === 0 && (
+            <div className="card" role="status">No benchmark results available yet.</div>
+          )}
           {/* Level 1: Executive Verdict & Top-Level Takeaways */}
           <section className="dashboard-section">
             <ExecutiveVerdictBanner leaderboard={filteredLeaderboard} metadata={data.metadata} />
@@ -174,7 +165,6 @@ export const App: React.FC = () => {
             <Leaderboard
               entries={filteredLeaderboard}
               selectedSeries={selectedSeries}
-              activeDataset={activeDataset}
             />
             <AccuracyGapChart entries={filteredLeaderboard} selectedSeries={selectedSeries} />
           </section>

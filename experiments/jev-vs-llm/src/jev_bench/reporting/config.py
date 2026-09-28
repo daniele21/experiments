@@ -128,4 +128,8 @@ def get_series_name(provider: str, model: str) -> str:
     if provider == "local-korgis":
         labels = load_reporting_config().get("model_labels", {})
         return labels.get(model, f"Korgis · {model}")
+    if provider == "local-decisio":
+        labels = load_reporting_config().get("model_labels", {})
+        model_label = labels.get(model, model).removeprefix("Korgis · ")
+        return f"Decisio · {model_label}"
     return model

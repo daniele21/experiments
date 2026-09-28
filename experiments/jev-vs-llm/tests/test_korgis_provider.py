@@ -15,7 +15,15 @@ class _FakeChatCompletions:
     def create(self, **kwargs):
         assert kwargs["model"] == "nemotron-nano-4b"
         assert kwargs["extra_body"]["enable_thinking"] is False
-        assert kwargs["response_format"] == {"type": "json_object"}
+        response_format = kwargs["response_format"]
+        assert response_format["type"] == "json_schema"
+        schema = response_format["json_schema"]["schema"]
+        answer = schema["properties"]["answers"]["items"]["anyOf"][0]
+        assert answer["properties"]["id"] == {"type": "string", "const": "intent"}
+        assert answer["properties"]["value"] == {
+            "type": "string",
+            "enum": ["billing", "support"],
+        }
         user_payload = json.loads(kwargs["messages"][1]["content"])
         assert user_payload["required_answer_ids"] == ["intent"]
         assert "output_example" not in user_payload
@@ -155,7 +163,11 @@ def test_empty_final_is_distinct_from_malformed_json():
     for content, error in [("", "empty_final_content"), ("not JSON", "JSONDecodeError")]:
         response = _thinking_response(content, "stop")
         provider.client = SimpleNamespace(
-            chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kwargs: response))
+            chat=SimpleNamespace(
+                completions=SimpleNamespace(
+                    create=lambda response=response, **kwargs: response
+                )
+            )
         )
         result = provider.evaluate("public input", [])
         assert error in result.error
@@ -180,7 +192,10 @@ def test_explicit_sampling_and_budget_reach_thinking_request(monkeypatch):
     result = provider.evaluate("public input", [])
     assert result.valid
     assert captured["max_tokens"] == 8192
-    assert captured["response_format"] is None
-    assert captured["extra_body"] == dict(
-        enable_thinking=True, show_thinking=False, temperature=1.0, top_k=20
-    )
+    assert captured["response_format"]["type"] == "json_schema"
+    assert captured["extra_body"] == {
+        "enable_thinking": True,
+        "show_thinking": False,
+        "temperature": 1.0,
+        "top_k": 20,
+    }

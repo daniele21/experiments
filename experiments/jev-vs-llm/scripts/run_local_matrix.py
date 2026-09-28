@@ -87,6 +87,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run local LLM decision benchmarks autonomously one model at a time.",
     )
+    from scripts.decisio_runner import add_decisio_options
+
+    parser.add_argument("--provider", choices=["korgis", "decisio"], default="korgis")
+    add_decisio_options(parser)
     parser.add_argument(
         "-m", "--models",
         help="Comma-separated model keys or 'all'. Defaults to config default_models.",
@@ -156,6 +160,11 @@ def main() -> int:
     registry_rel = cfg.get("registry_path", "benchmark-models.yaml")
     registry_file = (PROJECT_ROOT / registry_rel).resolve()
     available_models = load_registry_models(registry_file)
+
+    if args.provider == "decisio":
+        from scripts.decisio_runner import run_matrix as run_decisio_matrix
+
+        return run_decisio_matrix(args, available_models)
 
     if args.list:
         print("\nConfigured Local Benchmark Models:")

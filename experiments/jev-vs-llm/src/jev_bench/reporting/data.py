@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 from functools import lru_cache
 from pathlib import Path
@@ -74,7 +75,9 @@ def resolve_dataset_type(row: Any) -> str:
     exp = str(row.get("experiment", "") or "").strip().lower()
     suite = str(row.get("suite", "") or "").strip().lower()
     ds = str(row.get("dataset", "") or "").strip().lower()
-    if exp.endswith("-public") or "public" in suite or ds in {"banking77", "clinc150", "public"}:
+    if "smoke" in suite or ds == "smoke":
+        return "smoke"
+    if exp.endswith("-public") or "public" in suite or ds not in {"", "nan", "none"}:
         return "public"
     return "smoke"
 
@@ -108,6 +111,36 @@ def resolve_thinking_mode(row: Any) -> str:
     return "off"
 
 
+def resolve_dataset_name(row: Any) -> str:
+    value = row.get("dataset")
+    if pd.notna(value) and str(value).strip() and str(value) != "public":
+        return str(value).strip().lower()
+    return "banking77" if canonical_task_name(row.get("experiment", "")) == "routing" else "public"
+
+
+def resolve_configuration(row: Any) -> str:
+    """Use recorded configuration only, never today's model registry defaults."""
+    explicit = row.get("configuration_id")
+    if pd.notna(explicit) and str(explicit).strip():
+        return str(explicit)
+    params = _get_manifest_parameters(str(row.get("run_group", "")))
+    values = {}
+    fields = ["temperature", "top_p", "top_k", "max_tokens", "max_output_tokens",
+              "ctx_size", "sampling", "response_format", "output_contract"]
+    if row.get("provider") == "llm-workflow":
+        fields.append("openai_reasoning_effort")
+    for key in fields:
+        value = row.get(key, params.get(key))
+        if isinstance(value, (dict, list)) or (pd.notna(value) and str(value).strip()):
+            values[key] = value
+    # An absent cloud effort and the documented default describe the same config.
+    if values.get("openai_reasoning_effort") == "none":
+        values.pop("openai_reasoning_effort")
+    if not values:
+        return ""
+    return hashlib.sha256(json.dumps(values, sort_keys=True, default=str).encode()).hexdigest()[:8]
+
+
 def with_series(frame: pd.DataFrame) -> pd.DataFrame:
     """Add series display name and metadata columns to DataFrame."""
     if frame.empty:
@@ -133,6 +166,7 @@ def with_series(frame: pd.DataFrame) -> pd.DataFrame:
     ]
     frame["dataset_type"] = resolved_ds
     frame["thinking_mode"] = resolved_th
+    configs = [resolve_configuration(r) for _, r in frame.iterrows()]
 
     series_names = []
     for idx, r in frame.iterrows():
@@ -147,7 +181,8 @@ def with_series(frame: pd.DataFrame) -> pd.DataFrame:
             series_names.append(f"{base} (Smoke)")
         else:
             series_names.append(base)
-    frame["series"] = series_names
+    frame["series"] = [f"{name} · {config}" if config else name
+                       for name, config in zip(series_names, configs)]
     return frame
 
 
@@ -182,8 +217,10 @@ def select_run_group(
             raise ValueError(f"run_group not found: {run_group}")
         return selected, run_group
 
-    if "run_timestamp_utc" in rows.columns and "model" in rows.columns and "experiment" in rows.columns:
+    if "model" in rows.columns and "experiment" in rows.columns:
         df_copy = rows.copy()
+        if "run_timestamp_utc" not in df_copy:
+            df_copy["run_timestamp_utc"] = None
         df_copy["_task"] = df_copy["experiment"].apply(canonical_task_name)
         df_copy["_dataset_type"] = [
             str(r["dataset_type"]).strip().lower()
@@ -198,29 +235,25 @@ def select_run_group(
             for _, r in df_copy.iterrows()
         ]
 
-        # Filter out aborted runs where 0 requests were valid, IF valid runs exist for that combination
-        if "valid" in df_copy.columns:
-            group_val = df_copy.groupby("run_group")["valid"].apply(lambda s: (s == True).sum())  # noqa: E712
-            valid_groups = set(group_val[group_val > 0].index)
-            has_valid_runs = df_copy["run_group"].isin(valid_groups)
-            valid_df = df_copy[has_valid_runs] if has_valid_runs.any() else df_copy
-        else:
-            valid_df = df_copy
-
-        df_sorted = valid_df.sort_values(by=["run_timestamp_utc"], na_position="first")
+        df_copy["_dataset"] = df_copy.apply(resolve_dataset_name, axis=1)
+        df_copy["_configuration"] = df_copy.apply(resolve_configuration, axis=1)
+        df_copy["_timestamp"] = pd.to_datetime(df_copy["run_timestamp_utc"], utc=True, errors="coerce")
+        df_sorted = df_copy.sort_values("_timestamp", na_position="first", kind="stable")
+        keys = ["provider", "model", "_dataset_type", "_dataset", "_thinking_mode", "_configuration", "_task"]
+        run_key = "run_id" if "run_id" in rows and rows["run_id"].notna().all() else "run_group"
 
         # Select latest run_group per (model, dataset_type, thinking_mode, task)
         latest_pairs = (
-            df_sorted.groupby(["model", "_dataset_type", "_thinking_mode", "_task"], dropna=False)["run_group"]
+            df_sorted.groupby(keys, dropna=False)[run_key]
             .last()
             .reset_index()
         )
         selected = pd.merge(
             df_copy,
             latest_pairs,
-            on=["model", "_dataset_type", "_thinking_mode", "_task", "run_group"],
+            on=[*keys, run_key],
             how="inner",
-        ).drop(columns=["_task", "_dataset_type", "_thinking_mode"])
+        ).drop(columns=["_task", "_dataset_type", "_thinking_mode", "_dataset", "_configuration", "_timestamp"])
         return selected, "latest_per_model"
 
     if "run_timestamp_utc" in rows.columns:
@@ -290,8 +323,9 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
         valid_count = len(valid_reqs)
         valid_rate = (valid_count / total_count) if total_count > 0 else 0.0
 
-        ds_label = "Banking77 (77)" if dataset_type == "public" else "Smoke (24)"
-        series_id = f"{model}__{dataset_type}__{thinking_mode}"
+        datasets = sorted({resolve_dataset_name(r) for _, r in group.iterrows()})
+        ds_label = " + ".join(datasets)
+        series_id = f"{provider}__{series}__{dataset_type}__{thinking_mode}"
 
         records.append(
             {
@@ -312,6 +346,8 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
                 "run_cost_usd": float(costs.sum()) if len(costs) > 0 else 0.0,
                 "requests": total_count,
                 "valid_requests": valid_count,
+                "latest_run_at": str(group["run_timestamp_utc"].max()) if "run_timestamp_utc" in group else None,
+                "run_ids": sorted(group["run_id"].dropna().unique().tolist()) if "run_id" in group else [],
             }
         )
 
@@ -418,10 +454,7 @@ def compute_leaderboard(overview: pd.DataFrame) -> list[dict[str, Any]]:
 
         # Dataset badge
         row_dataset = str(row.get("dataset", "public")).lower()
-        if row_dataset == "public":
-            badges.append({"label": "🏛️ Banking77", "class": "badge-indigo"})
-        else:
-            badges.append({"label": "⚡ Smoke", "class": "badge-cyan"})
+        badges.append({"label": str(row.get("dataset_label", row_dataset)), "class": "badge-indigo"})
 
         # Quantization / Architecture badge
         q_label = ""
@@ -465,6 +498,8 @@ def compute_leaderboard(overview: pd.DataFrame) -> list[dict[str, Any]]:
                 "model": str(row["model"]),
                 "provider": str(row["provider"]),
                 "dataset": row_dataset,
+                "latest_run_at": row.get("latest_run_at"),
+                "run_ids": row.get("run_ids", []),
                 "dataset_label": str(row.get("dataset_label", "Banking77 (77)" if row_dataset == "public" else "Smoke (24)")),
                 "thinking_mode": row_thinking,
                 "accuracy": acc,
@@ -493,7 +528,7 @@ def compute_leaderboard(overview: pd.DataFrame) -> list[dict[str, Any]]:
 def compute_kpi_cards(leaderboard: list[dict[str, Any]]) -> dict[str, Any]:
     """Extract executive summary cards from leaderboard."""
     if not leaderboard:
-        return {}
+        return {"total_models": 0, "total_requests": 0}
 
     leader = leaderboard[0]
     fastest = min(leaderboard, key=lambda x: x["latency_p50_ms"] if pd.notna(x["latency_p50_ms"]) else 999999)

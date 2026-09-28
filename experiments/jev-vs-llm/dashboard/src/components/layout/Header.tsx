@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ metadata }) => {
         <h1 className="header-title">Decision Model Benchmark</h1>
         <p className="header-subtitle">
           Comparing intent routing quality, execution latency, calibration and efficiency across local
-          and cloud decision models. Filter models or switch tabs to explore deep case-level traces.
+          and cloud decision models. Latest run per model configuration and dataset.
         </p>
       </div>
       <div className="header-meta">
@@ -34,8 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ metadata }) => {
         )}
         <div className="meta-pill">
           <Tag size={13} />
-          <span>Run:</span>
-          <code>{metadata.run_group}</code>
+          <span>Latest runs only</span>
         </div>
         <div className="meta-pill">
           <Calendar size={13} />

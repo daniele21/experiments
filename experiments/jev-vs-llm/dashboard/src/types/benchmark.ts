@@ -47,6 +47,8 @@ export interface ModelBadge {
 }
 
 export interface LeaderboardEntry {
+  latest_run_at?: string | null;
+  run_ids?: string[];
   rank: number;
   medal: string;
   series: string;
@@ -206,6 +208,8 @@ export interface PricingInfo {
 }
 
 export interface BenchmarkPayload {
+  datasets?: Array<{ id: string; label: string; count: number }>;
+  dataset_views?: Record<string, BenchmarkPayload>;
   metadata: BenchmarkMetadata;
   experiments: Record<string, ExperimentStatus>;
   models: ModelSpec[];

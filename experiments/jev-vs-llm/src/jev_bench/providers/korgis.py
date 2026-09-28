@@ -13,6 +13,7 @@ from openai import OpenAI
 
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
+from jev_bench.providers.schema import decision_response_schema
 
 DEFAULT_KORGIS_MODELS = [
     "nemotron-nano-4b-q4",
@@ -213,7 +214,14 @@ class KorgisProvider(DecisionProvider):
                         "content": json.dumps(prompt, ensure_ascii=False),
                     },
                 ],
-                response_format={"type": "json_object"} if not self.enable_thinking else None,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "decision_benchmark",
+                        "strict": True,
+                        "schema": decision_response_schema(questions),
+                    },
+                },
                 max_tokens=self.max_tokens,
                 seed=self.seed,
                 extra_body={

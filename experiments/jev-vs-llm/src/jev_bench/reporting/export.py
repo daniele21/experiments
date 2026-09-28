@@ -28,6 +28,8 @@ from jev_bench.reporting.data import (
     compute_overview,
     get_active_experiments,
     select_run_group,
+    resolve_dataset_type,
+    resolve_dataset_name,
     with_series,
 )
 
@@ -257,7 +259,35 @@ def build_benchmark_payload(
 ) -> dict[str, Any]:
     """Generate complete structured dictionary for the React dashboard."""
     all_rows = pd.read_csv(raw_csv)
-    rows, selected_group = select_run_group(all_rows, run_group)
+    # Dashboard policy is always latest per configuration, including failed runs.
+    public_rows = all_rows[all_rows.apply(resolve_dataset_type, axis=1).ne("smoke")].copy()
+    rows, selected_group = select_run_group(public_rows, "latest_per_model")
+    hardware = _detect_hardware()
+    payload = _build_view(rows, selected_group, hardware)
+    datasets = []
+    views = {}
+    dataset_names = rows.apply(resolve_dataset_name, axis=1) if not rows.empty else pd.Series(dtype=str)
+    for name in sorted(dataset_names.unique()):
+        view = _build_view(rows[dataset_names.eq(name)].copy(), selected_group, hardware)
+        label = {"banking77": "BANKING77", "clinc150": "CLINC150"}.get(name, name)
+        datasets.append({"id": name, "label": label, "count": len(view["models"])})
+        views[name] = view
+    payload["datasets"] = datasets
+    payload["dataset_views"] = views
+    return payload
+
+
+def _series_metrics(rows: pd.DataFrame, metric, **kwargs) -> pd.DataFrame:
+    """Keep model configurations separate in every drill-down metric."""
+    outputs = []
+    for series, group in with_series(rows).groupby("series", sort=False):
+        result = metric(group, **kwargs).copy()
+        result["series"] = series
+        outputs.append(result)
+    return pd.concat(outputs, ignore_index=True) if outputs else pd.DataFrame()
+
+
+def _build_view(rows: pd.DataFrame, selected_group: str | None, hardware: dict) -> dict[str, Any]:
     overview_df = compute_overview(rows)
     leaderboard = compute_leaderboard(overview_df)
     kpis = compute_kpi_cards(leaderboard)
@@ -288,27 +318,25 @@ def build_benchmark_payload(
         })
 
     # Summary table per experiment
-    summary_df = with_series(summarize(rows)) if not rows.empty else pd.DataFrame()
+    summary_df = _series_metrics(rows, summarize)
+    if "experiment" not in summary_df:
+        summary_df["experiment"] = pd.Series(dtype=str)
 
     # Routing section
     routing_summary = _clean_df(
         summary_df[summary_df["experiment"].isin(["01-routing-public", "01-routing"])]
     )
-    confusions_df = top_confusions(rows, limit=12)
-    confusions = _clean_df(with_series(confusions_df)) if not confusions_df.empty else []
+    confusions_df = _series_metrics(rows, top_confusions, limit=12)
+    confusions = _clean_df(confusions_df)
     routing_per_class = _extract_per_class(rows, "01-routing")
     routing_cases = _extract_cases(rows, "01-routing")
     routing_errors = _extract_errors(rows, "01-routing")
 
     # Calibration section
-    cal_df = calibration_summary(rows)
-    cal_summary = _clean_df(with_series(cal_df)) if not cal_df.empty else []
-    rel_df = reliability_bins(rows)
-    rel_bins = _clean_df(with_series(rel_df)) if not rel_df.empty else []
-    cov_df = coverage_curve(rows)
-    coverage = _clean_df(with_series(cov_df)) if not cov_df.empty else []
-    diff_df = difficulty_summary(rows)
-    difficulty = _clean_df(with_series(diff_df)) if not diff_df.empty else []
+    cal_summary = _clean_df(_series_metrics(rows, calibration_summary))
+    rel_bins = _clean_df(_series_metrics(rows, reliability_bins))
+    coverage = _clean_df(_series_metrics(rows, coverage_curve))
+    difficulty = _clean_df(_series_metrics(rows, difficulty_summary))
     cal_cases = _extract_cases(rows, "02-calibration")
     cal_errors = _extract_errors(rows, "02-calibration")
 
@@ -351,7 +379,7 @@ def build_benchmark_payload(
             "pricing_as_of": pricing.get("as_of", "latest"),
             "total_rows": len(rows),
             "is_local_zero_cost": is_local_zero_cost,
-            "hardware": _detect_hardware(),
+            "hardware": hardware,
             "local_parameters": _load_local_parameters(),
         },
         "experiments": active_exps,

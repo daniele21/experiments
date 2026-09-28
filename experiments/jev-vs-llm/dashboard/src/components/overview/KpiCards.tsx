@@ -109,14 +109,14 @@ export const KpiCards: React.FC<KpiCardsProps> = ({ data, hardware }) => {
           <div className="kpi-model-name">Evaluated Systems</div>
           <div className="kpi-value-row">
             <span className="kpi-big-number">{total_models}</span>
-            <span className="kpi-subtext">models tested</span>
+            <span className="kpi-subtext">model configurations</span>
           </div>
         </div>
         <div className="kpi-footer">
           <span>Requests: {total_requests}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             <Cpu size={12} />
-            <span>5 Local M3 Pro · 2 Cloud/Engine</span>
+            <span>Latest benchmark runs</span>
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 # Guida all'Esecuzione dei Benchmark con Modelli Locali
 
-Questo documento raccoglie tutti i comandi pronti all'uso per eseguire i benchmark di `jev-vs-llm` sui 4 modelli selezionati in locale tramite l'orchestratore autonomo di Korgis.
+Questo documento raccoglie i comandi per eseguire i benchmark di `jev-vs-llm` sui modelli locali tramite Korgis e per confrontare **Decisio con Qwen3.5 2B e 4B**. Per Decisio vai direttamente alla [sezione 7](#7-decisio-con-qwen35-2b-e-4b).
 
 ---
 
@@ -15,6 +15,7 @@ Tutti i modelli sono configurati in [`benchmark-models.yaml`](./benchmark-models
 | **`qwen3.5-9b-q4km`** | Qwen 3.5 9B | `Q4_K_M` | 5.6 GB | Modello ad alte prestazioni per compiti multi-classe complessi |
 | **`qwen3.5-2b-q4km`** | Qwen 3.5 2B | `Q4_K_M` | 1.2 GB | Modello ultraleggero compatto |
 | **`minicpm5-2b-q4km`** | OpenBMB MiniCPM5 2B | `Q4_K_M` | 1.5 GB | Modello compatto con supporto reasoning opzionale (disabilitato per JSON) |
+| **`spark-x2.5-4b-q4km`** | Spark-X 2.5 4B | `Q4_K_M` | 2.4 GB | Modello compatto 4B con 1M context e reasoning nativo switchable |
 
 > [!NOTE]
 > `qwen3.5-0.8b-q4km` rimane registrato nel file di configurazione per test di regressione, ma è escluso dalle sequenze di valutazione standard.
@@ -325,6 +326,39 @@ uv run python scripts/run_local_matrix.py \
 
 ---
 
+### Modello 6: `spark-x2.5-4b-q4km` (Spark-X 2.5 4B Q4)
+
+```bash
+# 6.1 Smoke Test completo (Tutti i 5 esperimenti - circa 40 secondi)
+uv run python scripts/run_local_matrix.py \
+  --models spark-x2.5-4b-q4km \
+  --experiments all \
+  --dataset smoke
+
+# 6.2 Benchmark Pubblico Reale (Routing 77 classi + Calibrazione OOS in modalità budget)
+uv run python scripts/run_local_matrix.py \
+  --models spark-x2.5-4b-q4km \
+  --experiments all \
+  --dataset public \
+  --profile budget
+
+# 6.3 Solo Routing su Dataset Pubblico (BANKING77 - 77 casi budget)
+uv run python scripts/run_local_matrix.py \
+  --models spark-x2.5-4b-q4km \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+
+# 6.4 Solo Calibrazione su Dataset Pubblico (BANKING77 + CLINC150 budget)
+uv run python scripts/run_local_matrix.py \
+  --models spark-x2.5-4b-q4km \
+  --experiments calibration \
+  --dataset public \
+  --profile budget
+```
+
+---
+
 ## 4. Esecuzione Batch Sequenziale
 
 L'orchestratore attiva i modelli **uno alla volta**, gestendo automaticamente lo switch della memoria GPU/RAM e il ciclo di vita del server:
@@ -407,7 +441,7 @@ uv run python scripts/run_local_matrix.py \
 
 ## 6. Consultazione e Analisi dei Risultati
 
-Al termine di ogni run i risultati vengono salvati automaticamente e aggregati in modo cumulativo e **strutturale**:
+Al termine di ogni run Korgis o Decisio i risultati vengono salvati automaticamente e aggregati in modo cumulativo e **strutturale**. Decisio conserva anche gli artifact dettagliati descritti nella sezione 7; i metodi `semantic` e `json` appaiono nella dashboard come configurazioni separate.
 
 1. **Accorpamento Strutturale Solido a 4 Dimensioni**:
    L'aggregazione non sovrascrive né disperde i risultati precedenti. Ogni esecuzione è identificata univocamente da:
@@ -441,3 +475,211 @@ Al termine di ogni run i risultati vengono salvati automaticamente e aggregati i
    ```bash
    tail -f results/logs/korgis.log
    ```
+
+---
+
+## 7. Decisio con Qwen3.5 2B e 4B
+
+Usa lo stesso launcher degli altri benchmark, aggiungendo **`--provider decisio`**. Legge i GGUF da `benchmark-models.yaml`, esegue un modello alla volta e mostra lo stesso stile di progress con Rich: intestazione per modello, barra per metodo, casi completati/totali, tempo trascorso, ETA, accuratezza e latenza. Durante caricamento e warmup mostra uno spinner con la fase corrente; il warmup non conta tra i casi misurati. L'ETA compare quando sono disponibili tempi dei nuovi casi, anche nei run ripresi.
+
+### Comando consigliato: come gli altri run
+
+Dalla cartella del benchmark, con l'ambiente Decisio già preparato:
+
+```bash
+cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+
+# BANKING77: Qwen 2B e 4B in sequenza, 77 casi per modello
+uv run python scripts/run_local_matrix.py \
+  --provider decisio \
+  --models qwen3.5-2b-q4km,qwen3.5-4b-q4km \
+  --experiments routing \
+  --dataset public \
+  --profile budget
+
+# Smoke: stessi 24 casi a 6 classi per entrambi i modelli
+uv run python scripts/run_local_matrix.py \
+  --provider decisio \
+  --models qwen3.5-2b-q4km,qwen3.5-4b-q4km \
+  --experiments routing \
+  --dataset smoke
+```
+
+Non servono le variabili `DECISIO_*`: nel layout locale il launcher trova il checkout adiacente `/Users/moltisantid/Personal/decisio` e il suo `.venv/bin/python`. Su altre macchine usa `--decisio-root /percorso/decisio` ed eventualmente `--decisio-python /percorso/python`. Rich e l'interfaccia girano nell'ambiente del benchmark; l'inferenza usa l'ambiente separato di Decisio.
+
+I metodi predefiniti sono `direct,json` per smoke e `semantic,json` per public. `--methods direct,fresh,json` aggiunge il controllo senza riuso allo smoke. `--profile quick`, `standard` e `full` selezionano rispettivamente 154, 770 e tutti i 3.080 casi pubblici; `--cases N` permette una prova ridotta. `--threads` vale 4 di default. Decisio esegue solo routing: `--experiments all` indica tutti gli esperimenti attualmente supportati, quindi solo routing.
+
+Ogni nuova esecuzione crea una cartella univoca sotto `results/decisio/` e stampa subito il percorso e il comando per riprenderla. Un eventuale `--output percorso` deve indicare una cartella nuova. Per riprendere una matrice interrotta basta:
+
+```bash
+uv run python scripts/run_local_matrix.py \
+  --provider decisio \
+  --resume results/decisio/NOME-DELLA-SESSIONE
+```
+
+Puoi riprendere anche il vecchio run 2B già creato con `compare_decisio.py`, con la nuova interfaccia:
+
+```bash
+uv run python scripts/run_local_matrix.py \
+  --provider decisio \
+  --resume results/decisio/20260923-184748/2b-banking77
+```
+
+La ripresa recupera modelli, dataset, casi, metodi e thread salvati; salta i casi già presenti e i metodi completi. `Ctrl+C` ferma il processo di inferenza avviato dal launcher e conserva i casi completati. Per vedere i modelli predefiniti usa `--provider decisio --list`. Le barre si attivano automaticamente nel terminale; `--no-progress` o `BENCHMARK_NO_PROGRESS=1` producono log testuali con fase e avanzamento per caso. `--progress` forza le barre.
+
+Al termine appare una tabella comparativa con accuracy, macro-F1 e latenza p50/p95. Nella cartella di sessione trovi `matrix.json` e una sottocartella per modello con `summary.json`, `rows.jsonl`, `fixture.json` e `manifest.json`. Il runner importa inoltre le righe nel CSV cumulativo e rigenera la dashboard, mantenendo distinti metodo e device (`semantic-metal`, `json-metal`, oppure le varianti CPU). Su macOS il runner usa Metal per default; passa `--device cpu` per il riferimento CPU.
+
+Il launcher usa [`scripts/compare_decisio.py`](scripts/compare_decisio.py) come worker nativo. Le sezioni seguenti documentano anche l'invocazione avanzata del singolo worker; per l'uso quotidiano usa i comandi qui sopra.
+
+### 7.1 Preparazione
+
+Nel checkout locale di Decisio è già presente l'ambiente con `llama-cpp-python==0.3.35`. Su una nuova installazione preparalo una volta:
+
+```bash
+cd /Users/moltisantid/Personal/decisio
+uv sync --frozen --extra llama
+```
+
+Poi imposta i percorsi nella stessa shell in cui eseguirai i benchmark:
+
+```bash
+cd /Users/moltisantid/Personal/experiments/experiments/jev-vs-llm
+
+DECISIO_ROOT=/Users/moltisantid/Personal/decisio
+DECISIO_PYTHON="$DECISIO_ROOT/.venv/bin/python"
+DECISIO_QWEN2="$HOME/.lmstudio/models/unsloth/Qwen3.5-2B-GGUF/Qwen3.5-2B-Q4_K_M.gguf"
+DECISIO_QWEN4="$HOME/.lmstudio/models/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"
+DECISIO_RUN="results/decisio/$(date +%Y%m%d-%H%M%S)"
+
+"$DECISIO_PYTHON" scripts/compare_decisio.py --help
+```
+
+I pesi devono essere già scaricati. Il runner usa il backend **CPU di riferimento**, quattro thread e thinking disabilitato. Esegui i due modelli in sequenza e senza altri benchmark concorrenti, per mantenere le latenze confrontabili.
+
+### 7.2 Primo confronto: 24 casi, 6 classi
+
+Esegui entrambi i comandi, uno dopo l'altro:
+
+```bash
+# Qwen3.5 2B: Decisio diretto, controllo senza riuso, baseline JSON
+"$DECISIO_PYTHON" scripts/compare_decisio.py \
+  --decisio-root "$DECISIO_ROOT" \
+  --model "$DECISIO_QWEN2" \
+  --dataset smoke \
+  --methods direct,fresh,json \
+  --threads 4 \
+  --output "$DECISIO_RUN/2b-smoke"
+
+# Qwen3.5 4B: stessi casi e impostazioni
+"$DECISIO_PYTHON" scripts/compare_decisio.py \
+  --decisio-root "$DECISIO_ROOT" \
+  --model "$DECISIO_QWEN4" \
+  --dataset smoke \
+  --methods direct,fresh,json \
+  --threads 4 \
+  --output "$DECISIO_RUN/4b-smoke"
+```
+
+Ogni metodo effettua un warmup escluso dalle misure, seguito dagli stessi 24 casi in ordine deterministico (seed 42). Con tre metodi sono **72 classificazioni misurate per modello**. Caricamento e hash del GGUF sono esclusi dalla latenza per richiesta.
+
+| `--methods` | Comportamento | Uso |
+|---|---|---|
+| `direct` | Legge i logits delle lettere A/B/C, con riuso del prefisso abilitato | Classificazione nativa, zero token di risposta |
+| `fresh` | Stesso prompt di `direct`, senza esecuzione con prefisso condiviso | Controllo di equivalenza |
+| `json` | Genera `{"choice":"classe"}`, massimo 64 token | Baseline generativa sullo stesso backend CPU |
+| `semantic` | Valuta ogni candidato rispetto alle alternative tramite logits Yes/No | Scorer sperimentale, supporta anche 77 classi |
+
+Per una verifica rapida aggiungi `--cases 3` e usa una nuova directory di output. Quel sottoinsieme smoke non è bilanciato per classe e non sostituisce il confronto completo. Per il solo Decisio usa `--methods direct`; per confrontarlo con JSON usa `--methods direct,json`.
+
+### 7.3 BANKING77: scorer semantico su tutte le 77 classi
+
+**Il percorso diretto nativo supporta al massimo 26 classi.** Il runner rifiuta `--dataset banking77 --methods direct` o `fresh`. Per BANKING77 puoi usare `semantic,json`: non riduce le classi, ma esegue 77 valutazioni di candidato per ogni richiesta semantica ed è quindi molto più costoso del percorso diretto. È un esperimento distinto, non una misura delle prestazioni di `direct` su BANKING77.
+
+Prepara prima i dataset pubblici con l'ambiente del benchmark:
+
+```bash
+uv run jev-bench prepare-data
+```
+
+Esegui il profilo da 77 esempi, uno per classe, con seed 42:
+
+```bash
+"$DECISIO_PYTHON" scripts/compare_decisio.py \
+  --decisio-root "$DECISIO_ROOT" \
+  --model "$DECISIO_QWEN2" \
+  --dataset banking77 \
+  --cases 77 \
+  --methods semantic,json \
+  --threads 4 \
+  --output "$DECISIO_RUN/2b-banking77"
+
+"$DECISIO_PYTHON" scripts/compare_decisio.py \
+  --decisio-root "$DECISIO_ROOT" \
+  --model "$DECISIO_QWEN4" \
+  --dataset banking77 \
+  --cases 77 \
+  --methods semantic,json \
+  --threads 4 \
+  --output "$DECISIO_RUN/4b-banking77"
+```
+
+Questo runner usa `--dataset banking77` e `--cases`, anziché i flag `--dataset public --profile budget` di Korgis. Per campioni più grandi imposta `--cases 154` o `--cases 770`; omettendo `--cases` valuta tutti i 3.080 esempi. Il comando pubblico è disponibile, ma non è stato incluso nel primo confronto smoke.
+
+### 7.4 Dove leggere i risultati
+
+Il launcher mostra barre e riepilogo nel terminale; l'invocazione diretta di `compare_decisio.py` mostra log testuali. Ogni directory del singolo modello contiene:
+
+| File | Contenuto |
+|---|---|
+| `summary.json` | Accuracy, macro-F1, validità, latenza p50/p95, token generati, cache hit e casi errati, per metodo |
+| `rows.jsonl` | Singole predizioni, ground truth, distribuzioni/punteggi, latenza, contatori runtime ed eventuali errori |
+| `fixture.json` | Testi, etichette attese, domanda e classi usate |
+| `manifest.json` | Revisione/stato Decisio, hash GGUF e dataset selezionato, backend e parametri runtime |
+
+```bash
+"$DECISIO_PYTHON" -m json.tool "$DECISIO_RUN/2b-smoke/summary.json"
+"$DECISIO_PYTHON" -m json.tool "$DECISIO_RUN/4b-smoke/summary.json"
+```
+
+Le directory devono essere nuove: il runner rifiuta di sovrascrivere risultati esistenti. Rigenera `DECISIO_RUN` per ripetere una sessione. Gli artifact sono locali e gitignored; al completamento il runner aggiorna automaticamente la dashboard condivisa.
+
+Se un run è stato interrotto dopo la creazione della directory, rilancia **lo stesso comando** aggiungendo `--resume`. Il runner controlla fixture, modello e relativo hash, metodi, dataset e numero di thread; conserva le righe già complete e prosegue dal primo caso mancante:
+
+```bash
+"$DECISIO_PYTHON" scripts/compare_decisio.py \
+  --decisio-root "$DECISIO_ROOT" \
+  --model "$DECISIO_QWEN2" \
+  --dataset banking77 \
+  --cases 77 \
+  --methods semantic,json \
+  --threads 4 \
+  --output "$DECISIO_RUN/2b-banking77" \
+  --resume
+```
+
+Senza `--resume`, una directory esistente viene rifiutata intenzionalmente per evitare la perdita accidentale dei risultati precedenti.
+
+Nel leggere il confronto:
+
+- Accuratezza e macro-F1 includono nel denominatore anche output invalidi ed errori.
+- I punteggi nativi sono preferenze condizionate alle classi, **non confidenze calibrate**.
+- Sui prompt brevi smoke il backend può registrare zero cache hit: il checkpoint richiede blocchi completi da 512 token. Non attribuire alla cache un miglioramento senza riuso misurato.
+- Le latenze CPU non sono direttamente confrontabili con precedenti run Korgis su GPU/Metal o con API remote.
+- I 24 casi smoke verificano il funzionamento e danno un primo confronto; non dimostrano la qualità su BANKING77.
+
+Protocollo e dettagli tecnici: [`DECISIO.md`](DECISIO.md).
+
+### 7.5 Primo confronto eseguito — 23 settembre 2026
+
+Risultati sui **24 casi smoke a 6 classi**, Q4_K_M, CPU con quattro thread:
+
+| Modello | Metodo | Corretti | Macro-F1 | Latenza p50 | Latenza p95 |
+|---|---|---:|---:|---:|---:|
+| Qwen3.5 2B | Decisio `direct` | 22/24 (91,7%) | 0,919 | 1,253 s | 1,452 s |
+| Qwen3.5 2B | Baseline `json` | 23/24 (95,8%) | 0,958 | 1,480 s | 1,688 s |
+| Qwen3.5 4B | Decisio `direct` | 24/24 (100%) | 1,000 | 3,097 s | 3,733 s |
+| Qwen3.5 4B | Baseline `json` | 23/24 (95,8%) | 0,958 | 3,550 s | 3,922 s |
+
+Tutti i 144 output misurati sono validi, includendo i controlli `fresh`. Per entrambi i modelli `direct` e `fresh` restituiscono punteggi identici su ogni caso; i cache hit sono zero. È un singolo passaggio per metodo su un campione piccolo, senza evidenza sufficiente per concludere superiorità generale o speedup statisticamente stabile.
+
+Artifact locali: [`2B summary`](results/decisio/2b-smoke-v2/summary.json), [`4B summary`](results/decisio/4b-smoke/summary.json). Nelle stesse directory trovi fixture, manifest e righe grezze. Revisione Decisio: `1a8507178a6909a8270ef63303270ce36bd85f68`. BANKING77 non è stato eseguito in questa sessione.

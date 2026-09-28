@@ -11,6 +11,7 @@ from openai import OpenAI
 from jev_bench.costs import estimate_cost_usd
 from jev_bench.models import Decision, ProviderResult, QuestionSpec
 from jev_bench.providers.base import DecisionProvider
+from jev_bench.providers.schema import decision_response_schema
 
 
 class OpenAIProvider(DecisionProvider):
@@ -32,34 +33,6 @@ class OpenAIProvider(DecisionProvider):
         timeout = float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "60"))
         self.reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT", "none")
         self.client = OpenAI(max_retries=max_retries, timeout=timeout)
-
-    @staticmethod
-    def _schema() -> dict[str, Any]:
-        return {
-            "type": "object",
-            "properties": {
-                "answers": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "id": {"type": "string"},
-                            "value": {"type": ["string", "number"]},
-                            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                            "selected_probability": {
-                                "type": "number",
-                                "minimum": 0,
-                                "maximum": 1,
-                            },
-                        },
-                        "required": ["id", "value", "confidence", "selected_probability"],
-                        "additionalProperties": False,
-                    },
-                }
-            },
-            "required": ["answers"],
-            "additionalProperties": False,
-        }
 
     @staticmethod
     def _question_payload(q: QuestionSpec) -> dict[str, Any]:
@@ -95,7 +68,7 @@ class OpenAIProvider(DecisionProvider):
                         "type": "json_schema",
                         "name": "decision_benchmark",
                         "strict": True,
-                        "schema": self._schema(),
+                        "schema": decision_response_schema(questions),
                     }
                 },
             )

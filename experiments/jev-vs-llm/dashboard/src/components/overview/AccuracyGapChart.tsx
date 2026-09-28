@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import type { LeaderboardEntry } from '../../types/benchmark';
-import { getSeriesColor } from '../../config/theme';
+import { THEME, BAR_GRADIENT_CONFIG } from '../../config/theme';
 
 interface AccuracyGapChartProps {
   entries: LeaderboardEntry[];
@@ -40,6 +40,14 @@ export const AccuracyGapChart: React.FC<AccuracyGapChartProps> = ({
   const getX = (val: number) => marginLeft + val * plotWidth;
   const ticks = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
+  // Vertical bounds for cross-bar vertical gradient (from top of first bar to bottom of last bar)
+  const barHeight = rowHeight - 20;
+  const barY1 = marginTop + 10;
+  const barY2 =
+    visibleEntries.length > 1
+      ? marginTop + (visibleEntries.length - 1) * rowHeight + 10 + barHeight
+      : barY1 + barHeight;
+
   return (
     <div className="chart-card">
       <div className="chart-header">
@@ -58,23 +66,57 @@ export const AccuracyGapChart: React.FC<AccuracyGapChartProps> = ({
         >
           {/* SVG Gradient definitions for premium bar fills */}
           <defs>
-            {visibleEntries.map((entry, idx) => {
-              const color = getSeriesColor(entry.series, idx);
-              const gradId = `acc-bar-grad-${entry.series_id || idx}`;
-              return (
-                <linearGradient
-                  key={gradId}
-                  id={gradId}
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor={color} stopOpacity={0.85} />
-                  <stop offset="100%" stopColor={color} stopOpacity={1} />
-                </linearGradient>
-              );
-            })}
+            {/* Unified 2-color or 3-color gradient applied vertically across all bars */}
+            <linearGradient
+              id="acc-bar-unified-grad"
+              gradientUnits={
+                BAR_GRADIENT_CONFIG.direction === 'vertical'
+                  ? 'userSpaceOnUse'
+                  : 'objectBoundingBox'
+              }
+              x1="0"
+              y1={BAR_GRADIENT_CONFIG.direction === 'vertical' ? barY1 : '0%'}
+              x2={BAR_GRADIENT_CONFIG.direction === 'vertical' ? '0' : '100%'}
+              y2={BAR_GRADIENT_CONFIG.direction === 'vertical' ? barY2 : '0%'}
+            >
+              <stop
+                offset="0%"
+                stopColor={
+                  BAR_GRADIENT_CONFIG.mode === 'three-color'
+                    ? BAR_GRADIENT_CONFIG.threeColor.start
+                    : BAR_GRADIENT_CONFIG.twoColor.start
+                }
+                stopOpacity={0.94}
+              />
+              {BAR_GRADIENT_CONFIG.mode === 'three-color' && (
+                <stop
+                  offset="50%"
+                  stopColor={BAR_GRADIENT_CONFIG.threeColor.middle}
+                  stopOpacity={0.96}
+                />
+              )}
+              <stop
+                offset="100%"
+                stopColor={
+                  BAR_GRADIENT_CONFIG.mode === 'three-color'
+                    ? BAR_GRADIENT_CONFIG.threeColor.end
+                    : BAR_GRADIENT_CONFIG.twoColor.end
+                }
+                stopOpacity={1}
+              />
+            </linearGradient>
+
+            {/* Dedicated Hover Highlight Gradient (configurable in theme.ts) */}
+            <linearGradient
+              id="acc-bar-grad-hover"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor={THEME.chart.barHover.startColor} stopOpacity={1} />
+              <stop offset="100%" stopColor={THEME.chart.barHover.endColor} stopOpacity={1} />
+            </linearGradient>
           </defs>
 
           {/* Vertical grid lines */}
@@ -126,9 +168,7 @@ export const AccuracyGapChart: React.FC<AccuracyGapChartProps> = ({
             const barHeight = rowHeight - 20;
             const barWidth = entry.accuracy * plotWidth;
             const isHovered = hoveredIdx === idx;
-            const color = getSeriesColor(entry.series, idx);
             const rowKey = entry.series_id || `${entry.series}_${entry.dataset || 'ds'}_${idx}`;
-            const gradId = `acc-bar-grad-${entry.series_id || idx}`;
 
             return (
               <g
@@ -160,23 +200,33 @@ export const AccuracyGapChart: React.FC<AccuracyGapChartProps> = ({
                     fontSize: '12px',
                     fontWeight: isHovered ? 700 : 500,
                     fill: isHovered ? 'var(--text)' : 'var(--text-muted)',
+                    transition: 'fill 0.2s ease, font-weight 0.2s ease',
                   }}
                 >
                   {entry.series}
                 </text>
 
-                {/* Gradient bar with rounded corners */}
+                {/* Gradient bar with cohesive 2 or 3-color gradient and distinct hover highlight */}
                 <rect
                   x={marginLeft}
                   y={y}
                   width={Math.max(4, barWidth)}
                   height={barHeight}
                   rx={barHeight / 2}
-                  fill={`url(#${gradId})`}
-                  className="chart-bar-rect"
+                  fill={isHovered ? 'url(#acc-bar-grad-hover)' : 'url(#acc-bar-unified-grad)'}
+                  stroke={isHovered ? THEME.chart.barHover.stroke : 'none'}
+                  strokeWidth={isHovered ? THEME.chart.barHover.strokeWidth : 0}
+                  className={`chart-bar-rect ${isHovered ? 'is-hovered' : ''}`}
+                  onMouseEnter={() => setHoveredIdx(idx)}
+                  onMouseLeave={() => setHoveredIdx(null)}
                   style={{
-                    filter: isHovered ? `drop-shadow(0 0 8px ${color}88)` : undefined,
-                    transition: 'filter 0.2s ease',
+                    filter: isHovered
+                      ? THEME.chart.barHover.dropShadow
+                      : entry.rank === 1
+                      ? 'drop-shadow(0 2px 8px rgba(79, 70, 229, 0.35))'
+                      : undefined,
+                    opacity: hoveredIdx !== null && !isHovered ? THEME.chart.barHover.dimmedOpacity : 1,
+                    transition: 'fill 0.2s ease, filter 0.2s ease, opacity 0.2s ease',
                   }}
                 />
 
@@ -186,9 +236,10 @@ export const AccuracyGapChart: React.FC<AccuracyGapChartProps> = ({
                   y={y + barHeight / 2 + 4}
                   style={{
                     fontSize: '13px',
-                    fontWeight: 800,
-                    fill: 'var(--text)',
+                    fontWeight: isHovered ? 900 : 800,
+                    fill: isHovered ? THEME.chart.barHover.stroke : 'var(--text)',
                     letterSpacing: '-0.02em',
+                    transition: 'fill 0.2s ease',
                   }}
                 >
                   {entry.accuracy_pct}

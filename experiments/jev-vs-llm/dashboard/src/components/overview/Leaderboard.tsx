@@ -1,12 +1,12 @@
 import React from 'react';
 import type { LeaderboardEntry } from '../../types/benchmark';
-import { getSeriesColor, getModelRuntime } from '../../config/theme';
+import { getModelRuntime, BAR_GRADIENT_CONFIG } from '../../config/theme';
 import { Cpu, Cloud, Zap, Database } from 'lucide-react';
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
   selectedSeries: Set<string>;
-  activeDataset?: 'all' | 'public' | 'smoke';
+  activeDataset?: string;
 }
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({
@@ -58,7 +58,6 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           </thead>
           <tbody>
             {visibleEntries.map((entry, idx) => {
-              const color = getSeriesColor(entry.series, idx);
               const runtime = getModelRuntime(entry.provider, entry.series);
               const isFilteredDataset = activeDataset !== 'all';
               const displayRank = isFilteredDataset ? idx + 1 : entry.rank;
@@ -104,25 +103,19 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                       <div className="model-name-line">
                         <span className="model-name-text">{entry.series}</span>
                       </div>
+                      {entry.latest_run_at && (
+                        <time dateTime={entry.latest_run_at} title={entry.run_ids?.join(', ')}>
+                          Latest: {new Date(entry.latest_run_at).toLocaleString()}
+                        </time>
+                      )}
                       <div className="model-tags">
-                        {/* Dataset Tier Badge */}
-                        {entry.dataset === 'public' ? (
                           <span
                             className="tag-badge dataset-tag dataset-tag-public"
-                            title="Evaluated on 77-case public Banking77 benchmark dataset"
+                            title="Datasets included in this result"
                           >
                             <Database size={10} style={{ marginRight: '3px' }} />
-                            <span>Banking77 (77)</span>
+                            <span>{entry.dataset_label}</span>
                           </span>
-                        ) : (
-                          <span
-                            className="tag-badge dataset-tag dataset-tag-smoke"
-                            title="Evaluated on 24-case local synthetic benchmark dataset"
-                          >
-                            <Zap size={10} style={{ marginRight: '3px' }} />
-                            <span>Smoke (24)</span>
-                          </span>
-                        )}
 
                         {/* Thinking Mode Tag */}
                         {entry.thinking_mode === 'on' && (
@@ -200,7 +193,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                           className="accuracy-bar-fill"
                           style={{
                             width: `${Math.min(100, Math.max(0, entry.accuracy * 100))}%`,
-                            backgroundColor: color,
+                            background: BAR_GRADIENT_CONFIG.getBarColorAt(idx, entries.length),
                           }}
                         />
                       </div>

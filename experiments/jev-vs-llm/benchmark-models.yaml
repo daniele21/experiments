@@ -38,6 +38,21 @@ models:
       show_thinking: false
     tags: [local-benchmark, qwen, 2b]
 
+  qwen3.5-4b-q4km:
+    path: "/Users/moltisantid/.lmstudio/models/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"
+    model_id: "unsloth/qwen3.5-4b"
+    quantization: "Q4_K_M"
+    backend: llama_server
+    thinking_mode: switchable
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      default_temperature: 0.0
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, qwen, 4b]
+
   nemotron-nano-4b-q4:
     path: "/Users/moltisantid/.lmstudio/models/lmstudio-community/NVIDIA-Nemotron-3-Nano-4B-GGUF/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf"
     model_id: "nvidia/nemotron-3-nano-4b-q4"
@@ -113,3 +128,18 @@ models:
       enable_thinking: false
       show_thinking: false
     tags: [local-benchmark, minicpm, 2b]
+
+  spark-x2.5-4b-q4km:
+    path: "/Users/moltisantid/.lmstudio/models/XHToken/Spark-X2.5-4B-GGUF/Spark-X2.5-4B-Q4_K_M.gguf"
+    model_id: "xhtoken/spark-x2.5-4b"
+    quantization: "Q4_K_M"
+    backend: llama_server
+    thinking_mode: switchable
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      default_temperature: 0.0
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, spark, 4b]
