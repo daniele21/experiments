@@ -42,7 +42,7 @@ def test_perfect_case_has_no_leakage():
     assert summary["zero_leak_document_rate"] == 1.0
 
 
-def test_evaluation_v2_exposes_micro_macro_and_document_balance():
+def test_evaluation_v3_exposes_micro_macro_and_document_balance():
     large_text = "A" * 200
     large_gold = tuple(
         Span(index * 2, index * 2 + 1, "account_number", "A")
@@ -72,7 +72,7 @@ def test_evaluation_v2_exposes_micro_macro_and_document_balance():
         ]
     )
 
-    assert detailed["evaluation_schema"] == "redactguard-evaluation-v2"
+    assert detailed["evaluation_schema"] == "redactguard-evaluation-v3"
     assert detailed["micro"]["pii_recall"] == 100 / 101
     assert detailed["macro"]["pii_recall"] == 0.5
     assert detailed["dataset_balance"]["largest_document"] == "large.xlsx"
@@ -80,7 +80,7 @@ def test_evaluation_v2_exposes_micro_macro_and_document_balance():
     assert detailed["by_document"]["small.txt"]["fn"] == 1
 
 
-def test_evaluation_v2_reports_by_type_and_failure_examples():
+def test_evaluation_v3_reports_by_type_and_failure_examples():
     case = Case(
         "mixed.txt",
         "financial",
@@ -109,7 +109,7 @@ def test_evaluation_v2_reports_by_type_and_failure_examples():
     assert failure["false_positives"][0]["pii_type"] == "private_phone"
 
 
-def test_evaluation_v2_html_contains_diagnostic_sections(tmp_path: Path):
+def test_evaluation_v3_html_contains_diagnostic_sections(tmp_path: Path):
     case = Case(
         "x",
         "general",
@@ -131,3 +131,65 @@ def test_evaluation_v2_html_contains_diagnostic_sections(tmp_path: Path):
     assert "Performance by PII type" in content
     assert "Performance by document" in content
     assert "Failure analysis" in content
+
+
+def test_invalid_inference_is_not_scored_as_zero_recall():
+    case = Case(
+        "broken",
+        "general",
+        "Mario Rossi",
+        (Span(0, 11, "private_person", "Mario Rossi"),),
+    )
+    result = InferenceResult(
+        case_id="broken",
+        model="m",
+        valid=False,
+        latency_ms=5,
+        findings=[],
+        raw_content='{"pii_fields":',
+        status="invalid_json",
+        error_type="JSONDecodeError",
+        error="truncated json",
+    )
+
+    row = score_case(case, result)
+    summary = aggregate([row])
+
+    assert row["pii_recall"] is None
+    assert row["leakage_rate"] is None
+    assert row["system_leakage_rate"] == 1.0
+    assert summary["quality_available"] is False
+    assert summary["pii_recall"] is None
+    assert summary["precision"] is None
+    assert summary["inference_success_rate"] == 0.0
+    assert summary["system_pii_recall"] == 0.0
+    assert summary["system_leakage_rate"] == 1.0
+
+
+def test_unresolved_model_value_is_visible_as_false_positive_evidence():
+    case = Case(
+        "hallucination",
+        "general",
+        "Mario Rossi",
+        (Span(0, 11, "private_person", "Mario Rossi"),),
+    )
+    result = InferenceResult(
+        case_id="hallucination",
+        model="m",
+        valid=True,
+        latency_ms=5,
+        findings=[Finding("private_person", "Mario Rossi", 0, 11)],
+        raw_content="{}",
+        raw_item_count=2,
+        resolved_item_count=1,
+        unresolved_item_count=1,
+    )
+
+    row = score_case(case, result)
+    summary = aggregate([row])
+
+    assert row["tp"] == 1
+    assert row["fp"] == 1
+    assert row["unresolved_item_count"] == 1
+    assert summary["span_resolution_rate"] == 0.5
+    assert summary["precision"] == 0.5
