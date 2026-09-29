@@ -186,3 +186,39 @@ def test_clm_provider_uses_shared_transport_policy_and_auth(monkeypatch):
     }
     assert body["model"] == "clm-latest"
     assert latency == 4.5
+
+
+
+def test_clm_provider_can_report_benchmark_runtime_identity_separately():
+    provider = CLMProvider(
+        model="clm-latest",
+        benchmark_model_id="clm-v0.1-8b-q4km-outq2",
+    )
+    provider._post = lambda payload: (
+        {
+            "model": "clm-latest",
+            "answers": {
+                "intent": {
+                    "type": "choice",
+                    "choice": "billing",
+                    "confidence": 0.9,
+                    "probabilities": {"billing": 0.9, "support": 0.1},
+                }
+            },
+            "usage": {},
+        },
+        5.0,
+    )
+    question = QuestionSpec(
+        id="intent",
+        type="choice",
+        instructions="Choose one.",
+        criteria={"billing": "Billing", "support": "Support"},
+    )
+
+    result = provider.evaluate("charged twice", [question])
+
+    assert result.valid is True
+    assert result.model == "clm-v0.1-8b-q4km-outq2"
+    assert result.raw["served_model"] == "clm-latest"
+    assert result.raw["benchmark_model_id"] == "clm-v0.1-8b-q4km-outq2"
