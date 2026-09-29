@@ -86,11 +86,19 @@ export CLM_LLAMA_SERVER_BIN="$(command -v llama-server)"
 export CLM_SERVE_BIN="$(command -v clm-serve)"
 ```
 
-Install the official CLM package separately if `clm-serve` is not available:
+Install the official CLM serving code separately if `clm-serve` is not
+available. For the llama.cpp path, avoid pulling vLLM just to satisfy the
+upstream package metadata (especially on macOS). After `uv sync`, install only
+the CLM package plus the dependencies actually used by `clm-serve`:
 
 ```bash
-python -m pip install contrastive-lm
+uv pip install --no-deps contrastive-lm==0.1.0
+uv pip install "torch>=2.1" "fastapi>=0.100" "uvicorn>=0.23" "requests>=2.28"
 ```
+
+The checked-in benchmark does not import CLM itself; it only launches the
+`clm-serve` executable. You can therefore also point `CLM_SERVE_BIN` at an
+existing CLM environment instead of modifying the benchmark environment.
 
 The first run may need network access so `clm-serve` can fetch the official
 `Contrastive-LM/CLM-v0.1-8B` head. To use a pre-downloaded checkpoint instead:
