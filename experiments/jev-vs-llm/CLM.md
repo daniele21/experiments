@@ -163,6 +163,15 @@ pooling                      last
 This prevents a quantized encoder run from being reported ambiguously as just
 `clm-latest`.
 
+> [!IMPORTANT]
+> Treat `clm-v0.1-8b-q4km-outq2` as a **quantized CLM experiment arm**, not as
+> the reference-quality CLM-8B baseline. The GGUF publisher reports a measurable
+> ranking degradation for Q4_K_M relative to the same-runtime BF16 reference.
+> That is precisely why this arm is useful: it measures whether the much smaller
+> local CLM runtime remains competitive on BANKING77. Publication-grade claims
+> about CLM itself should keep the encoder precision/runtime explicit and, when
+> possible, include a higher-precision CLM arm as well.
+
 ## BANKING77
 
 The recommended entry point is the autonomous runner used by
