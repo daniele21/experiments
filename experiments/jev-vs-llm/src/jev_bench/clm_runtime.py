@@ -87,7 +87,9 @@ class CLMLocalRuntimeSpec:
         if spec.pooling != "last":
             raise ValueError(f"{runtime_id}: CLM-v0.1-8B requires last-token pooling")
         if spec.context_size <= 0 or spec.parallel <= 0 or spec.max_tokens <= 0:
-            raise ValueError(f"{runtime_id}: context_size, parallel and max_tokens must be positive")
+            raise ValueError(
+                f"{runtime_id}: context_size, parallel and max_tokens must be positive"
+            )
         if spec.context_size < spec.parallel * spec.max_tokens:
             raise ValueError(
                 f"{runtime_id}: context_size ({spec.context_size}) must be at least "
