@@ -27,8 +27,10 @@ class CLMProvider(DecisionProvider):
         base_url: str | None = None,
         *,
         temperature: float | None = None,
+        benchmark_model_id: str | None = None,
     ) -> None:
         self.model = model or os.getenv("CLM_MODEL", "clm-latest")
+        self.benchmark_model_id = benchmark_model_id
         self.base_url = (
             base_url or os.getenv("CLM_BASE_URL", "http://127.0.0.1:8700")
         ).rstrip("/")
@@ -176,9 +178,10 @@ class CLMProvider(DecisionProvider):
             if not isinstance(usage, dict):
                 usage = {}
             resolved_model = str(response.get("model") or self.model)
+            reported_model = self.benchmark_model_id or resolved_model
             return ProviderResult(
                 provider=self.name,
-                model=resolved_model,
+                model=reported_model,
                 answers=decisions,
                 latency_ms=latency_ms,
                 input_tokens=usage.get("input_tokens"),
@@ -187,6 +190,8 @@ class CLMProvider(DecisionProvider):
                 estimated_cost_usd=0.0,
                 raw={
                     "response": response,
+                    "served_model": resolved_model,
+                    "benchmark_model_id": self.benchmark_model_id,
                     "server_latency_ms": server_latency_ms,
                     "temperature": self.temperature,
                 },
@@ -194,7 +199,7 @@ class CLMProvider(DecisionProvider):
         except Exception as exc:  # noqa: BLE001 - provider boundary records failures
             return ProviderResult(
                 provider=self.name,
-                model=self.model,
+                model=self.benchmark_model_id or self.model,
                 answers={},
                 latency_ms=(time.perf_counter() - started) * 1000,
                 estimated_cost_usd=0.0,
