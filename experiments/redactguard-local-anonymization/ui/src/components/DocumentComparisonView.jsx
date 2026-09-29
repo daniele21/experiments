@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { uiConfig } from "../config/uiConfig";
 import { formatMs, formatPercent, micro } from "../utils/formatters";
 import { MiniBar } from "./MetricCard";
+import { DocumentTextViewer } from "./DocumentTextViewer";
 
 /**
  * Helper to identify file extension for aesthetic badges.
@@ -16,7 +17,7 @@ function getFileBadge(filename) {
  *
  * Provides a dedicated, file-by-file comparison of all tested models.
  * Includes search, filtering by profile and leak status, side-by-side model
- * benchmarking per file, and missed spans inspection.
+ * benchmarking per file, missed spans inspection, and interactive document text redaction visualization.
  */
 export function DocumentComparisonView({ detail }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +26,12 @@ export function DocumentComparisonView({ detail }) {
   const [expandedFiles, setExpandedFiles] = useState(new Set());
   const [expandedGoldFiles, setExpandedGoldFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState("cards"); // "cards" | "matrix"
+  const [cardTabs, setCardTabs] = useState({}); // filename -> "viewer" | "table" | "spans"
+
+  const getCardTab = (filename) => cardTabs[filename] || "viewer";
+  const setCardTab = (filename, tab) => {
+    setCardTabs((prev) => ({ ...prev, [filename]: tab }));
+  };
 
   const docSpans = useMemo(() => detail?.docSpans ?? {}, [detail]);
 
@@ -331,6 +338,7 @@ export function DocumentComparisonView({ detail }) {
                     {model}
                   </th>
                 ))}
+                <th>Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -375,6 +383,20 @@ export function DocumentComparisonView({ detail }) {
                       </td>
                     );
                   })}
+                  <td className="matrix-action-cell">
+                    <button
+                      type="button"
+                      className="matrix-action-btn"
+                      onClick={() => {
+                        setViewMode("cards");
+                        setExpandedFiles((prev) => new Set([...prev, file.filename]));
+                        setCardTab(file.filename, "viewer");
+                      }}
+                      title="Visualizza testo e redazioni del documento"
+                    >
+                      📄 Testo & Redact
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -435,310 +457,391 @@ export function DocumentComparisonView({ detail }) {
                         🏆 {file.bestModel}
                       </span>
                     )}
+                    <button
+                      type="button"
+                      className="quick-view-doc-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isExpanded) toggleExpand(file.filename);
+                        setCardTab(file.filename, "viewer");
+                      }}
+                      title="Visualizza testo e redazioni del documento"
+                    >
+                      📄 Testo & Redact
+                    </button>
                     <span className="accordion-arrow">
                       {isExpanded ? "▲" : "▼"}
                     </span>
                   </div>
                 </div>
 
-                {/* Tabella Comparativa Modelli per questo File */}
+                {/* Contenuto della Scheda File con Tabs */}
                 <div className="doc-card-body">
-                  <div className="table-scroll">
-                    <table className="comparison-table doc-model-table">
-                      <thead>
-                        <tr>
-                          <th>Modello</th>
-                          <th>Recall PII</th>
-                          <th>Leakage</th>
-                          <th>Precision</th>
-                          <th>Span F1</th>
-                          <th>Zero Leak</th>
-                          <th>Latenza</th>
-                          <th>Missed (FN)</th>
-                          <th>Over-redacted (FP)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {models.map((model) => {
-                          const mData = file.modelsData[model];
-                          if (!mData) {
-                            return (
-                              <tr key={model}>
-                                <td className="model-name">{model}</td>
-                                <td colSpan={8} className="muted">
-                                  Non testato su questo documento
-                                </td>
-                              </tr>
-                            );
-                          }
-
-                          const isZero = Number(mData.leakage_rate ?? 0) === 0;
-                          const isBest = file.bestModel === model;
-
-                          return (
-                            <tr
-                              key={model}
-                              className={isBest ? "row-highlight" : ""}
-                            >
-                              <td className="model-name">
-                                {model}
-                                {isBest && (
-                                  <span
-                                    className="best-star"
-                                    title="Miglior modello per questo file"
-                                  >
-                                    {" "}
-                                    ★
-                                  </span>
-                                )}
-                              </td>
-                              <td>
-                                <span>{formatPercent(mData.pii_recall)}</span>
-                                <MiniBar value={mData.pii_recall} />
-                              </td>
-                              <td>
-                                <span>{formatPercent(mData.leakage_rate)}</span>
-                                <MiniBar
-                                  value={mData.leakage_rate}
-                                  inverse
-                                />
-                              </td>
-                              <td>
-                                <span>{formatPercent(mData.precision)}</span>
-                                <MiniBar value={mData.precision} />
-                              </td>
-                              <td>{formatPercent(mData.span_f1)}</td>
-                              <td>
-                                <span
-                                  className={`status-badge ${
-                                    isZero
-                                      ? "status-badge--complete"
-                                      : "status-badge--partial"
-                                  }`}
-                                >
-                                  {isZero ? "Zero Leak" : "Leaked"}
-                                </span>
-                              </td>
-                              <td>
-                                {formatMs(
-                                  mData.latency_p50_ms ?? mData.latency_ms,
-                                )}
-                              </td>
-                              <td
-                                className={
-                                  (mData.fn ?? 0) > 0 ? "fn-count-risk" : ""
-                                }
-                              >
-                                {mData.fn ?? 0}
-                              </td>
-                              <td
-                                className={
-                                  (mData.fp ?? 0) > 0 ? "fp-count-risk" : ""
-                                }
-                              >
-                                {mData.fp ?? 0}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  {/* TABS DI NAVIGAZIONE INTERNA SCHEDA */}
+                  <div className="doc-card-tabs-header">
+                    <div className="doc-card-tabs-nav" role="tablist">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={getCardTab(file.filename) === "viewer"}
+                        className={`card-tab-btn ${
+                          getCardTab(file.filename) === "viewer" ? "active" : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCardTab(file.filename, "viewer");
+                        }}
+                      >
+                        📄 Testo & Redazioni Modelli
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={getCardTab(file.filename) === "table"}
+                        className={`card-tab-btn ${
+                          getCardTab(file.filename) === "table" ? "active" : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCardTab(file.filename, "table");
+                        }}
+                      >
+                        📊 Benchmark Metriche ({models.length} Modelli)
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={getCardTab(file.filename) === "spans"}
+                        className={`card-tab-btn ${
+                          getCardTab(file.filename) === "spans" ? "active" : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCardTab(file.filename, "spans");
+                        }}
+                      >
+                        🎯 Elenco PII ({expectedGold.length}) & Confronto
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Ispettore Dettagliato Spans (Espandibile) */}
-                  {isExpanded && (
-                    <div className="doc-spans-inspector">
-                      {/* 1. SEZIONE GROUND TRUTH: PII ATTESE NEL DOCUMENTO */}
-                      <div className="doc-gold-section">
-                        <div className="doc-gold-header">
-                          <div className="doc-gold-title">
-                            <span className="gold-icon">🎯</span>
-                            <div>
-                              <strong>PII Attese nel Documento (Ground Truth)</strong>
-                              <span>
-                                {expectedGold.length > 0
-                                  ? `${expectedGold.length} entità sensibili definite per questo documento`
-                                  : "Nessuna entità PII specificata nel dataset"}
-                              </span>
+                  {/* TAB 1: VISUALIZZATORE INTERATTIVO TESTO & REDAZIONI */}
+                  {getCardTab(file.filename) === "viewer" && (
+                    <div className="card-tab-content tab-viewer-content">
+                      <DocumentTextViewer
+                        filename={file.filename}
+                        documentData={fileSpans}
+                        modelsList={models}
+                        profile={file.profile}
+                        fileMetrics={file}
+                        initialModel={file.bestModel || models[0]}
+                      />
+                    </div>
+                  )}
+
+                  {/* TAB 2: TABELLA COMPARATIVA METRICHE MODELLI */}
+                  {getCardTab(file.filename) === "table" && (
+                    <div className="card-tab-content tab-table-content">
+                      <div className="table-scroll">
+                        <table className="comparison-table doc-model-table">
+                          <thead>
+                            <tr>
+                              <th>Modello</th>
+                              <th>Recall PII</th>
+                              <th>Leakage</th>
+                              <th>Precision</th>
+                              <th>Span F1</th>
+                              <th>Zero Leak</th>
+                              <th>Latenza</th>
+                              <th>Missed (FN)</th>
+                              <th>Over-redacted (FP)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {models.map((model) => {
+                              const mData = file.modelsData[model];
+                              if (!mData) {
+                                return (
+                                  <tr key={model}>
+                                    <td className="model-name">{model}</td>
+                                    <td colSpan={8} className="muted">
+                                      Non testato su questo documento
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              const isZero = Number(mData.leakage_rate ?? 0) === 0;
+                              const isBest = file.bestModel === model;
+
+                              return (
+                                <tr
+                                  key={model}
+                                  className={isBest ? "row-highlight" : ""}
+                                >
+                                  <td className="model-name">
+                                    {model}
+                                    {isBest && (
+                                      <span
+                                        className="best-star"
+                                        title="Miglior modello per questo file"
+                                      >
+                                        {" "}
+                                        ★
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <span>{formatPercent(mData.pii_recall)}</span>
+                                    <MiniBar value={mData.pii_recall} />
+                                  </td>
+                                  <td>
+                                    <span>{formatPercent(mData.leakage_rate)}</span>
+                                    <MiniBar
+                                      value={mData.leakage_rate}
+                                      inverse
+                                    />
+                                  </td>
+                                  <td>
+                                    <span>{formatPercent(mData.precision)}</span>
+                                    <MiniBar value={mData.precision} />
+                                  </td>
+                                  <td>{formatPercent(mData.span_f1)}</td>
+                                  <td>
+                                    <span
+                                      className={`status-badge ${
+                                        isZero
+                                          ? "status-badge--complete"
+                                          : "status-badge--partial"
+                                      }`}
+                                    >
+                                      {isZero ? "Zero Leak" : "Leaked"}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {formatMs(
+                                      mData.latency_p50_ms ?? mData.latency_ms,
+                                    )}
+                                  </td>
+                                  <td
+                                    className={
+                                      (mData.fn ?? 0) > 0 ? "fn-count-risk" : ""
+                                    }
+                                  >
+                                    {mData.fn ?? 0}
+                                  </td>
+                                  <td
+                                    className={
+                                      (mData.fp ?? 0) > 0 ? "fp-count-risk" : ""
+                                    }
+                                  >
+                                    {mData.fp ?? 0}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 3: ISPETTORE DETTAGLIATO SPANS */}
+                  {getCardTab(file.filename) === "spans" && (
+                    <div className="card-tab-content tab-spans-content">
+                      <div className="doc-spans-inspector" style={{ marginTop: 0, borderTop: "none" }}>
+                        {/* 1. SEZIONE GROUND TRUTH: PII ATTESE NEL DOCUMENTO */}
+                        <div className="doc-gold-section">
+                          <div className="doc-gold-header">
+                            <div className="doc-gold-title">
+                              <span className="gold-icon">🎯</span>
+                              <div>
+                                <strong>PII Attese nel Documento (Ground Truth)</strong>
+                                <span>
+                                  {expectedGold.length > 0
+                                    ? `${expectedGold.length} entità sensibili definite per questo documento`
+                                    : "Nessuna entità PII specificata nel dataset"}
+                                </span>
+                              </div>
                             </div>
+                            {expectedGold.length > 12 && (
+                              <button
+                                type="button"
+                                className="doc-gold-toggle-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleGoldExpand(file.filename);
+                                }}
+                              >
+                                {isGoldExpanded
+                                  ? "Mostra meno"
+                                  : `Mostra tutte (${expectedGold.length})`}
+                              </button>
+                            )}
                           </div>
-                          {expectedGold.length > 12 && (
-                            <button
-                              type="button"
-                              className="doc-gold-toggle-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleGoldExpand(file.filename);
-                              }}
-                            >
-                              {isGoldExpanded
-                                ? "Mostra meno"
-                                : `Mostra tutte (${expectedGold.length})`}
-                            </button>
+
+                          {expectedGold.length > 0 && (
+                            <div className="doc-gold-chips">
+                              {(isGoldExpanded
+                                ? expectedGold
+                                : expectedGold.slice(0, 12)
+                              ).map((g, gIdx) => (
+                                <div key={gIdx} className="doc-gold-chip">
+                                  <code className="gold-badge">{g.pii_type}</code>
+                                  <span className="gold-value">{g.value || "—"}</span>
+                                </div>
+                              ))}
+                              {!isGoldExpanded && expectedGold.length > 12 && (
+                                <span className="gold-more-count">
+                                  + altri {expectedGold.length - 12} elementi...
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
 
-                        {expectedGold.length > 0 && (
-                          <div className="doc-gold-chips">
-                            {(isGoldExpanded
-                              ? expectedGold
-                              : expectedGold.slice(0, 12)
-                            ).map((g, gIdx) => (
-                              <div key={gIdx} className="doc-gold-chip">
-                                <code className="gold-badge">{g.pii_type}</code>
-                                <span className="gold-value">{g.value || "—"}</span>
-                              </div>
-                            ))}
-                            {!isGoldExpanded && expectedGold.length > 12 && (
-                              <span className="gold-more-count">
-                                + altri {expectedGold.length - 12} elementi...
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                        {/* 2. CONFRONTO MODELLI: COSA HANNO IDENTIFICATO VS COSA HANNO MANCATO */}
+                        <h4 className="inspector-heading">
+                          Confronto Modelli: Cosa Hanno Identificato vs Mancato
+                        </h4>
+                        <div className="inspector-models-grid">
+                          {models.map((model) => {
+                            const mData = file.modelsData[model];
+                            const mSpans = fileSpans?.models?.[model];
+                            if (!mData && !mSpans) return null;
 
-                      {/* 2. CONFRONTO MODELLI: COSA HANNO IDENTIFICATO VS COSA HANNO MANCATO */}
-                      <h4 className="inspector-heading">
-                        Confronto Modelli: Cosa Hanno Identificato vs Mancato
-                      </h4>
-                      <div className="inspector-models-grid">
-                        {models.map((model) => {
-                          const mData = file.modelsData[model];
-                          const mSpans = fileSpans?.models?.[model];
-                          if (!mData && !mSpans) return null;
+                            const identified = mSpans?.identified ?? [];
+                            const fnSpans = mSpans?.missed ?? mData?.false_negatives ?? [];
+                            const fpSpans = mSpans?.overRedacted ?? mData?.false_positives ?? [];
+                            const isFailed = mSpans?.status === "failed" || !mData?.valid;
+                            const error = mSpans?.error || mData?.error;
 
-                          const identified = mSpans?.identified ?? [];
-                          const fnSpans = mSpans?.missed ?? mData?.false_negatives ?? [];
-                          const fpSpans = mSpans?.overRedacted ?? mData?.false_positives ?? [];
-                          const isFailed = mSpans?.status === "failed" || !mData?.valid;
-                          const error = mSpans?.error || mData?.error;
-
-                          return (
-                            <div
-                              key={model}
-                              className={`inspector-model-card ${
-                                isFailed ? "inspector-model-card--failed" : ""
-                              }`}
-                            >
-                              <div className="inspector-model-title">
-                                <strong>{model}</strong>
-                                <div className="inspector-model-pills">
-                                  {isFailed ? (
-                                    <span className="pill pill--risk">Errore di Sistema</span>
-                                  ) : (
-                                    <>
-                                      <span className="pill pill--success">
-                                        ✓ {mSpans?.identifiedCount ?? identified.length} Trovati
-                                      </span>
-                                      {fnSpans.length > 0 ? (
-                                        <span className="pill pill--risk">
-                                          ⚠️ {fnSpans.length} Mancati
-                                        </span>
-                                      ) : (
-                                        <span className="pill pill--zero-leak">
-                                          🛡️ Zero Leak
-                                        </span>
-                                      )}
-                                      {fpSpans.length > 0 && (
-                                        <span className="pill pill--warning">
-                                          +{fpSpans.length} Extra
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-
-                              {isFailed && error ? (
-                                <div className="spans-error-box">
-                                  <span className="error-icon">⚠️</span>
-                                  <code>{error}</code>
-                                </div>
-                              ) : (
-                                <div className="spans-dual-column">
-                                  {/* Colonna: Identificate con Successo */}
-                                  <div className="spans-section">
-                                    <span className="eyebrow eyebrow--success">
-                                      ✓ Identificate Correttamente ({mSpans?.identifiedCount ?? identified.length}):
-                                    </span>
-                                    {identified.length ? (
-                                      <ul className="spans-list spans-list--identified">
-                                        {identified.slice(0, 8).map((item, idx) => (
-                                          <li key={idx}>
-                                            <code className="span-code span-code--success">
-                                              {item.pii_type ?? "PII"}
-                                            </code>
-                                            <span>{item.value || "—"}</span>
-                                          </li>
-                                        ))}
-                                        {identified.length > 8 && (
-                                          <li className="muted">
-                                            + altri {identified.length - 8} elementi identificati...
-                                          </li>
-                                        )}
-                                      </ul>
+                            return (
+                              <div
+                                key={model}
+                                className={`inspector-model-card ${
+                                  isFailed ? "inspector-model-card--failed" : ""
+                                }`}
+                              >
+                                <div className="inspector-model-title">
+                                  <strong>{model}</strong>
+                                  <div className="inspector-model-pills">
+                                    {isFailed ? (
+                                      <span className="pill pill--risk">Errore di Sistema</span>
                                     ) : (
-                                      <p className="muted">Nessuna entità identificata</p>
+                                      <>
+                                        <span className="pill pill--success">
+                                          ✓ {mSpans?.identifiedCount ?? identified.length} Trovati
+                                        </span>
+                                        {fnSpans.length > 0 ? (
+                                          <span className="pill pill--risk">
+                                            ⚠️ {fnSpans.length} Mancati
+                                          </span>
+                                        ) : (
+                                          <span className="pill pill--zero-leak">
+                                            🛡️ Zero Leak
+                                          </span>
+                                        )}
+                                        {fpSpans.length > 0 && (
+                                          <span className="pill pill--warning">
+                                            +{fpSpans.length} Extra
+                                          </span>
+                                        )}
+                                      </>
                                     )}
                                   </div>
+                                </div>
 
-                                  {/* Colonna: Mancate (Data Leakage) */}
-                                  <div className="spans-section">
-                                    <span className="eyebrow eyebrow--risk">
-                                      ⚠️ Non Identificate / Mancate ({fnSpans.length}):
-                                    </span>
-                                    {fnSpans.length ? (
-                                      <ul className="spans-list spans-list--missed">
-                                        {fnSpans.slice(0, 8).map((item, idx) => (
-                                          <li key={idx}>
-                                            <code className="span-code span-code--risk">
-                                              {item.pii_type ?? "PII"}
-                                            </code>
-                                            <span>{item.value || "—"}</span>
-                                          </li>
-                                        ))}
-                                        {fnSpans.length > 8 && (
-                                          <li className="muted">
-                                            + altri {fnSpans.length - 8} elementi mancati...
-                                          </li>
-                                        )}
-                                      </ul>
-                                    ) : (
-                                      <p className="no-errors-text">
-                                        ✓ Nessuna entità PII persa (100% rilevate)
-                                      </p>
-                                    )}
+                                {isFailed && error ? (
+                                  <div className="spans-error-box">
+                                    <span className="error-icon">⚠️</span>
+                                    <code>{error}</code>
                                   </div>
-
-                                  {/* Colonna: Sovra-oscurate (False Positives) */}
-                                  {fpSpans.length > 0 && (
+                                ) : (
+                                  <div className="spans-dual-column">
+                                    {/* Colonna: Identificate con Successo */}
                                     <div className="spans-section">
-                                      <span className="eyebrow eyebrow--warn">
-                                        ⚡ Sovra-oscurati (Extra - {fpSpans.length}):
+                                      <span className="eyebrow eyebrow--success">
+                                        ✓ Identificate Correttamente ({mSpans?.identifiedCount ?? identified.length}):
                                       </span>
-                                      <ul className="spans-list spans-list--extra">
-                                        {fpSpans.slice(0, 6).map((item, idx) => (
-                                          <li key={idx}>
-                                            <code className="span-code span-code--warn">
-                                              {item.pii_type ?? "PII"}
-                                            </code>
-                                            <span>{item.value || "—"}</span>
-                                          </li>
-                                        ))}
-                                        {fpSpans.length > 6 && (
-                                          <li className="muted">
-                                            + altri {fpSpans.length - 6} elementi extra...
-                                          </li>
-                                        )}
-                                      </ul>
+                                      {identified.length ? (
+                                        <ul className="spans-list spans-list--identified">
+                                          {identified.slice(0, 8).map((item, idx) => (
+                                            <li key={idx}>
+                                              <code className="span-code span-code--success">
+                                                {item.pii_type ?? "PII"}
+                                              </code>
+                                              <span>{item.value || "—"}</span>
+                                            </li>
+                                          ))}
+                                          {identified.length > 8 && (
+                                            <li className="muted">
+                                              + altri {identified.length - 8} elementi identificati...
+                                            </li>
+                                          )}
+                                        </ul>
+                                      ) : (
+                                        <p className="muted">Nessuna entità identificata</p>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+
+                                    {/* Colonna: Mancate (Data Leakage) */}
+                                    <div className="spans-section">
+                                      <span className="eyebrow eyebrow--risk">
+                                        ⚠️ Non Identificate / Mancate ({fnSpans.length}):
+                                      </span>
+                                      {fnSpans.length ? (
+                                        <ul className="spans-list spans-list--missed">
+                                          {fnSpans.slice(0, 8).map((item, idx) => (
+                                            <li key={idx}>
+                                              <code className="span-code span-code--risk">
+                                                {item.pii_type ?? "PII"}
+                                              </code>
+                                              <span>{item.value || "—"}</span>
+                                            </li>
+                                          ))}
+                                          {fnSpans.length > 8 && (
+                                            <li className="muted">
+                                              + altri {fnSpans.length - 8} elementi mancati...
+                                            </li>
+                                          )}
+                                        </ul>
+                                      ) : (
+                                        <p className="no-errors-text">
+                                          ✓ Nessuna entità PII persa (100% rilevate)
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Colonna: Sovra-oscurate (False Positives) */}
+                                    {fpSpans.length > 0 && (
+                                      <div className="spans-section">
+                                        <span className="eyebrow eyebrow--warn">
+                                          ⚡ Sovra-oscurati (Extra - {fpSpans.length}):
+                                        </span>
+                                        <ul className="spans-list spans-list--extra">
+                                          {fpSpans.slice(0, 6).map((item, idx) => (
+                                            <li key={idx}>
+                                              <code className="span-code span-code--warn">
+                                                {item.pii_type ?? "PII"}
+                                              </code>
+                                              <span>{item.value || "—"}</span>
+                                            </li>
+                                          ))}
+                                          {fpSpans.length > 6 && (
+                                            <li className="muted">
+                                              + altri {fpSpans.length - 6} elementi extra...
+                                            </li>
+                                          )}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}

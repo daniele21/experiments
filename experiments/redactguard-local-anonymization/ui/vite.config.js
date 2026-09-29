@@ -460,6 +460,15 @@ async function discoverRuns() {
   });
 }
 
+const CANONICAL_DIR = path.resolve(UI_ROOT, "../data/realistic/canonical");
+const ANNOTATIONS_DIR = path.resolve(UI_ROOT, "../data/realistic/annotations");
+const STRUCTURE_MARKER_RE = /^\s*<!--\s*(page|sheet|slide|embedded-image)\s*:\s*(.*?)\s*-->\s*$/;
+
+function stripStructureMarkers(text) {
+  const lines = text.split(/\r?\n/);
+  return lines.filter((line) => !STRUCTURE_MARKER_RE.test(line.trim())).join("\n");
+}
+
 async function loadDocumentSpans(directory) {
   const docSpans = {};
   try {
@@ -483,7 +492,15 @@ async function loadDocumentSpans(directory) {
             })),
             models: {},
           };
+        } else if ((row.case?.gold?.length || 0) > docSpans[caseId].gold.length) {
+          docSpans[caseId].gold = (row.case.gold || []).map((g) => ({
+            pii_type: g.pii_type,
+            value: g.value,
+            start: g.start,
+            end: g.end,
+          }));
         }
+
         const missed = (row.score?.false_negatives || []).map((f) => ({
           pii_type: f.pii_type,
           value: f.value,
@@ -503,20 +520,66 @@ async function loadDocumentSpans(directory) {
           (g) => !missedKeys.has(`${g.start}:${g.end}:${g.pii_type}:${g.value}`),
         );
 
+        // Actual PII redactions performed by the model
+        const redactions = (row.result?.findings || []).map((f) => ({
+          pii_type: f.pii_type,
+          value: f.value,
+          start: f.start,
+          end: f.end,
+        }));
+
         docSpans[caseId].models[model] = {
           valid: row.score?.valid ?? false,
           status: row.score?.inference_status ?? (row.score?.valid ? "success" : "failed"),
           error: row.result?.error || row.score?.error || null,
           recall: row.score?.pii_recall ?? null,
+          pii_recall: row.score?.pii_recall ?? null,
           precision: row.score?.precision ?? null,
           leakage: row.score?.leakage_rate ?? null,
+          leakage_rate: row.score?.leakage_rate ?? null,
           identifiedCount: identified.length,
           missedCount: missed.length,
           overRedactedCount: overRedacted.length,
-          identified: identified.slice(0, 100),
-          missed: missed.slice(0, 100),
-          overRedacted: overRedacted.slice(0, 100),
+          redactionsCount: redactions.length,
+          identified,
+          missed,
+          overRedacted,
+          redactions,
         };
+      }
+    }
+
+    // Attach canonical inference text and fallback gold annotations
+    for (const caseId of Object.keys(docSpans)) {
+      // 1. Text
+      try {
+        let raw = null;
+        try {
+          raw = await fs.readFile(path.join(CANONICAL_DIR, `${caseId}.md`), "utf-8");
+        } catch {
+          raw = await fs.readFile(path.join(CANONICAL_DIR, caseId), "utf-8");
+        }
+        docSpans[caseId].text = stripStructureMarkers(raw);
+      } catch {
+        docSpans[caseId].text = null;
+      }
+
+      // 2. Fallback gold if missing or empty
+      if (!docSpans[caseId].gold || docSpans[caseId].gold.length === 0) {
+        try {
+          const annPath = path.join(ANNOTATIONS_DIR, `${caseId}.json`);
+          const ann = await readJson(annPath);
+          if (ann && Array.isArray(ann.spans)) {
+            docSpans[caseId].gold = ann.spans.map((s) => ({
+              pii_type: s.pii_type,
+              value: s.value,
+              start: s.start,
+              end: s.end,
+            }));
+          }
+        } catch {
+          // ignore fallback failure
+        }
       }
     }
   } catch (err) {
@@ -683,7 +746,14 @@ async function buildOverview() {
     const candidateDocSpans = await loadDocumentSpans(candidateDirectory);
     for (const [caseId, data] of Object.entries(candidateDocSpans)) {
       if (!docSpans[caseId]) {
-        docSpans[caseId] = { gold: data.gold, models: {} };
+        docSpans[caseId] = { gold: data.gold, text: data.text, models: {} };
+      } else {
+        if (!docSpans[caseId].text && data.text) {
+          docSpans[caseId].text = data.text;
+        }
+        if ((data.gold?.length || 0) > (docSpans[caseId].gold?.length || 0)) {
+          docSpans[caseId].gold = data.gold;
+        }
       }
       if (data.models[model]) {
         docSpans[caseId].models[model] = data.models[model];
