@@ -1,0 +1,31 @@
+runtimes:
+  clm-v0.1-8b-q4km-outq2:
+    benchmark_model_id: clm-v0.1-8b-q4km-outq2
+    served_model: clm-latest
+    head:
+      model_id: Contrastive-LM/CLM-v0.1-8B
+      checkpoint_env: CLM_CKPT
+    encoder:
+      model_id: czl/CLM-v0.1-8B-GGUF
+      filename: Qwen3-8B-Q4_K_M-outq2.gguf
+      path_env: CLM_ENCODER_GGUF
+      format: gguf
+      quantization: Q4_K_M
+      output_weight_quantization: Q2_K
+      backend: llama-server
+      alias: qwen3-8b
+      pooling: last
+      context_size: 8192
+      parallel: 4
+    clm:
+      max_tokens: 2048
+      encoder_host: 127.0.0.1
+      encoder_port: 8090
+      host: 127.0.0.1
+      port: 8700
+    tags:
+      - clm
+      - local
+      - banking77
+      - qwen3
+      - q4
