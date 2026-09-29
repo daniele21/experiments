@@ -460,6 +460,71 @@ async function discoverRuns() {
   });
 }
 
+async function loadDocumentSpans(directory) {
+  const docSpans = {};
+  try {
+    const dirents = await fs.readdir(directory, { withFileTypes: true });
+    for (const dirent of dirents) {
+      if (!dirent.isFile() || !dirent.name.endsWith(".jsonl") || RESERVED_JSONL.has(dirent.name)) {
+        continue;
+      }
+      const model = dirent.name.replace(".jsonl", "");
+      const rows = await readJsonLines(path.join(directory, dirent.name));
+      for (const row of rows) {
+        const caseId = row.case?.id ?? row.case_id;
+        if (!caseId) continue;
+        if (!docSpans[caseId]) {
+          docSpans[caseId] = {
+            gold: (row.case?.gold || []).map((g) => ({
+              pii_type: g.pii_type,
+              value: g.value,
+              start: g.start,
+              end: g.end,
+            })),
+            models: {},
+          };
+        }
+        const missed = (row.score?.false_negatives || []).map((f) => ({
+          pii_type: f.pii_type,
+          value: f.value,
+          start: f.start,
+          end: f.end,
+        }));
+        const overRedacted = (row.score?.false_positives || []).map((f) => ({
+          pii_type: f.pii_type,
+          value: f.value,
+          start: f.start,
+          end: f.end,
+        }));
+        const missedKeys = new Set(
+          missed.map((m) => `${m.start}:${m.end}:${m.pii_type}:${m.value}`),
+        );
+        const identified = docSpans[caseId].gold.filter(
+          (g) => !missedKeys.has(`${g.start}:${g.end}:${g.pii_type}:${g.value}`),
+        );
+
+        docSpans[caseId].models[model] = {
+          valid: row.score?.valid ?? false,
+          status: row.score?.inference_status ?? (row.score?.valid ? "success" : "failed"),
+          error: row.result?.error || row.score?.error || null,
+          recall: row.score?.pii_recall ?? null,
+          precision: row.score?.precision ?? null,
+          leakage: row.score?.leakage_rate ?? null,
+          identifiedCount: identified.length,
+          missedCount: missed.length,
+          overRedactedCount: overRedacted.length,
+          identified: identified.slice(0, 100),
+          missed: missed.slice(0, 100),
+          overRedacted: overRedacted.slice(0, 100),
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Error reading document spans:", err);
+  }
+  return docSpans;
+}
+
 async function loadRunFromSummary(summary) {
   const key = summary.key;
   const directory = path.resolve(RESULTS_ROOT, ...key.split("/"));
@@ -497,7 +562,8 @@ async function loadRunFromSummary(summary) {
   }
 
   const preflight = await readJson(path.join(directory, "preflight.json"), {});
-  return { summary, manifest, metrics, failures, latency, preflight };
+  const docSpans = await loadDocumentSpans(directory);
+  return { summary, manifest, metrics, failures, latency, preflight, docSpans };
 }
 
 async function loadRun(key) {
@@ -608,6 +674,23 @@ async function buildOverview() {
     };
   }
 
+  const docSpans = {};
+  for (const [model, candidate] of bestByModel.entries()) {
+    const candidateDirectory = path.resolve(
+      RESULTS_ROOT,
+      ...candidate.run.key.split("/"),
+    );
+    const candidateDocSpans = await loadDocumentSpans(candidateDirectory);
+    for (const [caseId, data] of Object.entries(candidateDocSpans)) {
+      if (!docSpans[caseId]) {
+        docSpans[caseId] = { gold: data.gold, models: {} };
+      }
+      if (data.models[model]) {
+        docSpans[caseId].models[model] = data.models[model];
+      }
+    }
+  }
+
   const statuses = Object.values(evidence);
   const datasets = [...new Set(
     statuses.map((item) => item.dataset).filter(Boolean),
@@ -639,6 +722,7 @@ async function buildOverview() {
     failures,
     latency: { metrics: latencyMetrics },
     evidence,
+    docSpans,
   };
 }
 
