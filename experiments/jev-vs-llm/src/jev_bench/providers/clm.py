@@ -15,8 +15,9 @@ class CLMProvider(DecisionProvider):
     """Contrastive-LM System One provider using the official wire protocol.
 
     CLM is kept behind its HTTP boundary instead of imported as a benchmark
-    dependency. This lets the reference Qwen3-8B pooling encoder and CLM head
-    run on a separate NVIDIA host while the benchmark runner stays unchanged.
+    dependency. The Qwen3-8B pooling encoder and CLM head may run on a remote
+    accelerator or through the managed local llama.cpp GGUF runtime while the
+    benchmark contract stays unchanged.
     """
 
     name = "clm"
