@@ -24,6 +24,14 @@ suite:
 
   quality_warmups: 1
 
+  # Execution resilience & capacity settings
+  benchmark_timeout_seconds: 360
+  chunk_max_chars: 4000
+  chunk_overlap_chars: 256
+  max_output_tokens: 4096
+  adaptive_subdivision: true
+  min_split_chars: 500
+
   latency:
     case_ids:
       - lettera.txt

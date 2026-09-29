@@ -16,6 +16,11 @@ from redact_bench.profiles import (
     load_contract_metadata,
     load_profiles,
 )
+from redact_bench.resilient_evaluator import (
+    ResilientExecutionSettings,
+    clean_exception_details,
+    evaluate_case_resiliently,
+)
 from redact_bench.segmentation import TextSegment, segment_text
 
 
@@ -99,7 +104,17 @@ class KorgisController:
 
 
 class KorgisRedactProvider:
-    def __init__(self, model: str, profiles_path: str) -> None:
+    def __init__(
+        self,
+        model: str,
+        profiles_path: str,
+        *,
+        timeout: float | None = None,
+        chunk_max_chars: int | None = None,
+        chunk_overlap_chars: int | None = None,
+        max_output_tokens: int | None = None,
+        adaptive_subdivision: bool | None = None,
+    ) -> None:
         self.model = model
         self.profiles_path = profiles_path
         base_url = os.getenv(
@@ -108,155 +123,70 @@ class KorgisRedactProvider:
         ).rstrip("/")
         contract = load_contract_metadata(profiles_path)
         self.max_tokens = int(
-            os.getenv(
+            max_output_tokens
+            if max_output_tokens is not None
+            else os.getenv(
                 "REDACT_BENCH_MAX_OUTPUT_TOKENS",
                 str(contract.get("max_output_tokens", 4096)),
             )
         )
         self.chunk_max_chars = int(
-            os.getenv(
+            chunk_max_chars
+            if chunk_max_chars is not None
+            else os.getenv(
                 "REDACT_BENCH_CHUNK_MAX_CHARS",
                 str(contract.get("chunk_max_chars", 4000)),
             )
         )
         self.chunk_overlap_chars = int(
-            os.getenv(
+            chunk_overlap_chars
+            if chunk_overlap_chars is not None
+            else os.getenv(
                 "REDACT_BENCH_CHUNK_OVERLAP_CHARS",
                 str(contract.get("chunk_overlap_chars", 256)),
             )
+        )
+        self.timeout = float(
+            timeout
+            if timeout is not None
+            else os.getenv(
+                "BENCHMARK_TIMEOUT_SECONDS",
+                str(contract.get("benchmark_timeout_seconds", 360)),
+            )
+        )
+        effective_adaptive = (
+            adaptive_subdivision
+            if adaptive_subdivision is not None
+            else os.getenv("REDACT_BENCH_ADAPTIVE_SUBDIVISION", "1").lower() not in {"0", "false", "no"}
+        )
+        self.settings = ResilientExecutionSettings(
+            timeout_seconds=self.timeout,
+            chunk_max_chars=self.chunk_max_chars,
+            chunk_overlap_chars=self.chunk_overlap_chars,
+            max_output_tokens=self.max_tokens,
+            adaptive_subdivision=effective_adaptive,
         )
         self.execution_settings = {
             "max_output_tokens": self.max_tokens,
             "chunk_max_chars": self.chunk_max_chars,
             "chunk_overlap_chars": self.chunk_overlap_chars,
+            "benchmark_timeout_seconds": self.timeout,
+            "adaptive_subdivision": effective_adaptive,
         }
         self.client = OpenAI(
             base_url=base_url,
             api_key=os.getenv("KORGIS_API_KEY", "local"),
-            timeout=float(os.getenv("BENCHMARK_TIMEOUT_SECONDS", "120")),
+            timeout=self.timeout,
             max_retries=0,
         )
 
     def evaluate(self, case: Case) -> InferenceResult:
-        """Evaluate one case using the same bounded segmentation as RedactGuard v2."""
-        segments = segment_text(
-            case.text,
-            max_chars=self.chunk_max_chars,
-            overlap_chars=self.chunk_overlap_chars,
-        )
-        if len(segments) == 1:
-            result = self._evaluate_segment(case, segments[0])
-            result.segment_count = 1
-            result.successful_segments = 1 if result.valid else 0
-            result.failed_segment_index = None if result.valid else 0
-            return result
-
-        total_latency_ms = 0.0
-        input_tokens: int | None = None
-        output_tokens: int | None = None
-        raw_item_count = 0
-        resolved_item_count = 0
-        unresolved_item_count = 0
-        findings: list[Finding] = []
-        seen: set[tuple[int, int, str]] = set()
-        raw_segments: list[dict[str, Any]] = []
-
-        for index, segment in enumerate(segments):
-            local_case = Case(
-                case_id=case.case_id,
-                profile=case.profile,
-                text=segment.text,
-                gold=(),
-                tags=case.tags,
-            )
-            result = self._evaluate_segment(local_case, segment)
-            total_latency_ms += result.latency_ms
-            input_tokens = _add_optional(input_tokens, result.input_tokens)
-            output_tokens = _add_optional(output_tokens, result.output_tokens)
-            raw_segments.append(
-                {
-                    "index": index,
-                    "start": segment.start,
-                    "end": segment.end,
-                    "status": result.status,
-                    "finish_reason": result.finish_reason,
-                    "content": result.raw_content,
-                    "error_type": result.error_type,
-                    "error": result.error,
-                }
-            )
-
-            if not result.valid:
-                return InferenceResult(
-                    case_id=case.case_id,
-                    model=self.model,
-                    valid=False,
-                    latency_ms=total_latency_ms,
-                    findings=[],
-                    raw_content=json.dumps(raw_segments, ensure_ascii=False),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    error=(
-                        f"segment {index + 1}/{len(segments)}: {result.error}"
-                        if result.error
-                        else f"segment {index + 1}/{len(segments)} failed"
-                    ),
-                    status=result.status,
-                    error_type=result.error_type,
-                    http_status=result.http_status,
-                    finish_reason=result.finish_reason,
-                    raw_item_count=raw_item_count + result.raw_item_count,
-                    resolved_item_count=resolved_item_count + result.resolved_item_count,
-                    unresolved_item_count=(
-                        unresolved_item_count + result.unresolved_item_count
-                    ),
-                    segment_count=len(segments),
-                    successful_segments=index,
-                    failed_segment_index=index,
-                )
-
-            raw_item_count += result.raw_item_count
-            resolved_item_count += result.resolved_item_count
-            unresolved_item_count += result.unresolved_item_count
-            for finding in result.findings:
-                global_finding = Finding(
-                    pii_type=finding.pii_type,
-                    value=case.text[
-                        segment.start + finding.start : segment.start + finding.end
-                    ],
-                    start=segment.start + finding.start,
-                    end=segment.start + finding.end,
-                    field_name=finding.field_name,
-                    field_description=finding.field_description,
-                )
-                key = (
-                    global_finding.start,
-                    global_finding.end,
-                    global_finding.pii_type,
-                )
-                if key not in seen:
-                    seen.add(key)
-                    findings.append(global_finding)
-
-        return InferenceResult(
-            case_id=case.case_id,
+        """Evaluate one case using bounded segmentation with adaptive subdivision."""
+        return evaluate_case_resiliently(
+            case,
             model=self.model,
-            valid=True,
-            latency_ms=total_latency_ms,
-            findings=sorted(
-                findings,
-                key=lambda item: (item.start, item.end, item.pii_type),
-            ),
-            raw_content=json.dumps(raw_segments, ensure_ascii=False),
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            status="success",
-            finish_reason="stop",
-            raw_item_count=raw_item_count,
-            resolved_item_count=resolved_item_count,
-            unresolved_item_count=unresolved_item_count,
-            segment_count=len(segments),
-            successful_segments=len(segments),
+            evaluator=self._evaluate_segment,
+            settings=self.settings,
         )
 
     def _evaluate_segment(
@@ -379,22 +309,13 @@ class KorgisRedactProvider:
                 unresolved_item_count=resolution.unresolved_items,
             )
         except Exception as exc:
-            status_code = getattr(exc, "status_code", None)
-            error_type = type(exc).__name__
-            lowered = error_type.lower()
-            status = (
-                "transport_error"
-                if "connection" in lowered or "timeout" in lowered
-                else "backend_error"
-                if status_code is not None
-                else "provider_error"
-            )
+            error_msg, status, status_code = clean_exception_details(exc, self.timeout)
             return self._failure(
                 case=case,
                 started=started,
                 status=status,
-                error_type=error_type,
-                error=f"{error_type}: {exc}",
+                error_type=type(exc).__name__,
+                error=error_msg,
                 http_status=status_code,
                 raw_content=content,
                 finish_reason=finish_reason,

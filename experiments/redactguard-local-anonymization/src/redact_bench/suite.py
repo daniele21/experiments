@@ -39,6 +39,11 @@ class SuiteConfig:
     latency_repeats: int
     ensure_models: bool
     korgis_startup_timeout_seconds: float
+    benchmark_timeout_seconds: float = 360.0
+    chunk_max_chars: int = 4000
+    chunk_overlap_chars: int = 256
+    max_output_tokens: int = 4096
+    adaptive_subdivision: bool = True
 
 
 def _resolve_path(value: str, root: Path) -> Path:
@@ -80,15 +85,42 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         korgis_startup_timeout_seconds=float(
             suite.get("korgis_startup_timeout_seconds", 600)
         ),
+        benchmark_timeout_seconds=float(
+            suite.get("benchmark_timeout_seconds", 360.0)
+        ),
+        chunk_max_chars=int(suite.get("chunk_max_chars", 4000)),
+        chunk_overlap_chars=int(suite.get("chunk_overlap_chars", 256)),
+        max_output_tokens=int(suite.get("max_output_tokens", 4096)),
+        adaptive_subdivision=bool(suite.get("adaptive_subdivision", True)),
     )
 
 
 @contextmanager
-def _suite_environment(*, base_url: str, korgis_sha: str | None) -> Iterator[None]:
+def _suite_environment(
+    *,
+    base_url: str,
+    korgis_sha: str | None,
+    timeout: float | None = None,
+    chunk_max_chars: int | None = None,
+    chunk_overlap_chars: int | None = None,
+    max_output_tokens: int | None = None,
+    adaptive_subdivision: bool | None = None,
+) -> Iterator[None]:
     keys = {
         "KORGIS_BASE_URL": base_url,
         "KORGIS_SOURCE_SHA": korgis_sha or "",
     }
+    if timeout is not None:
+        keys["BENCHMARK_TIMEOUT_SECONDS"] = str(timeout)
+    if chunk_max_chars is not None:
+        keys["REDACT_BENCH_CHUNK_MAX_CHARS"] = str(chunk_max_chars)
+    if chunk_overlap_chars is not None:
+        keys["REDACT_BENCH_CHUNK_OVERLAP_CHARS"] = str(chunk_overlap_chars)
+    if max_output_tokens is not None:
+        keys["REDACT_BENCH_MAX_OUTPUT_TOKENS"] = str(max_output_tokens)
+    if adaptive_subdivision is not None:
+        keys["REDACT_BENCH_ADAPTIVE_SUBDIVISION"] = "1" if adaptive_subdivision else "0"
+
     previous = {key: os.environ.get(key) for key in keys}
     try:
         for key, value in keys.items():
@@ -167,6 +199,11 @@ def run_managed_suite(
         with _suite_environment(
             base_url=config.korgis_base_url,
             korgis_sha=source_sha,
+            timeout=config.benchmark_timeout_seconds,
+            chunk_max_chars=config.chunk_max_chars,
+            chunk_overlap_chars=config.chunk_overlap_chars,
+            max_output_tokens=config.max_output_tokens,
+            adaptive_subdivision=config.adaptive_subdivision,
         ):
             for index, model in enumerate(models, start=1):
                 _write_status(

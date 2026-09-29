@@ -420,7 +420,7 @@ async function discoverRuns() {
   const rootDirectories = await listDirectories(RESULTS_ROOT);
 
   for (const name of rootDirectories) {
-    if (SUITE_CONTAINERS.includes(name)) continue;
+    if (SUITE_CONTAINERS.includes(name) || name.endsWith(".backup") || name.startsWith(".")) continue;
     const run = await summarizeRun(path.join(RESULTS_ROOT, name), { source: "run" });
     if (run) runs.push(run);
   }
@@ -528,6 +528,25 @@ async function buildOverview() {
     return 3;
   }
 
+  function isBetterCandidate(candidate, current) {
+    if (!current) return true;
+    const tierCand = candidateTier(candidate.run);
+    const tierCurr = candidateTier(current.run);
+    if (tierCand !== tierCurr) return tierCand < tierCurr;
+
+    // Prefer run with higher evaluated cases coverage
+    const candCases =
+      candidate.metrics?.micro?.evaluated_cases ?? candidate.metrics?.cases ?? 0;
+    const currCases =
+      current.metrics?.micro?.evaluated_cases ?? current.metrics?.cases ?? 0;
+    if (candCases !== currCases) return candCases > currCases;
+
+    // If tier and coverage are identical, prefer the more recent run
+    const timeCand = Date.parse(candidate.run.createdAt ?? "") || 0;
+    const timeCurr = Date.parse(current.run.createdAt ?? "") || 0;
+    return timeCand > timeCurr;
+  }
+
   for (const run of runs) {
     if (run.kind === "latency") continue;
     const detail = await loadRunFromSummary(run);
@@ -543,7 +562,7 @@ async function buildOverview() {
         preflight: detail.preflight?.[model] ?? metrics?.preflight ?? null,
       };
       const current = bestByModel.get(model);
-      if (!current || candidateTier(run) < candidateTier(current.run)) {
+      if (isBetterCandidate(candidate, current)) {
         bestByModel.set(model, candidate);
       }
     }

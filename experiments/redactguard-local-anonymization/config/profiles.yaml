@@ -6,6 +6,7 @@ source:
   max_output_tokens: 4096
   chunk_max_chars: 4000
   chunk_overlap_chars: 256
+  benchmark_timeout_seconds: 360
   prompt_builder: anonimizer/services/prompt_builder.py
   postprocessing: anonimizer/services/pii_detector.py
 profiles:
@@ -199,17 +200,19 @@ profiles:
       - Via Manzoni 10, 20121 Milano
       - sede legale in Roma
     private_date:
-      description: Date associated with a contract, hearing, filing, or legal event.
+      description: Specific calendar date associated with a contract, hearing, filing, or legal event (calendar dates only; do not redact durations like "24 mesi" or monetary amounts).
       examples:
       - 10/03/2025
       - sottoscritto in data 15.01.2024
     account_number:
-      description: Fiscal/tax/VAT identifier, case number, contract ID, filing number,
-        document reference, or comparable identifier that identifies or links a party
+      description: Fiscal/tax/VAT identifier, case number, contract ID, bank account, IBAN,
+        filing number, document reference, or comparable identifier that identifies or links a party
         or protected legal record.
       examples:
       - 'CF: RSSMRA85M01H501Z'
       - P.IVA 12345678901
+      - IBAN IT65A0542811101000000123456
+      - conto corrente 01234567897
       - RG n. 1234/2024
     private_url:
       description: Personal URL, portal link, or document sharing link.

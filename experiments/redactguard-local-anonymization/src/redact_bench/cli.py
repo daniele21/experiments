@@ -119,8 +119,34 @@ def compare(
         "--preflight/--no-preflight",
         help="Gate model-quality scoring on a tiny structured-output preflight.",
     ),
+    timeout: float | None = typer.Option(
+        None,
+        "--timeout",
+        help="Per-segment timeout in seconds (default: 360s or config).",
+    ),
+    chunk_max_chars: int | None = typer.Option(
+        None,
+        "--chunk-max-chars",
+        help="Maximum characters per segment chunk.",
+    ),
+    adaptive_subdivision: bool = typer.Option(
+        True,
+        "--adaptive-subdivision/--no-adaptive-subdivision",
+        help="Adaptively subdivide dense segments on failure.",
+    ),
+    cases: str | None = typer.Option(
+        None,
+        "--cases",
+        "--case-ids",
+        help="Optional comma-separated list of case IDs/filenames to evaluate (e.g. tabella_piccola.xlsx,contratto.doc).",
+    ),
 ) -> None:
     selected = [item.strip() for item in models.split(",") if item.strip()]
+    selected_cases = (
+        [item.strip() for item in cases.split(",") if item.strip()]
+        if cases
+        else None
+    )
     try:
         output = run_compare(
             models=selected,
@@ -130,6 +156,10 @@ def compare(
             warmups=warmups,
             progress=TerminalProgress() if progress else None,
             preflight=preflight,
+            timeout=timeout,
+            chunk_max_chars=chunk_max_chars,
+            adaptive_subdivision=adaptive_subdivision,
+            case_ids=selected_cases,
         )
     except KorgisUnavailableError as exc:
         _exit_korgis_unavailable(exc)
@@ -150,6 +180,21 @@ def latency(
         "--preflight/--no-preflight",
         help="Require the model to satisfy the structured-output contract first.",
     ),
+    timeout: float | None = typer.Option(
+        None,
+        "--timeout",
+        help="Per-segment timeout in seconds (default: 360s or config).",
+    ),
+    chunk_max_chars: int | None = typer.Option(
+        None,
+        "--chunk-max-chars",
+        help="Maximum characters per segment chunk.",
+    ),
+    adaptive_subdivision: bool = typer.Option(
+        True,
+        "--adaptive-subdivision/--no-adaptive-subdivision",
+        help="Adaptively subdivide dense segments on failure.",
+    ),
 ) -> None:
     """Run a dedicated repeated latency suite without changing quality scoring."""
     selected = [item.strip() for item in models.split(",") if item.strip()]
@@ -164,6 +209,9 @@ def latency(
             repeats=repeats,
             case_ids=latency_cases,
             preflight=preflight,
+            timeout=timeout,
+            chunk_max_chars=chunk_max_chars,
+            adaptive_subdivision=adaptive_subdivision,
         )
     except KorgisUnavailableError as exc:
         _exit_korgis_unavailable(exc)

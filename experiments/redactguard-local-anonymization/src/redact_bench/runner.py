@@ -39,6 +39,12 @@ def run_compare(
     warmups: int = 1,
     progress: ProgressReporter | None = None,
     preflight: bool = True,
+    timeout: float | None = None,
+    chunk_max_chars: int | None = None,
+    chunk_overlap_chars: int | None = None,
+    max_output_tokens: int | None = None,
+    adaptive_subdivision: bool | None = None,
+    case_ids: list[str] | None = None,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -46,7 +52,14 @@ def run_compare(
     output = Path(results_dir) / run_id
     output.mkdir(parents=True, exist_ok=True)
 
-    cases = load_dataset(dataset_path)
+    all_cases = load_dataset(dataset_path)
+    if case_ids:
+        by_id = {case.case_id: case for case in all_cases}
+        cases = [by_id[cid] for cid in case_ids if cid in by_id]
+        if not cases:
+            raise ValueError(f"No matching cases found in {dataset_path} for {case_ids}")
+    else:
+        cases = all_cases
     contract = load_contract_metadata(profiles_path)
     contract_digest = contract_snapshot_sha256(profiles_path)
     reporter = progress or NullProgress()
@@ -67,7 +80,15 @@ def run_compare(
         reporter.model_started(model=model, index=model_index, total=len(models))
         controller.activate(model)
         identities[model] = controller.model_identity(model)
-        provider = KorgisRedactProvider(model, profiles_path)
+        provider = KorgisRedactProvider(
+            model,
+            profiles_path,
+            timeout=timeout,
+            chunk_max_chars=chunk_max_chars,
+            chunk_overlap_chars=chunk_overlap_chars,
+            max_output_tokens=max_output_tokens,
+            adaptive_subdivision=adaptive_subdivision,
+        )
         inference_settings[model] = dict(provider.execution_settings)
 
         if preflight:
@@ -229,6 +250,11 @@ def run_latency(
     repeats: int = 30,
     case_ids: list[str] | None = None,
     preflight: bool = True,
+    timeout: float | None = None,
+    chunk_max_chars: int | None = None,
+    chunk_overlap_chars: int | None = None,
+    max_output_tokens: int | None = None,
+    adaptive_subdivision: bool | None = None,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -254,7 +280,15 @@ def run_latency(
     for model in models:
         controller.activate(model)
         identities[model] = controller.model_identity(model)
-        provider = KorgisRedactProvider(model, profiles_path)
+        provider = KorgisRedactProvider(
+            model,
+            profiles_path,
+            timeout=timeout,
+            chunk_max_chars=chunk_max_chars,
+            chunk_overlap_chars=chunk_overlap_chars,
+            max_output_tokens=max_output_tokens,
+            adaptive_subdivision=adaptive_subdivision,
+        )
         inference_settings[model] = dict(provider.execution_settings)
 
         if preflight:

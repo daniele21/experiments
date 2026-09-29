@@ -1,0 +1,64 @@
+# ==============================================================================
+# Remediation Targets Configuration
+#
+# Defines the specific failing models and documents from benchmark
+# run 20260929T070819Z-e9070dbe, allowing selective and fast re-evaluation.
+# ==============================================================================
+
+dataset: "data/realistic"
+profiles: "config/profiles.yaml"
+results_dir: "results"
+
+targets:
+  qwen:
+    name: "qwen"
+    description: "Re-run tabella_piccola.xlsx on Qwen models (resolves 120s timeout)"
+    models:
+      - "qwen3.5-4b-q4km"
+      - "qwen3.5-9b-q4km"
+    cases:
+      - "tabella_piccola.xlsx"
+
+  nemotron:
+    name: "nemotron"
+    description: "Re-run 5 failing documents on nemotron-nano-4b (resolves 502 loop and timeout)"
+    models:
+      - "nemotron-nano-4b"
+    cases:
+      - "tabella_piccola.xlsx"
+      - "contratto.doc"
+      - "contratto.docx"
+      - "scansione_con_immagini.pdf"
+      - "scansione_nuda.pdf"
+
+  nemotron-q8:
+    name: "nemotron-q8"
+    description: "Re-run 4 failing documents on nemotron-nano-4b-q8"
+    models:
+      - "nemotron-nano-4b-q8"
+    cases:
+      - "tabella_piccola.xlsx"
+      - "contratto.doc"
+      - "contratto.docx"
+      - "contratto.pdf"
+
+  all:
+    name: "all"
+    description: "Re-run each model only against its specific failing cases"
+    execution_mode: "per_model"
+    model_cases:
+      qwen3.5-4b-q4km:
+        - "tabella_piccola.xlsx"
+      qwen3.5-9b-q4km:
+        - "tabella_piccola.xlsx"
+      nemotron-nano-4b:
+        - "tabella_piccola.xlsx"
+        - "contratto.doc"
+        - "contratto.docx"
+        - "scansione_con_immagini.pdf"
+        - "scansione_nuda.pdf"
+      nemotron-nano-4b-q8:
+        - "tabella_piccola.xlsx"
+        - "contratto.doc"
+        - "contratto.docx"
+        - "contratto.pdf"

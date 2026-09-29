@@ -487,10 +487,16 @@ export default function App() {
                       <h2>Failure explorer</h2>
                     </div>
                     <span className="panel-note">
-                      {failures.length} case{failures.length === 1 ? "" : "s"}
+                      {failures.length} caso/i per {selectedModel ?? "modello"}
                     </span>
                   </div>
-                  <FailureExplorer failures={failures} />
+                  <FailureExplorer
+                    failures={failures}
+                    selectedModel={selectedModel}
+                    models={selectedRun.models}
+                    allFailures={detail?.failures}
+                    onSelectModel={setSelectedModel}
+                  />
                 </section>
               </>
             ) : (
