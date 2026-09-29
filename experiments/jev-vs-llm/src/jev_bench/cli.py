@@ -16,6 +16,7 @@ from jev_bench.benchmark_data import (
     calibration_public_cases,
     prepare_public_data,
 )
+from jev_bench.clm_runtime import CLMLocalRuntimeManager, load_clm_runtime_spec
 from jev_bench.costs import pricing_metadata
 from jev_bench.manifest import write_manifest
 from jev_bench.providers.clm import CLMProvider
@@ -45,6 +46,7 @@ DEFAULT_REPORT = Path("results/report.html")
 PUBLIC_RAW = Path("results/raw/public_results.csv")
 PUBLIC_REPORT = Path("results/public_report.html")
 MANIFEST_DIR = Path("results/manifests")
+CLM_RUNTIME_CONFIG = Path(__file__).resolve().parents[2] / "clm_runtimes.yaml"
 
 DEFAULT_OPENAI_MODELS = [
     "gpt-5.6-luna",
@@ -554,8 +556,42 @@ def compare_public(
     ] = False,
     clm_model: Annotated[
         str | None,
-        typer.Option(help="CLM model/checkpoint name. Defaults to CLM_MODEL."),
+        typer.Option(help="CLM served model/checkpoint name. Defaults to CLM_MODEL."),
     ] = None,
+    clm_runtime: Annotated[
+        str | None,
+        typer.Option(
+            help="Managed CLM runtime id from clm_runtimes.yaml; implies a local GGUF encoder."
+        ),
+    ] = None,
+    clm_runtime_config: Annotated[
+        Path,
+        typer.Option(help="CLM managed runtime registry YAML."),
+    ] = CLM_RUNTIME_CONFIG,
+    clm_encoder_path: Annotated[
+        Path | None,
+        typer.Option(help="Local CLM encoder GGUF path; overrides the runtime path_env."),
+    ] = None,
+    clm_llama_server_bin: Annotated[
+        str | None,
+        typer.Option(help="llama-server executable for a managed CLM runtime."),
+    ] = None,
+    clm_serve_bin: Annotated[
+        str | None,
+        typer.Option(help="clm-serve executable for a managed CLM runtime."),
+    ] = None,
+    clm_checkpoint: Annotated[
+        Path | None,
+        typer.Option(help="Optional local CLM head checkpoint for a managed runtime."),
+    ] = None,
+    clm_runtime_startup_timeout: Annotated[
+        float,
+        typer.Option(help="Seconds allowed for managed CLM runtime startup."),
+    ] = 300.0,
+    keep_clm_runtime: Annotated[
+        bool,
+        typer.Option(help="Leave a managed CLM runtime running after compare-public exits."),
+    ] = False,
     include_local: Annotated[
         bool,
         typer.Option(help="Also benchmark local Korgis models."),
@@ -590,9 +626,61 @@ def compare_public(
             "Use --allow-moving-jev-model only for exploratory runs."
         )
 
+    if clm_runtime and not include_clm:
+        raise typer.BadParameter("--clm-runtime requires --include-clm")
+    if clm_runtime_startup_timeout <= 0:
+        raise typer.BadParameter("clm-runtime-startup-timeout must be positive")
+
+    clm_runtime_manager: CLMLocalRuntimeManager | None = None
+    clm_runtime_identity: dict = {}
+    clm_runtime_spec = None
+
+    if include_clm and clm_runtime:
+        try:
+            clm_runtime_spec = load_clm_runtime_spec(clm_runtime_config, clm_runtime)
+        except (ValueError, TypeError, KeyError) as exc:
+            raise typer.BadParameter(str(exc)) from exc
+        if clm_model and clm_model != clm_runtime_spec.served_model:
+            raise typer.BadParameter(
+                f"Managed runtime {clm_runtime_spec.runtime_id!r} serves "
+                f"{clm_runtime_spec.served_model!r}, not {clm_model!r}."
+            )
+        clm_runtime_manager = CLMLocalRuntimeManager(
+            clm_runtime_spec,
+            encoder_path=clm_encoder_path,
+            llama_server_bin=clm_llama_server_bin,
+            clm_serve_bin=clm_serve_bin,
+            clm_checkpoint=clm_checkpoint,
+            startup_timeout=clm_runtime_startup_timeout,
+            log_dir=Path("results/logs"),
+        )
+        typer.echo(f"Starting managed CLM runtime: {clm_runtime_spec.runtime_id}...")
+        try:
+            clm_runtime_identity = clm_runtime_manager.start()
+        except RuntimeError as exc:
+            raise typer.BadParameter(f"Managed CLM runtime failed: {exc}") from exc
+        clm_model = clm_runtime_spec.served_model
+        os.environ["CLM_BASE_URL"] = clm_runtime_manager.clm_base_url
+
     model_matrix = _model_matrix(models) if include_openai else []
     minicpm_provider = MiniCPMProvider(model=minicpm_model) if include_minicpm else None
-    clm_provider = CLMProvider(model=clm_model) if include_clm else None
+    clm_provider = (
+        CLMProvider(
+            model=clm_model,
+            base_url=(
+                clm_runtime_manager.clm_base_url
+                if clm_runtime_manager is not None
+                else None
+            ),
+            benchmark_model_id=(
+                clm_runtime_spec.benchmark_model_id
+                if clm_runtime_spec is not None
+                else None
+            ),
+        )
+        if include_clm
+        else None
+    )
     local_matrix = _local_model_matrix(local_models) if include_local else []
     sizes = PUBLIC_PROFILES[profile]
     prepare_public_data(cache_dir)
@@ -638,7 +726,11 @@ def compare_public(
         frames.append(_tag_run(frame, group, f"public-{profile}"))
 
     if clm_provider is not None:
-        typer.echo(f"Running public {profile} benchmark: CLM ({clm_provider.model})...")
+        clm_label = clm_provider.benchmark_model_id or clm_provider.model
+        typer.echo(
+            f"Running public {profile} benchmark: CLM "
+            f"({clm_label}; served={clm_provider.model})..."
+        )
         frame = run_public_classification(
             clm_provider,
             cache_dir=cache_dir,
@@ -673,6 +765,7 @@ def compare_public(
             "include_openai": include_openai,
             "include_minicpm": minicpm_provider is not None,
             "include_clm": clm_provider is not None,
+            "clm_runtime_identity": clm_runtime_identity or None,
             "include_korgis": bool(local_matrix),
             "routing_cases": sizes["routing"],
             "calibration_in_scope": sizes["in_scope"],
@@ -685,7 +778,9 @@ def compare_public(
             [minicpm_provider.model] if minicpm_provider is not None else []
         ),
         requested_clm_models=(
-            [clm_provider.model] if clm_provider is not None else []
+            [clm_provider.benchmark_model_id or clm_provider.model]
+            if clm_provider is not None
+            else []
         ),
         requested_korgis_models=local_matrix,
         korgis_identity=korgis_identity,
@@ -697,11 +792,23 @@ def compare_public(
     if minicpm_provider is not None:
         typer.echo(f"MiniCPM API model: {minicpm_provider.model}")
     if clm_provider is not None:
-        typer.echo(f"CLM model: {clm_provider.model}")
+        typer.echo(
+            "CLM model: "
+            f"{clm_provider.benchmark_model_id or clm_provider.model} "
+            f"(served: {clm_provider.model})"
+        )
     if local_matrix:
         typer.echo(f"Korgis models: {', '.join(local_matrix)}")
     typer.echo(f"Manifest: {manifest}")
     typer.echo(f"Dashboard: {html}")
+    if clm_runtime_manager is not None:
+        if keep_clm_runtime:
+            clm_runtime_manager.detach()
+            typer.echo(
+                f"Managed CLM runtime left running at {clm_runtime_manager.clm_base_url}"
+            )
+        else:
+            clm_runtime_manager.stop()
 
 
 @app.command("compare-local")
