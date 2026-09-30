@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "clienti.csv.md",
   "profile": "financial",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -23,7 +23,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 50,
@@ -33,6 +34,13 @@
       "private_email": 10,
       "private_person": 10,
       "private_phone": 10
+    },
+    "by_subtype": {
+      "account_number:iban": 10,
+      "account_number:vat_number": 10,
+      "private_email:contact_email": 10,
+      "private_person:named_person": 10,
+      "private_phone:contact_phone": 10
     }
   },
   "entities": [
@@ -325,7 +333,8 @@
       "pii_type": "private_person",
       "value": "Mario Rossi",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 91,
@@ -333,7 +342,8 @@
       "pii_type": "private_email",
       "value": "mario.rossi@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 116,
@@ -341,7 +351,8 @@
       "pii_type": "private_phone",
       "value": "+39 02 1234567",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 133,
@@ -349,7 +360,8 @@
       "pii_type": "account_number",
       "value": "01234567897",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 147,
@@ -357,7 +369,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 179,
@@ -365,7 +378,8 @@
       "pii_type": "private_person",
       "value": "Anna Bianchi",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 194,
@@ -373,7 +387,8 @@
       "pii_type": "private_email",
       "value": "anna.bianchi@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 220,
@@ -381,7 +396,8 @@
       "pii_type": "private_phone",
       "value": "+39 335 1234567",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 238,
@@ -389,7 +405,8 @@
       "pii_type": "account_number",
       "value": "98765432103",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 252,
@@ -397,7 +414,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 284,
@@ -405,7 +423,8 @@
       "pii_type": "private_person",
       "value": "Luigi Verdi",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 298,
@@ -413,7 +432,8 @@
       "pii_type": "private_email",
       "value": "luigi.verdi@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 323,
@@ -421,7 +441,8 @@
       "pii_type": "private_phone",
       "value": "+39 06 7654321",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 340,
@@ -429,7 +450,8 @@
       "pii_type": "account_number",
       "value": "01234567897",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 354,
@@ -437,7 +459,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 386,
@@ -445,7 +468,8 @@
       "pii_type": "private_person",
       "value": "Giulia Neri",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 400,
@@ -453,7 +477,8 @@
       "pii_type": "private_email",
       "value": "giulia.neri@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 425,
@@ -461,7 +486,8 @@
       "pii_type": "private_phone",
       "value": "+39 011 2233445",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 443,
@@ -469,7 +495,8 @@
       "pii_type": "account_number",
       "value": "98765432103",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 457,
@@ -477,7 +504,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 489,
@@ -485,7 +513,8 @@
       "pii_type": "private_person",
       "value": "Paolo Gialli",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 504,
@@ -493,7 +522,8 @@
       "pii_type": "private_email",
       "value": "paolo.gialli@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 530,
@@ -501,7 +531,8 @@
       "pii_type": "private_phone",
       "value": "+39 051 998877",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 547,
@@ -509,7 +540,8 @@
       "pii_type": "account_number",
       "value": "01234567897",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 561,
@@ -517,7 +549,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 593,
@@ -525,7 +558,8 @@
       "pii_type": "private_person",
       "value": "Chiara Blu",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 606,
@@ -533,7 +567,8 @@
       "pii_type": "private_email",
       "value": "chiara.blu@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 630,
@@ -541,7 +576,8 @@
       "pii_type": "private_phone",
       "value": "+39 081 445566",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 647,
@@ -549,7 +585,8 @@
       "pii_type": "account_number",
       "value": "98765432103",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 661,
@@ -557,7 +594,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 693,
@@ -565,7 +603,8 @@
       "pii_type": "private_person",
       "value": "Marco Grigi",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 707,
@@ -573,7 +612,8 @@
       "pii_type": "private_email",
       "value": "marco.grigi@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 732,
@@ -581,7 +621,8 @@
       "pii_type": "private_phone",
       "value": "+39 045 112233",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 749,
@@ -589,7 +630,8 @@
       "pii_type": "account_number",
       "value": "01234567897",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 763,
@@ -597,7 +639,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 795,
@@ -605,7 +648,8 @@
       "pii_type": "private_person",
       "value": "Sara Viola",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 808,
@@ -613,7 +657,8 @@
       "pii_type": "private_email",
       "value": "sara.viola@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 832,
@@ -621,7 +666,8 @@
       "pii_type": "private_phone",
       "value": "+39 055 667788",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 849,
@@ -629,7 +675,8 @@
       "pii_type": "account_number",
       "value": "98765432103",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 863,
@@ -637,7 +684,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 895,
@@ -645,7 +693,8 @@
       "pii_type": "private_person",
       "value": "Davide Rosa",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 909,
@@ -653,7 +702,8 @@
       "pii_type": "private_email",
       "value": "davide.rosa@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 934,
@@ -661,7 +711,8 @@
       "pii_type": "private_phone",
       "value": "+39 010 334455",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 951,
@@ -669,7 +720,8 @@
       "pii_type": "account_number",
       "value": "01234567897",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 965,
@@ -677,7 +729,8 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     },
     {
       "start": 997,
@@ -685,7 +738,8 @@
       "pii_type": "private_person",
       "value": "Elena Verde",
       "source_rule": "table:csv:Nome",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "named_person"
     },
     {
       "start": 1011,
@@ -693,7 +747,8 @@
       "pii_type": "private_email",
       "value": "elena.verde@esempio.it",
       "source_rule": "table:csv:Email",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1036,
@@ -701,7 +756,8 @@
       "pii_type": "private_phone",
       "value": "+39 049 556677",
       "source_rule": "table:csv:Telefono",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1053,
@@ -709,7 +765,8 @@
       "pii_type": "account_number",
       "value": "98765432103",
       "source_rule": "table:csv:P.IVA",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1067,
@@ -717,7 +774,14 @@
       "pii_type": "account_number",
       "value": "IT65A0542811101000000123456",
       "source_rule": "table:csv:IBAN",
-      "structure": null
+      "structure": null,
+      "pii_subtype": "iban"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
