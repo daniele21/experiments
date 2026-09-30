@@ -17,7 +17,15 @@ def _resolve_entities(text: str, entities: list[dict]) -> tuple[Span, ...]:
             idx = text.find(value, start)
             if idx < 0:
                 break
-            spans.append(Span(idx, idx + len(value), pii_type, value))
+            spans.append(
+                Span(
+                    idx,
+                    idx + len(value),
+                    pii_type,
+                    value,
+                    entity.get("pii_subtype"),
+                )
+            )
             found += 1
             if not entity.get("all_occurrences", False):
                 break
@@ -43,6 +51,18 @@ def load_jsonl(path: str | Path) -> list[Case]:
                     text=text,
                     gold=_resolve_entities(text, list(row.get("entities", []))),
                     tags=tuple(str(x) for x in row.get("tags", [])),
+                    content_family_id=(
+                        str(row["content_family_id"])
+                        if row.get("content_family_id")
+                        else None
+                    ),
+                    variant_id=(
+                        str(row["variant_id"]) if row.get("variant_id") else None
+                    ),
+                    gold_version=(
+                        str(row["gold_version"]) if row.get("gold_version") else None
+                    ),
+                    human_reviewed=row.get("human_reviewed"),
                 )
             )
     ids = [case.case_id for case in cases]
