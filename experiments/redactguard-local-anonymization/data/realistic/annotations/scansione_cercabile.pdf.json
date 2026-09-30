@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "scansione_cercabile.pdf.md",
   "profile": "legal",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -23,7 +23,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 16,
@@ -33,6 +34,12 @@
       "private_address": 4,
       "private_email": 4,
       "private_person": 4
+    },
+    "by_subtype": {
+      "account_number:iban": 4,
+      "private_address:postal_address": 4,
+      "private_email:contact_email": 4,
+      "private_person:named_person": 4
     }
   },
   "entities": [
@@ -93,7 +100,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 150,
@@ -106,7 +114,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 190,
@@ -119,7 +128,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 203,
@@ -132,7 +142,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 287,
@@ -145,7 +156,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 377,
@@ -158,7 +170,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 417,
@@ -171,7 +184,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 430,
@@ -184,7 +198,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 514,
@@ -197,7 +212,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 604,
@@ -210,7 +226,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 644,
@@ -223,7 +240,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 657,
@@ -236,7 +254,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 741,
@@ -249,7 +268,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 831,
@@ -262,7 +282,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 871,
@@ -275,7 +296,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 884,
@@ -288,7 +310,14 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
