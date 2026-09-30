@@ -91,19 +91,40 @@ function summarizeTypes(spans) {
 }
 
 function modelMetrics(detail, model) {
-  const summary = micro(detail?.metrics?.[model]);
+  const metrics = detail?.metrics?.[model] ?? {};
+  const summary = micro(metrics);
+  const familyMacro = metrics.macro_family ?? metrics.macro ?? {};
   const latency = micro(detail?.latency?.metrics?.[model]);
+  const qualityBasis = metrics.macro_family
+    ? "family macro"
+    : metrics.macro
+      ? "document macro"
+      : "micro";
+
   return {
     model,
-    recall: summary.pii_recall,
-    leakage: summary.system_leakage_rate ?? summary.leakage_rate,
-    qualityLeakage: summary.leakage_rate,
-    precision: summary.precision,
-    success: summary.inference_success_rate ?? summary.valid_output_rate,
+    recall:
+      familyMacro.system_pii_recall ??
+      familyMacro.pii_recall ??
+      summary.system_pii_recall ??
+      summary.pii_recall,
+    leakage:
+      familyMacro.system_leakage_rate ??
+      familyMacro.leakage_rate ??
+      summary.system_leakage_rate ??
+      summary.leakage_rate,
+    qualityLeakage:
+      familyMacro.leakage_rate ?? summary.leakage_rate,
+    precision: familyMacro.precision ?? summary.precision,
+    success:
+      familyMacro.inference_success_rate ??
+      summary.inference_success_rate ??
+      summary.valid_output_rate,
     latency: latency.latency_p95_ms ?? summary.latency_p95_ms,
     evaluated: summary.evaluated_cases ?? summary.cases ?? 0,
     cases: summary.cases ?? 0,
     valid: summary.quality_available !== false,
+    qualityBasis,
   };
 }
 
@@ -378,7 +399,7 @@ function ModelOverview({ detail, models, documents, onOpenDocuments }) {
           <h2>Overall benchmark results</h2>
         </div>
         <p>
-          A small set of comparable metrics. No document-level detail until requested.
+          Quality metrics use semantic-family macro when available, so repeated format variants and very large documents do not dominate the comparison.
         </p>
       </div>
 
@@ -403,7 +424,7 @@ function ModelOverview({ detail, models, documents, onOpenDocuments }) {
             <div className="client-model-name">
               <strong>{row.model}</strong>
               <small>
-                {row.evaluated}/{row.cases || documents.length} cases evaluated
+                {row.evaluated}/{row.cases || documents.length} cases evaluated · {row.qualityBasis}
               </small>
             </div>
             <strong className={`metric-text--${metricTone(row.recall, "recall")}`}>
