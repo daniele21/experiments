@@ -6874,3 +6874,323 @@ input:disabled {
     border-left: 0;
   }
 }
+
+
+/* ==========================================================================
+   PII SCOPE / TAXONOMY
+   Contextual documentation, intentionally secondary to benchmark results.
+   ========================================================================== */
+
+.client-scope-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.client-scope-button:hover {
+  background: var(--accent-soft);
+}
+
+.client-scope-button > span {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+}
+
+.pii-scope-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, #000000 30%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.pii-scope-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 94vw);
+  height: 100%;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, 0.18);
+  animation: pii-scope-enter 150ms ease-out;
+}
+
+@keyframes pii-scope-enter {
+  from {
+    transform: translateX(20px);
+    opacity: 0.65;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.pii-scope-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 24px 16px;
+}
+
+.pii-scope-drawer__header h2 {
+  margin: 4px 0 5px;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.pii-scope-drawer__header p {
+  max-width: 430px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.pii-scope-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pii-scope-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.pii-scope-provenance {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 24px 15px;
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.pii-scope-provenance code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.pii-scope-profiles {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 0 24px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pii-scope-profiles button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pii-scope-profiles button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.pii-scope-profiles button.active {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pii-scope-profiles button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text-soft);
+  font-size: 8px;
+}
+
+.pii-scope-search {
+  display: grid;
+  gap: 5px;
+  padding: 14px 24px;
+}
+
+.pii-scope-search > span {
+  color: var(--muted);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pii-scope-search input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 10.5px;
+}
+
+.pii-scope-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.pii-definition-card {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  scroll-margin: 120px 0;
+  transition: background 120ms ease;
+}
+
+.pii-definition-card:last-child {
+  border-bottom: 0;
+}
+
+.pii-definition-card--focused {
+  margin: 4px -10px;
+  padding: 14px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 11px;
+  background: var(--accent-soft);
+}
+
+.pii-definition-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pii-definition-card__title strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.pii-definition-card__title code {
+  color: var(--text-faint);
+  font-size: 8.5px;
+}
+
+.pii-definition-card > p {
+  margin: 5px 0 0;
+  color: var(--text-soft);
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.pii-definition-card details {
+  margin-top: 8px;
+}
+
+.pii-definition-card summary {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pii-definition-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.pii-definition-examples span {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 8.5px;
+}
+
+.pii-scope-empty {
+  padding: 28px 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-align: center;
+}
+
+.pii-scope-drawer__footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .client-journey-scope {
+    align-items: flex-start;
+  }
+
+  .pii-scope-drawer {
+    width: 100%;
+  }
+
+  .pii-scope-drawer__header,
+  .pii-scope-profiles,
+  .pii-scope-search,
+  .pii-scope-list,
+  .pii-scope-drawer__footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+@media print {
+  .pii-scope-overlay,
+  .client-scope-button {
+    display: none !important;
+  }
+}
