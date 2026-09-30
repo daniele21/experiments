@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "contratto.docx.md",
   "profile": "legal",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -24,7 +24,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 102,
@@ -35,6 +36,14 @@
       "private_email": 29,
       "private_person": 23,
       "private_phone": 22
+    },
+    "by_subtype": {
+      "account_number:iban": 11,
+      "account_number:vat_number": 9,
+      "private_address:postal_address": 8,
+      "private_email:contact_email": 29,
+      "private_person:named_person": 23,
+      "private_phone:contact_phone": 22
     }
   },
   "entities": [
@@ -223,7 +232,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 116,
@@ -236,7 +246,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 160,
@@ -249,7 +260,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 210,
@@ -262,7 +274,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 282,
@@ -275,7 +288,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 687,
@@ -288,7 +302,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 904,
@@ -301,7 +316,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 917,
@@ -314,7 +330,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 946,
@@ -327,7 +344,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 978,
@@ -340,7 +358,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 991,
@@ -353,7 +372,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1022,
@@ -366,7 +386,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1508,
@@ -379,7 +400,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1567,
@@ -392,7 +414,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1581,
@@ -405,7 +428,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1627,
@@ -418,7 +442,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 1823,
@@ -431,7 +456,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1836,
@@ -444,7 +470,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1865,
@@ -457,7 +484,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1897,
@@ -470,7 +498,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1910,
@@ -483,7 +512,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1941,
@@ -496,7 +526,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2427,
@@ -509,7 +540,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2644,
@@ -522,7 +554,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 2657,
@@ -535,7 +568,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2686,
@@ -548,7 +582,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2718,
@@ -561,7 +596,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 2731,
@@ -574,7 +610,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2762,
@@ -587,7 +624,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3153,
@@ -600,7 +638,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3167,
@@ -613,7 +652,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3213,
@@ -626,7 +666,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 3346,
@@ -639,7 +680,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3563,
@@ -652,7 +694,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 3576,
@@ -665,7 +708,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3605,
@@ -678,7 +722,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3637,
@@ -691,7 +736,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 3650,
@@ -704,7 +750,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3681,
@@ -717,7 +764,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4167,
@@ -730,7 +778,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4384,
@@ -743,7 +792,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 4397,
@@ -756,7 +806,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4426,
@@ -769,7 +820,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4458,
@@ -782,7 +834,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 4471,
@@ -795,7 +848,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4502,
@@ -808,7 +862,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4754,
@@ -821,7 +876,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4768,
@@ -834,7 +890,8 @@
           "kind": "page",
           "label": "3"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4814,
@@ -847,7 +904,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 5086,
@@ -860,7 +918,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5303,
@@ -873,7 +932,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 5316,
@@ -886,7 +946,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5345,
@@ -899,7 +960,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5377,
@@ -912,7 +974,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 5390,
@@ -925,7 +988,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5421,
@@ -938,7 +1002,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5907,
@@ -951,7 +1016,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6124,
@@ -964,7 +1030,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 6137,
@@ -977,7 +1044,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6166,
@@ -990,7 +1058,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6198,
@@ -1003,7 +1072,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 6211,
@@ -1016,7 +1086,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6242,
@@ -1029,7 +1100,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6266,
@@ -1042,7 +1114,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6280,
@@ -1055,7 +1128,8 @@
           "kind": "page",
           "label": "4"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6326,
@@ -1068,7 +1142,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 6826,
@@ -1081,7 +1156,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7043,
@@ -1094,7 +1170,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 7056,
@@ -1107,7 +1184,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7085,
@@ -1120,7 +1198,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7117,
@@ -1133,7 +1212,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 7130,
@@ -1146,7 +1226,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7161,
@@ -1159,7 +1240,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7647,
@@ -1172,7 +1254,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7829,
@@ -1185,7 +1268,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7843,
@@ -1198,7 +1282,8 @@
           "kind": "page",
           "label": "5"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7889,
@@ -1211,7 +1296,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 7962,
@@ -1224,7 +1310,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 7975,
@@ -1237,7 +1324,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8004,
@@ -1250,7 +1338,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8036,
@@ -1263,7 +1352,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 8049,
@@ -1276,7 +1366,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8080,
@@ -1289,7 +1380,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8569,
@@ -1302,7 +1394,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8788,
@@ -1315,7 +1408,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 8801,
@@ -1328,7 +1422,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8830,
@@ -1341,7 +1436,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8862,
@@ -1354,7 +1450,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 8875,
@@ -1367,7 +1464,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8906,
@@ -1380,7 +1478,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9300,
@@ -1393,7 +1492,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9314,
@@ -1406,7 +1506,8 @@
           "kind": "page",
           "label": "6"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9360,
@@ -1419,7 +1520,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 9494,
@@ -1432,7 +1534,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9713,
@@ -1445,7 +1548,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 9726,
@@ -1458,7 +1562,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9755,
@@ -1471,7 +1576,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9787,
@@ -1484,7 +1590,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 9800,
@@ -1497,7 +1604,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9831,
@@ -1510,7 +1618,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10225,
@@ -1523,7 +1632,8 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10239,
@@ -1536,7 +1646,14 @@
           "kind": "page",
           "label": "7"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
