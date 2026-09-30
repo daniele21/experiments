@@ -20,6 +20,7 @@ import QualityLatencyChart from "./components/QualityLatencyChart";
 import RunList from "./components/RunList";
 import TopBar from "./components/TopBar";
 import { uiConfig } from "./config/uiConfig";
+import { appRoutes, useAppRoute } from "./routing";
 import { formatDate, formatMs, formatPercent, micro, shortDataset } from "./utils/formatters";
 
 function contractState(metrics, evidence, summary) {
@@ -36,15 +37,24 @@ function contractLabel(state) {
 }
 
 export default function App() {
+  const route = useAppRoute();
   const [runs, setRuns] = useState([]);
-  const [selectedKey, setSelectedKey] = useState("__overview__");
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
 
-  // Client-facing evaluation is the primary surface. Technical benchmark
-  // workspaces are intentionally nested under Advanced.
-  const [activeView, setActiveView] = useState("client");
-  const [advancedView, setAdvancedView] = useState("executive");
+  const selectedKey = route.searchParams.get("run") ?? "__overview__";
+  const activeView = route.area;
+  const advancedView = route.area === "advanced" ? route.page : "executive";
+
+  const handleSelectRun = useCallback(
+    (runKey) => {
+      route.setQueryParam(
+        "run",
+        runKey === "__overview__" ? null : runKey,
+      );
+    },
+    [route],
+  );
 
   // Loading states:
   // - loadingInitial: True only during the very first bootstrap
@@ -211,7 +221,7 @@ export default function App() {
         {loadingInitial ? (
           <div className="loading-line">Loading runs…</div>
         ) : (
-          <RunList runs={runs} selectedKey={selectedKey} onSelect={setSelectedKey} />
+          <RunList runs={runs} selectedKey={selectedKey} onSelect={handleSelectRun} />
         )}
       </aside>
 
@@ -332,7 +342,7 @@ export default function App() {
               <button
                 type="button"
                 className={`view-tab ${activeView === "client" ? "active" : ""}`}
-                onClick={() => setActiveView("client")}
+                onClick={() => route.navigate(appRoutes.clientModels)}
               >
                 <span className="view-tab__icon">🛡️</span>
                 <span>Client Evaluation</span>
@@ -340,7 +350,7 @@ export default function App() {
               <button
                 type="button"
                 className={`view-tab ${activeView === "advanced" ? "active" : ""}`}
-                onClick={() => setActiveView("advanced")}
+                onClick={() => route.navigate(appRoutes.advancedExecutive)}
               >
                 <span className="view-tab__icon">⚙️</span>
                 <span>Advanced analysis</span>
@@ -352,21 +362,21 @@ export default function App() {
                 <button
                   type="button"
                   className={advancedView === "executive" ? "active" : ""}
-                  onClick={() => setAdvancedView("executive")}
+                  onClick={() => route.navigate(appRoutes.advancedExecutive)}
                 >
                   Executive benchmark
                 </button>
                 <button
                   type="button"
                   className={advancedView === "models" ? "active" : ""}
-                  onClick={() => setAdvancedView("models")}
+                  onClick={() => route.navigate(appRoutes.advancedModels)}
                 >
                   Technical workbench
                 </button>
                 <button
                   type="button"
                   className={advancedView === "documents" ? "active" : ""}
-                  onClick={() => setAdvancedView("documents")}
+                  onClick={() => route.navigate(appRoutes.advancedDocuments)}
                 >
                   Gold-aware document audit
                   {documentCount > 0 ? <span>{documentCount}</span> : null}
@@ -380,6 +390,7 @@ export default function App() {
                 detail={detail}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
+                route={route}
               />
             ) : advancedView === "executive" ? (
               <ExecutiveBriefingView
@@ -387,7 +398,7 @@ export default function App() {
                 selectedRun={selectedRun}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
-                onNavigateToDocuments={() => setAdvancedView("documents")}
+                onNavigateToDocuments={() => route.navigate(appRoutes.advancedDocuments)}
               />
             ) : advancedView === "models" ? (
               <>
