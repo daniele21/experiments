@@ -279,6 +279,10 @@ def test_family_macro_and_subtype_recall_are_reported():
 
     assert detailed["dataset_balance"]["content_families"] == 2
     assert detailed["dataset_balance"]["documents_by_family"]["contract-family"] == 2
+    assert detailed["dataset_balance"]["semantic_contents"] == 2
+    assert detailed["dataset_balance"]["duplicate_semantic_content_groups"] == [
+        ["contract.doc", "contract.docx"]
+    ]
     assert detailed["by_subtype"]["account_number:iban"]["pii_recall"] == 1.0
     assert detailed["by_subtype"]["private_person:named_person"]["pii_recall"] == 0.0
     assert detailed["by_document"]["contract.doc"]["content_family_id"] == "contract-family"
