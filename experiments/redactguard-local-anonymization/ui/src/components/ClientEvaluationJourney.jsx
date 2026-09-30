@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { appRoutes } from "../routing";
 import { formatMs, formatPercent, micro } from "../utils/formatters";
 
 const TYPE_LABELS = {
@@ -158,10 +159,12 @@ function Breadcrumb({ level, documentName, model, onNavigate }) {
   );
 }
 
-function ClientEvaluationJourney({ detail, selectedModel, onSelectModel }) {
-  const [level, setLevel] = useState("overview");
-  const [selectedDocument, setSelectedDocument] = useState(null);
-
+function ClientEvaluationJourney({
+  detail,
+  selectedModel,
+  onSelectModel,
+  route,
+}) {
   const models = useMemo(
     () => detail?.summary?.models ?? Object.keys(detail?.metrics ?? {}),
     [detail],
@@ -171,34 +174,76 @@ function ClientEvaluationJourney({ detail, selectedModel, onSelectModel }) {
     [detail],
   );
 
-  useEffect(() => {
-    if (selectedDocument && !documents.includes(selectedDocument)) {
-      setSelectedDocument(null);
-      setLevel("overview");
-    }
-  }, [documents, selectedDocument]);
-
+  const level =
+    route.page === "models"
+      ? "overview"
+      : route.page === "documents"
+        ? "documents"
+        : "detail";
+  const selectedDocument = route.params?.documentName ?? null;
+  const routeModel = route.params?.model ?? null;
   const effectiveModel =
-    selectedModel && models.includes(selectedModel)
-      ? selectedModel
-      : models[0] ?? null;
+    routeModel && models.includes(routeModel)
+      ? routeModel
+      : selectedModel && models.includes(selectedModel)
+        ? selectedModel
+        : models[0] ?? null;
+
+  useEffect(() => {
+    if (level !== "detail") return;
+
+    if (!selectedDocument || !documents.includes(selectedDocument)) {
+      route.navigate(appRoutes.clientDocuments, { replace: true });
+      return;
+    }
+
+    if (!effectiveModel || !models.includes(effectiveModel)) {
+      route.navigate(appRoutes.clientDocuments, { replace: true });
+      return;
+    }
+
+    if (routeModel !== effectiveModel) {
+      route.navigate(
+        appRoutes.clientDetail(selectedDocument, effectiveModel),
+        { replace: true },
+      );
+      return;
+    }
+
+    onSelectModel?.(effectiveModel);
+  }, [
+    documents,
+    effectiveModel,
+    level,
+    models,
+    onSelectModel,
+    route,
+    routeModel,
+    selectedDocument,
+  ]);
 
   const openDocuments = (model = effectiveModel) => {
     if (model) onSelectModel?.(model);
-    setLevel("documents");
+    route.navigate(appRoutes.clientDocuments);
   };
 
   const openDetail = (documentName, model) => {
-    setSelectedDocument(documentName);
     onSelectModel?.(model);
-    setLevel("detail");
+    route.navigate(appRoutes.clientDetail(documentName, model));
   };
 
   const navigate = (target) => {
     if (target === "overview") {
-      setSelectedDocument(null);
+      route.navigate(appRoutes.clientModels);
+      return;
     }
-    setLevel(target);
+    route.navigate(appRoutes.clientDocuments);
+  };
+
+  const selectDetailModel = (model) => {
+    if (!selectedDocument) return;
+    onSelectModel?.(model);
+    route.navigate(appRoutes.clientDetail(selectedDocument, model));
   };
 
   const goldCount = useMemo(
@@ -265,7 +310,7 @@ function ClientEvaluationJourney({ detail, selectedModel, onSelectModel }) {
           models={models}
           documentName={selectedDocument}
           model={effectiveModel}
-          onSelectModel={onSelectModel}
+          onSelectModel={selectDetailModel}
         />
       )}
     </div>
