@@ -1,6 +1,6 @@
 # PII gold annotations
 
-`annotations/` contains one JSON file for every canonical document. The files implement the frozen RedactGuard gold contract used by the realistic-document benchmark.
+`annotations/` contains one JSON file for every canonical document. The files implement the frozen RedactGuard gold contract used by the realistic-document benchmark. Current schema: `redactguard-gold-v2`, gold version `deterministic_v0.2`.
 
 ## Span contract
 
@@ -19,7 +19,7 @@ Each file contains:
 
 - `profile`: RedactGuard profile to use for inference (`legal` or `financial`);
 - `entities`: grouped `(pii_type, value)` records with occurrence counts;
-- `spans`: exact `[start, end)` gold spans plus source rule and page/sheet/slide attribution when available;
+- `spans`: exact `[start, end)` gold spans plus `pii_subtype`, source rule, and page/sheet/slide attribution when available;
 - `summary.by_type`: counts by PII type;
 - `gold_policy`: explicit inclusion/exclusion decisions.
 
@@ -31,6 +31,10 @@ Excluded: organization names and monetary amounts because the frozen RedactGuard
 
 ## Review status
 
-These annotations are **deterministic gold v0.1**, generated from the canonical source and structural column semantics and validated for exact substring/hash consistency. `human_reviewed` is intentionally `false`: do not describe this version as independently human-reviewed.
+These annotations are **deterministic gold v0.1**, generated from the canonical source and structural column semantics and validated for exact substring/hash consistency. `human_reviewed` is intentionally `false`: do not describe this version as independently human-reviewed. Each annotation also carries a pending review block (`reviewer_count=0`, `adjudicated=false`) so review state cannot be confused with deterministic validation.
+
+## Subtype policy
+
+`pii_subtype` is benchmark-only diagnostic metadata. It does **not** expand the model output schema. The evaluator still matches predictions on RedactGuard `pii_type` and source span, then attributes matched/missed gold spans to subtypes such as `iban`, `vat_number`, `invoice_id`, `fiscal_code`, `customer_record_id`, `postal_address`, and `invoice_date`.
 
 The benchmark should treat any canonical hash mismatch as an invalid dataset state rather than silently recomputing spans.
