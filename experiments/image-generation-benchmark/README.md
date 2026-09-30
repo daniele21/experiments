@@ -130,7 +130,11 @@ uv run python scripts/run_benchmark.py \
   --output-dir results
 ```
 
-The GGUF arm uses 1024×1024, 20 steps, CFG 6.0 and Euler sampling, while the MFlux arm keeps
-its own 40-step Q8 configuration. These are recorded as effective generation configurations
-rather than being forced into artificial parameter parity. The React UI shows
-`stable_diffusion_cpp_image` and `Q4_K_M` from Korgis runtime provenance.
+The GGUF arm keeps 1024×1024, 20 steps, CFG 6.0 and Euler as its quality-oriented model
+configuration, but the `smoke` profile overrides only this arm to **512×512** to reduce peak
+memory during local hardware validation. The `budget` profile remains at 1024×1024. The MFlux
+arm keeps its own 40-step Q8 configuration.
+
+Profile overrides are persisted as the effective generation configuration in the run manifest and
+evidence, so a 512×512 smoke result cannot be mistaken for a 1K quality comparison. The React UI
+shows `stable_diffusion_cpp_image`, `Q4_K_M`, and Korgis runtime provenance.

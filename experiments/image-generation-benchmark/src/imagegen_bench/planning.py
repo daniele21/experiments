@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from benchmark_core import ConfigError, load_yaml_mapping, seeded_random
@@ -72,10 +72,32 @@ def build_run_plan(
         rng.shuffle(indices)
         selected.extend(available[index] for index in sorted(indices[:limit]))
 
+    models = list(resolve_image_models(root, model_keys))
+    raw_generation_overrides = profile.get("generation_overrides", {})
+    if not isinstance(raw_generation_overrides, dict):
+        raise ConfigError(
+            f"profile {profile_id!r} generation_overrides must be a mapping"
+        )
+
+    for index, model in enumerate(models):
+        raw_override = raw_generation_overrides.get(model.model_key)
+        if raw_override is None:
+            continue
+        if not isinstance(raw_override, dict):
+            raise ConfigError(
+                f"profile {profile_id!r} generation override for "
+                f"{model.model_key!r} must be a mapping"
+            )
+        merged_generation = {
+            **dict(model.generation),
+            **{str(key): value for key, value in raw_override.items()},
+        }
+        models[index] = replace(model, generation=merged_generation)
+
     return ImageRunPlan(
         suite_id=suite_id,
         profile_id=profile_id,
         seed=seed,
-        models=resolve_image_models(root, model_keys),
+        models=tuple(models),
         prompts=tuple(selected),
     )
