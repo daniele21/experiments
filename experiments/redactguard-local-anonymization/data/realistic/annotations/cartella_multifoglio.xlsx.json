@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "cartella_multifoglio.xlsx.md",
   "profile": "financial",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -25,7 +25,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 148,
@@ -37,6 +38,18 @@
       "private_email": 15,
       "private_person": 39,
       "private_phone": 10
+    },
+    "by_subtype": {
+      "account_number:iban": 11,
+      "account_number:invoice_id": 25,
+      "account_number:vat_number": 13,
+      "private_address:locality": 10,
+      "private_date:invoice_date": 25,
+      "private_email:contact_email": 15,
+      "private_person:contact_person": 3,
+      "private_person:customer_name": 25,
+      "private_person:named_person": 11,
+      "private_phone:contact_phone": 10
     }
   },
   "entities": [
@@ -852,7 +865,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 120,
@@ -865,7 +879,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 145,
@@ -878,7 +893,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 162,
@@ -891,7 +907,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 171,
@@ -904,7 +921,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 185,
@@ -917,7 +935,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 235,
@@ -930,7 +949,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 250,
@@ -943,7 +963,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 276,
@@ -956,7 +977,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 294,
@@ -969,7 +991,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 303,
@@ -982,7 +1005,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 317,
@@ -995,7 +1019,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 367,
@@ -1008,7 +1033,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 381,
@@ -1021,7 +1047,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 406,
@@ -1034,7 +1061,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 423,
@@ -1047,7 +1075,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 430,
@@ -1060,7 +1089,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 444,
@@ -1073,7 +1103,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 496,
@@ -1086,7 +1117,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 510,
@@ -1099,7 +1131,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 535,
@@ -1112,7 +1145,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 553,
@@ -1125,7 +1159,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 562,
@@ -1138,7 +1173,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 576,
@@ -1151,7 +1187,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 611,
@@ -1164,7 +1201,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 626,
@@ -1177,7 +1215,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 652,
@@ -1190,7 +1229,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 669,
@@ -1203,7 +1243,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 679,
@@ -1216,7 +1257,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 693,
@@ -1229,7 +1271,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 750,
@@ -1242,7 +1285,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 763,
@@ -1255,7 +1299,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 787,
@@ -1268,7 +1313,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 804,
@@ -1281,7 +1327,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 813,
@@ -1294,7 +1341,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 827,
@@ -1307,7 +1355,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 862,
@@ -1320,7 +1369,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 876,
@@ -1333,7 +1383,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 901,
@@ -1346,7 +1397,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 918,
@@ -1359,7 +1411,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 927,
@@ -1372,7 +1425,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 941,
@@ -1385,7 +1439,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 992,
@@ -1398,7 +1453,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1005,
@@ -1411,7 +1467,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1029,
@@ -1424,7 +1481,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1046,
@@ -1437,7 +1495,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1056,
@@ -1450,7 +1509,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1070,
@@ -1463,7 +1523,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1105,
@@ -1476,7 +1537,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1119,
@@ -1489,7 +1551,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1144,
@@ -1502,7 +1565,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1161,
@@ -1515,7 +1579,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1170,
@@ -1528,7 +1593,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1184,
@@ -1541,7 +1607,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1239,
@@ -1554,7 +1621,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1253,
@@ -1567,7 +1635,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1278,
@@ -1580,7 +1649,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1295,
@@ -1593,7 +1663,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1304,
@@ -1606,7 +1677,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1318,
@@ -1619,7 +1691,8 @@
           "kind": "sheet",
           "label": "Clienti"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1468,
@@ -1632,7 +1705,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1482,
@@ -1645,7 +1719,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1507,
@@ -1658,7 +1733,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1542,
@@ -1671,7 +1747,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1556,
@@ -1684,7 +1761,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1582,
@@ -1697,7 +1775,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1617,
@@ -1710,7 +1789,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1632,
@@ -1723,7 +1803,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1650,
@@ -1736,7 +1817,8 @@
           "kind": "sheet",
           "label": "Fornitori"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1746,
@@ -1749,7 +1831,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 1758,
@@ -1762,7 +1845,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 1771,
@@ -1775,7 +1859,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1806,
@@ -1788,7 +1873,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 1818,
@@ -1801,7 +1887,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 1831,
@@ -1814,7 +1901,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1865,
@@ -1827,7 +1915,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 1877,
@@ -1840,7 +1929,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 1890,
@@ -1853,7 +1943,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1924,
@@ -1866,7 +1957,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 1936,
@@ -1879,7 +1971,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 1949,
@@ -1892,7 +1985,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1984,
@@ -1905,7 +1999,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 1996,
@@ -1918,7 +2013,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2009,
@@ -1931,7 +2027,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2042,
@@ -1944,7 +2041,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2054,
@@ -1957,7 +2055,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2067,
@@ -1970,7 +2069,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2101,
@@ -1983,7 +2083,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2113,
@@ -1996,7 +2097,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2126,
@@ -2009,7 +2111,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2159,
@@ -2022,7 +2125,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2171,
@@ -2035,7 +2139,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2184,
@@ -2048,7 +2153,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2218,
@@ -2061,7 +2167,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2230,
@@ -2074,7 +2181,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2243,
@@ -2087,7 +2195,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2277,
@@ -2100,7 +2209,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2289,
@@ -2113,7 +2223,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2302,
@@ -2126,7 +2237,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2336,
@@ -2139,7 +2251,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2348,
@@ -2152,7 +2265,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2361,
@@ -2165,7 +2279,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2396,
@@ -2178,7 +2293,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2408,
@@ -2191,7 +2307,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2421,
@@ -2204,7 +2321,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2455,
@@ -2217,7 +2335,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2467,
@@ -2230,7 +2349,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2480,
@@ -2243,7 +2363,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2514,
@@ -2256,7 +2377,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2526,
@@ -2269,7 +2391,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2539,
@@ -2282,7 +2405,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2574,
@@ -2295,7 +2419,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2586,
@@ -2308,7 +2433,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2599,
@@ -2321,7 +2447,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2632,
@@ -2334,7 +2461,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2644,
@@ -2347,7 +2475,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2657,
@@ -2360,7 +2489,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2691,
@@ -2373,7 +2503,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2703,
@@ -2386,7 +2517,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2716,
@@ -2399,7 +2531,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2749,
@@ -2412,7 +2545,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2761,
@@ -2425,7 +2559,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2774,
@@ -2438,7 +2573,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2808,
@@ -2451,7 +2587,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2820,
@@ -2464,7 +2601,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2833,
@@ -2477,7 +2615,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2867,
@@ -2490,7 +2629,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2879,
@@ -2503,7 +2643,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2892,
@@ -2516,7 +2657,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2926,
@@ -2529,7 +2671,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2938,
@@ -2542,7 +2685,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 2951,
@@ -2555,7 +2699,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2986,
@@ -2568,7 +2713,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 2998,
@@ -2581,7 +2727,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 3011,
@@ -2594,7 +2741,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3045,
@@ -2607,7 +2755,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 3057,
@@ -2620,7 +2769,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 3070,
@@ -2633,7 +2783,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3104,
@@ -2646,7 +2797,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 3116,
@@ -2659,7 +2811,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 3129,
@@ -2672,7 +2825,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3164,
@@ -2685,7 +2839,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_id"
     },
     {
       "start": 3176,
@@ -2698,7 +2853,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "invoice_date"
     },
     {
       "start": 3189,
@@ -2711,7 +2867,8 @@
           "kind": "sheet",
           "label": "Fatture"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3318,
@@ -2724,7 +2881,8 @@
           "kind": "sheet",
           "label": "Riepilogo"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 3331,
@@ -2737,7 +2895,8 @@
           "kind": "sheet",
           "label": "Riepilogo"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3408,
@@ -2750,7 +2909,8 @@
           "kind": "sheet",
           "label": "Note"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3497,
@@ -2763,7 +2923,14 @@
           "kind": "sheet",
           "label": "Note"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
