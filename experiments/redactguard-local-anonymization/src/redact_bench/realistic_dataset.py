@@ -54,6 +54,10 @@ def validate_realistic_dataset(
 
     total_spans = 0
     by_type: dict[str, int] = {}
+    by_subtype: dict[str, int] = {}
+    families: set[str] = set()
+    inference_hashes: dict[str, list[str]] = {}
+    human_reviewed_documents = 0
 
     for document in documents:
         source_filename = str(document["source_filename"])
@@ -100,6 +104,12 @@ def validate_realistic_dataset(
                 f"{source_filename}: manifest/annotation profile mismatch"
             )
 
+        family_id = str(document.get("content_family_id") or source_filename)
+        families.add(family_id)
+        inference_hashes.setdefault(expected_sha, []).append(source_filename)
+        if bool(annotation.get("human_reviewed", document.get("human_reviewed", False))):
+            human_reviewed_documents += 1
+
         spans = list(annotation.get("spans", []))
         for index, span in enumerate(spans):
             start = int(span["start"])
@@ -118,6 +128,10 @@ def validate_realistic_dataset(
                 )
             total_spans += 1
             by_type[pii_type] = by_type.get(pii_type, 0) + 1
+            pii_subtype = span.get("pii_subtype")
+            if pii_subtype:
+                subtype_key = f"{pii_type}:{pii_subtype}"
+                by_subtype[subtype_key] = by_subtype.get(subtype_key, 0) + 1
 
         manifest_span_count = document.get("annotation_span_count")
         if manifest_span_count is not None and int(manifest_span_count) != len(spans):
@@ -131,11 +145,18 @@ def validate_realistic_dataset(
                 f"Missing original source document: {originals_dir / source_filename}"
             )
 
+    duplicate_text_groups = [
+        names for names in inference_hashes.values() if len(names) > 1
+    ]
     return {
         "dataset_id": manifest.get("dataset_id"),
         "documents": len(documents),
+        "content_families": len(families),
         "spans": total_spans,
         "by_type": dict(sorted(by_type.items())),
+        "by_subtype": dict(sorted(by_subtype.items())),
+        "human_reviewed_documents": human_reviewed_documents,
+        "duplicate_inference_text_groups": duplicate_text_groups,
         "originals_required": require_originals,
     }
 
@@ -162,6 +183,9 @@ def load_realistic_dataset(dataset_dir: str | Path) -> list[Case]:
                 end=int(span["end"]),
                 pii_type=str(span["pii_type"]),
                 value=str(span["value"]),
+                pii_subtype=(
+                    str(span["pii_subtype"]) if span.get("pii_subtype") else None
+                ),
             )
             for span in annotation.get("spans", [])
         )
@@ -174,6 +198,24 @@ def load_realistic_dataset(dataset_dir: str | Path) -> list[Case]:
                 tags=(
                     "realistic-document",
                     str(document.get("source_mime_type", "unknown")),
+                ),
+                content_family_id=str(
+                    document.get("content_family_id") or source_filename
+                ),
+                variant_id=str(
+                    document.get("variant_id")
+                    or document.get("source_mime_type", "unknown")
+                ),
+                gold_version=str(
+                    annotation.get("gold_version")
+                    or annotation.get("gold_status")
+                    or "unknown"
+                ),
+                human_reviewed=bool(
+                    annotation.get(
+                        "human_reviewed",
+                        document.get("human_reviewed", False),
+                    )
                 ),
             )
         )
