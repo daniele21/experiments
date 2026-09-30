@@ -23,13 +23,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from redact_bench.datasets import load_dataset
-from redact_bench.metrics import aggregate_detailed, score_case
-from redact_bench.models import Case
-from redact_bench.progress import TerminalProgress
-from redact_bench.provider import KorgisController, KorgisRedactProvider
-from redact_bench.report import write_html
-from redact_bench.runner import run_compare
+from redact_bench.datasets import load_dataset  # noqa: E402
+from redact_bench.metrics import aggregate_detailed, score_case  # noqa: E402
+from redact_bench.models import Case  # noqa: E402
+from redact_bench.progress import TerminalProgress  # noqa: E402
+from redact_bench.provider import KorgisController, KorgisRedactProvider  # noqa: E402
+from redact_bench.report import write_html  # noqa: E402
+from redact_bench.runner import run_compare  # noqa: E402
 
 
 def load_config(config_path: Path) -> dict[str, Any]:
