@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const TYPE_LABELS = {
   private_person: "Personal names",
@@ -143,6 +143,10 @@ export function ClientDocumentPreview({
     () => categorySummary(missed),
     [missed],
   );
+
+  useEffect(() => {
+    setRevealedDetected(new Set());
+  }, [model, text]);
 
   const toggleReveal = (segmentKey) => {
     setRevealedDetected((current) => {
