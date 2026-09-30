@@ -66,9 +66,22 @@ def test_qwen_gguf_local_plan_resolves_korgis_sdcpp_runtime() -> None:
     assert model.provider_key == "korgis-image"
     assert model.provider_type == "korgis-image"
     assert model.base_url_env == "KORGIS_BASE_URL"
-    assert model.generation["size"] == "1024x1024"
+    assert model.generation["size"] == "512x512"
     assert model.generation["num_inference_steps"] == 20
     assert model.generation["guidance_scale"] == 6.0
     assert model.generation["sampling_method"] == "euler"
     assert model.benchmark_mapping["runtime"] == "stable-diffusion.cpp"
     assert model.benchmark_mapping["quantization"] == "Q4_K_M"
+
+
+
+def test_qwen_gguf_budget_keeps_quality_resolution() -> None:
+    plan = build_run_plan(
+        ROOT,
+        model_keys=["qwen-image-2.1-local-gguf-q4km"],
+        profile_id="budget",
+    )
+
+    [model] = plan.models
+    assert model.generation["size"] == "1024x1024"
+    assert model.generation["num_inference_steps"] == 20
