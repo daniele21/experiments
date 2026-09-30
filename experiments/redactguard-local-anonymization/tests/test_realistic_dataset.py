@@ -26,12 +26,14 @@ def _write_fixture(root: Path) -> Path:
             "start": inference.index("Mario Rossi"),
             "end": inference.index("Mario Rossi") + len("Mario Rossi"),
             "pii_type": "private_person",
+            "pii_subtype": "named_person",
             "value": "Mario Rossi",
         },
         {
             "start": inference.index("mario@example.com"),
             "end": inference.index("mario@example.com") + len("mario@example.com"),
             "pii_type": "private_email",
+            "pii_subtype": "contact_email",
             "value": "mario@example.com",
         },
     ]
@@ -41,7 +43,9 @@ def _write_fixture(root: Path) -> Path:
     (annotations_dir / "sample.pdf.json").write_text(
         json.dumps(
             {
-                "schema_version": "redactguard-gold-v1",
+                "schema_version": "redactguard-gold-v2",
+                "gold_version": "deterministic_v0.2",
+                "human_reviewed": False,
                 "canonical_filename": "sample.pdf.md",
                 "profile": "legal",
                 "inference_text_chars": len(inference),
@@ -62,6 +66,8 @@ def _write_fixture(root: Path) -> Path:
                         "canonical_filename": "sample.pdf.md",
                         "annotation_filename": "sample.pdf.json",
                         "benchmark_profile": "legal",
+                        "content_family_id": "sample-family",
+                        "variant_id": "pdf-native",
                         "annotation_span_count": 2,
                         "inference_text_sha256": sha,
                     }
@@ -78,11 +84,19 @@ def test_validate_and_load_realistic_dataset(tmp_path):
     summary = validate_realistic_dataset(root)
     assert summary["documents"] == 1
     assert summary["spans"] == 2
+    assert summary["content_families"] == 1
+    assert summary["human_reviewed_documents"] == 0
+    assert summary["by_subtype"]["private_person:named_person"] == 1
 
     cases = load_realistic_dataset(root)
     assert len(cases) == 1
     assert cases[0].case_id == "sample.pdf"
     assert cases[0].profile == "legal"
+    assert cases[0].content_family_id == "sample-family"
+    assert cases[0].variant_id == "pdf-native"
+    assert cases[0].gold_version == "deterministic_v0.2"
+    assert cases[0].human_reviewed is False
+    assert cases[0].gold[0].pii_subtype == "named_person"
     assert len(cases[0].gold) == 2
     assert "<!-- page:" not in cases[0].text
 
