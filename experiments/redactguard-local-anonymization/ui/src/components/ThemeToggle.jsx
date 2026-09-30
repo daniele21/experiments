@@ -1,73 +1,57 @@
 /**
  * ThemeToggle.jsx
  *
- * Provides explicit switching between Light, Dark, and System (Auto) color modes.
- * Persists user choice in localStorage and sets data-theme on <html>.
+ * Explicit Light, Dark, and System theme control.
  */
 
 import { useEffect, useState } from "react";
-
-const THEME_KEY = "redactbench_theme";
+import {
+  applyThemePreference,
+  readThemePreference,
+} from "../theme";
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem(THEME_KEY) || "auto";
-    } catch {
-      return "auto";
-    }
-  });
+  const [theme, setTheme] = useState(readThemePreference);
 
   useEffect(() => {
-    const root = document.documentElement;
-    try {
-      if (theme === "auto") {
-        root.removeAttribute("data-theme");
-        localStorage.setItem(THEME_KEY, "auto");
-      } else {
-        root.setAttribute("data-theme", theme);
-        localStorage.setItem(THEME_KEY, theme);
-      }
-    } catch {
-      // localStorage may fail in restricted sandboxes
-    }
+    applyThemePreference(theme);
   }, [theme]);
 
   return (
-    <div className="theme-toggle-group" role="radiogroup" aria-label="Seleziona tema">
+    <div className="theme-toggle-group" role="radiogroup" aria-label="Color theme">
       <button
         type="button"
         className={`theme-toggle-btn ${theme === "light" ? "active" : ""}`}
         onClick={() => setTheme("light")}
-        title="Tema Chiaro (Light Mode)"
+        title="Light mode"
         aria-checked={theme === "light"}
         role="radio"
       >
         <span aria-hidden="true">☀️</span>
-        <span className="theme-toggle-label">Chiaro</span>
+        <span className="theme-toggle-label">Light</span>
       </button>
 
       <button
         type="button"
         className={`theme-toggle-btn ${theme === "dark" ? "active" : ""}`}
         onClick={() => setTheme("dark")}
-        title="Tema Scuro (Dark Mode)"
+        title="Dark mode"
         aria-checked={theme === "dark"}
         role="radio"
       >
         <span aria-hidden="true">🌙</span>
-        <span className="theme-toggle-label">Scuro</span>
+        <span className="theme-toggle-label">Dark</span>
       </button>
 
       <button
         type="button"
         className={`theme-toggle-btn ${theme === "auto" ? "active" : ""}`}
         onClick={() => setTheme("auto")}
-        title="Segui impostazioni di sistema (Auto)"
+        title="Follow system appearance"
         aria-checked={theme === "auto"}
         role="radio"
       >
-        <span aria-hidden="true">💻</span>
+        <span aria-hidden="true">◐</span>
         <span className="theme-toggle-label">Auto</span>
       </button>
     </div>
