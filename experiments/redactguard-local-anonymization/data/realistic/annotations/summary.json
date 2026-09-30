@@ -175,5 +175,33 @@
     "private_email": 217,
     "private_person": 357,
     "private_phone": 194
+  },
+  "dataset_id": "redactguard-realistic-documents-v0.2",
+  "gold_version": "deterministic_v0.2",
+  "content_families": 6,
+  "human_reviewed_documents": 0,
+  "human_reviewed": false,
+  "duplicate_inference_text_groups": [
+    [
+      "contratto.docx",
+      "contratto.doc"
+    ]
+  ],
+  "total_by_subtype": {
+    "account_number:customer_record_id": 120,
+    "account_number:fiscal_code": 1,
+    "account_number:iban": 173,
+    "account_number:invoice_id": 25,
+    "account_number:vat_number": 175,
+    "private_address:locality": 130,
+    "private_address:postal_address": 28,
+    "private_address:street_address": 120,
+    "private_date:document_event_date": 1,
+    "private_date:invoice_date": 25,
+    "private_email:contact_email": 217,
+    "private_person:contact_person": 123,
+    "private_person:customer_name": 165,
+    "private_person:named_person": 69,
+    "private_phone:contact_phone": 194
   }
 }
