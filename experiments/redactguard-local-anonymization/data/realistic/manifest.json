@@ -1,5 +1,5 @@
 {
-  "dataset_id": "redactguard-realistic-documents-v0.1",
+  "dataset_id": "redactguard-realistic-documents-v0.2",
   "canonical_contract": {
     "description": "Canonical Markdown represents visible/source content, not Docling/OCR output.",
     "structure_markers": "HTML comments such as page/sheet/slide are metadata and should be stripped before LLM inference.",
@@ -13,7 +13,7 @@
       "canonical_filename": "scansione_nuda.pdf.md",
       "canonicalization_method": "manual_visual_transcription",
       "canonical_chars": 1372,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "scansione_nuda.pdf.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 15,
@@ -26,7 +26,11 @@
       },
       "inference_text_chars": 1355,
       "inference_text_sha256": "c3ffff9db1ecb5fdbd0153f4c82c3e44be0199ee39c8978d19fd2dfe4786d5b5",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "scan-image-only",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "scansione_cercabile.pdf",
@@ -35,7 +39,7 @@
       "canonical_filename": "scansione_cercabile.pdf.md",
       "canonicalization_method": "manual_visual_transcription_ignoring_noisy_ocr_layer",
       "canonical_chars": 925,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "scansione_cercabile.pdf.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 16,
@@ -47,7 +51,11 @@
       },
       "inference_text_chars": 908,
       "inference_text_sha256": "6a26ddd021b42b9628862451c74c4c658c814bb24e181cd9fc923bed8ecf74df",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "scan-searchable",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "tabella_piccola.xlsx",
@@ -56,7 +64,7 @@
       "canonical_filename": "tabella_piccola.xlsx.md",
       "canonicalization_method": "xlsx_xml_sheet_and_table_conversion",
       "canonical_chars": 20710,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "tabella_piccola.xlsx.json",
       "benchmark_profile": "financial",
       "annotation_span_count": 1080,
@@ -69,7 +77,11 @@
       },
       "inference_text_chars": 20689,
       "inference_text_sha256": "f0bc953b8d09494e251d51f2c65b9773ba2011373676b6366b762e49cb88f7ae",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "customer-master-table-v1",
+      "variant_id": "xlsx-single-sheet",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "scansione_con_immagini.pdf",
@@ -78,7 +90,7 @@
       "canonical_filename": "scansione_con_immagini.pdf.md",
       "canonicalization_method": "manual_visual_transcription_including_embedded_image_text",
       "canonical_chars": 1400,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "scansione_con_immagini.pdf.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 15,
@@ -91,7 +103,11 @@
       },
       "inference_text_chars": 1356,
       "inference_text_sha256": "839916ca58069ecd6025f6b432bdbeb0055187ac6b86076a3064393700f1d67d",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "scan-mixed-image-text",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "presentazione.pptx",
@@ -100,7 +116,7 @@
       "canonical_filename": "presentazione.pptx.md",
       "canonicalization_method": "pptx_xml_slide_order_conversion",
       "canonical_chars": 422,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "presentazione.pptx.json",
       "benchmark_profile": "financial",
       "annotation_span_count": 7,
@@ -113,7 +129,11 @@
       },
       "inference_text_chars": 368,
       "inference_text_sha256": "b1a9af772140e9a41ae05ac91605bfeaf2b7ca01608d9e2b533aba28ee82f9e3",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "commercial-offer-acme-v1",
+      "variant_id": "pptx",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "contratto.docx",
@@ -122,7 +142,7 @@
       "canonical_filename": "contratto.docx.md",
       "canonicalization_method": "visible_render_to_pdf_then_text_with_page_boundaries",
       "canonical_chars": 10381,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "contratto.docx.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 102,
@@ -135,7 +155,11 @@
       },
       "inference_text_chars": 10262,
       "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "docx-render",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "lettera.txt",
@@ -144,7 +168,7 @@
       "canonical_filename": "lettera.txt.md",
       "canonicalization_method": "direct_text",
       "canonical_chars": 602,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "lettera.txt.json",
       "benchmark_profile": "financial",
       "annotation_span_count": 9,
@@ -158,7 +182,11 @@
       },
       "inference_text_chars": 602,
       "inference_text_sha256": "ad9698a3729f7e10a80385fbb1e12dd3d05e82e798ca332f21a426c3acdbbb29",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "order-confirmation-acme-v1",
+      "variant_id": "plain-text",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "clienti.csv",
@@ -167,7 +195,7 @@
       "canonical_filename": "clienti.csv.md",
       "canonicalization_method": "csv_to_markdown_table",
       "canonical_chars": 1097,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "clienti.csv.json",
       "benchmark_profile": "financial",
       "annotation_span_count": 50,
@@ -179,7 +207,11 @@
       },
       "inference_text_chars": 1097,
       "inference_text_sha256": "a657bfc30609ecaa29720c8ee953659f741e57748ab2460660c5b0e0dc04a600",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "customer-register-v1",
+      "variant_id": "csv-table",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "contratto.pdf",
@@ -188,7 +220,7 @@
       "canonical_filename": "contratto.pdf.md",
       "canonicalization_method": "native_pdf_text_layer_with_page_boundaries",
       "canonical_chars": 2260,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "contratto.pdf.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 22,
@@ -201,7 +233,11 @@
       },
       "inference_text_chars": 2226,
       "inference_text_sha256": "7cd112859cab894b4eab0a4a553e271b657e2e30f9f5af4873e838b9bcaac806",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "native-pdf",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "contratto.doc",
@@ -210,7 +246,7 @@
       "canonical_filename": "contratto.doc.md",
       "canonicalization_method": "visible_render_to_pdf_then_text_with_page_boundaries",
       "canonical_chars": 10381,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "contratto.doc.json",
       "benchmark_profile": "legal",
       "annotation_span_count": 102,
@@ -223,7 +259,11 @@
       },
       "inference_text_chars": 10262,
       "inference_text_sha256": "76249b4c8c9869cce63cc9e805451843a04bb52bfeedc265c6f26174715abfd3",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "supply-contract-acme-v1",
+      "variant_id": "doc-render",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     },
     {
       "source_filename": "cartella_multifoglio.xlsx",
@@ -232,7 +272,7 @@
       "canonical_filename": "cartella_multifoglio.xlsx.md",
       "canonicalization_method": "xlsx_xml_sheet_and_table_conversion",
       "canonical_chars": 3644,
-      "annotation_status": "deterministic_gold_v0.1",
+      "annotation_status": "deterministic_gold_v0.2",
       "annotation_filename": "cartella_multifoglio.xlsx.json",
       "benchmark_profile": "financial",
       "annotation_span_count": 148,
@@ -246,12 +286,16 @@
       },
       "inference_text_chars": 3523,
       "inference_text_sha256": "1351620a60b04e52ace6dd028dd14deb15b6ab0b69147f45e861ad75de5752c1",
-      "human_reviewed": false
+      "human_reviewed": false,
+      "content_family_id": "financial-workbook-v1",
+      "variant_id": "xlsx-multi-sheet",
+      "gold_version": "deterministic_v0.2",
+      "review_status": "pending_human_review"
     }
   ],
   "annotation_contract": {
-    "schema_version": "redactguard-gold-v1",
-    "gold_version": "deterministic_v0.1",
+    "schema_version": "redactguard-gold-v2",
+    "gold_version": "deterministic_v0.2",
     "description": "Gold spans are resolved on canonical Markdown after removing structural HTML-comment markers; all other characters are preserved.",
     "structure_markers_stripped": [
       "page",
@@ -267,6 +311,15 @@
       "iban_and_fiscal_codes": "included_as_account_number",
       "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
       "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    },
+    "review": {
+      "status": "pending_human_review",
+      "reviewer_count": 0,
+      "adjudicated": false
+    },
+    "semantic_independence": {
+      "unit": "content_family_id",
+      "note": "Format variants of the same semantic source are retained for extraction/E2E analysis but must not be treated as independent model-capability cases."
     }
   }
 }
