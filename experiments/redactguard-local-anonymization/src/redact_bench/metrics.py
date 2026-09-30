@@ -71,12 +71,15 @@ def _ratio(
 
 
 def _span_payload(span: Span) -> dict:
-    return {
+    payload = {
         "start": span.start,
         "end": span.end,
         "pii_type": span.pii_type,
         "value": span.value,
     }
+    if span.pii_subtype:
+        payload["pii_subtype"] = span.pii_subtype
+    return payload
 
 
 def _quality_from_counts(
@@ -132,6 +135,49 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         else None
     )
 
+    by_subtype: dict[str, dict] = {}
+    subtype_keys = sorted(
+        {
+            (span.pii_type, span.pii_subtype)
+            for span in gold
+            if span.pii_subtype
+        }
+    )
+    for pii_type, pii_subtype in subtype_keys:
+        indices = [
+            index
+            for index, span in enumerate(gold)
+            if span.pii_type == pii_type and span.pii_subtype == pii_subtype
+        ]
+        subtype_gold = [gold[index] for index in indices]
+        subtype_tp = sum(index not in unmatched_gold for index in indices) if result.valid else 0
+        subtype_fn = len(indices) - subtype_tp if result.valid else 0
+        subtype_gold_chars = _char_positions(subtype_gold)
+        subtype_leaked_chars = (
+            len(subtype_gold_chars - pred_chars)
+            if result.valid
+            else 0
+        )
+        by_subtype[f"{pii_type}:{pii_subtype}"] = {
+            "pii_type": pii_type,
+            "pii_subtype": pii_subtype,
+            "gold_count": len(indices),
+            "tp": subtype_tp,
+            "fn": subtype_fn,
+            "pii_recall": (
+                _ratio(subtype_tp, len(indices), empty=1.0)
+                if result.valid
+                else None
+            ),
+            "gold_chars": len(subtype_gold_chars),
+            "leaked_chars": subtype_leaked_chars,
+            "leakage_rate": (
+                _ratio(subtype_leaked_chars, len(subtype_gold_chars))
+                if result.valid
+                else None
+            ),
+        }
+
     by_type: dict[str, dict] = {}
     pii_types = sorted({span.pii_type for span in gold} | {span.pii_type for span in pred})
     for pii_type in pii_types:
@@ -181,6 +227,10 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         "case_id": case.case_id,
         "profile": case.profile,
         "tags": list(case.tags),
+        "content_family_id": case.content_family_id or case.case_id,
+        "variant_id": case.variant_id,
+        "gold_version": case.gold_version,
+        "human_reviewed": case.human_reviewed,
         "model": result.model,
         "valid": result.valid,
         "quality_available": result.valid,
@@ -225,6 +275,7 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         )["pii_recall"],
         "system_leakage_rate": _ratio(system_leaked_chars, len(gold_chars)),
         "by_type": by_type,
+        "by_subtype": by_subtype,
         "false_negatives": (
             [_span_payload(gold[index]) for index in sorted(unmatched_gold)]
             if result.valid
@@ -425,6 +476,38 @@ def _aggregate_type_rows(rows: list[dict]) -> dict[str, dict]:
     return result
 
 
+def _aggregate_subtype_rows(rows: list[dict]) -> dict[str, dict]:
+    counters: dict[str, Counter] = defaultdict(Counter)
+    metadata: dict[str, dict] = {}
+    for row in rows:
+        if not row["valid"]:
+            continue
+        for key, summary in row.get("by_subtype", {}).items():
+            metadata[key] = {
+                "pii_type": summary["pii_type"],
+                "pii_subtype": summary["pii_subtype"],
+            }
+            counters[key].update(
+                {
+                    "gold_count": summary["gold_count"],
+                    "tp": summary["tp"],
+                    "fn": summary["fn"],
+                    "gold_chars": summary["gold_chars"],
+                    "leaked_chars": summary["leaked_chars"],
+                }
+            )
+
+    result: dict[str, dict] = {}
+    for key, counts in sorted(counters.items()):
+        result[key] = {
+            **metadata[key],
+            **dict(counts),
+            "pii_recall": _ratio(counts["tp"], counts["gold_count"], empty=1.0),
+            "leakage_rate": _ratio(counts["leaked_chars"], counts["gold_chars"]),
+        }
+    return result
+
+
 def _document_summary(case_rows: list[dict]) -> dict:
     summary = aggregate(case_rows)
     valid_case_rows = [row for row in case_rows if row["valid"]]
@@ -445,6 +528,10 @@ def _document_summary(case_rows: list[dict]) -> dict:
         {
             "profile": case_rows[0]["profile"],
             "tags": case_rows[0].get("tags", []),
+            "content_family_id": case_rows[0].get("content_family_id"),
+            "variant_id": case_rows[0].get("variant_id"),
+            "gold_version": case_rows[0].get("gold_version"),
+            "human_reviewed": case_rows[0].get("human_reviewed"),
             "gold_count_per_document": case_rows[0]["gold_count"],
             "false_negatives": representative.get("false_negatives", []),
             "false_positives": representative.get("false_positives", []),
@@ -503,6 +590,16 @@ def _dataset_balance(rows: list[dict]) -> dict:
         largest_document = None
         largest_count = 0
 
+    family_gold: Counter = Counter()
+    family_documents: Counter = Counter()
+    reviewed_documents = 0
+    for row in first_by_case.values():
+        family = row.get("content_family_id") or row["case_id"]
+        family_gold[family] += row["gold_count"]
+        family_documents[family] += 1
+        if row.get("human_reviewed"):
+            reviewed_documents += 1
+
     by_type: Counter = Counter()
     for row in first_by_case.values():
         for pii_type, summary in row.get("by_type", {}).items():
@@ -516,6 +613,14 @@ def _dataset_balance(rows: list[dict]) -> dict:
         "largest_document": largest_document,
         "largest_document_gold_spans": largest_count,
         "largest_document_share": _ratio(largest_count, total_gold),
+        "content_families": len(family_gold),
+        "gold_spans_by_family": dict(sorted(family_gold.items())),
+        "documents_by_family": dict(sorted(family_documents.items())),
+        "human_reviewed_documents": reviewed_documents,
+        "human_reviewed_document_rate": _ratio(
+            reviewed_documents,
+            len(per_document),
+        ),
     }
 
 
@@ -525,9 +630,13 @@ def aggregate_detailed(rows: Iterable[dict]) -> dict:
 
     grouped_documents: dict[str, list[dict]] = defaultdict(list)
     grouped_profiles: dict[str, list[dict]] = defaultdict(list)
+    grouped_families: dict[str, list[dict]] = defaultdict(list)
     for row in rows:
         grouped_documents[row["case_id"]].append(row)
         grouped_profiles[row["profile"]].append(row)
+        grouped_families[
+            row.get("content_family_id") or row["case_id"]
+        ].append(row)
 
     by_document = {
         case_id: _document_summary(case_rows)
@@ -538,7 +647,13 @@ def aggregate_detailed(rows: Iterable[dict]) -> dict:
         for profile, profile_rows in sorted(grouped_profiles.items())
     }
     by_type = _aggregate_type_rows(rows)
+    by_subtype = _aggregate_subtype_rows(rows)
+    by_family = {
+        family_id: aggregate(family_rows)
+        for family_id, family_rows in sorted(grouped_families.items())
+    }
     macro = _macro_summary(by_document)
+    macro_family = _macro_summary(by_family)
 
     failures = []
     for case_id, summary in by_document.items():
@@ -588,8 +703,11 @@ def aggregate_detailed(rows: Iterable[dict]) -> dict:
         "evaluation_schema": EVALUATION_SCHEMA,
         "micro": micro,
         "macro": macro,
+        "macro_family": macro_family,
         "by_type": by_type,
+        "by_subtype": by_subtype,
         "by_profile": by_profile,
+        "by_family": by_family,
         "by_document": by_document,
         "dataset_balance": _dataset_balance(rows),
         "failure_analysis": failures,
