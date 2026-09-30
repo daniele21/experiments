@@ -4,6 +4,13 @@ Questo documento raccoglie i comandi per eseguire i benchmark di `jev-vs-llm` su
 
 ---
 
+> [!NOTE]
+> **CLM 8B Q4 is a separate local benchmark arm, not a Korgis text-generation model.**
+> The managed runtime `clm-v0.1-8b-q4km-outq2` uses
+> `Qwen3-8B-Q4_K_M-outq2.gguf` only as the CLM pooling encoder and launches
+> `clm-serve` on top of it. See [CLM.md](./CLM.md) for setup and the one-command
+> BANKING77 / unified `compare-public` flows.
+
 ## 1. I 4 Modelli Locali Selezionati
 
 Le identità benchmark dei modelli sono dichiarate nel registry portabile [`models.yaml`](./models.yaml). I path reali degli artifact GGUF/MLX sono risolti da Korgis tramite il suo registry locale o `LOCAL_LLM_REGISTRY_PATHS` e non sono committati nel repo:
