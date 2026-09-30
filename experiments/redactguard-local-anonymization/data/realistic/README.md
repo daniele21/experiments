@@ -16,11 +16,31 @@ The scan-heavy PDFs were visually transcribed so OCR mistakes do not become grou
 
 ## Gold annotations
 
-Annotation contract: `redactguard-gold-v1`, gold version `deterministic_v0.1`.
+Annotation contract: `redactguard-gold-v2`, gold version `deterministic_v0.2`.
 
 The 11 documents currently contain **1,566 gold spans** across `account_number`, `private_person`, `private_address`, `private_email`, `private_phone`, and `private_date`. Every annotation stores the expected inference-text SHA-256 to detect drift.
 
 The current gold is deterministic and source-derived, but not independently human-reviewed (`human_reviewed=false`).
+
+### Semantic independence
+
+The 11 source documents map to **6 semantic content families** through `content_family_id`.
+Format variants remain separate documents for extraction/end-to-end analysis, but model-capability
+reporting must not treat them as 11 independent semantic samples.
+
+In particular, `contratto.doc` and `contratto.docx` have identical inference text and are
+explicitly grouped in the same family. The evaluation now reports `macro_family` and
+`by_family` alongside document-level and micro metrics.
+
+### Benchmark-only PII subtypes
+
+Gold spans now carry `pii_subtype` for diagnostic analysis without changing the RedactGuard
+model output contract. Examples include `iban`, `vat_number`, `fiscal_code`,
+`invoice_id`, `customer_record_id`, `invoice_date`, `contact_person`, and
+`postal_address`.
+
+Models still return only `pii_type + value`. Subtypes are used to explain where recall/leakage
+problems originate.
 
 ## Benchmark use
 
