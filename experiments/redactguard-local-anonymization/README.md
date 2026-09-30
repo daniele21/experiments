@@ -166,8 +166,12 @@ runs plus managed suite layouts under either `results/suite/` or `results/suites
 
 The dashboard includes:
 
-- **Client Output Preview** as the default view: a product/client-facing PII recognition summary driven by the actual findings of the selected model/document, with masked values, category footprint and suggested redactions;
-- a separate **benchmark-only validation panel** below the client preview showing the hidden gold truth (recall, leakage, precision, missed spans), specifically to catch cases where a polished client output looks complete while the benchmark knows PII was missed;
+- **Client Evaluation** as the default, client-facing experience, organized with progressive disclosure:
+  1. aggregate model comparison across the benchmark;
+  2. document-by-document matrix comparing every model on the same test files;
+  3. detailed document × model evidence with masked detected PII, missed annotations and extra detections;
+- a minimal information hierarchy at each level: the overview exposes only recall, leakage, precision, inference success and p95 latency; deeper evidence is revealed only after the user drills into a model/document;
+- technical benchmark dashboards are intentionally nested under **Advanced analysis** so they do not compete with the client-facing evaluation journey;
 - run selector with automatic discovery of newly completed runs;
 - recall, leakage, precision, zero-leak and latency KPI cards;
 - recall-vs-latency trade-off chart across models;
