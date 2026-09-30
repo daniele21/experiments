@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ClientOutputPreview from "./components/ClientOutputPreview";
+import ClientEvaluationJourney from "./components/ClientEvaluationJourney";
 import DocumentComparisonView from "./components/DocumentComparisonView";
 import ExecutiveBriefingView from "./components/ExecutiveBriefingView";
 import FailureExplorer from "./components/FailureExplorer";
@@ -41,12 +41,10 @@ export default function App() {
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
 
-  // Active top-level view:
-  // - client: product/client-facing output prototype driven by real findings
-  // - executive: benchmark-level executive comparison
-  // - models: technical workbench
-  // - documents: gold-aware document audit
+  // Client-facing evaluation is the primary surface. Technical benchmark
+  // workspaces are intentionally nested under Advanced.
   const [activeView, setActiveView] = useState("client");
+  const [advancedView, setAdvancedView] = useState("executive");
 
   // Loading states:
   // - loadingInitial: True only during the very first bootstrap
@@ -245,8 +243,8 @@ export default function App() {
           <div className="loading-panel">Loading benchmark data…</div>
         ) : (
           <>
-            {/* Status banners */}
-            {selectedRun.legacy ? (
+            {/* Status banners: advanced evidence context only */}
+            {activeView === "advanced" && (selectedRun.legacy ? (
               <div className="legacy-banner">
                 <strong>Legacy evaluation schema</strong>
                 <span>
@@ -280,9 +278,10 @@ export default function App() {
                   partial until the run writes its final manifest and metrics.
                 </span>
               </div>
-            ) : null}
+            ) : null)}
 
             {/* Run Context Header Grid */}
+            {activeView === "advanced" ? (
             <section className="run-context">
               {selectedRun.source === "overview" ? (
                 <>
@@ -326,62 +325,71 @@ export default function App() {
                 </>
               )}
             </section>
+            ) : null}
 
-            {/* View Selector Tabs */}
-            <nav className="view-navigation-tabs view-tabs" aria-label="Seleziona visualizzazione">
+            {/* Primary client/advanced navigation */}
+            <nav className="view-navigation-tabs view-tabs client-primary-tabs" aria-label="Dashboard mode">
               <button
                 type="button"
                 className={`view-tab ${activeView === "client" ? "active" : ""}`}
                 onClick={() => setActiveView("client")}
               >
                 <span className="view-tab__icon">🛡️</span>
-                <span>Client Output Preview</span>
+                <span>Client Evaluation</span>
               </button>
               <button
                 type="button"
-                className={`view-tab ${activeView === "executive" ? "active" : ""}`}
-                onClick={() => setActiveView("executive")}
+                className={`view-tab ${activeView === "advanced" ? "active" : ""}`}
+                onClick={() => setActiveView("advanced")}
               >
-                <span className="view-tab__icon">🏛️</span>
-                <span>Executive Benchmark</span>
-              </button>
-              <button
-                type="button"
-                className={`view-tab ${activeView === "models" ? "active" : ""}`}
-                onClick={() => setActiveView("models")}
-              >
-                <span className="view-tab__icon">🔬</span>
-                <span>Technical Workbench</span>
-              </button>
-              <button
-                type="button"
-                className={`view-tab ${activeView === "documents" ? "active" : ""}`}
-                onClick={() => setActiveView("documents")}
-              >
-                <span className="view-tab__icon">📑</span>
-                <span>Gold-aware Document Audit</span>
-                {documentCount > 0 && (
-                  <span className="view-tab__badge">{documentCount} file</span>
-                )}
+                <span className="view-tab__icon">⚙️</span>
+                <span>Advanced analysis</span>
               </button>
             </nav>
 
-            {/* VIEW 0: Client-facing output prototype */}
+            {activeView === "advanced" ? (
+              <nav className="advanced-view-tabs" aria-label="Advanced analysis section">
+                <button
+                  type="button"
+                  className={advancedView === "executive" ? "active" : ""}
+                  onClick={() => setAdvancedView("executive")}
+                >
+                  Executive benchmark
+                </button>
+                <button
+                  type="button"
+                  className={advancedView === "models" ? "active" : ""}
+                  onClick={() => setAdvancedView("models")}
+                >
+                  Technical workbench
+                </button>
+                <button
+                  type="button"
+                  className={advancedView === "documents" ? "active" : ""}
+                  onClick={() => setAdvancedView("documents")}
+                >
+                  Gold-aware document audit
+                  {documentCount > 0 ? <span>{documentCount}</span> : null}
+                </button>
+              </nav>
+            ) : null}
+
+            {/* Primary progressive-disclosure client journey */}
             {activeView === "client" ? (
-              <ClientOutputPreview
+              <ClientEvaluationJourney
                 detail={detail}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
               />
-            ) : activeView === "executive" ? (
+            ) : advancedView === "executive" ? (
               <ExecutiveBriefingView
                 detail={detail}
                 selectedRun={selectedRun}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
-                onNavigateToDocuments={() => setActiveView("documents")}
+                onNavigateToDocuments={() => setAdvancedView("documents")}
               />
-            ) : activeView === "models" ? (
+            ) : advancedView === "models" ? (
               <>
                 {/* 1. Overall Models Multi-Metric Scatter Plot */}
                 <section className="panel multi-metric-panel">
@@ -551,7 +559,8 @@ export default function App() {
               </section>
             )}
 
-            {/* Run Manifest & Environment Footer */}
+            {/* Run Manifest & Environment Footer: advanced provenance only */}
+            {activeView === "advanced" ? (
             <section className="manifest-strip">
               <span>
                 <strong>Evidence source</strong>
@@ -573,6 +582,7 @@ export default function App() {
                 {formatDate(selectedEvidence?.createdAt ?? selectedRun.createdAt)}
               </span>
             </section>
+            ) : null}
           </>
         )}
       </main>
