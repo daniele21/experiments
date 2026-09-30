@@ -7,6 +7,7 @@ import subprocess
 
 import typer
 
+from redact_bench.dataset_audit import audit_cases
 from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.document_runner import run_document_compare
@@ -74,6 +75,17 @@ def check_data(
 ) -> None:
     cases = load_dataset(dataset)
     typer.echo(f"{len(cases)} cases OK")
+
+
+@app.command("audit-data")
+def audit_data(
+    dataset: Path = typer.Option(ROOT / "data/realistic"),
+    profiles: Path = typer.Option(ROOT / "config/profiles.yaml"),
+) -> None:
+    """Audit dataset balance, taxonomy coverage, semantic families and review state."""
+    cases = load_dataset(dataset)
+    snapshot = load_profile_snapshot(profiles)
+    typer.echo(json.dumps(audit_cases(cases, snapshot), indent=2, ensure_ascii=False))
 
 
 @app.command("preflight")
