@@ -195,6 +195,8 @@ The dashboard includes:
   2. document-by-document matrix comparing every model on the same test files;
   3. detailed document × model evidence with a contextual document preview that highlights the PII actually identified by the selected model, plus benchmark misses and extra detections;
 - the document × model detail includes a contextual coverage preview: **detected PII** is highlighted as protected coverage while **missed gold PII** is highlighted separately as exposed leakage;
+- **PII Detection Scope** is available on demand from the Client Evaluation header rather than occupying permanent dashboard space; it opens a profile-aware side drawer with search, the exact PII definition, and collapsed examples for every type in General, Healthcare, Financial and Legal;
+- the taxonomy shown in the UI is generated at `redact-bench ui` startup directly from the pinned `config/profiles.yaml` snapshot, so UI documentation and model-facing detection definitions share one source of truth;
 - the preview supports **Coverage** and **Redacted** modes; in Redacted mode detected PII is masked but can be revealed on click (or revealed/hidden in bulk) so the client can inspect exactly what the model decided to protect, while missed PII stays visible as leakage;
 - a minimal information hierarchy at each level: the overview exposes only recall, leakage, precision, inference success and p95 latency; deeper evidence is revealed only after the user drills into a model/document;
 - technical benchmark dashboards are intentionally nested under **Advanced analysis** so they do not compete with the client-facing evaluation journey;
