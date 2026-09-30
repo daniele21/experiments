@@ -194,7 +194,8 @@ The dashboard includes:
   1. aggregate model comparison across the benchmark;
   2. document-by-document matrix comparing every model on the same test files;
   3. detailed document × model evidence with a contextual document preview that highlights the PII actually identified by the selected model, plus benchmark misses and extra detections;
-- the document × model detail supports both **Highlighted** and **Redacted** preview modes so the client can inspect what was recognized in context and how the protected text would look;
+- the document × model detail includes a contextual coverage preview: **detected PII** is highlighted as protected coverage while **missed gold PII** is highlighted separately as exposed leakage;
+- the preview supports **Coverage** and **Redacted** modes; in Redacted mode detected PII is masked but can be revealed on click (or revealed/hidden in bulk) so the client can inspect exactly what the model decided to protect, while missed PII stays visible as leakage;
 - a minimal information hierarchy at each level: the overview exposes only recall, leakage, precision, inference success and p95 latency; deeper evidence is revealed only after the user drills into a model/document;
 - technical benchmark dashboards are intentionally nested under **Advanced analysis** so they do not compete with the client-facing evaluation journey;
 - run selector with automatic discovery of newly completed runs;
