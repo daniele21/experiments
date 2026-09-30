@@ -167,6 +167,28 @@ export const uiConfig = {
   fileComparison: {
     maxVisibleSpans: 8,
   },
+
+  // Executive briefing and decision governance settings
+  executive: {
+    thresholds: {
+      minProductionRecall: 0.85,
+      minProductionReliability: 0.95,
+      maxAcceptableLeakage: 0.10,
+      highZeroLeakDocRate: 0.40,
+    },
+    riskTiers: {
+      low: { label: "Basso Rischio GDPR", tone: "positive" },
+      moderate: { label: "Rischio Moderato", tone: "warning" },
+      high: { label: "Alto Rischio Sanzioni", tone: "risk" },
+    },
+    // Return on Investment & TCO comparison with commercial cloud APIs
+    roiEstimator: {
+      defaultDocsPerMonth: 5000,
+      avgTokensPerDoc: 2500,
+      cloudCostPerMillionTokens: 4.5, // Reference GPT-4o / Claude blended pricing (€/M tokens)
+      localHostingMonthlyEstimate: 160, // Reference GPU instance / amortized on-premise hardware (€/month)
+    },
+  },
 };
 
 export default uiConfig;

@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DocumentComparisonView from "./components/DocumentComparisonView";
+import ExecutiveBriefingView from "./components/ExecutiveBriefingView";
 import FailureExplorer from "./components/FailureExplorer";
 import { MetricCard } from "./components/MetricCard";
 import ModelTable from "./components/ModelTable";
@@ -39,8 +40,8 @@ export default function App() {
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
 
-  // Active top-level view: "models" (Panoramica & Scatter) | "documents" (Confronto per File)
-  const [activeView, setActiveView] = useState("models");
+  // Active top-level view: "executive" (Executive Briefing & Verdetto) | "models" (Workbench Tecnico) | "documents" (Confronto per File)
+  const [activeView, setActiveView] = useState("executive");
 
   // Loading states:
   // - loadingInitial: True only during the very first bootstrap
@@ -321,15 +322,23 @@ export default function App() {
               )}
             </section>
 
-            {/* View Selector Tabs (Overall Models & Scatter vs Confronto per File) */}
-            <nav className="view-tabs" aria-label="Seleziona visualizzazione">
+            {/* View Selector Tabs (Executive Briefing vs Workbench Tecnico vs Audit Documenti) */}
+            <nav className="view-navigation-tabs view-tabs" aria-label="Seleziona visualizzazione">
+              <button
+                type="button"
+                className={`view-tab ${activeView === "executive" ? "active" : ""}`}
+                onClick={() => setActiveView("executive")}
+              >
+                <span className="view-tab__icon">🏛️</span>
+                <span>Executive Briefing & Verdetto</span>
+              </button>
               <button
                 type="button"
                 className={`view-tab ${activeView === "models" ? "active" : ""}`}
                 onClick={() => setActiveView("models")}
               >
-                <span className="view-tab__icon">📊</span>
-                <span>Panoramica Modelli & Scatter</span>
+                <span className="view-tab__icon">🔬</span>
+                <span>Workbench Tecnico & Scatter</span>
               </button>
               <button
                 type="button"
@@ -337,15 +346,23 @@ export default function App() {
                 onClick={() => setActiveView("documents")}
               >
                 <span className="view-tab__icon">📑</span>
-                <span>Confronto per File</span>
+                <span>Audit & Confronto Documenti</span>
                 {documentCount > 0 && (
                   <span className="view-tab__badge">{documentCount} file</span>
                 )}
               </button>
             </nav>
 
-            {/* VIEW 1: Overall Models, Multi-Metric Scatter & Diagnostics */}
-            {activeView === "models" ? (
+            {/* VIEW 0: Executive Briefing & Decision Summary */}
+            {activeView === "executive" ? (
+              <ExecutiveBriefingView
+                detail={detail}
+                selectedRun={selectedRun}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                onNavigateToDocuments={() => setActiveView("documents")}
+              />
+            ) : activeView === "models" ? (
               <>
                 {/* 1. Overall Models Multi-Metric Scatter Plot */}
                 <section className="panel multi-metric-panel">

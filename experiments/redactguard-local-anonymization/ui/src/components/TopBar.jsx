@@ -1,5 +1,6 @@
 import { uiConfig } from "../config/uiConfig";
 import { formatDate, shortDataset } from "../utils/formatters";
+import ThemeToggle from "./ThemeToggle";
 
 /**
  * TopBar component containing run title, metadata summary, and auto-refresh/manual-refresh controls.
@@ -36,6 +37,9 @@ export function TopBar({
       </div>
 
       <div className="topbar-actions">
+        {/* Color Theme Selector */}
+        <ThemeToggle />
+
         {/* Cadence selector / pause toggle */}
         <div className="cadence-picker" title="Configure background auto-refresh">
           <span className={`live-dot ${isAutoEnabled ? "live-dot--active" : "live-dot--paused"}`}>
