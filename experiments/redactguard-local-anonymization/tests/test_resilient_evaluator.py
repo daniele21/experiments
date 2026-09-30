@@ -1,7 +1,5 @@
 from types import SimpleNamespace
-import pytest
-
-from redact_bench.models import Case, Finding, InferenceResult, Span
+from redact_bench.models import Case, Finding, InferenceResult
 from redact_bench.resilient_evaluator import (
     ResilientExecutionSettings,
     clean_exception_details,
