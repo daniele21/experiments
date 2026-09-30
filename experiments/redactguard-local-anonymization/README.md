@@ -263,6 +263,38 @@ produce a valid RedactGuard v2 structured response before any dataset quality sc
 accepted. `compare` and `latency` run the same gate automatically unless explicitly
 disabled for diagnostics with `--no-preflight`.
 
+## Dataset audit and semantic challenge set
+
+Before interpreting model rankings, audit the dataset itself:
+
+```bash
+uv run redact-bench audit-data --dataset data/realistic
+uv run redact-bench audit-data --dataset data/challenge/cases.jsonl
+```
+
+The audit reports taxonomy coverage, profile balance, positive/negative cases, semantic
+content families, exact duplicate texts, largest-case/family share, PII subtype coverage,
+contrast-pair families and human-review status.
+
+`data/challenge/cases.jsonl` is a dedicated semantic challenge set with 46 compact cases
+covering all 14 frozen PII types. It includes 20 hard-negative/contrast families so the
+benchmark tests contextual policy application rather than only obvious pattern matching.
+
+Run it directly:
+
+```bash
+uv run redact-bench compare --dataset data/challenge/cases.jsonl
+```
+
+or with the managed four-model suite:
+
+```bash
+uv run redact-bench suite --config config/suite-challenge.yaml
+```
+
+The challenge set and realistic v0.2 gold are still marked `human_reviewed=false`; they
+must not be presented as independently adjudicated gold until review is completed.
+
 ## Realistic test dataset
 
 The realistic model-only dataset is committed under `data/realistic/`: 11 heterogeneous source representations, canonical Markdown and exact deterministic PII gold spans. A fresh clone does not need a Drive download for model comparison.
@@ -390,12 +422,12 @@ failure cause.
 
 The result artifacts expose:
 
-- micro and macro model-quality metrics;
+- micro, document-macro and semantic-family-macro model-quality metrics;
 - system recall and system leakage;
 - inference-success and evaluated-case coverage;
 - contract-valid and truncation rates;
 - raw → resolved model-item counts and span-resolution rate;
-- by-type and by-document metrics;
+- by-type, benchmark-only by-subtype, by-family and by-document metrics;
 - typed failure analysis;
 - per-model preflight evidence;
 - RedactGuard contract version + source revision;
