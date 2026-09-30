@@ -166,13 +166,15 @@ runs plus managed suite layouts under either `results/suite/` or `results/suites
 
 The dashboard includes:
 
+- **Client Output Preview** as the default view: a product/client-facing PII recognition summary driven by the actual findings of the selected model/document, with masked values, category footprint and suggested redactions;
+- a separate **benchmark-only validation panel** below the client preview showing the hidden gold truth (recall, leakage, precision, missed spans), specifically to catch cases where a polished client output looks complete while the benchmark knows PII was missed;
 - run selector with automatic discovery of newly completed runs;
 - recall, leakage, precision, zero-leak and latency KPI cards;
 - recall-vs-latency trade-off chart across models;
 - per-PII-type recall / precision / leakage chart;
 - all-model comparison table;
 - model-specific failure explorer;
-- benchmark, Korgis and host provenance.
+- benchmark, Korgis and host provenance;
 - unified cross-run overview that places all models in one comparison, using the newest complete evidence per model and falling back to clearly labelled partial evidence when needed.
 
 
