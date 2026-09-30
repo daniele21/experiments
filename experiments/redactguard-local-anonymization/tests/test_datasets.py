@@ -1,6 +1,8 @@
 from pathlib import Path
 
+from redact_bench.dataset_audit import audit_cases
 from redact_bench.datasets import load_jsonl
+from redact_bench.profiles import load_profile_snapshot
 
 
 def test_smoke_dataset_loads():
@@ -66,3 +68,17 @@ def test_challenge_dataset_contains_contrast_families():
         if {tag for case in family_cases for tag in case.tags} >= {"positive", "negative"}
     ]
     assert len(contrast_families) >= 15
+
+
+def test_challenge_audit_reports_full_taxonomy_and_contrast_pairs():
+    root = Path(__file__).resolve().parents[1]
+    cases = load_jsonl(root / "data/challenge/cases.jsonl")
+    snapshot = load_profile_snapshot(root / "config/profiles.yaml")
+
+    audit = audit_cases(cases, snapshot)
+
+    assert audit["taxonomy"]["missing_types"] == []
+    assert audit["taxonomy"]["coverage_rate"] == 1.0
+    assert audit["contrast_families"] >= 15
+    assert audit["negative_cases"] >= 15
+    assert audit["human_reviewed_rate"] == 0.0
