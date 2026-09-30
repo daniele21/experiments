@@ -53,19 +53,69 @@ uv run python scripts/run_benchmark.py \
 
 Inspect the resolved models and prompt IDs before continuing.
 
-For the optional three-arm dry-run:
+### Start the local GGUF Q4_K_M runtime
+
+From the Korgis repository, point Korgis at a working stable-diffusion.cpp `sd-server`,
+download/verify the complete three-artifact bundle, and start the public Korgis API:
 
 ```bash
+uv sync --frozen --extra dev
+
+export LOCAL_LLM_SD_SERVER_BIN="/absolute/path/to/sd-server"
+
+uv run --frozen local-llm download qwen-image-2.1-gguf-q4km
+uv run --frozen local-llm serve \
+  --model qwen-image-2.1-gguf-q4km \
+  --enable-admin-api \
+  --no-download
+```
+
+Korgis expects the bundle root to contain the Q4_K_M diffusion GGUF, Qwen3-VL text encoder
+GGUF and Qwen Image 2.1 VAE. The public endpoint remains `http://127.0.0.1:1235`.
+
+Before any paid comparison, validate the benchmark mapping against the local runtime:
+
+```bash
+cd experiments/image-generation-benchmark
 export KORGIS_BASE_URL="http://127.0.0.1:1235"
 
 uv run python scripts/run_benchmark.py \
-  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local \
+  --models qwen-image-2.1-local-gguf-q4km \
   --profile smoke \
   --output-dir results \
   --dry-run
 ```
 
-The MFlux arm uses Korgis model `qwen-image-2.1-mflux-q8`. The optional GGUF arm uses
+Then run the local-only real smoke:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-local-gguf-q4km \
+  --profile smoke \
+  --output-dir results
+```
+
+For the GPT + Gemini + GGUF comparison dry-run:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local-gguf-q4km \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+For a four-arm dry-run that also includes the MFlux Q8 profile:
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local,qwen-image-2.1-local-gguf-q4km \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+The MFlux arm uses Korgis model `qwen-image-2.1-mflux-q8`. The GGUF arm uses
 `qwen-image-2.1-gguf-q4km`, a three-artifact stable-diffusion.cpp bundle with Q4_K_M
 denoiser, Qwen3-VL text encoder and Qwen Image 2.1 VAE. Record artifact/runtime provenance
 without inferring peak memory or performance from file size.
@@ -79,11 +129,22 @@ export OPENAI_API_KEY="..."
 export GEMINI_API_KEY="..."
 ```
 
-Then run:
+Then run the paid baseline:
 
 ```bash
 uv run python scripts/run_benchmark.py \
   --models openai-sunburst,gemini-pro-image \
+  --profile smoke \
+  --output-dir results
+```
+
+With the GGUF Korgis runtime already running, execute the three-arm comparison with:
+
+```bash
+export KORGIS_BASE_URL="http://127.0.0.1:1235"
+
+uv run python scripts/run_benchmark.py \
+  --models openai-sunburst,gemini-pro-image,qwen-image-2.1-local-gguf-q4km \
   --profile smoke \
   --output-dir results
 ```
