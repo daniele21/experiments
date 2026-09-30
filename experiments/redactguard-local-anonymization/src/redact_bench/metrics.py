@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+import hashlib
 from statistics import median
 from typing import Iterable
 
@@ -227,6 +228,9 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         "case_id": case.case_id,
         "profile": case.profile,
         "tags": list(case.tags),
+        "semantic_content_sha256": hashlib.sha256(
+            case.text.encode("utf-8")
+        ).hexdigest(),
         "content_family_id": case.content_family_id or case.case_id,
         "variant_id": case.variant_id,
         "gold_version": case.gold_version,
@@ -593,12 +597,16 @@ def _dataset_balance(rows: list[dict]) -> dict:
     family_gold: Counter = Counter()
     family_documents: Counter = Counter()
     reviewed_documents = 0
+    semantic_content_cases: dict[str, list[str]] = defaultdict(list)
     for row in first_by_case.values():
         family = row.get("content_family_id") or row["case_id"]
         family_gold[family] += row["gold_count"]
         family_documents[family] += 1
         if row.get("human_reviewed"):
             reviewed_documents += 1
+        semantic_content_cases[
+            row.get("semantic_content_sha256") or row["case_id"]
+        ].append(row["case_id"])
 
     by_type: Counter = Counter()
     for row in first_by_case.values():
@@ -616,6 +624,12 @@ def _dataset_balance(rows: list[dict]) -> dict:
         "content_families": len(family_gold),
         "gold_spans_by_family": dict(sorted(family_gold.items())),
         "documents_by_family": dict(sorted(family_documents.items())),
+        "semantic_contents": len(semantic_content_cases),
+        "duplicate_semantic_content_groups": [
+            case_ids
+            for case_ids in semantic_content_cases.values()
+            if len(case_ids) > 1
+        ],
         "human_reviewed_documents": reviewed_documents,
         "human_reviewed_document_rate": _ratio(
             reviewed_documents,
@@ -631,12 +645,19 @@ def aggregate_detailed(rows: Iterable[dict]) -> dict:
     grouped_documents: dict[str, list[dict]] = defaultdict(list)
     grouped_profiles: dict[str, list[dict]] = defaultdict(list)
     grouped_families: dict[str, list[dict]] = defaultdict(list)
+    family_seen_content: dict[str, set[str]] = defaultdict(set)
     for row in rows:
         grouped_documents[row["case_id"]].append(row)
         grouped_profiles[row["profile"]].append(row)
-        grouped_families[
-            row.get("content_family_id") or row["case_id"]
-        ].append(row)
+
+        family = row.get("content_family_id") or row["case_id"]
+        semantic_content = (
+            row.get("semantic_content_sha256")
+            or row["case_id"]
+        )
+        if semantic_content not in family_seen_content[family]:
+            grouped_families[family].append(row)
+            family_seen_content[family].add(semantic_content)
 
     by_document = {
         case_id: _document_summary(case_rows)
