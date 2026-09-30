@@ -50,3 +50,25 @@ def test_qwen_local_plan_resolves_korgis_runtime() -> None:
     assert model.generation["num_inference_steps"] == 40
     assert model.benchmark_mapping["runtime"] == "mflux"
     assert model.benchmark_mapping["quantization"] == "Q8"
+
+
+
+def test_qwen_gguf_local_plan_resolves_korgis_sdcpp_runtime() -> None:
+    plan = build_run_plan(
+        ROOT,
+        model_keys=["qwen-image-2.1-local-gguf-q4km"],
+        profile_id="smoke",
+    )
+
+    [model] = plan.models
+    assert model.model_id == "qwen-image-2.1-gguf-q4km"
+    assert model.runtime_key == "korgis-image-local"
+    assert model.provider_key == "korgis-image"
+    assert model.provider_type == "korgis-image"
+    assert model.base_url_env == "KORGIS_BASE_URL"
+    assert model.generation["size"] == "1024x1024"
+    assert model.generation["num_inference_steps"] == 20
+    assert model.generation["guidance_scale"] == 6.0
+    assert model.generation["sampling_method"] == "euler"
+    assert model.benchmark_mapping["runtime"] == "stable-diffusion.cpp"
+    assert model.benchmark_mapping["quantization"] == "Q4_K_M"

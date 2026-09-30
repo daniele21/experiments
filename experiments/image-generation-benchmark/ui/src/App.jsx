@@ -28,9 +28,11 @@ function provenance(row) {
     row?.provider_id ? `provider=${row.provider_id}` : null,
     korgis.runtime_key ? `runtime=${korgis.runtime_key}` : null,
     korgis.backend ? `backend=${korgis.backend}` : null,
-    generation.quantization_bits != null
-      ? `quantization=Q${generation.quantization_bits}`
-      : null,
+    generation.quantization
+      ? `quantization=${generation.quantization}`
+      : generation.quantization_bits != null
+        ? `quantization=Q${generation.quantization_bits}`
+        : null,
   ].filter(Boolean);
 }
 
