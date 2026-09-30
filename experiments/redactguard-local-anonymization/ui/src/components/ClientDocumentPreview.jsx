@@ -109,7 +109,8 @@ export function ClientDocumentPreview({
 }) {
   const [mode, setMode] = useState("highlighted");
   const text = documentData?.text ?? "";
-  const findings = documentData?.models?.[model]?.redactions ?? [];
+  const modelData = documentData?.models?.[model] ?? null;
+  const findings = modelData?.redactions ?? [];
 
   const segments = useMemo(
     () => buildSegments(text, findings),
@@ -119,6 +120,21 @@ export function ClientDocumentPreview({
     () => categorySummary(findings),
     [findings],
   );
+
+  if (modelData && modelData.valid === false) {
+    return (
+      <section className="client-document-preview client-document-preview--unavailable">
+        <div>
+          <span className="client-journey-kicker">Document preview</span>
+          <h3>Preview unavailable</h3>
+          <p>
+            This model did not produce a valid inference for the selected document,
+            so a “0 PII” preview would be misleading.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   if (!text) {
     return (
