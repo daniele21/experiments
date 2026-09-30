@@ -19,3 +19,4 @@ korgis
 experiments/*/data/documents/generated/
 experiments/*/data/realistic/originals/
 experiments/*/results/history.jsonl
+experiments/*/ui/public/pii-taxonomy.json
