@@ -19,3 +19,50 @@ def test_load_dataset_filter_by_id():
     assert len(selected) == 2
     assert [c.case_id for c in selected] == ["g01", "g03"]
 
+
+
+def test_challenge_dataset_covers_full_taxonomy():
+    root = Path(__file__).resolve().parents[1]
+    cases = load_jsonl(root / "data/challenge/cases.jsonl")
+    assert len(cases) == 46
+
+    covered_types = {
+        span.pii_type
+        for case in cases
+        for span in case.gold
+    }
+    expected = {
+        "private_person",
+        "private_email",
+        "private_phone",
+        "private_address",
+        "private_date",
+        "private_url",
+        "account_number",
+        "personal_demographic",
+        "secret",
+        "health_condition",
+        "health_treatment",
+        "health_lab_result",
+        "personal_measurement",
+        "lifestyle_info",
+    }
+    assert covered_types == expected
+    assert all(case.content_family_id for case in cases)
+    assert all(case.gold_version == "challenge_v0.1" for case in cases)
+    assert all(case.human_reviewed is False for case in cases)
+
+
+def test_challenge_dataset_contains_contrast_families():
+    root = Path(__file__).resolve().parents[1]
+    cases = load_jsonl(root / "data/challenge/cases.jsonl")
+    by_family = {}
+    for case in cases:
+        by_family.setdefault(case.content_family_id, []).append(case)
+
+    contrast_families = [
+        family_cases
+        for family_cases in by_family.values()
+        if {tag for case in family_cases for tag in case.tags} >= {"positive", "negative"}
+    ]
+    assert len(contrast_families) >= 15
