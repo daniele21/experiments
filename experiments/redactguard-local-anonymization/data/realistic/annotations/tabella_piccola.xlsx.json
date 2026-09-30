@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "tabella_piccola.xlsx.md",
   "profile": "financial",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -24,7 +24,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 1080,
@@ -35,6 +36,17 @@
       "private_email": 120,
       "private_person": 240,
       "private_phone": 120
+    },
+    "by_subtype": {
+      "account_number:customer_record_id": 120,
+      "account_number:iban": 120,
+      "account_number:vat_number": 120,
+      "private_address:locality": 120,
+      "private_address:street_address": 120,
+      "private_email:contact_email": 120,
+      "private_person:contact_person": 120,
+      "private_person:customer_name": 120,
+      "private_phone:contact_phone": 120
     }
   },
   "entities": [
@@ -2272,7 +2284,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 160,
@@ -2285,7 +2298,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 174,
@@ -2298,7 +2312,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 199,
@@ -2311,7 +2326,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 216,
@@ -2324,7 +2340,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 230,
@@ -2337,7 +2354,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 260,
@@ -2350,7 +2368,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 269,
@@ -2363,7 +2382,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 302,
@@ -2376,7 +2396,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 318,
@@ -2389,7 +2410,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 331,
@@ -2402,7 +2424,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 346,
@@ -2415,7 +2438,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 372,
@@ -2428,7 +2452,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 390,
@@ -2441,7 +2466,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 404,
@@ -2454,7 +2480,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 434,
@@ -2467,7 +2494,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 443,
@@ -2480,7 +2508,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 476,
@@ -2493,7 +2522,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 492,
@@ -2506,7 +2536,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 505,
@@ -2519,7 +2550,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 519,
@@ -2532,7 +2564,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 544,
@@ -2545,7 +2578,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 561,
@@ -2558,7 +2592,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 575,
@@ -2571,7 +2606,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 605,
@@ -2584,7 +2620,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 612,
@@ -2597,7 +2634,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 645,
@@ -2610,7 +2648,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 661,
@@ -2623,7 +2662,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 674,
@@ -2636,7 +2676,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 688,
@@ -2649,7 +2690,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 713,
@@ -2662,7 +2704,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 731,
@@ -2675,7 +2718,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 745,
@@ -2688,7 +2732,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 775,
@@ -2701,7 +2746,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 784,
@@ -2714,7 +2760,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 817,
@@ -2727,7 +2774,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 833,
@@ -2740,7 +2788,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 846,
@@ -2753,7 +2802,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 861,
@@ -2766,7 +2816,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 887,
@@ -2779,7 +2830,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 904,
@@ -2792,7 +2844,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 918,
@@ -2805,7 +2858,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 948,
@@ -2818,7 +2872,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 958,
@@ -2831,7 +2886,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 991,
@@ -2844,7 +2900,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1007,
@@ -2857,7 +2914,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1020,
@@ -2870,7 +2928,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1033,
@@ -2883,7 +2942,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1057,
@@ -2896,7 +2956,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1074,
@@ -2909,7 +2970,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1088,
@@ -2922,7 +2984,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1118,
@@ -2935,7 +2998,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1127,
@@ -2948,7 +3012,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 1160,
@@ -2961,7 +3026,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1176,
@@ -2974,7 +3040,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1189,
@@ -2987,7 +3054,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1203,
@@ -3000,7 +3068,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1228,
@@ -3013,7 +3082,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1245,
@@ -3026,7 +3096,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1259,
@@ -3039,7 +3110,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1289,
@@ -3052,7 +3124,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1298,
@@ -3065,7 +3138,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 1331,
@@ -3078,7 +3152,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1347,
@@ -3091,7 +3166,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1360,
@@ -3104,7 +3180,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1373,
@@ -3117,7 +3194,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1397,
@@ -3130,7 +3208,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1414,
@@ -3143,7 +3222,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1428,
@@ -3156,7 +3236,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1458,
@@ -3169,7 +3250,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1468,
@@ -3182,7 +3264,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 1501,
@@ -3195,7 +3278,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1517,
@@ -3208,7 +3292,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1530,
@@ -3221,7 +3306,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1544,
@@ -3234,7 +3320,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1569,
@@ -3247,7 +3334,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1586,
@@ -3260,7 +3348,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1600,
@@ -3273,7 +3362,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1630,
@@ -3286,7 +3376,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1639,
@@ -3299,7 +3390,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 1672,
@@ -3312,7 +3404,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1688,
@@ -3325,7 +3418,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1701,
@@ -3338,7 +3432,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1715,
@@ -3351,7 +3446,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1740,
@@ -3364,7 +3460,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1757,
@@ -3377,7 +3474,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1771,
@@ -3390,7 +3488,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1801,
@@ -3403,7 +3502,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1810,
@@ -3416,7 +3516,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 1843,
@@ -3429,7 +3530,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 1859,
@@ -3442,7 +3544,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 1872,
@@ -3455,7 +3558,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 1886,
@@ -3468,7 +3572,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 1911,
@@ -3481,7 +3586,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1928,
@@ -3494,7 +3600,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1942,
@@ -3507,7 +3614,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1972,
@@ -3520,7 +3628,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 1981,
@@ -3533,7 +3642,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2014,
@@ -3546,7 +3656,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2030,
@@ -3559,7 +3670,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2043,
@@ -3572,7 +3684,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2058,
@@ -3585,7 +3698,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2084,
@@ -3598,7 +3712,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2102,
@@ -3611,7 +3726,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2116,
@@ -3624,7 +3740,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2146,
@@ -3637,7 +3754,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 2155,
@@ -3650,7 +3768,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2188,
@@ -3663,7 +3782,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2204,
@@ -3676,7 +3796,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2217,
@@ -3689,7 +3810,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2231,
@@ -3702,7 +3824,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2256,
@@ -3715,7 +3838,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2273,
@@ -3728,7 +3852,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2287,
@@ -3741,7 +3866,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2317,
@@ -3754,7 +3880,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 2324,
@@ -3767,7 +3894,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2357,
@@ -3780,7 +3908,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2373,
@@ -3793,7 +3922,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2386,
@@ -3806,7 +3936,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2400,
@@ -3819,7 +3950,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2425,
@@ -3832,7 +3964,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2443,
@@ -3845,7 +3978,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2457,
@@ -3858,7 +3992,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2487,
@@ -3871,7 +4006,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 2496,
@@ -3884,7 +4020,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2529,
@@ -3897,7 +4034,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2545,
@@ -3910,7 +4048,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2558,
@@ -3923,7 +4062,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2573,
@@ -3936,7 +4076,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2599,
@@ -3949,7 +4090,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2616,
@@ -3962,7 +4104,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2630,
@@ -3975,7 +4118,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2660,
@@ -3988,7 +4132,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 2670,
@@ -4001,7 +4146,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2703,
@@ -4014,7 +4160,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2719,
@@ -4027,7 +4174,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2732,
@@ -4040,7 +4188,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2745,
@@ -4053,7 +4202,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2769,
@@ -4066,7 +4216,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2786,
@@ -4079,7 +4230,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2800,
@@ -4092,7 +4244,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 2830,
@@ -4105,7 +4258,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 2839,
@@ -4118,7 +4272,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 2872,
@@ -4131,7 +4286,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 2888,
@@ -4144,7 +4300,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 2901,
@@ -4157,7 +4314,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 2915,
@@ -4170,7 +4328,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2940,
@@ -4183,7 +4342,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2957,
@@ -4196,7 +4356,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 2971,
@@ -4209,7 +4370,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3001,
@@ -4222,7 +4384,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3010,
@@ -4235,7 +4398,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3043,
@@ -4248,7 +4412,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3059,
@@ -4261,7 +4426,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3072,
@@ -4274,7 +4440,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3085,
@@ -4287,7 +4454,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3109,
@@ -4300,7 +4468,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3126,
@@ -4313,7 +4482,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3140,
@@ -4326,7 +4496,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3170,
@@ -4339,7 +4510,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3180,
@@ -4352,7 +4524,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3213,
@@ -4365,7 +4538,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3229,
@@ -4378,7 +4552,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3242,
@@ -4391,7 +4566,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3256,
@@ -4404,7 +4580,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3281,
@@ -4417,7 +4594,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3298,
@@ -4430,7 +4608,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3312,
@@ -4443,7 +4622,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3342,
@@ -4456,7 +4636,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3351,
@@ -4469,7 +4650,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3384,
@@ -4482,7 +4664,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3400,
@@ -4495,7 +4678,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3413,
@@ -4508,7 +4692,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3427,
@@ -4521,7 +4706,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3452,
@@ -4534,7 +4720,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3469,
@@ -4547,7 +4734,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3483,
@@ -4560,7 +4748,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3513,
@@ -4573,7 +4762,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3522,
@@ -4586,7 +4776,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3555,
@@ -4599,7 +4790,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3571,
@@ -4612,7 +4804,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3584,
@@ -4625,7 +4818,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3598,
@@ -4638,7 +4832,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3623,
@@ -4651,7 +4846,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3640,
@@ -4664,7 +4860,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3654,
@@ -4677,7 +4874,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3684,
@@ -4690,7 +4888,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3693,
@@ -4703,7 +4902,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3726,
@@ -4716,7 +4916,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3742,
@@ -4729,7 +4930,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3755,
@@ -4742,7 +4944,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3770,
@@ -4755,7 +4958,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3796,
@@ -4768,7 +4972,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3814,
@@ -4781,7 +4986,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3828,
@@ -4794,7 +5000,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 3858,
@@ -4807,7 +5014,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 3867,
@@ -4820,7 +5028,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 3900,
@@ -4833,7 +5042,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 3916,
@@ -4846,7 +5056,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 3929,
@@ -4859,7 +5070,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 3943,
@@ -4872,7 +5084,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 3968,
@@ -4885,7 +5098,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 3985,
@@ -4898,7 +5112,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 3999,
@@ -4911,7 +5126,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4029,
@@ -4924,7 +5140,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4036,
@@ -4937,7 +5154,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4069,
@@ -4950,7 +5168,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4085,
@@ -4963,7 +5182,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4098,
@@ -4976,7 +5196,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4112,
@@ -4989,7 +5210,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4137,
@@ -5002,7 +5224,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4155,
@@ -5015,7 +5238,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4169,
@@ -5028,7 +5252,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4199,
@@ -5041,7 +5266,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4208,
@@ -5054,7 +5280,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4241,
@@ -5067,7 +5294,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4257,
@@ -5080,7 +5308,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4270,
@@ -5093,7 +5322,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4285,
@@ -5106,7 +5336,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4311,
@@ -5119,7 +5350,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4328,
@@ -5132,7 +5364,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4342,
@@ -5145,7 +5378,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4372,
@@ -5158,7 +5392,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4382,
@@ -5171,7 +5406,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4415,
@@ -5184,7 +5420,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4431,
@@ -5197,7 +5434,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4444,
@@ -5210,7 +5448,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4457,
@@ -5223,7 +5462,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4481,
@@ -5236,7 +5476,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4498,
@@ -5249,7 +5490,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4512,
@@ -5262,7 +5504,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4542,
@@ -5275,7 +5518,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4551,
@@ -5288,7 +5532,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4584,
@@ -5301,7 +5546,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4600,
@@ -5314,7 +5560,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4613,
@@ -5327,7 +5574,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4627,
@@ -5340,7 +5588,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4652,
@@ -5353,7 +5602,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4669,
@@ -5366,7 +5616,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4683,
@@ -5379,7 +5630,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4713,
@@ -5392,7 +5644,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4722,
@@ -5405,7 +5658,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4755,
@@ -5418,7 +5672,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4771,
@@ -5431,7 +5686,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4784,
@@ -5444,7 +5700,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4797,
@@ -5457,7 +5714,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4821,
@@ -5470,7 +5728,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 4838,
@@ -5483,7 +5742,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 4852,
@@ -5496,7 +5756,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 4882,
@@ -5509,7 +5770,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 4892,
@@ -5522,7 +5784,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 4925,
@@ -5535,7 +5798,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 4941,
@@ -5548,7 +5812,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 4954,
@@ -5561,7 +5826,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 4968,
@@ -5574,7 +5840,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 4993,
@@ -5587,7 +5854,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5010,
@@ -5600,7 +5868,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5024,
@@ -5613,7 +5882,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5054,
@@ -5626,7 +5896,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5063,
@@ -5639,7 +5910,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5096,
@@ -5652,7 +5924,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5112,
@@ -5665,7 +5938,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5125,
@@ -5678,7 +5952,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5139,
@@ -5691,7 +5966,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5164,
@@ -5704,7 +5980,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5181,
@@ -5717,7 +5994,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5195,
@@ -5730,7 +6008,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5225,
@@ -5743,7 +6022,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5234,
@@ -5756,7 +6036,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5267,
@@ -5769,7 +6050,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5283,
@@ -5782,7 +6064,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5296,
@@ -5795,7 +6078,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5310,
@@ -5808,7 +6092,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5335,
@@ -5821,7 +6106,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5352,
@@ -5834,7 +6120,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5366,
@@ -5847,7 +6134,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5396,
@@ -5860,7 +6148,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5405,
@@ -5873,7 +6162,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5438,
@@ -5886,7 +6176,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5454,
@@ -5899,7 +6190,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5467,
@@ -5912,7 +6204,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5482,
@@ -5925,7 +6218,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5508,
@@ -5938,7 +6232,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5526,
@@ -5951,7 +6246,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5540,
@@ -5964,7 +6260,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5570,
@@ -5977,7 +6274,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5579,
@@ -5990,7 +6288,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5612,
@@ -6003,7 +6302,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5628,
@@ -6016,7 +6316,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5641,
@@ -6029,7 +6330,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5655,
@@ -6042,7 +6344,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5680,
@@ -6055,7 +6358,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5697,
@@ -6068,7 +6372,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5711,
@@ -6081,7 +6386,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5741,
@@ -6094,7 +6400,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5748,
@@ -6107,7 +6414,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5781,
@@ -6120,7 +6428,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5797,
@@ -6133,7 +6442,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5810,
@@ -6146,7 +6456,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5824,
@@ -6159,7 +6470,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 5849,
@@ -6172,7 +6484,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 5867,
@@ -6185,7 +6498,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 5881,
@@ -6198,7 +6512,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 5911,
@@ -6211,7 +6526,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 5920,
@@ -6224,7 +6540,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 5953,
@@ -6237,7 +6554,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 5969,
@@ -6250,7 +6568,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 5982,
@@ -6263,7 +6582,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 5997,
@@ -6276,7 +6596,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6023,
@@ -6289,7 +6610,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6040,
@@ -6302,7 +6624,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6054,
@@ -6315,7 +6638,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6084,
@@ -6328,7 +6652,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6094,
@@ -6341,7 +6666,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6127,
@@ -6354,7 +6680,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6143,
@@ -6367,7 +6694,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 6156,
@@ -6380,7 +6708,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 6169,
@@ -6393,7 +6722,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6193,
@@ -6406,7 +6736,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6210,
@@ -6419,7 +6750,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6224,
@@ -6432,7 +6764,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6254,
@@ -6445,7 +6778,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6263,
@@ -6458,7 +6792,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6296,
@@ -6471,7 +6806,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6312,
@@ -6484,7 +6820,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 6325,
@@ -6497,7 +6834,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 6339,
@@ -6510,7 +6848,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6364,
@@ -6523,7 +6862,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6381,
@@ -6536,7 +6876,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6395,
@@ -6549,7 +6890,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6425,
@@ -6562,7 +6904,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6434,
@@ -6575,7 +6918,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6467,
@@ -6588,7 +6932,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6483,
@@ -6601,7 +6946,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 6496,
@@ -6614,7 +6960,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 6509,
@@ -6627,7 +6974,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6533,
@@ -6640,7 +6988,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6550,
@@ -6653,7 +7002,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6564,
@@ -6666,7 +7016,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6594,
@@ -6679,7 +7030,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6604,
@@ -6692,7 +7044,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6637,
@@ -6705,7 +7058,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6653,
@@ -6718,7 +7072,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 6666,
@@ -6731,7 +7086,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 6680,
@@ -6744,7 +7100,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6705,
@@ -6757,7 +7114,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6722,
@@ -6770,7 +7128,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6736,
@@ -6783,7 +7142,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6766,
@@ -6796,7 +7156,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6775,
@@ -6809,7 +7170,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6808,
@@ -6822,7 +7184,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6824,
@@ -6835,7 +7198,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 6837,
@@ -6848,7 +7212,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 6851,
@@ -6861,7 +7226,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 6876,
@@ -6874,7 +7240,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 6893,
@@ -6887,7 +7254,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 6907,
@@ -6900,7 +7268,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 6937,
@@ -6913,7 +7282,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 6946,
@@ -6926,7 +7296,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 6979,
@@ -6939,7 +7310,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 6995,
@@ -6952,7 +7324,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7008,
@@ -6965,7 +7338,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7022,
@@ -6978,7 +7352,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7047,
@@ -6991,7 +7366,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7064,
@@ -7004,7 +7380,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7078,
@@ -7017,7 +7394,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7108,
@@ -7030,7 +7408,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7117,
@@ -7043,7 +7422,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 7150,
@@ -7056,7 +7436,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 7166,
@@ -7069,7 +7450,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7179,
@@ -7082,7 +7464,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7194,
@@ -7095,7 +7478,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7220,
@@ -7108,7 +7492,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7238,
@@ -7121,7 +7506,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7252,
@@ -7134,7 +7520,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7282,
@@ -7147,7 +7534,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7291,
@@ -7160,7 +7548,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 7324,
@@ -7173,7 +7562,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 7340,
@@ -7186,7 +7576,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7353,
@@ -7199,7 +7590,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7367,
@@ -7212,7 +7604,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7392,
@@ -7225,7 +7618,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7409,
@@ -7238,7 +7632,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7423,
@@ -7251,7 +7646,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7453,
@@ -7264,7 +7660,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7460,
@@ -7277,7 +7674,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 7493,
@@ -7290,7 +7688,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 7509,
@@ -7303,7 +7702,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7522,
@@ -7316,7 +7716,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7536,
@@ -7329,7 +7730,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7561,
@@ -7342,7 +7744,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7579,
@@ -7355,7 +7758,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7593,
@@ -7368,7 +7772,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7623,
@@ -7381,7 +7786,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7632,
@@ -7394,7 +7800,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 7665,
@@ -7407,7 +7814,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 7681,
@@ -7420,7 +7828,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7694,
@@ -7433,7 +7842,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7709,
@@ -7446,7 +7856,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7735,
@@ -7459,7 +7870,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7752,
@@ -7472,7 +7884,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7766,
@@ -7485,7 +7898,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7796,
@@ -7498,7 +7912,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7806,
@@ -7511,7 +7926,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 7839,
@@ -7524,7 +7940,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 7855,
@@ -7537,7 +7954,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 7868,
@@ -7550,7 +7968,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 7881,
@@ -7563,7 +7982,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 7905,
@@ -7576,7 +7996,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 7922,
@@ -7589,7 +8010,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 7936,
@@ -7602,7 +8024,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 7966,
@@ -7615,7 +8038,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 7975,
@@ -7628,7 +8052,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8008,
@@ -7641,7 +8066,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8024,
@@ -7654,7 +8080,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8037,
@@ -7667,7 +8094,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8051,
@@ -7680,7 +8108,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8076,
@@ -7693,7 +8122,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8093,
@@ -7706,7 +8136,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8107,
@@ -7719,7 +8150,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8137,
@@ -7732,7 +8164,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 8146,
@@ -7745,7 +8178,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8179,
@@ -7758,7 +8192,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8195,
@@ -7771,7 +8206,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8208,
@@ -7784,7 +8220,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8221,
@@ -7797,7 +8234,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8245,
@@ -7810,7 +8248,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8262,
@@ -7823,7 +8262,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8276,
@@ -7836,7 +8276,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8306,
@@ -7849,7 +8290,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 8316,
@@ -7862,7 +8304,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8349,
@@ -7875,7 +8318,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8365,
@@ -7888,7 +8332,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8378,
@@ -7901,7 +8346,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8392,
@@ -7914,7 +8360,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8417,
@@ -7927,7 +8374,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8434,
@@ -7940,7 +8388,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8448,
@@ -7953,7 +8402,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8478,
@@ -7966,7 +8416,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 8487,
@@ -7979,7 +8430,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8520,
@@ -7992,7 +8444,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8536,
@@ -8005,7 +8458,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8549,
@@ -8018,7 +8472,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8563,
@@ -8031,7 +8486,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8588,
@@ -8044,7 +8500,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8605,
@@ -8057,7 +8514,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8619,
@@ -8070,7 +8528,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8649,
@@ -8083,7 +8542,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 8658,
@@ -8096,7 +8556,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8691,
@@ -8109,7 +8570,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8707,
@@ -8122,7 +8584,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8720,
@@ -8135,7 +8598,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8734,
@@ -8148,7 +8612,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8759,
@@ -8161,7 +8626,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8776,
@@ -8174,7 +8640,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8790,
@@ -8187,7 +8654,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8820,
@@ -8200,7 +8668,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 8829,
@@ -8213,7 +8682,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 8862,
@@ -8226,7 +8696,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 8878,
@@ -8239,7 +8710,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 8891,
@@ -8252,7 +8724,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 8906,
@@ -8265,7 +8738,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 8932,
@@ -8278,7 +8752,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 8950,
@@ -8291,7 +8766,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 8964,
@@ -8304,7 +8780,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 8994,
@@ -8317,7 +8794,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9003,
@@ -8330,7 +8808,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9036,
@@ -8343,7 +8822,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9052,
@@ -8356,7 +8836,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9065,
@@ -8369,7 +8850,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9079,
@@ -8382,7 +8864,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9104,
@@ -8395,7 +8878,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9121,
@@ -8408,7 +8892,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9135,
@@ -8421,7 +8906,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9165,
@@ -8434,7 +8920,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9172,
@@ -8447,7 +8934,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9205,
@@ -8460,7 +8948,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9221,
@@ -8473,7 +8962,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9234,
@@ -8486,7 +8976,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9248,
@@ -8499,7 +8990,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9273,
@@ -8512,7 +9004,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9291,
@@ -8525,7 +9018,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9305,
@@ -8538,7 +9032,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9335,
@@ -8551,7 +9046,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9344,
@@ -8564,7 +9060,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9377,
@@ -8577,7 +9074,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9393,
@@ -8590,7 +9088,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9406,
@@ -8603,7 +9102,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9421,
@@ -8616,7 +9116,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9447,
@@ -8629,7 +9130,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9464,
@@ -8642,7 +9144,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9478,
@@ -8655,7 +9158,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9508,
@@ -8668,7 +9172,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9518,
@@ -8681,7 +9186,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9551,
@@ -8694,7 +9200,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9567,
@@ -8707,7 +9214,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9580,
@@ -8720,7 +9228,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9593,
@@ -8733,7 +9242,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9617,
@@ -8746,7 +9256,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9634,
@@ -8759,7 +9270,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9648,
@@ -8772,7 +9284,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9678,
@@ -8785,7 +9298,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9687,
@@ -8798,7 +9312,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9720,
@@ -8811,7 +9326,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9736,
@@ -8824,7 +9340,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9749,
@@ -8837,7 +9354,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9763,
@@ -8850,7 +9368,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9788,
@@ -8863,7 +9382,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9805,
@@ -8876,7 +9396,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9819,
@@ -8889,7 +9410,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 9849,
@@ -8902,7 +9424,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 9858,
@@ -8915,7 +9438,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 9891,
@@ -8928,7 +9452,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 9907,
@@ -8941,7 +9466,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 9920,
@@ -8954,7 +9480,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 9933,
@@ -8967,7 +9494,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 9957,
@@ -8980,7 +9508,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 9974,
@@ -8993,7 +9522,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 9988,
@@ -9006,7 +9536,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10018,
@@ -9019,7 +9550,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10028,
@@ -9032,7 +9564,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10061,
@@ -9045,7 +9578,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10077,
@@ -9058,7 +9592,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10090,
@@ -9071,7 +9606,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10104,
@@ -9084,7 +9620,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10129,
@@ -9097,7 +9634,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10146,
@@ -9110,7 +9648,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10160,
@@ -9123,7 +9662,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10190,
@@ -9136,7 +9676,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10199,
@@ -9149,7 +9690,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10232,
@@ -9162,7 +9704,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10248,
@@ -9175,7 +9718,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10261,
@@ -9188,7 +9732,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10275,
@@ -9201,7 +9746,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10300,
@@ -9214,7 +9760,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10317,
@@ -9227,7 +9774,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10331,
@@ -9240,7 +9788,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10361,
@@ -9253,7 +9802,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10370,
@@ -9266,7 +9816,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10403,
@@ -9279,7 +9830,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10419,
@@ -9292,7 +9844,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10432,
@@ -9305,7 +9858,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10446,
@@ -9318,7 +9872,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10471,
@@ -9331,7 +9886,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10488,
@@ -9344,7 +9900,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10502,
@@ -9357,7 +9914,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10532,
@@ -9370,7 +9928,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10541,
@@ -9383,7 +9942,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10574,
@@ -9396,7 +9956,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10590,
@@ -9409,7 +9970,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10603,
@@ -9422,7 +9984,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10618,
@@ -9435,7 +9998,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10644,
@@ -9448,7 +10012,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10662,
@@ -9461,7 +10026,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10676,
@@ -9474,7 +10040,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10706,
@@ -9487,7 +10054,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10715,
@@ -9500,7 +10068,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10748,
@@ -9513,7 +10082,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10764,
@@ -9526,7 +10096,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10777,
@@ -9539,7 +10110,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10791,
@@ -9552,7 +10124,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10816,
@@ -9565,7 +10138,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 10833,
@@ -9578,7 +10152,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 10847,
@@ -9591,7 +10166,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 10877,
@@ -9604,7 +10180,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 10884,
@@ -9617,7 +10194,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 10917,
@@ -9630,7 +10208,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 10933,
@@ -9643,7 +10222,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 10946,
@@ -9656,7 +10236,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 10960,
@@ -9669,7 +10250,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 10985,
@@ -9682,7 +10264,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11003,
@@ -9695,7 +10278,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11017,
@@ -9708,7 +10292,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11047,
@@ -9721,7 +10306,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11056,
@@ -9734,7 +10320,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11089,
@@ -9747,7 +10334,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11105,
@@ -9760,7 +10348,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11118,
@@ -9773,7 +10362,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11133,
@@ -9786,7 +10376,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 11159,
@@ -9799,7 +10390,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11176,
@@ -9812,7 +10404,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11190,
@@ -9825,7 +10418,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11220,
@@ -9838,7 +10432,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11230,
@@ -9851,7 +10446,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11263,
@@ -9864,7 +10460,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11279,
@@ -9877,7 +10474,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11292,
@@ -9890,7 +10488,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11305,
@@ -9903,7 +10502,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 11329,
@@ -9916,7 +10516,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11346,
@@ -9929,7 +10530,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11360,
@@ -9942,7 +10544,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11390,
@@ -9955,7 +10558,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11399,
@@ -9968,7 +10572,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11432,
@@ -9981,7 +10586,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11448,
@@ -9994,7 +10600,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11461,
@@ -10007,7 +10614,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11475,
@@ -10020,7 +10628,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 11500,
@@ -10033,7 +10642,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11517,
@@ -10046,7 +10656,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11531,
@@ -10059,7 +10670,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11561,
@@ -10072,7 +10684,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11570,
@@ -10085,7 +10698,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11603,
@@ -10098,7 +10712,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11619,
@@ -10111,7 +10726,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11632,
@@ -10124,7 +10740,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11645,
@@ -10137,7 +10754,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 11669,
@@ -10150,7 +10768,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11686,
@@ -10163,7 +10782,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11700,
@@ -10176,7 +10796,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11730,
@@ -10189,7 +10810,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11740,
@@ -10202,7 +10824,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11773,
@@ -10215,7 +10838,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11789,
@@ -10228,7 +10852,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11802,
@@ -10241,7 +10866,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11816,
@@ -10254,7 +10880,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 11841,
@@ -10267,7 +10894,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 11858,
@@ -10280,7 +10908,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 11872,
@@ -10293,7 +10922,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 11902,
@@ -10306,7 +10936,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 11911,
@@ -10319,7 +10950,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 11944,
@@ -10332,7 +10964,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 11960,
@@ -10345,7 +10978,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 11973,
@@ -10358,7 +10992,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 11987,
@@ -10371,7 +11006,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12012,
@@ -10384,7 +11020,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12029,
@@ -10397,7 +11034,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12043,
@@ -10410,7 +11048,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12073,
@@ -10423,7 +11062,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12082,
@@ -10436,7 +11076,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12115,
@@ -10449,7 +11090,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12131,
@@ -10462,7 +11104,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 12144,
@@ -10475,7 +11118,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 12158,
@@ -10488,7 +11132,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12183,
@@ -10501,7 +11146,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12200,
@@ -10514,7 +11160,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12214,
@@ -10527,7 +11174,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12244,
@@ -10540,7 +11188,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12253,
@@ -10553,7 +11202,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12286,
@@ -10566,7 +11216,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12302,
@@ -10579,7 +11230,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 12315,
@@ -10592,7 +11244,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 12330,
@@ -10605,7 +11258,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12356,
@@ -10618,7 +11272,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12374,
@@ -10631,7 +11286,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12388,
@@ -10644,7 +11300,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12418,
@@ -10657,7 +11314,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12427,
@@ -10670,7 +11328,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12460,
@@ -10683,7 +11342,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12476,
@@ -10696,7 +11356,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 12489,
@@ -10709,7 +11370,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 12503,
@@ -10722,7 +11384,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12528,
@@ -10735,7 +11398,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12545,
@@ -10748,7 +11412,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12559,
@@ -10761,7 +11426,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12589,
@@ -10774,7 +11440,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12596,
@@ -10787,7 +11454,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12629,
@@ -10800,7 +11468,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12645,
@@ -10813,7 +11482,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 12658,
@@ -10826,7 +11496,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 12672,
@@ -10839,7 +11510,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12697,
@@ -10852,7 +11524,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12715,
@@ -10865,7 +11538,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12729,
@@ -10878,7 +11552,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12759,
@@ -10891,7 +11566,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12768,
@@ -10904,7 +11580,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12801,
@@ -10917,7 +11594,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12817,
@@ -10930,7 +11608,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 12830,
@@ -10943,7 +11622,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 12845,
@@ -10956,7 +11636,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 12871,
@@ -10969,7 +11650,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 12888,
@@ -10982,7 +11664,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 12902,
@@ -10995,7 +11678,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 12932,
@@ -11008,7 +11692,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 12942,
@@ -11021,7 +11706,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 12975,
@@ -11034,7 +11720,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 12991,
@@ -11047,7 +11734,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13004,
@@ -11060,7 +11748,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13017,
@@ -11073,7 +11762,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13041,
@@ -11086,7 +11776,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13058,
@@ -11099,7 +11790,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13072,
@@ -11112,7 +11804,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13102,
@@ -11125,7 +11818,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13111,
@@ -11138,7 +11832,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13144,
@@ -11151,7 +11846,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 13160,
@@ -11164,7 +11860,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13173,
@@ -11177,7 +11874,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13187,
@@ -11190,7 +11888,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13212,
@@ -11203,7 +11902,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13229,
@@ -11216,7 +11916,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13243,
@@ -11229,7 +11930,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13273,
@@ -11242,7 +11944,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13282,
@@ -11255,7 +11958,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13315,
@@ -11268,7 +11972,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 13331,
@@ -11281,7 +11986,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13344,
@@ -11294,7 +12000,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13357,
@@ -11307,7 +12014,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13381,
@@ -11320,7 +12028,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13398,
@@ -11333,7 +12042,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13412,
@@ -11346,7 +12056,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13442,
@@ -11359,7 +12070,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13452,
@@ -11372,7 +12084,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13485,
@@ -11385,7 +12098,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 13501,
@@ -11398,7 +12112,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13514,
@@ -11411,7 +12126,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13528,
@@ -11424,7 +12140,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13553,
@@ -11437,7 +12154,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13570,
@@ -11450,7 +12168,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13584,
@@ -11463,7 +12182,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13614,
@@ -11476,7 +12196,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13623,
@@ -11489,7 +12210,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13656,
@@ -11502,7 +12224,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 13672,
@@ -11515,7 +12238,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13685,
@@ -11528,7 +12252,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13699,
@@ -11541,7 +12266,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13724,
@@ -11554,7 +12280,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13741,
@@ -11567,7 +12294,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13755,
@@ -11580,7 +12308,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13785,
@@ -11593,7 +12322,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13794,
@@ -11606,7 +12336,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13827,
@@ -11619,7 +12350,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 13843,
@@ -11632,7 +12364,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 13856,
@@ -11645,7 +12378,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 13870,
@@ -11658,7 +12392,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 13895,
@@ -11671,7 +12406,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 13912,
@@ -11684,7 +12420,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 13926,
@@ -11697,7 +12434,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 13956,
@@ -11710,7 +12448,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 13965,
@@ -11723,7 +12462,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 13998,
@@ -11736,7 +12476,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14014,
@@ -11749,7 +12490,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14027,
@@ -11762,7 +12504,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14042,
@@ -11775,7 +12518,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14068,
@@ -11788,7 +12532,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14086,
@@ -11801,7 +12546,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14100,
@@ -11814,7 +12560,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14130,
@@ -11827,7 +12574,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14139,
@@ -11840,7 +12588,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 14172,
@@ -11853,7 +12602,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14188,
@@ -11866,7 +12616,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14201,
@@ -11879,7 +12630,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14215,
@@ -11892,7 +12644,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14240,
@@ -11905,7 +12658,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14257,
@@ -11918,7 +12672,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14271,
@@ -11931,7 +12686,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14301,
@@ -11944,7 +12700,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14308,
@@ -11957,7 +12714,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 14341,
@@ -11970,7 +12728,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14357,
@@ -11983,7 +12742,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14370,
@@ -11996,7 +12756,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14384,
@@ -12009,7 +12770,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14409,
@@ -12022,7 +12784,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14427,
@@ -12035,7 +12798,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14441,
@@ -12048,7 +12812,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14471,
@@ -12061,7 +12826,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14480,
@@ -12074,7 +12840,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 14513,
@@ -12087,7 +12854,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14529,
@@ -12100,7 +12868,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14542,
@@ -12113,7 +12882,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14557,
@@ -12126,7 +12896,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14583,
@@ -12139,7 +12910,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14600,
@@ -12152,7 +12924,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14614,
@@ -12165,7 +12938,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14644,
@@ -12178,7 +12952,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14654,
@@ -12191,7 +12966,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 14687,
@@ -12204,7 +12980,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14703,
@@ -12217,7 +12994,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14716,
@@ -12230,7 +13008,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14729,
@@ -12243,7 +13022,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14753,
@@ -12256,7 +13036,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14770,
@@ -12269,7 +13050,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14784,
@@ -12282,7 +13064,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14814,
@@ -12295,7 +13078,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14823,
@@ -12308,7 +13092,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 14856,
@@ -12321,7 +13106,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 14872,
@@ -12334,7 +13120,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 14885,
@@ -12347,7 +13134,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 14899,
@@ -12360,7 +13148,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 14924,
@@ -12373,7 +13162,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 14941,
@@ -12386,7 +13176,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 14955,
@@ -12399,7 +13190,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 14985,
@@ -12412,7 +13204,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 14994,
@@ -12425,7 +13218,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15027,
@@ -12438,7 +13232,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15043,
@@ -12451,7 +13246,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15056,
@@ -12464,7 +13260,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15069,
@@ -12477,7 +13274,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15093,
@@ -12490,7 +13288,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15110,
@@ -12503,7 +13302,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15124,
@@ -12516,7 +13316,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 15154,
@@ -12529,7 +13330,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 15164,
@@ -12542,7 +13344,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15197,
@@ -12555,7 +13358,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15213,
@@ -12568,7 +13372,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15226,
@@ -12581,7 +13386,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15240,
@@ -12594,7 +13400,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15265,
@@ -12607,7 +13414,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15282,
@@ -12620,7 +13428,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15296,
@@ -12633,7 +13442,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 15326,
@@ -12646,7 +13456,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 15335,
@@ -12659,7 +13470,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15368,
@@ -12672,7 +13484,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15384,
@@ -12685,7 +13498,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15397,
@@ -12698,7 +13512,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15411,
@@ -12711,7 +13526,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15436,
@@ -12724,7 +13540,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15453,
@@ -12737,7 +13554,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15467,
@@ -12750,7 +13568,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 15497,
@@ -12763,7 +13582,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 15506,
@@ -12776,7 +13596,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15539,
@@ -12789,7 +13610,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15555,
@@ -12802,7 +13624,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15568,
@@ -12815,7 +13638,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15582,
@@ -12828,7 +13652,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15607,
@@ -12841,7 +13666,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15624,
@@ -12854,7 +13680,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15638,
@@ -12867,7 +13694,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 15668,
@@ -12880,7 +13708,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 15677,
@@ -12893,7 +13722,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15710,
@@ -12906,7 +13736,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15726,
@@ -12919,7 +13750,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15739,
@@ -12932,7 +13764,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15754,
@@ -12945,7 +13778,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15780,
@@ -12958,7 +13792,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15798,
@@ -12971,7 +13806,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15812,
@@ -12984,7 +13820,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 15842,
@@ -12997,7 +13834,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 15851,
@@ -13010,7 +13848,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 15884,
@@ -13023,7 +13862,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 15900,
@@ -13036,7 +13876,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 15913,
@@ -13049,7 +13890,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 15927,
@@ -13062,7 +13904,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 15952,
@@ -13075,7 +13918,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 15969,
@@ -13088,7 +13932,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 15983,
@@ -13101,7 +13946,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16013,
@@ -13114,7 +13960,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16020,
@@ -13127,7 +13974,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16053,
@@ -13140,7 +13988,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16069,
@@ -13153,7 +14002,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16082,
@@ -13166,7 +14016,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16096,
@@ -13179,7 +14030,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16121,
@@ -13192,7 +14044,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16139,
@@ -13205,7 +14058,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 16153,
@@ -13218,7 +14072,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16183,
@@ -13231,7 +14086,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16192,
@@ -13244,7 +14100,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16225,
@@ -13257,7 +14114,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16241,
@@ -13270,7 +14128,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16254,
@@ -13283,7 +14142,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16269,
@@ -13296,7 +14156,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16295,
@@ -13309,7 +14170,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16312,
@@ -13322,7 +14184,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 16326,
@@ -13335,7 +14198,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16356,
@@ -13348,7 +14212,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16366,
@@ -13361,7 +14226,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16399,
@@ -13374,7 +14240,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16415,
@@ -13387,7 +14254,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16428,
@@ -13400,7 +14268,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16441,
@@ -13413,7 +14282,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16465,
@@ -13426,7 +14296,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16482,
@@ -13439,7 +14310,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 16496,
@@ -13452,7 +14324,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16526,
@@ -13465,7 +14338,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16535,
@@ -13478,7 +14352,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16568,
@@ -13491,7 +14366,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16584,
@@ -13504,7 +14380,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16597,
@@ -13517,7 +14394,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16611,
@@ -13530,7 +14408,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16636,
@@ -13543,7 +14422,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16653,
@@ -13556,7 +14436,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 16667,
@@ -13569,7 +14450,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16697,
@@ -13582,7 +14464,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16706,
@@ -13595,7 +14478,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16739,
@@ -13608,7 +14492,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16755,
@@ -13621,7 +14506,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16768,
@@ -13634,7 +14520,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16781,
@@ -13647,7 +14534,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16805,
@@ -13660,7 +14548,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16822,
@@ -13673,7 +14562,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 16836,
@@ -13686,7 +14576,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 16866,
@@ -13699,7 +14590,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 16876,
@@ -13712,7 +14604,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 16909,
@@ -13725,7 +14618,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 16925,
@@ -13738,7 +14632,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 16938,
@@ -13751,7 +14646,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 16952,
@@ -13764,7 +14660,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 16977,
@@ -13777,7 +14674,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 16994,
@@ -13790,7 +14688,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17008,
@@ -13803,7 +14702,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17038,
@@ -13816,7 +14716,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17047,
@@ -13829,7 +14730,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17080,
@@ -13842,7 +14744,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17096,
@@ -13855,7 +14758,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17109,
@@ -13868,7 +14772,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17123,
@@ -13881,7 +14786,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 17148,
@@ -13894,7 +14800,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 17165,
@@ -13907,7 +14814,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17179,
@@ -13920,7 +14828,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17209,
@@ -13933,7 +14842,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17218,
@@ -13946,7 +14856,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17251,
@@ -13959,7 +14870,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17267,
@@ -13972,7 +14884,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17280,
@@ -13985,7 +14898,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17294,
@@ -13998,7 +14912,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 17319,
@@ -14011,7 +14926,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 17336,
@@ -14024,7 +14940,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17350,
@@ -14037,7 +14954,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17380,
@@ -14050,7 +14968,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17389,
@@ -14063,7 +14982,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17422,
@@ -14076,7 +14996,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17438,
@@ -14089,7 +15010,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17451,
@@ -14102,7 +15024,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17466,
@@ -14115,7 +15038,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 17492,
@@ -14128,7 +15052,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 17510,
@@ -14141,7 +15066,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17524,
@@ -14154,7 +15080,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17554,
@@ -14167,7 +15094,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17563,
@@ -14180,7 +15108,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17596,
@@ -14193,7 +15122,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17612,
@@ -14206,7 +15136,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17625,
@@ -14219,7 +15150,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17639,
@@ -14232,7 +15164,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 17664,
@@ -14245,7 +15178,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 17681,
@@ -14258,7 +15192,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17695,
@@ -14271,7 +15206,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17725,
@@ -14284,7 +15220,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17732,
@@ -14297,7 +15234,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17765,
@@ -14310,7 +15248,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17781,
@@ -14323,7 +15262,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17794,
@@ -14336,7 +15276,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17808,
@@ -14349,7 +15290,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 17833,
@@ -14362,7 +15304,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 17851,
@@ -14375,7 +15318,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 17865,
@@ -14388,7 +15332,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 17895,
@@ -14401,7 +15346,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 17904,
@@ -14414,7 +15360,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 17937,
@@ -14427,7 +15374,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 17953,
@@ -14440,7 +15388,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 17966,
@@ -14453,7 +15402,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 17981,
@@ -14466,7 +15416,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18007,
@@ -14479,7 +15430,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18024,
@@ -14492,7 +15444,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18038,
@@ -14505,7 +15458,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18068,
@@ -14518,7 +15472,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18078,
@@ -14531,7 +15486,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18111,
@@ -14544,7 +15500,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18127,
@@ -14557,7 +15514,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18140,
@@ -14570,7 +15528,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 18153,
@@ -14583,7 +15542,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18177,
@@ -14596,7 +15556,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18194,
@@ -14609,7 +15570,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18208,
@@ -14622,7 +15584,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18238,
@@ -14635,7 +15598,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18247,
@@ -14648,7 +15612,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18280,
@@ -14661,7 +15626,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18296,
@@ -14674,7 +15640,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18309,
@@ -14687,7 +15654,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 18323,
@@ -14700,7 +15668,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18348,
@@ -14713,7 +15682,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18365,
@@ -14726,7 +15696,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18379,
@@ -14739,7 +15710,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18409,
@@ -14752,7 +15724,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18418,
@@ -14765,7 +15738,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18451,
@@ -14778,7 +15752,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18467,
@@ -14791,7 +15766,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18480,
@@ -14804,7 +15780,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 18493,
@@ -14817,7 +15794,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18517,
@@ -14830,7 +15808,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18534,
@@ -14843,7 +15822,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18548,
@@ -14856,7 +15836,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18578,
@@ -14869,7 +15850,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18588,
@@ -14882,7 +15864,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18621,
@@ -14895,7 +15878,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18637,
@@ -14908,7 +15892,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18650,
@@ -14921,7 +15906,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 18664,
@@ -14934,7 +15920,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18689,
@@ -14947,7 +15934,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18706,
@@ -14960,7 +15948,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18720,
@@ -14973,7 +15962,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18750,
@@ -14986,7 +15976,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18759,
@@ -14999,7 +15990,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18792,
@@ -15012,7 +16004,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18808,
@@ -15025,7 +16018,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18821,
@@ -15038,7 +16032,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 18835,
@@ -15051,7 +16046,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 18860,
@@ -15064,7 +16060,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 18877,
@@ -15077,7 +16074,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 18891,
@@ -15090,7 +16088,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 18921,
@@ -15103,7 +16102,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 18930,
@@ -15116,7 +16116,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 18963,
@@ -15129,7 +16130,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 18979,
@@ -15142,7 +16144,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 18992,
@@ -15155,7 +16158,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19006,
@@ -15168,7 +16172,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19031,
@@ -15181,7 +16186,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19048,
@@ -15194,7 +16200,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19062,
@@ -15207,7 +16214,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19092,
@@ -15220,7 +16228,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19101,
@@ -15233,7 +16242,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19134,
@@ -15246,7 +16256,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 19150,
@@ -15259,7 +16270,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 19163,
@@ -15272,7 +16284,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19178,
@@ -15285,7 +16298,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19204,
@@ -15298,7 +16312,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19222,
@@ -15311,7 +16326,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19236,
@@ -15324,7 +16340,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19266,
@@ -15337,7 +16354,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19275,
@@ -15350,7 +16368,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19308,
@@ -15363,7 +16382,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 19324,
@@ -15376,7 +16396,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 19337,
@@ -15389,7 +16410,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19351,
@@ -15402,7 +16424,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19376,
@@ -15415,7 +16438,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19393,
@@ -15428,7 +16452,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19407,
@@ -15441,7 +16466,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19437,
@@ -15454,7 +16480,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19444,
@@ -15467,7 +16494,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19477,
@@ -15480,7 +16508,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 19493,
@@ -15493,7 +16522,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 19506,
@@ -15506,7 +16536,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19520,
@@ -15519,7 +16550,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19545,
@@ -15532,7 +16564,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19563,
@@ -15545,7 +16578,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19577,
@@ -15558,7 +16592,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19607,
@@ -15571,7 +16606,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19616,
@@ -15584,7 +16620,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19649,
@@ -15597,7 +16634,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 19665,
@@ -15610,7 +16648,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 19678,
@@ -15623,7 +16662,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19693,
@@ -15636,7 +16676,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19719,
@@ -15649,7 +16690,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19736,
@@ -15662,7 +16704,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19750,
@@ -15675,7 +16718,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19780,
@@ -15688,7 +16732,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19790,
@@ -15701,7 +16746,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19823,
@@ -15714,7 +16760,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 19839,
@@ -15727,7 +16774,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 19852,
@@ -15740,7 +16788,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 19865,
@@ -15753,7 +16802,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 19889,
@@ -15766,7 +16816,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 19906,
@@ -15779,7 +16830,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 19920,
@@ -15792,7 +16844,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 19950,
@@ -15805,7 +16858,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 19959,
@@ -15818,7 +16872,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 19992,
@@ -15831,7 +16886,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 20008,
@@ -15844,7 +16900,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 20021,
@@ -15857,7 +16914,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 20035,
@@ -15870,7 +16928,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 20060,
@@ -15883,7 +16942,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 20077,
@@ -15896,7 +16956,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 20091,
@@ -15909,7 +16970,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 20121,
@@ -15922,7 +16984,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 20130,
@@ -15935,7 +16998,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 20163,
@@ -15948,7 +17012,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 20179,
@@ -15961,7 +17026,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 20192,
@@ -15974,7 +17040,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 20205,
@@ -15987,7 +17054,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 20229,
@@ -16000,7 +17068,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 20246,
@@ -16013,7 +17082,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 20260,
@@ -16026,7 +17096,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 20290,
@@ -16039,7 +17110,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 20300,
@@ -16052,7 +17124,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 20333,
@@ -16065,7 +17138,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 20349,
@@ -16078,7 +17152,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 20362,
@@ -16091,7 +17166,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 20376,
@@ -16104,7 +17180,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 20401,
@@ -16117,7 +17194,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 20418,
@@ -16130,7 +17208,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 20432,
@@ -16143,7 +17222,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 20462,
@@ -16156,7 +17236,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 20471,
@@ -16169,7 +17250,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 20504,
@@ -16182,7 +17264,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     },
     {
       "start": 20520,
@@ -16195,7 +17278,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_record_id"
     },
     {
       "start": 20533,
@@ -16208,7 +17292,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "customer_name"
     },
     {
       "start": 20547,
@@ -16221,7 +17306,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 20572,
@@ -16234,7 +17320,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 20589,
@@ -16247,7 +17334,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 20603,
@@ -16260,7 +17348,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 20633,
@@ -16273,7 +17362,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "locality"
     },
     {
       "start": 20642,
@@ -16286,7 +17376,8 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "street_address"
     },
     {
       "start": 20675,
@@ -16299,7 +17390,14 @@
           "kind": "sheet",
           "label": "Dati"
         }
-      }
+      },
+      "pii_subtype": "contact_person"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
