@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ClientOutputPreview from "./components/ClientOutputPreview";
 import DocumentComparisonView from "./components/DocumentComparisonView";
 import ExecutiveBriefingView from "./components/ExecutiveBriefingView";
 import FailureExplorer from "./components/FailureExplorer";
@@ -40,8 +41,12 @@ export default function App() {
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
 
-  // Active top-level view: "executive" (Executive Briefing & Verdetto) | "models" (Workbench Tecnico) | "documents" (Confronto per File)
-  const [activeView, setActiveView] = useState("executive");
+  // Active top-level view:
+  // - client: product/client-facing output prototype driven by real findings
+  // - executive: benchmark-level executive comparison
+  // - models: technical workbench
+  // - documents: gold-aware document audit
+  const [activeView, setActiveView] = useState("client");
 
   // Loading states:
   // - loadingInitial: True only during the very first bootstrap
@@ -322,15 +327,23 @@ export default function App() {
               )}
             </section>
 
-            {/* View Selector Tabs (Executive Briefing vs Workbench Tecnico vs Audit Documenti) */}
+            {/* View Selector Tabs */}
             <nav className="view-navigation-tabs view-tabs" aria-label="Seleziona visualizzazione">
+              <button
+                type="button"
+                className={`view-tab ${activeView === "client" ? "active" : ""}`}
+                onClick={() => setActiveView("client")}
+              >
+                <span className="view-tab__icon">🛡️</span>
+                <span>Client Output Preview</span>
+              </button>
               <button
                 type="button"
                 className={`view-tab ${activeView === "executive" ? "active" : ""}`}
                 onClick={() => setActiveView("executive")}
               >
                 <span className="view-tab__icon">🏛️</span>
-                <span>Executive Briefing & Verdetto</span>
+                <span>Executive Benchmark</span>
               </button>
               <button
                 type="button"
@@ -338,7 +351,7 @@ export default function App() {
                 onClick={() => setActiveView("models")}
               >
                 <span className="view-tab__icon">🔬</span>
-                <span>Workbench Tecnico & Scatter</span>
+                <span>Technical Workbench</span>
               </button>
               <button
                 type="button"
@@ -346,15 +359,21 @@ export default function App() {
                 onClick={() => setActiveView("documents")}
               >
                 <span className="view-tab__icon">📑</span>
-                <span>Audit & Confronto Documenti</span>
+                <span>Gold-aware Document Audit</span>
                 {documentCount > 0 && (
                   <span className="view-tab__badge">{documentCount} file</span>
                 )}
               </button>
             </nav>
 
-            {/* VIEW 0: Executive Briefing & Decision Summary */}
-            {activeView === "executive" ? (
+            {/* VIEW 0: Client-facing output prototype */}
+            {activeView === "client" ? (
+              <ClientOutputPreview
+                detail={detail}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+              />
+            ) : activeView === "executive" ? (
               <ExecutiveBriefingView
                 detail={detail}
                 selectedRun={selectedRun}
