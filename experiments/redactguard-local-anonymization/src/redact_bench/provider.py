@@ -9,7 +9,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from redact_bench.models import Case, Finding, InferenceResult
+from redact_bench.models import Case, InferenceResult
 from redact_bench.postprocess import resolve_model_payload
 from redact_bench.profiles import (
     build_system_prompt,
@@ -21,7 +21,7 @@ from redact_bench.resilient_evaluator import (
     clean_exception_details,
     evaluate_case_resiliently,
 )
-from redact_bench.segmentation import TextSegment, segment_text
+from redact_bench.segmentation import TextSegment
 
 
 class KorgisUnavailableError(RuntimeError):
