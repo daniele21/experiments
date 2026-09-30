@@ -164,6 +164,22 @@ The UI reads `results/` dynamically through the local Vite server and refreshes 
 index every five seconds. No export/rebuild step is required. It supports direct benchmark
 runs plus managed suite layouts under either `results/suite/` or `results/suites/`.
 
+The dashboard is URL-routed: every disclosure level is a real, shareable browser path and browser back/forward navigation is preserved.
+
+Canonical routes:
+
+```text
+/client/models
+/client/documents
+/client/documents/<document>/models/<model>
+
+/advanced/executive
+/advanced/models
+/advanced/documents
+```
+
+The selected benchmark run is preserved as `?run=<run-key>`, so a specific piece of evidence can be bookmarked/shared without coupling the route hierarchy to filesystem-shaped run IDs. `/` and `/client` canonicalize to `/client/models`.
+
 The dashboard includes:
 
 - **Client Evaluation** as the default, client-facing experience, organized with progressive disclosure:
