@@ -36,6 +36,20 @@ function provenance(row) {
   ].filter(Boolean);
 }
 
+function runtimeArtifacts(row) {
+  const artifacts =
+    row?.provider_metadata?.korgis?.generation?.artifacts ?? {};
+  return Object.entries(artifacts)
+    .filter(([, value]) => value && typeof value === "object")
+    .map(([role, value]) => ({
+      role,
+      filename: value.filename ?? "unknown",
+      repo: value.repo ?? null,
+      revision: value.revision ?? null,
+      sha256: value.sha256 ?? null,
+    }));
+}
+
 function downloadJson(filename, payload) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
@@ -168,6 +182,7 @@ function Filters({
 
 function OutputCard({ row }) {
   const badges = provenance(row);
+  const artifacts = runtimeArtifacts(row);
   return (
     <article className={row.valid ? "output-card" : "output-card invalid"}>
       <div className="image-stage">
@@ -191,6 +206,20 @@ function OutputCard({ row }) {
           <span className="badge">{formatMs(row.latency_ms)}</span>
           {badges.map((badge) => <span className="badge" key={badge}>{badge}</span>)}
         </div>
+        {artifacts.length ? (
+          <details className="artifact-provenance">
+            <summary>Runtime artifacts</summary>
+            <div className="artifact-provenance-list">
+              {artifacts.map((artifact) => (
+                <div className="artifact-provenance-row" key={artifact.role}>
+                  <span>{artifact.role.replaceAll("_", " ")}</span>
+                  <strong>{artifact.filename}</strong>
+                  {artifact.repo ? <small>{artifact.repo}</small> : null}
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
         {!row.valid ? (
           <p className="error-text">{row.error_kind}: {row.error_message}</p>
         ) : null}
