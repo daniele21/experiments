@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -12,6 +13,7 @@ from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.progress import TerminalProgress
 from redact_bench.preflight import run_model_preflight
+from redact_bench.profiles import load_profile_snapshot
 from redact_bench.provider import (
     DEFAULT_MODELS,
     KorgisController,
@@ -340,6 +342,19 @@ def dashboard(
     typer.echo(str(path))
 
 
+def _write_ui_taxonomy_snapshot(ui_dir: Path) -> Path:
+    """Expose the pinned RedactGuard profile taxonomy to the local UI."""
+    payload = load_profile_snapshot(ROOT / "config/profiles.yaml")
+    public_dir = ui_dir / "public"
+    public_dir.mkdir(parents=True, exist_ok=True)
+    output = public_dir / "pii-taxonomy.json"
+    output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return output
+
+
 @app.command("ui")
 def ui(
     host: str = typer.Option("127.0.0.1", help="Host for the local React dashboard."),
@@ -360,6 +375,8 @@ def ui(
         typer.echo("  npm --prefix ui install", err=True)
         raise typer.Exit(code=2)
 
+    taxonomy_path = _write_ui_taxonomy_snapshot(ui_dir)
+    typer.echo(f"taxonomy: {taxonomy_path}")
     typer.echo(f"dashboard: http://{host}:{port}")
     try:
         completed = subprocess.run(
