@@ -10,6 +10,7 @@ class Span:
     end: int
     pii_type: str
     value: str
+    pii_subtype: str | None = None
 
     def overlaps(self, other: "Span") -> bool:
         return self.start < other.end and other.start < self.end
@@ -22,6 +23,10 @@ class Case:
     text: str
     gold: tuple[Span, ...]
     tags: tuple[str, ...] = ()
+    content_family_id: str | None = None
+    variant_id: str | None = None
+    gold_version: str | None = None
+    human_reviewed: bool | None = None
 
 
 @dataclass(frozen=True)
