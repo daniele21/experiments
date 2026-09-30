@@ -166,6 +166,14 @@ runs plus managed suite layouts under either `results/suite/` or `results/suites
 
 The dashboard is URL-routed: every disclosure level is a real, shareable browser path and browser back/forward navigation is preserved.
 
+Theme behavior is also consistent across these routes:
+
+- `Light`, `Dark`, and `Auto` are available from the top bar;
+- the preference is persisted locally and applied before React mounts, avoiding a light/dark flash;
+- `Auto` follows the operating-system preference;
+- semantic surface/status tokens are shared by Client Evaluation, Advanced analysis, executive cards, document comparison, tooltips, and native form controls;
+- print output is forced to a readable light palette independently of the active screen theme.
+
 Canonical routes:
 
 ```text
