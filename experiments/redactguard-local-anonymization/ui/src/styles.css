@@ -6462,3 +6462,553 @@ code {
     max-width: none;
   }
 }
+
+
+/* ==========================================================================
+   THEME HARDENING
+   Semantic tokens intentionally live at the end of the stylesheet so newer
+   product surfaces cannot accidentally override dark/light behavior with
+   light-only literals.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  --app-bg: #f5f7fb;
+  --surface-raised: #ffffff;
+  --surface-hover: #f1f4f8;
+  --surface-overlay: rgba(255, 255, 255, 0.98);
+  --text-soft: #475569;
+  --text-faint: #8792a2;
+  --positive: #08715f;
+  --positive-strong: #047857;
+  --positive-border: #bce4da;
+  --positive-surface: #eff9f6;
+  --warning: #a06000;
+  --warning-strong: #9a6700;
+  --warning-border: #ead1a1;
+  --warning-surface: #fffaf0;
+  --danger: #b42318;
+  --danger-border: #efcaca;
+  --danger-surface: #fff4f4;
+  --shadow-low: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-medium: 0 10px 28px rgba(15, 23, 42, 0.10);
+  --focus-ring: rgba(73, 105, 245, 0.20);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --app-bg: #101318;
+    --surface-raised: #161a21;
+    --surface-hover: #202630;
+    --surface-overlay: rgba(22, 26, 33, 0.98);
+    --text-soft: #cbd5e1;
+    --text-faint: #7f8a9a;
+    --positive: #62c9bc;
+    --positive-strong: #86e3d2;
+    --positive-border: #285c54;
+    --positive-surface: #142824;
+    --warning: #f0c96a;
+    --warning-strong: #f6d98b;
+    --warning-border: #5a4a22;
+    --warning-surface: #332b18;
+    --danger: #ff9aac;
+    --danger-border: #5b3039;
+    --danger-surface: #351f25;
+    --shadow-low: 0 1px 3px rgba(0, 0, 0, 0.30);
+    --shadow-medium: 0 12px 34px rgba(0, 0, 0, 0.38);
+    --focus-ring: rgba(129, 152, 255, 0.26);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #101318;
+  --surface-raised: #161a21;
+  --surface-hover: #202630;
+  --surface-overlay: rgba(22, 26, 33, 0.98);
+  --text-soft: #cbd5e1;
+  --text-faint: #7f8a9a;
+  --positive: #62c9bc;
+  --positive-strong: #86e3d2;
+  --positive-border: #285c54;
+  --positive-surface: #142824;
+  --warning: #f0c96a;
+  --warning-strong: #f6d98b;
+  --warning-border: #5a4a22;
+  --warning-surface: #332b18;
+  --danger: #ff9aac;
+  --danger-border: #5b3039;
+  --danger-surface: #351f25;
+  --shadow-low: 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-medium: 0 12px 34px rgba(0, 0, 0, 0.38);
+  --focus-ring: rgba(129, 152, 255, 0.26);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #f5f7fb;
+  --surface-raised: #ffffff;
+  --surface-hover: #f1f4f8;
+  --surface-overlay: rgba(255, 255, 255, 0.98);
+  --text-soft: #475569;
+  --text-faint: #8792a2;
+  --positive: #08715f;
+  --positive-strong: #047857;
+  --positive-border: #bce4da;
+  --positive-surface: #eff9f6;
+  --warning: #a06000;
+  --warning-strong: #9a6700;
+  --warning-border: #ead1a1;
+  --warning-surface: #fffaf0;
+  --danger: #b42318;
+  --danger-border: #efcaca;
+  --danger-surface: #fff4f4;
+  --shadow-low: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-medium: 0 10px 28px rgba(15, 23, 42, 0.10);
+  --focus-ring: rgba(73, 105, 245, 0.20);
+}
+
+/* App canvas + native controls */
+html,
+body,
+#root,
+.app-shell {
+  background: var(--app-bg);
+  color: var(--text);
+}
+
+input,
+select,
+textarea,
+button {
+  color-scheme: inherit;
+}
+
+input,
+select,
+textarea {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Theme selector */
+.theme-toggle-group {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+.theme-toggle-btn {
+  color: var(--muted);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.theme-toggle-btn.active {
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-low);
+}
+
+/* Shared semantic status treatment */
+.metric-text--positive,
+.pii-tag--zero-leak,
+.compliance-tier-badge--positive,
+.executive-verdict-pill--positive,
+.quadrant-tooltip-verdict--positive,
+.no-errors-text {
+  color: var(--positive) !important;
+}
+
+.metric-text--warning,
+.pii-tag--attention,
+.compliance-tier-badge--warning,
+.executive-verdict-pill--warning,
+.quadrant-tooltip-verdict--warning,
+.eyebrow--warn,
+.client-detail-entity small.attention {
+  color: var(--warning) !important;
+}
+
+.metric-text--risk,
+.pii-tag--high,
+.compliance-tier-badge--risk,
+.executive-verdict-pill--risk,
+.quadrant-tooltip-verdict--risk,
+.eyebrow--risk,
+.client-type-evidence__row .risk,
+.fn-count-risk,
+.fp-count-risk {
+  color: var(--danger) !important;
+}
+
+/* Client Evaluation: every layer is token-driven */
+.client-journey-header {
+  border-color: var(--border);
+  background:
+    radial-gradient(
+      circle at 95% 0%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 34%
+    ),
+    var(--surface);
+  color: var(--text);
+}
+
+.client-journey-header p,
+.client-level-heading p,
+.client-document-name small,
+.client-document-cell small,
+.client-detail-heading p,
+.client-detail-panel__heading small,
+.client-detail-entity span,
+.client-detail-entity small,
+.client-detail-more-count,
+.client-detail-empty {
+  color: var(--muted);
+}
+
+.client-journey-scope span,
+.client-context-note,
+.client-detail-model-switcher,
+.client-detail-more {
+  border-color: var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.client-model-comparison,
+.client-document-matrix-wrap,
+.client-detail-heading,
+.client-detail-kpi,
+.client-detail-panel {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.client-model-comparison__head,
+.client-document-matrix th {
+  border-color: var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.client-model-row,
+.client-document-matrix td,
+.client-detail-entity,
+.client-type-evidence__row {
+  border-color: var(--border);
+}
+
+.client-model-row {
+  background: transparent;
+  color: var(--text);
+}
+
+.client-model-row:hover,
+.client-document-cell:hover,
+.advanced-view-tabs button:hover {
+  background: var(--surface-hover);
+}
+
+.client-document-matrix th:first-child,
+.client-document-matrix td:first-child {
+  background: var(--surface);
+}
+
+.client-document-matrix thead th:first-child {
+  background: var(--surface-soft);
+}
+
+.client-document-cell {
+  color: var(--text);
+}
+
+.client-document-cell--invalid,
+.client-detail-status--invalid {
+  border-color: var(--danger-border);
+  background: var(--danger-surface);
+  color: var(--danger);
+}
+
+.client-detail-status--valid {
+  border-color: var(--positive-border);
+  background: var(--positive-surface);
+  color: var(--positive);
+}
+
+.client-detail-panel--attention {
+  border-color: var(--warning-border);
+  background: var(--warning-surface);
+}
+
+.client-detail-model-switcher button {
+  color: var(--muted);
+}
+
+.client-detail-model-switcher button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.client-detail-model-switcher button.active,
+.advanced-view-tabs button.active {
+  border-color: var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-low);
+}
+
+.client-detail-more > div {
+  background: var(--border);
+}
+
+.client-detail-more > div > div {
+  background: var(--surface);
+}
+
+/* Executive / advanced cards */
+.executive-verdict-card,
+.executive-kpi-card,
+.executive-quadrant-container,
+.executive-advisory-panel,
+.executive-table-card,
+.executive-findings-panel,
+.executive-pii-card,
+.executive-profile-card,
+.executive-roi-card {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.executive-verdict-card {
+  background: var(--card-hero-bg);
+  border-color: var(--card-hero-border);
+}
+
+.executive-risk-card {
+  border-color: var(--danger-border);
+  background: var(--danger-surface);
+  color: var(--text);
+}
+
+.verdict-model-header h2,
+.risk-models-list span,
+.advisory-block strong,
+.profile-text strong,
+.executive-table-card,
+.executive-findings-panel {
+  color: var(--text);
+}
+
+.verdict-summary-text,
+.risk-models-list small,
+.advisory-block p,
+.profile-text p,
+.profile-takeaway-note,
+.shield-point p {
+  color: var(--text-soft);
+}
+
+.verdict-highlight-item,
+.risk-models-list li,
+.advisory-block,
+.shield-point,
+.executive-pii-item,
+.executive-profile-item,
+.profile-takeaway-note {
+  border-color: var(--border);
+  background: var(--surface-soft);
+}
+
+.executive-table-row--recommended,
+.row-highlight {
+  background: var(--accent-soft);
+}
+
+.executive-rec-badge,
+.btn--drilldown,
+.btn--export {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.btn--drilldown {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.btn--drilldown:hover,
+.quick-view-doc-btn:hover,
+.matrix-action-btn:hover {
+  background: var(--surface-hover);
+}
+
+/* Document comparison + document viewer */
+.doc-text-viewer-container,
+.doc-category-drawer,
+.doc-table-wrapper,
+.span-floating-tooltip,
+.doc-card,
+.inspector-model-card,
+.doc-gold-section {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.card-tab-btn,
+.quick-view-doc-btn,
+.matrix-action-btn,
+.mini-tool-btn,
+.drawer-pii-chip {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.card-tab-btn:hover,
+.quick-view-doc-btn:hover,
+.matrix-action-btn:hover,
+.mini-tool-btn:hover,
+.drawer-pii-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.card-tab-btn.active,
+.mini-tool-btn.active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.doc-line-row:hover,
+.doc-tr:nth-child(even) {
+  background: var(--surface-soft);
+}
+
+.doc-tr:hover {
+  background: var(--surface-hover);
+}
+
+.canvas-header-badge,
+.tooltip-type-pill,
+.mini-filter-badge,
+.chip-qty {
+  background: var(--surface-strong);
+  color: var(--text-soft);
+}
+
+.span-floating-tooltip {
+  box-shadow: var(--shadow-medium);
+}
+
+.tooltip-label,
+.tooltip-coords,
+.tooltip-action-hint {
+  color: var(--muted);
+}
+
+.tooltip-value {
+  color: var(--text);
+}
+
+/* Alerts and legacy states */
+.error-banner,
+.error-inline,
+.contract-banner {
+  border-color: var(--danger-border);
+  background: var(--danger-surface);
+  color: var(--danger);
+}
+
+.legacy-banner,
+.pill--legacy,
+.status-badge--legacy,
+.best-model-badge {
+  border-color: var(--warning-border);
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+
+.overview-banner {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: var(--accent-soft);
+}
+
+.partial-banner {
+  border-color: var(--warning-border);
+  background: var(--warning-surface);
+}
+
+.partial-banner strong {
+  color: var(--warning);
+}
+
+/* Recharts / SVG labels */
+.recharts-cartesian-grid line {
+  stroke: var(--border);
+}
+
+.recharts-text,
+.recharts-cartesian-axis-tick-value {
+  fill: var(--muted);
+}
+
+.recharts-tooltip-wrapper {
+  color: var(--text);
+}
+
+/* Avoid washed-out disabled controls in dark mode. */
+button:disabled,
+select:disabled,
+input:disabled {
+  opacity: 0.55;
+}
+
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --app-bg: #ffffff;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-soft: #f7f8fb;
+    --surface-hover: #f1f4f8;
+    --border: #e3e7ee;
+    --border-strong: #d4dae4;
+    --text: #172033;
+    --muted: #697386;
+    --text-soft: #475569;
+  }
+
+  html,
+  body,
+  #root,
+  .app-shell {
+    background: #ffffff !important;
+    color: #172033 !important;
+  }
+}
