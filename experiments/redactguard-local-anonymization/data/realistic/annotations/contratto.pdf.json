@@ -1,8 +1,8 @@
 {
-  "schema_version": "redactguard-gold-v1",
+  "schema_version": "redactguard-gold-v2",
   "canonical_filename": "contratto.pdf.md",
   "profile": "legal",
-  "gold_status": "deterministic_v0.1",
+  "gold_status": "deterministic_v0.2",
   "human_reviewed": false,
   "inference_text_transform": {
     "strip_structure_markers": true,
@@ -24,7 +24,8 @@
     "company_vat_numbers": "included_as_account_number",
     "iban_and_fiscal_codes": "included_as_account_number",
     "customer_and_invoice_ids": "included_as_account_number_when_structurally_identifying_record",
-    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record"
+    "standalone_locations": "included_only_when_structurally_associated_with_a_person_or_account_record",
+    "policy_version": "v0.2"
   },
   "summary": {
     "span_count": 22,
@@ -35,6 +36,14 @@
       "private_email": 4,
       "private_person": 6,
       "private_phone": 4
+    },
+    "by_subtype": {
+      "account_number:iban": 2,
+      "account_number:vat_number": 4,
+      "private_address:postal_address": 2,
+      "private_email:contact_email": 4,
+      "private_person:named_person": 6,
+      "private_phone:contact_phone": 4
     }
   },
   "entities": [
@@ -143,7 +152,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 127,
@@ -156,7 +166,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 177,
@@ -169,7 +180,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 249,
@@ -182,7 +194,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 654,
@@ -195,7 +208,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 871,
@@ -208,7 +222,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 884,
@@ -221,7 +236,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 913,
@@ -234,7 +250,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 945,
@@ -247,7 +264,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 958,
@@ -260,7 +278,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 989,
@@ -273,7 +292,8 @@
           "kind": "page",
           "label": "1"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 1201,
@@ -286,7 +306,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "postal_address"
     },
     {
       "start": 1245,
@@ -299,7 +320,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1295,
@@ -312,7 +334,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 1367,
@@ -325,7 +348,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "vat_number"
     },
     {
       "start": 1772,
@@ -338,7 +362,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "iban"
     },
     {
       "start": 1989,
@@ -351,7 +376,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 2002,
@@ -364,7 +390,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2031,
@@ -377,7 +404,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     },
     {
       "start": 2063,
@@ -390,7 +418,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "named_person"
     },
     {
       "start": 2076,
@@ -403,7 +432,8 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_email"
     },
     {
       "start": 2107,
@@ -416,7 +446,14 @@
           "kind": "page",
           "label": "2"
         }
-      }
+      },
+      "pii_subtype": "contact_phone"
     }
-  ]
+  ],
+  "gold_version": "deterministic_v0.2",
+  "review": {
+    "status": "pending_human_review",
+    "reviewer_count": 0,
+    "adjudicated": false
+  }
 }
