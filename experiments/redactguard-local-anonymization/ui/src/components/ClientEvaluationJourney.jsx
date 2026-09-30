@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { appRoutes } from "../routing";
 import { formatMs, formatPercent, micro } from "../utils/formatters";
 import ClientDocumentPreview from "./ClientDocumentPreview";
+import PIIScopeDrawer from "./PIIScopeDrawer";
 
 const TYPE_LABELS = {
   private_person: "Personal names",
@@ -165,6 +166,7 @@ function ClientEvaluationJourney({
   selectedModel,
   onSelectModel,
   route,
+  taxonomy,
 }) {
   const models = useMemo(
     () => detail?.summary?.models ?? Object.keys(detail?.metrics ?? {}),
@@ -174,6 +176,8 @@ function ClientEvaluationJourney({
     () => Object.keys(detail?.docSpans ?? {}).sort(),
     [detail],
   );
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [focusedPiiType, setFocusedPiiType] = useState(null);
 
   const level =
     route.page === "models"
@@ -189,6 +193,27 @@ function ClientEvaluationJourney({
       : selectedModel && models.includes(selectedModel)
         ? selectedModel
         : models[0] ?? null;
+
+  const selectedDocMetrics =
+    level === "detail" && selectedDocument && effectiveModel
+      ? detail?.metrics?.[effectiveModel]?.by_document?.[selectedDocument] ?? null
+      : null;
+  const activeProfile = selectedDocMetrics?.profile ?? "general";
+
+  const taxonomyProfiles = taxonomy?.profiles ?? {};
+  const taxonomyTypeCount = new Set(
+    Object.values(taxonomyProfiles).flatMap((profile) =>
+      Object.keys(profile ?? {}),
+    ),
+  ).size;
+  const activeProfileTypeCount = Object.keys(
+    taxonomyProfiles[activeProfile] ?? {},
+  ).length;
+
+  const openScope = (piiType = null) => {
+    setFocusedPiiType(piiType);
+    setScopeOpen(true);
+  };
 
   useEffect(() => {
     if (level !== "detail") return;
@@ -281,6 +306,18 @@ function ClientEvaluationJourney({
           <span>{models.length} models</span>
           <span>{documents.length} documents</span>
           <span>{goldCount} annotated PII</span>
+          {taxonomy ? (
+            <button
+              type="button"
+              className="client-scope-button"
+              onClick={() => openScope()}
+            >
+              {level === "detail"
+                ? `${activeProfile} scope · ${activeProfileTypeCount} PII types`
+                : `Detection scope · ${taxonomyTypeCount} PII types`}
+              <span aria-hidden="true">ⓘ</span>
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -312,8 +349,20 @@ function ClientEvaluationJourney({
           documentName={selectedDocument}
           model={effectiveModel}
           onSelectModel={selectDetailModel}
+          onOpenDefinition={openScope}
         />
       )}
+
+      <PIIScopeDrawer
+        open={scopeOpen}
+        taxonomy={taxonomy}
+        initialProfile={activeProfile}
+        focusedType={focusedPiiType}
+        onClose={() => {
+          setScopeOpen(false);
+          setFocusedPiiType(null);
+        }}
+      />
     </div>
   );
 }
@@ -487,6 +536,7 @@ function DocumentModelDetail({
   documentName,
   model,
   onSelectModel,
+  onOpenDefinition,
 }) {
   const document = detail?.docSpans?.[documentName];
   const modelData = document?.models?.[model];
@@ -556,6 +606,7 @@ function DocumentModelDetail({
       <ClientDocumentPreview
         documentData={document}
         model={model}
+        onOpenDefinition={onOpenDefinition}
       />
 
       <div className="client-detail-grid">
