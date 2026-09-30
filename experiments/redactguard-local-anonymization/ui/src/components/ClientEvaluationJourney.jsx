@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { appRoutes } from "../routing";
 import { formatMs, formatPercent, micro } from "../utils/formatters";
+import ClientDocumentPreview from "./ClientDocumentPreview";
 
 const TYPE_LABELS = {
   private_person: "Personal names",
@@ -551,6 +552,11 @@ function DocumentModelDetail({
           tone="neutral"
         />
       </div>
+
+      <ClientDocumentPreview
+        documentData={document}
+        model={model}
+      />
 
       <div className="client-detail-grid">
         <article className="client-detail-panel">
