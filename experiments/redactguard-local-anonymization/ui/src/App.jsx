@@ -41,6 +41,7 @@ export default function App() {
   const [runs, setRuns] = useState([]);
   const [detail, setDetail] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [taxonomy, setTaxonomy] = useState(null);
 
   const selectedKey = route.searchParams.get("run") ?? "__overview__";
   const activeView = route.area;
@@ -136,6 +137,26 @@ export default function App() {
     },
     [],
   );
+
+  // Load the pinned RedactGuard taxonomy once. The CLI generates this file
+  // directly from config/profiles.yaml before starting Vite.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/pii-taxonomy.json", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Taxonomy request failed: ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        if (!cancelled) setTaxonomy(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setTaxonomy(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Fetch when selectedKey changes (user navigates to a new run)
   useEffect(() => {
@@ -391,6 +412,7 @@ export default function App() {
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
                 route={route}
+                taxonomy={taxonomy}
               />
             ) : advancedView === "executive" ? (
               <ExecutiveBriefingView
