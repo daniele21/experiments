@@ -193,3 +193,93 @@ def test_unresolved_model_value_is_visible_as_false_positive_evidence():
     assert row["unresolved_item_count"] == 1
     assert summary["span_resolution_rate"] == 0.5
     assert summary["precision"] == 0.5
+
+
+def test_family_macro_and_subtype_recall_are_reported():
+    first = Case(
+        "contract.doc",
+        "legal",
+        "IBAN IT60X0542811101000000123456",
+        (
+            Span(
+                5,
+                32,
+                "account_number",
+                "IT60X0542811101000000123456",
+                "iban",
+            ),
+        ),
+        content_family_id="contract-family",
+        variant_id="doc",
+        gold_version="deterministic_v0.2",
+        human_reviewed=False,
+    )
+    duplicate_variant = Case(
+        "contract.docx",
+        "legal",
+        "IBAN IT60X0542811101000000123456",
+        (
+            Span(
+                5,
+                32,
+                "account_number",
+                "IT60X0542811101000000123456",
+                "iban",
+            ),
+        ),
+        content_family_id="contract-family",
+        variant_id="docx",
+        gold_version="deterministic_v0.2",
+        human_reviewed=False,
+    )
+    other = Case(
+        "letter.txt",
+        "financial",
+        "Mario",
+        (Span(0, 5, "private_person", "Mario", "named_person"),),
+        content_family_id="letter-family",
+        variant_id="txt",
+        gold_version="deterministic_v0.2",
+        human_reviewed=False,
+    )
+
+    rows = [
+        score_case(
+            first,
+            _result(
+                case_id=first.case_id,
+                findings=[
+                    Finding(
+                        "account_number",
+                        "IT60X0542811101000000123456",
+                        5,
+                        32,
+                    )
+                ],
+            ),
+        ),
+        score_case(
+            duplicate_variant,
+            _result(
+                case_id=duplicate_variant.case_id,
+                findings=[
+                    Finding(
+                        "account_number",
+                        "IT60X0542811101000000123456",
+                        5,
+                        32,
+                    )
+                ],
+            ),
+        ),
+        score_case(other, _result(case_id=other.case_id, findings=[])),
+    ]
+
+    detailed = aggregate_detailed(rows)
+
+    assert detailed["dataset_balance"]["content_families"] == 2
+    assert detailed["dataset_balance"]["documents_by_family"]["contract-family"] == 2
+    assert detailed["by_subtype"]["account_number:iban"]["pii_recall"] == 1.0
+    assert detailed["by_subtype"]["private_person:named_person"]["pii_recall"] == 0.0
+    assert detailed["by_document"]["contract.doc"]["content_family_id"] == "contract-family"
+    assert detailed["macro_family"]["pii_recall"] == 0.5
