@@ -9,11 +9,11 @@ from benchmark_core import (
     DatasetSpec,
     Sample,
     fingerprint_values,
-    seeded_random,
     sha256_file,
 )
 
 from model_capability_bench.datasets.common import require_mapping, require_text, safe_child
+from model_capability_bench.datasets.selection import select_samples
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -97,17 +97,12 @@ class ControlledYamlDataset:
 
     def load(self, context: DatasetLoadContext) -> DatasetLoadResult:
         path = self._path()
-        available = list(self._samples(path, self.spec))
-        max_cases = context.profile.max_cases_for(self.spec.dataset_id)
-
-        if max_cases is not None and max_cases < len(available):
-            rng = seeded_random(context.seed)
-            rng.shuffle(available)
-            selected = available[:max_cases]
-        else:
-            selected = available
-
-        samples = tuple(selected)
+        available = self._samples(path, self.spec)
+        samples = select_samples(
+            available,
+            dataset_id=self.spec.dataset_id,
+            context=context,
+        )
         return DatasetLoadResult(
             spec=self.spec,
             samples=samples,
@@ -116,5 +111,10 @@ class ControlledYamlDataset:
             ),
             available_count=len(available),
             source_checksums={"repository_file": sha256_file(path)},
-            metadata={"repository_path": str(path.relative_to(ROOT))},
+            metadata={
+                "repository_path": str(path.relative_to(ROOT)),
+                "selection_strategy": str(
+                    context.selection.get("strategy") or "profile"
+                ),
+            },
         )

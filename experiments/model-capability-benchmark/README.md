@@ -17,7 +17,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-6 five-capability suite: complete;
 - MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending;
 - MCB-8 neutral capability reporting: complete;
-- MCB-9 Jev consolidation/migration: complete.
+- MCB-9 Jev consolidation/migration: complete;
+- MCB-10 vertical benchmark hardening: implemented on v2 suite; local automated gates and controlled real-provider validation pending.
 
 ## Registry
 
@@ -102,6 +103,8 @@ See `.env.example` for the currently supported environment variables.
 BANKING77 + CLINC150 OOS/top-label calibration, structured output with real JSON Schema
 validation, QA with abstention, and final-answer-only mathematical reasoning.
 
+The v2 core profile is task-vertical: 154 intent-classification cases, 154 OOS/calibration cases, 60 structured-output cases, 60 QA/abstention cases and 40 reasoning cases, for 468 cases per model.
+
 Inspect the same suite across a local and API model without provider calls:
 
 ```bash
@@ -110,9 +113,31 @@ uv run python scripts/suite_inspect.py \
   --capabilities all
 ```
 
+## Plan and estimate before running
+
+Inspect exact case counts and configured budgets without provider calls:
+
+~~~bash
+uv run model-bench plan --profile core --capabilities all
+~~~
+
+Run a small real pilot to project runtime/cost before committing to the full matrix:
+
+~~~bash
+uv run model-bench estimate \
+  --models qwen3.5-2b-q4km,gpt-5.6-luna \
+  --profile core \
+  --capabilities all \
+  --pilot-cases 5
+~~~
+
+The core configuration targets 28 minutes and has a 45-minute local hard guardrail per model. Its API target is USD 0.45 and hard guardrail USD 1.00 per model. API token cost is enriched from `pricing_snapshot.json` when a versioned price exists; otherwise it remains unknown rather than guessed.
+
+See `MCB_10_VERTICAL_BENCHMARK_HARDENING.md` for benchmark-science details.
+
 ## Unified runner
 
-The `model-bench` CLI now executes the same capability matrix across local and API
+The `model-bench` CLI executes the same capability matrix across local and API
 models:
 
 ```bash
@@ -147,6 +172,7 @@ report.json
 ```
 
 The HTML includes the declared primary metric for each capability, secondary metrics,
+paired same-case comparisons, family/difficulty breakdowns for controlled suites,
 model/runtime metadata, exact case-attempt drill-down and infrastructure events.
 
 A persisted run can be rendered again without provider credentials or a running runtime:
@@ -156,16 +182,15 @@ uv run model-bench report \
   --run-dir results/runs/capability-smoke
 ```
 
-Unknown provider cost remains `null`; a local provider fee of zero is not interpreted as
-zero hardware/runtime cost.
+Unknown provider cost remains `null`. The pricing snapshot is checksumed into each run manifest, and local hardware/runtime cost is intentionally separate from API token pricing.
 
 See `MCB_8_REPORTING.md` for the evidence/report contract.
 
 ## What comes next
 
-The MCB-0…9 architecture workstream is complete. The next validation step is the controlled
-real-provider E2E documented in `MCB_7_UNIFIED_RUNNER.md`: run the same capability slice
-through Korgis and an API model, then inspect the persisted evidence and neutral report.
+MCB-0…10 is implemented. The immediate gate is local automated validation followed by the controlled real-provider E2E: run `plan`, then `estimate`, and only then execute the same core slice through Korgis and an API model.
+
+Further enhancements are a repeated performance microbenchmark, local RAM/VRAM/throughput telemetry, harder near-domain OOS cases and explicit parity-vs-native serving modes.
 
 Jev remains a bounded-decision suite on top of the same core. Its task semantics and rich
 Jev-specific dashboard stay intentionally separate from the generic capability report.

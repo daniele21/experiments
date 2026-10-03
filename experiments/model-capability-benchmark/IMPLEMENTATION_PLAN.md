@@ -690,6 +690,63 @@ Rimuovere duplicazioni transitorie create durante la migrazione.
 
 ---
 
+## MCB-10 — Vertical benchmark hardening & efficiency ✅ IMPLEMENTED / VALIDATION PENDING
+
+### Obiettivo
+
+Rendere la suite decision-grade e verticale per task senza aumentare il benchmark a migliaia di casi, con guardrail espliciti su tempo locale e costo API.
+
+### Implementato
+
+- benchmark tiers capability-specific: smoke/core/extended;
+- core v2 da 468 casi/modello:
+  - 154 intent classification;
+  - 154 OOS/calibration;
+  - 60 structured output;
+  - 60 QA/abstention;
+  - 40 reasoning;
+- selezione deterministica stratificata tramite family/difficulty/challenge_type;
+- dataset controlled v2 versionati;
+- cache dataset capability/profile/seed-aware;
+- budget aggregato core target 28 min, hard 45 min locale;
+- API budget core target USD 0.45, hard USD 1.00;
+- comando plan senza inferenza;
+- comando estimate con pilot reale e proiezione runtime/costo;
+- pricing snapshot versionato usato da estimate e full run;
+- costo sconosciuto preservato come null quando il modello non ha pricing dichiarato;
+- paired bootstrap CI + McNemar su stessi sample ID;
+- practical delta per capability;
+- reporting per family e difficulty;
+- structured-output primary metric semantica exact_match;
+- QA primary metric qa_correct che include i casi unanswerable;
+- comparison metric OOS esplicita oos_correct;
+- version bump degli evaluator modificati e suite v2.
+
+### Definition of Done
+
+- [x] cardinalità core differenziata per task;
+- [x] stessa selezione deterministica per tutti i modelli confrontati;
+- [x] family/difficulty persistite nell'evidence;
+- [x] plan mostra cardinalità e guardrail prima della run;
+- [x] estimate usa pochi casi e proietta runtime/costo senza eseguire il benchmark completo;
+- [x] pricing snapshot è checksumato nel manifest e arricchisce anche la full run;
+- [x] confronti paired ricostruibili offline dagli artifact;
+- [x] metriche primarie structured/QA coprono qualità semantica reale;
+- [x] report mantiene neutralità e non produce ranking globale;
+- [ ] esecuzione dei gate locali ruff/pytest sulla HEAD del branch;
+- [ ] controlled E2E Korgis + API sul profilo core.
+
+### Enhancement successivi
+
+- repeated performance microbenchmark separato dalla quality run;
+- RAM/VRAM, throughput e startup/switch telemetry;
+- OOS near-domain v2 curato;
+- modalità parity vs native per i meccanismi di structured generation.
+
+Vedi `MCB_10_VERTICAL_BENCHMARK_HARDENING.md`.
+
+---
+
 # 6. Dipendenze
 
 ```text
@@ -722,6 +779,9 @@ registry                   |
                  |
                  v
           MCB-9 Jev cleanup
+                 |
+                 v
+          MCB-10 vertical hardening
 ```
 
 MCB-3 e MCB-4 possono procedere in parallelo dopo la stabilizzazione dei contratti core. MCB-5 può procedere in parallelo alla parte finale di MCB-4 una volta fissati Sample e Task contracts.
@@ -944,6 +1004,9 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 ### Consolidation
 
 - [ ] capability matrix dashboard
+- [x] vertical core tiers + deterministic stratification
+- [x] pre-run plan + pilot estimate
+- [x] paired statistics + vertical breakdown reporting
 - [x] resume/failure hardening
 - [ ] local resource telemetry
 - [x] Jev migration cleanup
@@ -970,7 +1033,7 @@ Il workstream è concluso quando:
 
 # 14. Stato finale e prossime validazioni
 
-Il workstream architetturale **MCB-0…9 è implementato**: contratti, core condiviso,
+Il workstream architetturale **MCB-0…10 è implementato**: contratti, core condiviso,
 registry, task/dataset plugin, capability suite, unified runner, reporting e migrazione Jev
 sono consolidati e coperti dai gate automatici.
 

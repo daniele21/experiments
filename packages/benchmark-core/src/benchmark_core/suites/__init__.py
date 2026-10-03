@@ -3,7 +3,12 @@ from benchmark_core.suites.context import (
     resolve_capability_context,
 )
 from benchmark_core.suites.contracts import (
+    BenchmarkSelectionQuota,
+    BenchmarkSelectionSpec,
+    BenchmarkSelectionStrategy,
     BenchmarkSuiteSpec,
+    BenchmarkTierSpec,
+    CapabilityComparisonSpec,
     CapabilityContextBinding,
     CapabilityMetricSpec,
     CapabilitySpec,
@@ -19,7 +24,12 @@ from benchmark_core.suites.validation import (
 )
 
 __all__ = [
+    "BenchmarkSelectionQuota",
+    "BenchmarkSelectionSpec",
+    "BenchmarkSelectionStrategy",
     "BenchmarkSuiteSpec",
+    "BenchmarkTierSpec",
+    "CapabilityComparisonSpec",
     "CapabilityContextBinding",
     "CapabilityContextError",
     "CapabilityMetricSpec",

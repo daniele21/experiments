@@ -46,7 +46,7 @@ class Banking77Dataset:
         for label in categories:
             rng.shuffle(by_label[label])
 
-        max_cases = context.profile.max_cases_for(self.spec.dataset_id)
+        max_cases = context.max_cases_for(self.spec.dataset_id)
         target = len(rows) if max_cases is None else min(max_cases, len(rows))
 
         selected_rows: list[tuple[int, str, str]] = []

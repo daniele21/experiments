@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_core import (
+    load_pricing_snapshot,
+    pricing_snapshot_metadata,
     sha256_file,
     to_jsonable,
     write_environment_manifest,
@@ -23,6 +25,7 @@ CONFIG_FILES = (
     "suite.yaml",
     "runner.yaml",
     "reporting.yaml",
+    "pricing_snapshot.json",
 )
 
 
@@ -74,6 +77,11 @@ def write_run_artifacts(
             "capability_id": capability.spec.capability_id,
             "task_id": capability.spec.task_id,
             "dataset_ids": list(capability.spec.dataset_ids),
+            "benchmark": {
+                tier_id: to_jsonable(tier)
+                for tier_id, tier in capability.spec.benchmark_tiers.items()
+            },
+            "comparison": to_jsonable(capability.spec.comparison),
             "metrics": [
                 {
                     "name": metric.name,
@@ -88,6 +96,13 @@ def write_run_artifacts(
         for capability in suite.resolved_capabilities
         if capability.spec.capability_id in set(selected_capability_ids)
     ]
+
+    pricing_path = suite.root / "pricing_snapshot.json"
+    pricing = (
+        pricing_snapshot_metadata(load_pricing_snapshot(pricing_path))
+        if pricing_path.is_file()
+        else {"semantics": "provider-reported API cost when available; unknown is null"}
+    )
 
     write_environment_manifest(
         output_dir / "environment.json",
@@ -107,9 +122,7 @@ def write_run_artifacts(
             "retry_failures": config.retry_failures,
             "generation": to_jsonable(suite.suite.generation),
         },
-        pricing={
-            "semantics": "provider-reported API cost when available; unknown is null",
-        },
+        pricing=pricing,
         packages=(
             "benchmark-core",
             "model-capability-bench",

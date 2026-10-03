@@ -150,6 +150,7 @@ def test_structured_output_uses_sample_schema_and_scores_fields() -> None:
 
     metrics = {metric.name: metric.value for metric in result.metrics}
     assert metrics == {
+        "exact_match": 0.0,
         "schema_valid_rate": 0.0,
         "field_accuracy": 1.0,
         "hallucinated_fields": 1,
@@ -166,3 +167,58 @@ def test_registry_enforces_task_dataset_compatibility() -> None:
             "intent-classification",
             "structured-output-controlled-v1",
         )
+
+
+def test_structured_output_does_not_reward_schema_valid_wrong_values() -> None:
+    task = build_task_registry(TASKS).get("structured-output")
+    schema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+    sample = Sample(
+        sample_id="extract-wrong",
+        input="The name is Alice.",
+        expected={"name": "Alice"},
+        metadata={"response_schema": schema},
+    )
+    result = task.evaluate(
+        sample,
+        InferenceResult(
+            provider_id="fake",
+            model_id="fake-model",
+            raw_output={"name": "Bob"},
+            normalized_output={"name": "Bob"},
+            latency_ms=1.0,
+        ),
+        _context("structured-output-controlled-v2"),
+    )
+    metrics = {metric.name: metric.value for metric in result.metrics}
+    assert result.valid is True
+    assert metrics["schema_valid_rate"] == 1.0
+    assert metrics["exact_match"] == 0.0
+
+
+def test_qa_correct_includes_unanswerable_abstention() -> None:
+    task = build_task_registry(TASKS).get("qa-abstention")
+    sample = Sample(
+        sample_id="qa-unanswerable",
+        input={"context": "The server is healthy.", "question": "Who owns it?"},
+        expected={"answer": "", "answerable": False},
+    )
+    result = task.evaluate(
+        sample,
+        InferenceResult(
+            provider_id="fake",
+            model_id="fake-model",
+            raw_output={"answer": "", "abstain": True},
+            normalized_output={"answer": "", "abstain": True},
+            latency_ms=1.0,
+        ),
+        _context("qa-abstention-controlled-v2"),
+    )
+    metrics = {metric.name: metric.value for metric in result.metrics}
+    assert metrics["qa_correct"] == 1.0
+    assert metrics["exact_match"] is None
+    assert metrics["answerability_accuracy"] == 1.0

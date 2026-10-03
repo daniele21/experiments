@@ -1,0 +1,404 @@
+{
+  "cases": [
+    {
+      "sample_id": "math2-arith-01",
+      "input": "A box contains 28 red and 17 blue balls. How many balls total?",
+      "expected": "45",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "easy",
+        "challenge_type": "addition"
+      }
+    },
+    {
+      "sample_id": "math2-arith-02",
+      "input": "A warehouse has 144 items split equally into 12 bins. Items per bin?",
+      "expected": "12",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "easy",
+        "challenge_type": "division"
+      }
+    },
+    {
+      "sample_id": "math2-arith-03",
+      "input": "A runner completes 7 laps of 450 meters. Total distance in meters?",
+      "expected": "3150",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "multiplication"
+      }
+    },
+    {
+      "sample_id": "math2-arith-04",
+      "input": "A balance of 950 decreases by 287. New balance?",
+      "expected": "663",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "subtraction"
+      }
+    },
+    {
+      "sample_id": "math2-arith-05",
+      "input": "Three invoices are 19.90, 45.10 and 35.00 EUR. Total EUR?",
+      "expected": "100",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "decimal-addition"
+      }
+    },
+    {
+      "sample_id": "math2-pct-01",
+      "input": "An 80 EUR product gets a 25% discount. Final price?",
+      "expected": "60",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "easy",
+        "challenge_type": "discount"
+      }
+    },
+    {
+      "sample_id": "math2-pct-02",
+      "input": "A value rises from 120 to 150. Percentage increase?",
+      "expected": "25",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "medium",
+        "challenge_type": "percent-change"
+      }
+    },
+    {
+      "sample_id": "math2-pct-03",
+      "input": "35% of 240 employees work remotely. How many employees?",
+      "expected": "84",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "medium",
+        "challenge_type": "percentage-of"
+      }
+    },
+    {
+      "sample_id": "math2-pct-04",
+      "input": "A 200 EUR price is increased by 10% then discounted by 10%. Final price?",
+      "expected": "198",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "sequential-percent"
+      }
+    },
+    {
+      "sample_id": "math2-pct-05",
+      "input": "A portfolio falls 20% from 5000 and then rises 25% from the reduced value. Final value?",
+      "expected": "5000",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "base-change"
+      }
+    },
+    {
+      "sample_id": "math2-step-01",
+      "input": "5 boxes contain 12 bottles each. 7 bottles are removed. How many remain?",
+      "expected": "53",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "medium",
+        "challenge_type": "two-step"
+      }
+    },
+    {
+      "sample_id": "math2-step-02",
+      "input": "A car travels 180 km at 60 km/h, then 120 km at 40 km/h. Total travel time in hours?",
+      "expected": "6",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "rate-sum"
+      }
+    },
+    {
+      "sample_id": "math2-step-03",
+      "input": "A store buys 8 items at 15 EUR each and sells all for 160 EUR. Profit?",
+      "expected": "40",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "medium",
+        "challenge_type": "cost-revenue"
+      }
+    },
+    {
+      "sample_id": "math2-step-04",
+      "input": "A tank starts with 200 liters, loses 15%, then 20 liters are added. Final liters?",
+      "expected": "190",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "percent-plus-absolute"
+      }
+    },
+    {
+      "sample_id": "math2-step-05",
+      "input": "Three workers make 18 units each, then 1/3 of all units fail QA. Good units?",
+      "expected": "36",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "fraction-after-total"
+      }
+    },
+    {
+      "sample_id": "math2-alg-01",
+      "input": "Solve for x: 3x + 5 = 26.",
+      "expected": "7",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "linear-equation"
+      }
+    },
+    {
+      "sample_id": "math2-alg-02",
+      "input": "Solve for x: 5(x - 2) = 35.",
+      "expected": "9",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "linear-equation"
+      }
+    },
+    {
+      "sample_id": "math2-alg-03",
+      "input": "Two consecutive integers sum to 41. What is the larger integer?",
+      "expected": "21",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "word-equation"
+      }
+    },
+    {
+      "sample_id": "math2-alg-04",
+      "input": "A rectangle perimeter is 30. Its length is 9. What is its width?",
+      "expected": "6",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "geometry-equation"
+      }
+    },
+    {
+      "sample_id": "math2-alg-05",
+      "input": "A number doubled and then reduced by 8 equals 34. What is the number?",
+      "expected": "21",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "word-equation"
+      }
+    },
+    {
+      "sample_id": "math2-logic-01",
+      "input": "All red cards are numbered. Card A is red. If numbered cards have value 1, what value does A have?",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "deduction"
+      }
+    },
+    {
+      "sample_id": "math2-logic-02",
+      "input": "Exactly one of switches A and B is on. A is off. Encode B on as 1 and off as 0. What is B?",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "exclusive-or"
+      }
+    },
+    {
+      "sample_id": "math2-logic-03",
+      "input": "If P implies Q and P is true, encode Q true as 1 and false as 0. What is Q?",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "implication"
+      }
+    },
+    {
+      "sample_id": "math2-logic-04",
+      "input": "There are three boxes. Only box 2 contains the key. If you may open box 1 and box 3 only, how many keys can you retrieve?",
+      "expected": "0",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "constraint-deduction"
+      }
+    },
+    {
+      "sample_id": "math2-logic-05",
+      "input": "A sequence alternates 2,5,2,5,2. What is the next number?",
+      "expected": "5",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "pattern"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-01",
+      "input": "Choose the largest integer less than 20 that is divisible by both 3 and 4.",
+      "expected": "12",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "divisibility"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-02",
+      "input": "A budget is at most 100. Fixed cost is 64 and each unit costs 9. Maximum whole units purchasable?",
+      "expected": "4",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "integer-budget"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-03",
+      "input": "A lift limit is 500 kg. Four people weigh 82, 74, 91 and 68 kg. How many kg capacity remain?",
+      "expected": "185",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "capacity"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-04",
+      "input": "You need at least 50 points. Each win gives 7 points. Starting from 8 points, minimum wins needed?",
+      "expected": "6",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "ceiling"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-05",
+      "input": "A batch must contain between 30 and 40 items inclusive and be divisible by 6. What is the largest valid size?",
+      "expected": "36",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "range-divisibility"
+      }
+    },
+    {
+      "sample_id": "math2-arith-06",
+      "input": "A shop sells 13 pens at 2.50 EUR each. Revenue in EUR?",
+      "expected": "32.5",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "decimal-multiplication"
+      }
+    },
+    {
+      "sample_id": "math2-arith-07",
+      "input": "A counter starts at 1000, adds 275, then subtracts 88. Final value?",
+      "expected": "1187",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "mixed-operations"
+      }
+    },
+    {
+      "sample_id": "math2-pct-06",
+      "input": "A 320 EUR bill includes a 15% surcharge. Final amount?",
+      "expected": "368",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "medium",
+        "challenge_type": "surcharge"
+      }
+    },
+    {
+      "sample_id": "math2-pct-07",
+      "input": "An item is discounted from 250 EUR to 200 EUR. Discount percentage?",
+      "expected": "20",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "reverse-percent"
+      }
+    },
+    {
+      "sample_id": "math2-step-06",
+      "input": "A bus has 48 passengers. 13 leave and 9 board. Final passengers?",
+      "expected": "44",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "medium",
+        "challenge_type": "sequential-count"
+      }
+    },
+    {
+      "sample_id": "math2-step-07",
+      "input": "A factory makes 120 units, rejects 10%, then ships 18 fewer than the good units. Units shipped?",
+      "expected": "90",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "percent-and-subtract"
+      }
+    },
+    {
+      "sample_id": "math2-alg-06",
+      "input": "Solve for x: 4x - 7 = 29.",
+      "expected": "9",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "linear-equation"
+      }
+    },
+    {
+      "sample_id": "math2-alg-07",
+      "input": "Three equal tickets plus a 5 EUR fee cost 50 EUR. Price of one ticket?",
+      "expected": "15",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "word-equation"
+      }
+    },
+    {
+      "sample_id": "math2-logic-06",
+      "input": "If every approved request is logged and request R is approved, encode 'R is logged' as 1 for true and 0 for false.",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "deduction"
+      }
+    },
+    {
+      "sample_id": "math2-constraint-06",
+      "input": "A van can carry at most 900 kg. Cargo already weighs 735 kg. Each added box weighs 40 kg. Maximum additional whole boxes?",
+      "expected": "4",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "integer-capacity"
+      }
+    }
+  ]
+}

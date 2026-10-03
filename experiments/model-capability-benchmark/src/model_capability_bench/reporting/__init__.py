@@ -12,6 +12,7 @@ from model_capability_bench.reporting.model import (
     ReportCase,
     ReportCell,
     ReportModelInfo,
+    ReportPairwiseComparison,
 )
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "ReportCell",
     "ReportDataError",
     "ReportModelInfo",
+    "ReportPairwiseComparison",
     "ReportOutputs",
     "ReportingConfig",
     "load_benchmark_report",

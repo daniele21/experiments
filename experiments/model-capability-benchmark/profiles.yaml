@@ -7,7 +7,29 @@ profiles:
       structured-output-controlled-v1: null
       qa-abstention-controlled-v1: null
       math-reasoning-controlled-v1: null
+      structured-output-controlled-v2: 12
+      qa-abstention-controlled-v2: 12
+      math-reasoning-controlled-v2: 12
 
+  core:
+    max_cases: 100
+    datasets:
+      banking77: 154
+      clinc150-oos: 100
+      structured-output-controlled-v2: 60
+      qa-abstention-controlled-v2: 60
+      math-reasoning-controlled-v2: 40
+
+  extended:
+    max_cases: 500
+    datasets:
+      banking77: 770
+      clinc150-oos: 500
+      structured-output-controlled-v2: 60
+      qa-abstention-controlled-v2: 60
+      math-reasoning-controlled-v2: 40
+
+  # Legacy aliases retained while callers migrate to vertical tiers.
   budget:
     max_cases: 100
     datasets:

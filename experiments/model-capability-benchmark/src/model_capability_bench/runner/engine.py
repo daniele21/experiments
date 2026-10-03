@@ -8,7 +8,6 @@ from typing import Any
 
 from benchmark_core import (
     BenchmarkCaseIdentity,
-    DatasetLoadContext,
     EvaluationRecord,
     InferenceProvider,
     InferenceResult,
@@ -20,12 +19,17 @@ from benchmark_core import (
 )
 
 from model_capability_bench.runner.aggregation import aggregate_capability
+from model_capability_bench.runner.capability_data import (
+    CapabilityDatasetLoadError,
+    load_capability_datasets,
+)
 from model_capability_bench.runner.contracts import (
     RunnerConfig,
     RunnerSummary,
     RuntimeResolver,
 )
 from model_capability_bench.runner.evidence import EvidenceStore
+from model_capability_bench.runner.pricing import enrich_inference_cost
 from model_capability_bench.suite import CapabilitySuiteBundle
 
 
@@ -105,7 +109,7 @@ class CapabilityRunner:
             },
         )
 
-        dataset_cache: dict[str, Any] = {}
+        dataset_cache: dict[tuple[str, str, str, int], Any] = {}
         planned_cases = 0
         completed_cases = 0
         failed_cases = 0
@@ -149,35 +153,27 @@ class CapabilityRunner:
                     capability = capability_by_id[arm.capability_id]
                     task = self.suite.tasks.get(capability.spec.task_id)
 
-                    loaded_for_capability: dict[str, Any] = {}
-                    dataset_failed = False
-                    for dataset_id in capability.spec.dataset_ids:
-                        try:
-                            if dataset_id not in dataset_cache:
-                                dataset_cache[dataset_id] = self.suite.datasets.load(
-                                    dataset_id,
-                                    DatasetLoadContext(
-                                        cache_dir=self.cache_dir,
-                                        profile=profile,
-                                        seed=config.seed,
-                                    ),
-                                )
-                            loaded_for_capability[dataset_id] = dataset_cache[dataset_id]
-                        except Exception as exc:  # noqa: BLE001 - dataset boundary
-                            dataset_failed = True
-                            self.evidence_store.record_event(
-                                "dataset_load_failed",
-                                metadata={
-                                    "run_id": identity.run_id,
-                                    "model_key": model.model.model_key,
-                                    "capability_id": capability.spec.capability_id,
-                                    "dataset_id": dataset_id,
-                                },
-                                error=exc,
-                            )
-                            break
-
-                    if dataset_failed:
+                    try:
+                        loaded_for_capability = load_capability_datasets(
+                            suite=self.suite,
+                            capability=capability,
+                            profile=profile,
+                            profile_id=config.profile,
+                            cache_dir=self.cache_dir,
+                            seed=config.seed,
+                            cache=dataset_cache,
+                        )
+                    except CapabilityDatasetLoadError as exc:
+                        self.evidence_store.record_event(
+                            "dataset_load_failed",
+                            metadata={
+                                "run_id": identity.run_id,
+                                "model_key": model.model.model_key,
+                                "capability_id": capability.spec.capability_id,
+                                "dataset_id": exc.dataset_id,
+                            },
+                            error=exc.__cause__ or exc,
+                        )
                         continue
 
                     context_metadata = resolve_capability_context(
@@ -258,6 +254,12 @@ class CapabilityRunner:
                                 "dataset_split": loaded.spec.split,
                                 "sample_id": sample.sample_id,
                                 "profile": config.profile,
+                                "benchmark_tier": config.profile,
+                                "case_family": sample.metadata.get("family"),
+                                "difficulty": sample.metadata.get("difficulty"),
+                                "challenge_type": sample.metadata.get(
+                                    "challenge_type"
+                                ),
                             }
                             attempt = self.evidence_store.begin_case(
                                 case_id,
@@ -285,6 +287,11 @@ class CapabilityRunner:
                                         "InferenceProvider.generate() must return "
                                         "InferenceResult"
                                     )
+                                inference = enrich_inference_cost(
+                                    pricing_path=self.suite.root / "pricing_snapshot.json",
+                                    model=model,
+                                    result=inference,
+                                )
                             except Exception as exc:  # noqa: BLE001 - provider boundary
                                 failed_cases += 1
                                 self.evidence_store.fail_case(

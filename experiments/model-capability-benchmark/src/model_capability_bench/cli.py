@@ -13,7 +13,13 @@ from model_capability_bench.reporting import (
     load_reporting_config,
     write_report,
 )
-from model_capability_bench.runner import CapabilityRunner, EvidenceStore, RunnerConfig
+from model_capability_bench.runner import (
+    CapabilityRunner,
+    EvidenceStore,
+    RunnerConfig,
+    estimate_benchmark,
+)
+from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
 from model_capability_bench.runtimes import RegistryRuntimeResolver
@@ -58,11 +64,29 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
 
+    estimate = sub.add_parser(
+        "estimate",
+        help="Run a small pilot and project runtime/cost for a benchmark tier.",
+    )
+    estimate.add_argument("--models", default="all")
+    estimate.add_argument("--capabilities", default="all")
+    estimate.add_argument("--profile")
+    estimate.add_argument("--pilot-cases", type=int, default=5)
+    estimate.add_argument("--seed", type=int)
+    estimate.add_argument("--cache-dir", type=Path)
+
     validate = sub.add_parser(
         "validate-config",
         help="Validate suite composition and provider environment.",
     )
     validate.add_argument("--models", default="all")
+
+    plan = sub.add_parser(
+        "plan",
+        help="Show vertical case counts and configured budgets without inference.",
+    )
+    plan.add_argument("--capabilities", default="all")
+    plan.add_argument("--profile")
 
     report = sub.add_parser(
         "report",
@@ -159,8 +183,57 @@ def main() -> int:
         _json(_catalog_payload(bundle, args.command))
         return 0
 
+    if args.command == "plan":
+        capability_ids = _selection(
+            args.capabilities,
+            [
+                capability.spec.capability_id
+                for capability in bundle.resolved_capabilities
+            ],
+        )
+        profile = args.profile or defaults.default_profile
+        _json(
+            plan_benchmark(
+                bundle,
+                profile_id=profile,
+                capability_ids=capability_ids,
+            )
+        )
+        return 0
+
     available_models = list(bundle.models.models)
     model_keys = _selection(args.models, available_models)
+
+    if args.command == "estimate":
+        capability_ids = _selection(
+            args.capabilities,
+            [
+                capability.spec.capability_id
+                for capability in bundle.resolved_capabilities
+            ],
+        )
+        profile = args.profile or defaults.default_profile
+        seed = args.seed if args.seed is not None else defaults.default_seed
+        cache_dir = (
+            args.cache_dir.resolve()
+            if args.cache_dir is not None
+            else defaults.cache_dir
+        )
+        runtime_resolver = RegistryRuntimeResolver(os.environ)
+        _json(
+            estimate_benchmark(
+                bundle,
+                runtime_resolver=runtime_resolver,
+                cache_dir=cache_dir,
+                environ=os.environ,
+                profile_id=profile,
+                model_keys=model_keys,
+                capability_ids=capability_ids,
+                pilot_cases=args.pilot_cases,
+                seed=seed,
+            )
+        )
+        return 0
 
     if args.command == "validate-config":
         models = bundle.models.select(model_keys=model_keys)

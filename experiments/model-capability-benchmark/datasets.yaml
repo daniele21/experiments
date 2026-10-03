@@ -99,3 +99,46 @@ datasets:
     cache_mode: repository
     options:
       path: data/math-reasoning-controlled-v1.yaml
+
+
+  structured-output-controlled-v2:
+    version: "2"
+    adapter: structured-output-controlled
+    source: repository-authored
+    revision: v2
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "2"
+    cache_mode: repository
+    options:
+      path: data/structured-output-controlled-v2.yaml
+      human_reviewed: false
+      difficulty_labels: authored-provisional
+
+  qa-abstention-controlled-v2:
+    version: "2"
+    adapter: controlled-yaml
+    source: repository-authored
+    revision: v2
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "2"
+    cache_mode: repository
+    options:
+      path: data/qa-abstention-controlled-v2.yaml
+      human_reviewed: false
+      difficulty_labels: authored-provisional
+
+  math-reasoning-controlled-v2:
+    version: "2"
+    adapter: controlled-yaml
+    source: repository-authored
+    revision: v2
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "2"
+    cache_mode: repository
+    options:
+      path: data/math-reasoning-controlled-v2.yaml
+      human_reviewed: false
+      difficulty_labels: authored-provisional

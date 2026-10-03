@@ -7,7 +7,7 @@ A collection of heterogeneous, reproducible experiments. Each experiment lives i
 | Experiment | Status | Goal |
 |---|---|---|
 | [`jev-vs-llm`](experiments/jev-vs-llm/) | In progress | Compare System One decision models and LLMs on accuracy, calibration, latency, scaling, and end-to-end workflows. |
-| [`model-capability-benchmark`](experiments/model-capability-benchmark/) | Planned | Compare local and API models across reusable task/dataset suites on quality, validity, latency, token usage, cost, and local runtime characteristics. |
+| [`model-capability-benchmark`](experiments/model-capability-benchmark/) | Implemented / hardening | Compare local and API models with compact task-vertical suites, deterministic evidence, paired statistics, runtime/cost planning, and neutral capability reporting. |
 | [`vlm-capability-benchmark`](experiments/vlm-capability-benchmark/) | Planned | Compare local/open and API vision-language models on document, chart, visual reasoning, grounding, and UI-understanding tasks. |
 | [`image-generation-benchmark`](experiments/image-generation-benchmark/) | Planned | Compare image-generation/editing models with reproducible prompt suites, objective checks where meaningful, blind human evaluation, and visual side-by-side reports. |
 | [`redactguard-local-anonymization`](experiments/redactguard-local-anonymization/) | Initial implementation | Compare local Korgis models on RedactGuard PII recall, leakage, over-redaction, robustness, and latency. |

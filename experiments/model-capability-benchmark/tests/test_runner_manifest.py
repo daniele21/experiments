@@ -57,6 +57,8 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
 
     assert environment["parameters"]["run_id"] == "run-1"
     assert environment["parameters"]["seed"] == 7
+    assert environment["pricing"]["as_of"] == "2026-09-20"
+    assert environment["pricing"]["currency"] == "USD"
     assert manifest["run"]["run_id"] == "run-1"
     assert {model["model_key"] for model in manifest["models"]} == {
         "qwen3.5-2b-q4km",
@@ -66,6 +68,9 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         capability["capability_id"]
         for capability in manifest["capabilities"]
     } == {"structured-output", "mathematical-reasoning"}
+    for capability in manifest["capabilities"]:
+        assert "benchmark" in capability
+        assert "comparison" in capability
     assert set(manifest["config_checksums"]) == {
         "models.yaml",
         "tasks.yaml",
@@ -74,4 +79,5 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         "suite.yaml",
         "runner.yaml",
         "reporting.yaml",
+        "pricing_snapshot.json",
     }

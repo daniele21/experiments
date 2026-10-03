@@ -23,20 +23,22 @@ tasks:
       labels_metadata_key: labels
 
   structured-output:
-    version: "1"
+    version: "2"
     plugin: structured-output
-    evaluator: exact-fields
-    evaluator_version: "1"
+    evaluator: semantic-exact-fields
+    evaluator_version: "2"
     compatible_datasets:
       - structured-output-controlled-v1
+      - structured-output-controlled-v2
     required_capabilities:
       text_input: true
     prompt:
       id: structured-output-v1
       version: "1"
     metrics:
-      - name: schema_valid_rate
+      - name: exact_match
         primary: true
+      - name: schema_valid_rate
       - name: field_accuracy
       - name: hallucinated_fields
     options:
@@ -77,20 +79,22 @@ tasks:
       oos_label: other
 
   qa-abstention:
-    version: "1"
+    version: "2"
     plugin: qa-abstention
     evaluator: qa-answerability
-    evaluator_version: "1"
+    evaluator_version: "2"
     compatible_datasets:
       - qa-abstention-controlled-v1
+      - qa-abstention-controlled-v2
     required_capabilities:
       text_input: true
     prompt:
       id: qa-abstention-v1
       version: "1"
     metrics:
-      - name: exact_match
+      - name: qa_correct
         primary: true
+      - name: exact_match
       - name: answerability_accuracy
       - name: parse_valid
     options:
@@ -106,6 +110,7 @@ tasks:
     evaluator_version: "1"
     compatible_datasets:
       - math-reasoning-controlled-v1
+      - math-reasoning-controlled-v2
     required_capabilities:
       text_input: true
     prompt:
