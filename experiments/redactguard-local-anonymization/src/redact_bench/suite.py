@@ -12,6 +12,7 @@ from typing import Iterator
 
 import yaml
 
+from redact_bench.datasets import load_dataset
 from redact_bench.history import append_history, build_history_entry
 from redact_bench.history_dashboard import write_history_dashboard
 from redact_bench.korgis_process import (
@@ -137,6 +138,22 @@ def _suite_environment(
                 os.environ[key] = value
 
 
+def _resolve_suite_dataset(dataset_path: Path) -> str | None:
+    """Resolve the dataset identifier for directory-based (realistic) or JSONL datasets."""
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Dataset path does not exist: {dataset_path}")
+    if dataset_path.is_dir():
+        validation = validate_realistic_dataset(dataset_path)
+        return validation.get("dataset_id")
+    cases = load_dataset(dataset_path)
+    if not cases:
+        raise ValueError(f"Dataset contains no cases: {dataset_path}")
+    if cases[0].gold_version:
+        return cases[0].gold_version
+    parent_name = dataset_path.parent.name
+    return f"{parent_name}-{dataset_path.stem}" if parent_name not in ("", ".", "data") else dataset_path.stem
+
+
 def _write_status(path: Path, payload: dict) -> None:
     path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False),
@@ -162,7 +179,7 @@ def run_managed_suite(
         else ensure_models_override
     )
 
-    validation = validate_realistic_dataset(config.dataset)
+    dataset_id = _resolve_suite_dataset(config.dataset)
     resolved_korgis = resolve_korgis_repo(
         korgis_repo,
         experiment_root=experiment_root,
@@ -182,7 +199,7 @@ def run_managed_suite(
         "suite_id": suite_id,
         "started_at": started_at,
         "models": list(models),
-        "dataset_id": validation.get("dataset_id"),
+        "dataset_id": dataset_id,
         "runtime_strategy": config.runtime_strategy,
         "korgis_repo": str(resolved_korgis),
         "korgis_source_sha": source_sha,
@@ -264,7 +281,7 @@ def run_managed_suite(
 
         entry = build_history_entry(
             suite_id=suite_id,
-            dataset_id=validation.get("dataset_id"),
+            dataset_id=dataset_id,
             suite_dir=suite_dir,
             quality_dir=quality_dir,
             latency_dir=latency_dir,

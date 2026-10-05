@@ -173,3 +173,69 @@ def test_combine_model_runs_builds_one_comparison(tmp_path: Path):
     assert manifest["models"] == ["a", "b"]
     assert manifest["runtime_strategy"] == "restart_per_model"
     assert (output / "report.html").exists()
+
+
+def test_clean_korgis_env_strips_runner_virtualenv(monkeypatch):
+    from redact_bench.korgis_process import _clean_korgis_env
+
+    monkeypatch.setenv("VIRTUAL_ENV", "/some/other/project/.venv")
+    monkeypatch.setenv("PYTHONHOME", "/custom/python/home")
+    monkeypatch.setenv("SOME_OTHER_VAR", "value123")
+
+    env = _clean_korgis_env()
+    assert "VIRTUAL_ENV" not in env
+    assert "PYTHONHOME" not in env
+    assert env.get("SOME_OTHER_VAR") == "value123"
+
+
+def test_clean_korgis_env_preserves_explicit_llama_server_bin(monkeypatch):
+    from redact_bench.korgis_process import _clean_korgis_env
+
+    monkeypatch.setenv("LOCAL_LLM_SERVER_BIN", "/custom/path/llama-server")
+    env = _clean_korgis_env()
+    assert env.get("LOCAL_LLM_SERVER_BIN") == "/custom/path/llama-server"
+
+
+def test_resolve_suite_dataset_handles_jsonl(tmp_path: Path):
+    from redact_bench.suite import _resolve_suite_dataset
+
+    jsonl_file = tmp_path / "cases.jsonl"
+    jsonl_file.write_text(
+        json.dumps(
+            {
+                "id": "c1",
+                "profile": "general",
+                "text": "Hello Mario Rossi",
+                "entities": [{"pii_type": "private_person", "value": "Mario Rossi"}],
+                "gold_version": "challenge_v0.1",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    dataset_id = _resolve_suite_dataset(jsonl_file)
+    assert dataset_id == "challenge_v0.1"
+
+
+def test_resolve_suite_dataset_handles_jsonl_without_gold_version(tmp_path: Path):
+    from redact_bench.suite import _resolve_suite_dataset
+
+    dataset_dir = tmp_path / "smoke"
+    dataset_dir.mkdir()
+    jsonl_file = dataset_dir / "cases.jsonl"
+    jsonl_file.write_text(
+        json.dumps(
+            {
+                "id": "c1",
+                "profile": "general",
+                "text": "Hello Mario Rossi",
+                "entities": [{"pii_type": "private_person", "value": "Mario Rossi"}],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    dataset_id = _resolve_suite_dataset(jsonl_file)
+    assert dataset_id == "smoke-cases"

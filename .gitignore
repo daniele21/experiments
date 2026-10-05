@@ -5,6 +5,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.cache/
+experiments/*/.cache/
 experiments/*/data/cache/
 experiments/*/results/raw/
 experiments/*/results/private/

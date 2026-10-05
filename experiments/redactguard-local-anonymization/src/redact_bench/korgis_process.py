@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -71,13 +72,75 @@ def korgis_git_sha(repo: Path) -> str | None:
         return None
 
 
-def run_korgis_cli(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    command = ["uv", "run", "--frozen", "local-llm", *args]
+def _find_uv_binary(env: dict[str, str] | None = None) -> str:
+    path_val = env.get("PATH") if env else None
+    discovered = shutil.which("uv", path=path_val)
+    if discovered:
+        return discovered
+    for candidate in (
+        Path.home() / ".local" / "bin" / "uv",
+        Path.home() / ".cargo" / "bin" / "uv",
+        Path("/opt/homebrew/bin/uv"),
+        Path("/usr/local/bin/uv"),
+    ):
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return "uv"
+
+
+def _clean_korgis_env(extra_env: dict[str, str] | None = None) -> dict[str, str]:
+    """Return an environment isolated from the benchmark runner virtualenv."""
+    env = os.environ.copy()
+    env.pop("VIRTUAL_ENV", None)
+    env.pop("PYTHONHOME", None)
+
+    # Ensure standard user and package binary paths are present in PATH
+    current_paths = env.get("PATH", "").split(os.pathsep)
+    paths_to_add: list[str] = []
+    for candidate_dir in (
+        Path.home() / ".local" / "bin",
+        Path.home() / ".cargo" / "bin",
+        Path("/opt/homebrew/bin"),
+        Path("/usr/local/bin"),
+    ):
+        cand_str = str(candidate_dir)
+        if candidate_dir.is_dir() and cand_str not in current_paths:
+            paths_to_add.append(cand_str)
+    if paths_to_add:
+        env["PATH"] = os.pathsep.join([*paths_to_add, *current_paths])
+
+    if "LOCAL_LLM_SERVER_BIN" not in env:
+        discovered = shutil.which("llama-server", path=env.get("PATH"))
+        if not discovered:
+            for candidate in (
+                Path("/opt/homebrew/bin/llama-server"),
+                Path("/usr/local/bin/llama-server"),
+                Path.home() / ".local" / "bin" / "llama-server",
+            ):
+                if candidate.is_file() and os.access(candidate, os.X_OK):
+                    discovered = str(candidate)
+                    break
+        if discovered:
+            env["LOCAL_LLM_SERVER_BIN"] = discovered
+    if extra_env:
+        env.update(extra_env)
+    return env
+
+
+def run_korgis_cli(
+    repo: Path,
+    *args: str,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    cleaned_env = _clean_korgis_env(env)
+    uv_bin = _find_uv_binary(cleaned_env)
+    command = [uv_bin, "run", "--frozen", "local-llm", *args]
     return subprocess.run(
         command,
         cwd=repo,
         check=True,
         text=True,
+        env=cleaned_env,
     )
 
 
@@ -148,8 +211,10 @@ class ManagedKorgis:
 
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self._log_handle = self.log_path.open("w", encoding="utf-8")
+        cleaned_env = _clean_korgis_env()
+        uv_bin = _find_uv_binary(cleaned_env)
         command = [
-            "uv",
+            uv_bin,
             "run",
             "--frozen",
             "local-llm",
@@ -169,6 +234,7 @@ class ManagedKorgis:
             stdout=self._log_handle,
             stderr=subprocess.STDOUT,
             text=True,
+            env=cleaned_env,
         )
         self._wait_until_ready()
         self._assert_admin_api()
