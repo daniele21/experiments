@@ -27,9 +27,9 @@ from jev_bench.reporting.data import (
     compute_leaderboard,
     compute_overview,
     get_active_experiments,
-    select_run_group,
-    resolve_dataset_type,
     resolve_dataset_name,
+    resolve_dataset_type,
+    select_run_group,
     with_series,
 )
 
@@ -205,7 +205,7 @@ def _detect_hardware() -> dict[str, str | None]:
             elif stripped.startswith("Memory:"):
                 mem_str = stripped.split(":", 1)[1].strip()
                 result["memory_gb"] = mem_str.replace(" GB", "")
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - optional hardware probe
         pass  # graceful fallback: fields stay None
 
     return result
@@ -227,7 +227,7 @@ def _load_local_parameters() -> dict[str, Any]:
                 max_output_tokens = int(c.get("max_output_tokens", 512))
                 if enable_thinking and max_output_tokens <= 512:
                     max_output_tokens = int(c.get("thinking_max_output_tokens", 2048))
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 - optional local config
             pass
 
     ctx_size = 8192
@@ -240,7 +240,7 @@ def _load_local_parameters() -> dict[str, Any]:
                     if "ctx_size" in params:
                         ctx_size = int(params["ctx_size"])
                         break
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 - optional local config
             pass
 
     return {
