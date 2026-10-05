@@ -1,4 +1,4 @@
-import { ChevronRight, Info, Sparkles, Trophy } from 'lucide-react';
+import { ChevronRight, Info, Maximize2, Sparkles, Trophy, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppLink } from './Shell';
@@ -7,6 +7,8 @@ import type {
   DecisionModelSummary,
 } from '../types';
 import { milliseconds, providerCostCoverage, score, usd } from '../utils';
+import { modelShortLabel, modelVisual } from '../modelVisuals';
+import { ModelLegend, ModelMarker } from './ModelExplorerControls';
 
 export function DeploymentBadge({ deployment }: { deployment: string }) {
   const normalized = deployment.toLowerCase();
@@ -54,18 +56,6 @@ export function MetricCard({
   );
 }
 
-function shortModelLabel(value: string): string {
-  return value
-    .replace(/-q\d.*$/i, '')
-    .replace(/-nano-/i, ' ')
-    .replace(/-v-?\d+(?:\.\d+)*-/i, ' ')
-    .replace(/-luna$/i, '')
-    .replaceAll('-', ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 18);
-}
-
 function scaleLog(value: number, min: number, max: number): number {
   if (value <= 0) return 0;
   const lo = Math.log10(Math.max(min, Number.MIN_VALUE));
@@ -80,15 +70,20 @@ export function TradeoffScatter({
   models,
   xMetric,
   selectedModel,
+  hoveredModel,
   onSelect,
+  onHover,
 }: {
   title: string;
   description: string;
   models: DecisionModelSummary[];
   xMetric: 'latency' | 'cost';
   selectedModel?: string | null;
+  hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const eligible = models.filter((model) => {
     const x =
       xMetric === 'latency'
@@ -101,19 +96,18 @@ export function TradeoffScatter({
       ? Number(model.latency_p50_ms)
       : Number(model.provider_cost_per_1k_cases_usd),
   );
-  const minX = xs.length ? Math.min(...xs) / 1.7 : 0.01;
-  const maxX = xs.length ? Math.max(...xs) * 1.7 : 1000;
+  const minX = xs.length ? Math.min(...xs) / 1.35 : 0.01;
+  const maxX = xs.length ? Math.max(...xs) * 1.35 : 1000;
   const plotted = eligible.map((model) => {
     const xValue =
       xMetric === 'latency'
         ? Number(model.latency_p50_ms)
         : Number(model.provider_cost_per_1k_cases_usd);
     const x =
-      48 +
-      Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 354;
+      72 +
+      Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 468;
     const quality = Number(model.overall_quality_score);
-    const y =
-      210 - Math.max(0, Math.min(1, (quality - 40) / 60)) * 170;
+    const y = 272 - Math.max(0, Math.min(1, quality / 100)) * 220;
     const frontier =
       xMetric === 'latency'
         ? model.observed_quality_latency_pareto
@@ -124,107 +118,232 @@ export function TradeoffScatter({
     .filter((point) => point.frontier)
     .sort((a, b) => a.x - b.x);
 
-  return (
-    <section className="analysis-card scatter-card">
-      <div className="section-heading compact">
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
+  const complete = models.filter((m) => m.provider_cost_status === 'complete').length;
+  const partial = models.filter((m) => m.provider_cost_status === 'partial').length;
+  const local = models.filter((m) => m.provider_cost_status === 'local_not_applicable').length;
+  const unavailable = models.filter((m) => m.provider_cost_status === 'unavailable').length;
+
+  const chart = (
+    <div className={expanded ? 'scatter-wrap expanded' : 'scatter-wrap'}>
+      {xMetric === 'cost' ? (
+        <div className="scatter-coverage-summary">
+          <span><b>{eligible.length}</b> plotted</span>
+          <span><b>{complete}</b> complete</span>
+          <span><b>{partial}</b> partial</span>
+          <span><b>{local}</b> local N/A</span>
+          <span><b>{unavailable}</b> unavailable</span>
         </div>
-        <span className="info-dot" title="Dashed frontier marks non-dominated observed points.">
-          <Info size={14} />
-        </span>
-      </div>
+      ) : null}
       {eligible.length ? (
-        <div className="scatter-wrap">
-          <svg
-            className="scatter-svg"
-            viewBox="0 0 420 250"
-            role="img"
-            aria-label={title}
-          >
-            <g className="scatter-grid">
-              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                <line key={'h' + t} x1="48" x2="402" y1={210 - t * 170} y2={210 - t * 170} />
-              ))}
-              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                <line key={'v' + t} y1="40" y2="210" x1={48 + t * 354} x2={48 + t * 354} />
-              ))}
-            </g>
-            {frontierPoints.length > 1 ? (
-              <>
-                <polyline
-                  className="pareto-line"
-                  points={frontierPoints
-                    .map((point) => point.x + ',' + point.y)
-                    .join(' ')}
-                />
-              </>
-            ) : null}
-            {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
-              const selected = selectedModel === model.model_signature;
-              const labelRight = x < 300;
-              const labelY = y + (index % 2 === 0 ? -9 : 13);
+        <svg
+          className="scatter-svg"
+          viewBox="0 0 600 330"
+          role="img"
+          aria-label={title}
+        >
+          <g className="scatter-grid">
+            {[0, 25, 50, 75, 100].map((tick) => {
+              const y = 272 - (tick / 100) * 220;
               return (
-                <g
-                  key={model.model_signature}
-                  className={
-                    'scatter-point ' +
-                    (model.deployment === 'local' ? 'local ' : 'api ') +
-                    (selected ? 'selected ' : '') +
-                    (frontier ? 'frontier ' : '') +
-                    (xMetric === 'cost' && model.provider_cost_status === 'partial'
-                      ? 'cost-partial'
-                      : '')
-                  }
-                  onClick={() => onSelect?.(model.model_signature)}
-                >
-                  <circle cx={x} cy={y} r={selected ? 7 : 5.5}>
-                    <title>
-                      {model.model_key + ' · quality ' + quality.toFixed(1) +
-                        (xMetric === 'latency'
-                          ? ' · P50 ' + milliseconds(xValue)
-                          : ' · ' + usd(xValue) + ' / 1k cases · ' +
-                            providerCostCoverage(
-                              model.provider_cost_status,
-                              model.provider_cost_priced_cases,
-                              model.provider_cost_total_cases,
-                              model.provider_cost_coverage_rate,
-                            ))}
-                    </title>
-                  </circle>
-                  <text
-                    x={labelRight ? x + 9 : x - 9}
-                    y={labelY}
-                    textAnchor={labelRight ? 'start' : 'end'}
-                  >
-                    {shortModelLabel(model.model_key)}
-                  </text>
+                <g key={'y' + tick}>
+                  <line x1="72" x2="540" y1={y} y2={y} />
+                  <text className="axis-label" x="42" y={y + 3}>{tick}</text>
                 </g>
               );
             })}
-            <text className="axis-label" x="8" y="30">100</text>
-            <text className="axis-label" x="14" y="214">40</text>
-            <text className="axis-title" x="190" y="242">
-              {xMetric === 'latency' ? 'Observed latency · P50' : 'Known provider cost / 1k cases'}
-            </text>
-          </svg>
-        </div>
+            {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+              <line key={'v' + t} y1="52" y2="272" x1={72 + t * 468} x2={72 + t * 468} />
+            ))}
+          </g>
+          {frontierPoints.length > 1 ? (
+            <polyline
+              className="pareto-line"
+              points={frontierPoints.map((point) => point.x + ',' + point.y).join(' ')}
+            />
+          ) : null}
+          {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
+            const visual = modelVisual(model.model_signature);
+            const selected = selectedModel === model.model_signature;
+            const hovered = hoveredModel === model.model_signature;
+            const dimmed = Boolean(hoveredModel && !hovered);
+            const showLabel = expanded || selected || hovered || frontier || plotted.length <= 6;
+            const labelRight = x < 410;
+            const labelY = y + (index % 2 === 0 ? -10 : 15);
+            return (
+              <g
+                key={model.model_signature}
+                className={
+                  'scatter-point ' +
+                  (selected ? 'selected ' : '') +
+                  (hovered ? 'hovered ' : '') +
+                  (dimmed ? 'dimmed ' : '') +
+                  (frontier ? 'frontier ' : '') +
+                  (xMetric === 'cost' && model.provider_cost_status === 'partial'
+                    ? 'cost-partial'
+                    : '')
+                }
+                onClick={() => onSelect?.(model.model_signature)}
+                onMouseEnter={() => onHover?.(model.model_signature)}
+                onMouseLeave={() => onHover?.(null)}
+              >
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={selected || hovered ? 8 : 6}
+                  style={{ fill: visual.color }}
+                >
+                  <title>
+                    {model.model_key + ' · quality ' + quality.toFixed(1) +
+                      (xMetric === 'latency'
+                        ? ' · P50 ' + milliseconds(xValue)
+                        : ' · ' + usd(xValue) + ' / 1k · ' +
+                          providerCostCoverage(
+                            model.provider_cost_status,
+                            model.provider_cost_priced_cases,
+                            model.provider_cost_total_cases,
+                            model.provider_cost_coverage_rate,
+                          ))}
+                  </title>
+                </circle>
+                {showLabel ? (
+                  <text
+                    x={labelRight ? x + 10 : x - 10}
+                    y={labelY}
+                    textAnchor={labelRight ? 'start' : 'end'}
+                  >
+                    {modelShortLabel(model.model_key)}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
+          <text className="axis-title axis-y-title" x="10" y="160" transform="rotate(-90 10 160)">
+            Quality score
+          </text>
+          <text className="axis-title" x="236" y="318">
+            {xMetric === 'latency'
+              ? 'Observed latency · P50'
+              : 'Known provider cost / 1k cases'}
+          </text>
+        </svg>
       ) : (
-        <div className="empty-visual">No comparable observed points yet.</div>
+        <div className="empty-visual scatter-empty">
+          <strong>No priced models in the current selection.</strong>
+          <span>
+            {xMetric === 'cost'
+              ? 'Select API models with complete or partial frozen pricing, or reset the model filters.'
+              : 'No selected models have observed latency evidence.'}
+          </span>
+        </div>
       )}
-    </section>
+    </div>
+  );
+
+  return (
+    <>
+      <section className="analysis-card scatter-card">
+        <div className="section-heading compact">
+          <div>
+            <h2>{title}</h2>
+            <p>{description}</p>
+          </div>
+          <div className="chart-card-actions">
+            <button
+              type="button"
+              className="info-dot"
+              title="Dashed frontier marks non-dominated comparable points."
+            >
+              <Info size={14} />
+            </button>
+            <button
+              type="button"
+              className="expand-chart-button"
+              onClick={() => setExpanded(true)}
+              title={'Expand ' + title}
+            >
+              <Maximize2 size={15} />
+            </button>
+          </div>
+        </div>
+        {chart}
+        <ModelLegend
+          models={eligible}
+          hoveredModel={hoveredModel}
+          selectedModel={selectedModel}
+          onHover={onHover}
+          onSelect={onSelect}
+          compact
+        />
+      </section>
+
+      {expanded ? (
+        <div className="chart-modal-backdrop" role="presentation" onMouseDown={() => setExpanded(false)}>
+          <section
+            className="chart-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="chart-modal-header">
+              <div>
+                <span className="eyebrow">Analytical workspace</span>
+                <h2>{title}</h2>
+                <p>{description}</p>
+              </div>
+              <button type="button" className="modal-close" onClick={() => setExpanded(false)}>
+                <X size={18} />
+              </button>
+            </header>
+            <div className="chart-modal-grid">
+              <div className="chart-modal-canvas">
+                {chart}
+                <ModelLegend
+                  models={eligible}
+                  hoveredModel={hoveredModel}
+                  selectedModel={selectedModel}
+                  onHover={onHover}
+                  onSelect={onSelect}
+                />
+              </div>
+              <aside className="chart-modal-insights">
+                <h3>What to read</h3>
+                <dl>
+                  <div><dt>Best quality</dt><dd>{[...eligible].sort((a,b) => Number(b.overall_quality_score) - Number(a.overall_quality_score))[0]?.model_key ?? '—'}</dd></div>
+                  <div><dt>{xMetric === 'latency' ? 'Fastest observed' : 'Lowest priced'}</dt><dd>{[...eligible].sort((a,b) => Number(xMetric === 'latency' ? a.latency_p50_ms : a.provider_cost_per_1k_cases_usd) - Number(xMetric === 'latency' ? b.latency_p50_ms : b.provider_cost_per_1k_cases_usd))[0]?.model_key ?? '—'}</dd></div>
+                  <div><dt>Pareto models</dt><dd>{frontierPoints.length}</dd></div>
+                  <div><dt>Visible models</dt><dd>{models.length}</dd></div>
+                </dl>
+                {xMetric === 'cost' ? (
+                  <div className="modal-note">
+                    Local runtime cost is intentionally excluded. Partial pricing is shown, but the cost Pareto frontier uses complete pricing only.
+                  </div>
+                ) : (
+                  <div className="modal-note">
+                    Latency is observed execution performance and can reflect different hardware/runtime environments.
+                  </div>
+                )}
+              </aside>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
 export function QualityLeaderboard({
   models,
   selectedModel,
+  hoveredModel,
   onSelect,
+  onHover,
 }: {
   models: DecisionModelSummary[];
   selectedModel?: string | null;
+  hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const ranked = [...models].sort((a, b) => {
     if (a.quality_coverage_complete !== b.quality_coverage_complete) {
@@ -251,15 +370,17 @@ export function QualityLeaderboard({
             type="button"
             key={model.model_signature}
             className={
-              selectedModel === model.model_signature
-                ? 'leader-row selected'
-                : 'leader-row'
+              'leader-row ' +
+              (selectedModel === model.model_signature ? 'selected ' : '') +
+              (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
             }
             onClick={() => onSelect?.(model.model_signature)}
+            onMouseEnter={() => onHover?.(model.model_signature)}
+            onMouseLeave={() => onHover?.(null)}
           >
             <span className="rank">{index + 1}</span>
             <span className="leader-name">
-              <strong>{model.model_key}</strong>
+              <strong><ModelMarker signature={model.model_signature} /> {model.model_key}</strong>
               <span>
                 <DeploymentBadge deployment={model.deployment} />
                 {!model.quality_coverage_complete ? (
@@ -272,6 +393,7 @@ export function QualityLeaderboard({
                 style={{
                   width:
                     ((model.overall_quality_score ?? 0) / max) * 100 + '%',
+                  background: modelVisual(model.model_signature).color,
                 }}
               />
             </span>
@@ -342,9 +464,17 @@ function buildDatasetLandscapeRows(
 export function DatasetPerformanceLandscape({
   datasets,
   models,
+  selectedModel,
+  hoveredModel,
+  onSelect,
+  onHover,
 }: {
   datasets: DecisionDatasetSummary[];
   models: DecisionModelSummary[];
+  selectedModel?: string | null;
+  hoveredModel?: string | null;
+  onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const [view, setView] = useState<DatasetLandscapeView>('score');
   const [sortMode, setSortMode] = useState<DatasetLandscapeSort>('discriminative');
@@ -420,6 +550,15 @@ export function DatasetPerformanceLandscape({
         </div>
       </div>
 
+      <ModelLegend
+        models={models}
+        hoveredModel={hoveredModel}
+        selectedModel={selectedModel}
+        onHover={onHover}
+        onSelect={onSelect}
+        compact={models.length > 8}
+      />
+
       <div className="dataset-insight-chips">
         <div><Trophy size={14}/><span>Most wins</span><strong>{mostWins ? mostWins[0] + ' · ' + mostWins[1] : '—'}</strong></div>
         <div><span>Best local</span><strong>{bestLocal ? bestLocal[0] : '—'}</strong></div>
@@ -449,7 +588,12 @@ export function DatasetPerformanceLandscape({
                   winner {row.winner_model_key ?? '—'} · spread {row.spread?.toFixed(1) ?? '—'}
                 </small>
               </div>
-              <div className="dataset-landscape-track">
+              <div
+                className="dataset-landscape-track"
+                style={{
+                  height: Math.max(44, Math.min(220, models.length * 10 + 20)),
+                }}
+              >
                 {models.map((model, modelIndex) => {
                   const value = row.values.find((item) => item.model_key === model.model_key);
                   const scoreValue = value?.normalized_quality_score ?? null;
@@ -463,18 +607,40 @@ export function DatasetPerformanceLandscape({
                       : view === 'delta'
                         ? delta == null ? '—' : delta === 0 ? 'best' : delta.toFixed(1)
                         : score(scoreValue);
+                  const hovered = hoveredModel === model.model_signature;
+                  const selected = selectedModel === model.model_signature;
+                  const dimmed = Boolean(hoveredModel && !hovered);
+                  const showValue =
+                    hovered ||
+                    selected ||
+                    row.winner_model_key === model.model_key ||
+                    models.length <= 4;
                   return scoreValue == null ? null : (
                     <div
                       key={model.model_signature}
-                      className={'dataset-landscape-point ' + model.deployment}
+                      className={
+                        'dataset-landscape-point ' +
+                        (selected ? 'selected ' : '') +
+                        (hovered ? 'hovered ' : '') +
+                        (dimmed ? 'dimmed' : '')
+                      }
                       style={{
                         left: Math.max(0, Math.min(100, scoreValue)) + '%',
                         top: ((modelIndex + 1) / (models.length + 1)) * 100 + '%',
                       }}
                       title={model.model_key + ' · ' + display}
+                      role="button"
+                      tabIndex={0}
+                      onMouseEnter={() => onHover?.(model.model_signature)}
+                      onMouseLeave={() => onHover?.(null)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onSelect?.(model.model_signature);
+                      }}
                     >
-                      <i/>
-                      <span>{display}</span>
+                      <ModelMarker signature={model.model_signature} size={10} />
+                      {showValue ? <span>{display}</span> : null}
                     </div>
                   );
                 })}
@@ -542,8 +708,8 @@ export function DatasetDeltaSlopegraph({
         <>
           <div className="slopegraph-column-head">
             <span>Dataset</span>
-            <div><strong>{shortModelLabel(modelA.model_key)}</strong><small>Model A</small></div>
-            <div><strong>{shortModelLabel(modelB.model_key)}</strong><small>Model B</small></div>
+            <div><strong>{modelShortLabel(modelA.model_key)}</strong><small>Model A</small></div>
+            <div><strong>{modelShortLabel(modelB.model_key)}</strong><small>Model B</small></div>
             <span>Δ A − B</span>
           </div>
           <div className="slopegraph-rows">
@@ -602,14 +768,30 @@ export function DatasetDeltaSlopegraph({
   );
 }
 
+function performanceBand(value: number | null): string {
+  if (value == null) return 'unavailable';
+  if (value < 40) return 'poor';
+  if (value < 60) return 'weak';
+  if (value < 80) return 'good';
+  return 'excellent';
+}
+
 export function DatasetHeatmap({
   datasets,
   models,
   view = 'score',
+  selectedModel,
+  hoveredModel,
+  onSelect,
+  onHover,
 }: {
   datasets: DecisionDatasetSummary[];
   models: DecisionModelSummary[];
   view?: 'score' | 'delta' | 'rank';
+  selectedModel?: string | null;
+  hoveredModel?: string | null;
+  onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const modelKeys = models.map((model) => model.model_key);
   const rows = Array.from(
@@ -645,6 +827,13 @@ export function DatasetHeatmap({
         </div>
         <span className="semantic-chip">{view === 'score' ? 'Score' : view}</span>
       </div>
+      <div className="performance-legend">
+        <span><i className="performance-poor" /> Poor &lt;40</span>
+        <span><i className="performance-weak" /> Weak 40–59</span>
+        <span><i className="performance-good" /> Good 60–79</span>
+        <span><i className="performance-excellent" /> Excellent 80–100</span>
+        <span><i className="performance-unavailable" /> No comparable result</span>
+      </div>
       <div className="heatmap-scroll">
         <div
           className="heatmap-grid"
@@ -653,8 +842,20 @@ export function DatasetHeatmap({
           <div className="heatmap-head">Capability / dataset</div>
           <div className="heatmap-head samples">n</div>
           {models.map((model) => (
-            <div className="heatmap-head model" key={model.model_signature}>
-              <span>{model.model_key}</span>
+            <div
+              className={
+                'heatmap-head model ' +
+                (selectedModel === model.model_signature ? 'selected ' : '') +
+                (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
+              }
+              key={model.model_signature}
+              role="button"
+              tabIndex={0}
+              onMouseEnter={() => onHover?.(model.model_signature)}
+              onMouseLeave={() => onHover?.(null)}
+              onClick={() => onSelect?.(model.model_signature)}
+            >
+              <span><ModelMarker signature={model.model_signature} /> {model.model_key}</span>
               <DeploymentBadge deployment={model.deployment} />
             </div>
           ))}
@@ -688,6 +889,7 @@ export function DatasetHeatmap({
                 </AppLink>
                 <div className="heatmap-samples">{row.sample_count}</div>
                 {modelKeys.map((modelKey) => {
+                  const model = models.find((item) => item.model_key === modelKey);
                   const cell = byCell.get(
                     modelKey + '::' + row.capability_id + '::' + row.dataset_id,
                   );
@@ -706,12 +908,23 @@ export function DatasetHeatmap({
                             ? 'best'
                             : delta.toFixed(1)
                         : score(value);
-                  const heat = value == null ? 0 : Math.max(0, Math.min(1, value / 100));
+                  const isWinner = value != null && best != null && value === best;
+                  const signature = model?.model_signature ?? modelKey;
+                  const dimmed = Boolean(
+                    hoveredModel && hoveredModel !== signature,
+                  );
                   return (
                     <div
                       key={modelKey}
-                      className="heatmap-cell"
-                      style={{ '--heat': heat } as CSSProperties}
+                      className={
+                        'heatmap-cell performance-' + performanceBand(value) + ' ' +
+                        (isWinner ? 'winner ' : '') +
+                        (selectedModel === signature ? 'selected ' : '') +
+                        (dimmed ? 'dimmed' : '')
+                      }
+                      onMouseEnter={() => onHover?.(signature)}
+                      onMouseLeave={() => onHover?.(null)}
+                      onClick={() => onSelect?.(signature)}
                       title={
                         cell
                           ? [
@@ -737,6 +950,7 @@ export function DatasetHeatmap({
                           : 'No CURRENT comparable result'
                       }
                     >
+                      {isWinner && view === 'score' ? <span className="cell-winner">★</span> : null}
                       {display}
                     </div>
                   );
