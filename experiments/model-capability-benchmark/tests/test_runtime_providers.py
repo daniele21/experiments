@@ -229,7 +229,7 @@ def test_typesafe_jev_provider_builds_and_evaluates(monkeypatch) -> None:
     assert result.usage.output_tokens == 15
 
 
-def test_decisio_provider_builds_and_evaluates(monkeypatch) -> None:
+def test_decisio_provider_builds_and_evaluates(monkeypatch, tmp_path) -> None:
     import json
     from io import StringIO
 
@@ -267,10 +267,18 @@ def test_decisio_provider_builds_and_evaluates(monkeypatch) -> None:
             pass
 
     monkeypatch.setattr("subprocess.Popen", lambda *args, **kwargs: _MockProc())
+    decisio_python = tmp_path / "python"
+    decisio_python.write_text("", encoding="utf-8")
+    model_path = tmp_path / "fake.gguf"
+    model_path.write_bytes(b"fixture")
 
     provider = build_inference_provider(
         model,
-        {"DECISIO_MODEL_PATH": "/path/to/fake.gguf"},
+        {
+            "DECISIO_ROOT": str(tmp_path),
+            "DECISIO_PYTHON": str(decisio_python),
+            "DECISIO_MODEL_PATH": str(model_path),
+        },
     )
     assert isinstance(provider, DecisioJsonProvider)
 
