@@ -94,7 +94,7 @@ def test_runtime_registry_rejects_context_smaller_than_parallel_slots():
         "clm": {"max_tokens": 2048},
     }
 
-    with pytest.raises(ValueError, match="parallel \* max_tokens"):
+    with pytest.raises(ValueError, match=r"parallel \* max_tokens"):
         CLMLocalRuntimeSpec.from_mapping("bad-runtime", payload)
 
 
