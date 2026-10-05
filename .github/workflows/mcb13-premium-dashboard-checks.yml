@@ -66,17 +66,36 @@ jobs:
         working-directory: experiments/model-capability-benchmark/dashboard
         run: npm run build
 
-      - name: Render premium Overview with Chrome
+      - name: Render premium routes with Chrome
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || true)"
           test -n "$CHROME"
           HTML="$(pwd)/dashboard/dist/index.html"
-          "$CHROME"             --headless             --no-sandbox             --disable-gpu             --hide-scrollbars             --window-size=1600,1000             --screenshot=/tmp/mcb13-overview.png             "file://$HTML#/overview"
-          test -s /tmp/mcb13-overview.png
+          for route in overview capabilities/structured-output compare; do
+            name="$(echo "$route" | tr '/' '-')"
+            "$CHROME" \
+              --headless \
+              --no-sandbox \
+              --disable-gpu \
+              --hide-scrollbars \
+              --window-size=1600,1000 \
+              --screenshot="/tmp/mcb13-$name.png" \
+              "file://$HTML#/$route"
+            test -s "/tmp/mcb13-$name.png"
+          done
+          uv run python - <<'PY'
+          from pathlib import Path
 
-      - name: Upload visual review artifact
+          for path in sorted(Path("/tmp").glob("mcb13-*.png")):
+              data = path.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n"
+              assert int.from_bytes(data[16:20], "big") == 1600
+              assert int.from_bytes(data[20:24], "big") == 1000
+          PY
+
+      - name: Upload visual review artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mcb13-premium-overview
-          path: /tmp/mcb13-overview.png
+          name: mcb13-premium-routes
+          path: /tmp/mcb13-*.png
           if-no-files-found: error
