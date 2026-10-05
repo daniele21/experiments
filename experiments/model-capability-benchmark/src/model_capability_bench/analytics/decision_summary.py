@@ -265,6 +265,39 @@ def _load_pricing(
     return result
 
 
+def _price_entry_for_model(
+    run_pricing: dict[str, dict[str, Any]],
+    *,
+    run_id: str,
+    model_key: str,
+    model_id: Any,
+    effective_model_id: Any,
+    provider_key: Any,
+) -> tuple[dict[str, Any], dict[str, Any], str] | None:
+    snapshot = run_pricing.get(run_id)
+    if not snapshot:
+        return None
+    prices = snapshot.get("prices_per_million_tokens")
+    if not isinstance(prices, dict):
+        return None
+
+    for candidate in (model_key, model_id, effective_model_id):
+        if not candidate:
+            continue
+        entry = prices.get(str(candidate))
+        if isinstance(entry, dict) and str(entry.get("match") or "exact") == "exact":
+            return snapshot, entry, str(candidate)
+
+    for price_key, entry in prices.items():
+        if (
+            isinstance(entry, dict)
+            and str(entry.get("match") or "") == "provider"
+            and str(price_key) == str(provider_key)
+        ):
+            return snapshot, entry, str(price_key)
+    return None
+
+
 def _pricing_for_model(
     run_pricing: dict[str, dict[str, Any]],
     *,
@@ -274,44 +307,97 @@ def _pricing_for_model(
     effective_model_id: Any,
     provider_key: Any,
 ) -> dict[str, Any] | None:
-    snapshot = run_pricing.get(run_id)
-    if not snapshot:
+    resolved = _price_entry_for_model(
+        run_pricing,
+        run_id=run_id,
+        model_key=model_key,
+        model_id=model_id,
+        effective_model_id=effective_model_id,
+        provider_key=provider_key,
+    )
+    if resolved is None:
         return None
-    prices = snapshot.get("prices_per_million_tokens")
-    if not isinstance(prices, dict):
+    snapshot, entry, price_key = resolved
+    return {
+        "price_key": price_key,
+        "source": entry.get("source"),
+        "source_url": entry.get("source_url"),
+        "currency": snapshot.get("currency"),
+        "as_of": snapshot.get("as_of"),
+        "processing": snapshot.get("processing"),
+    }
+
+
+def _estimate_case_cost_from_frozen_pricing(
+    case: dict[str, Any],
+    cell: dict[str, Any],
+    run_pricing: dict[str, dict[str, Any]],
+) -> float | None:
+    if _number(case.get("estimated_cost_usd")) is not None:
+        return float(case["estimated_cost_usd"])
+
+    resolved = _price_entry_for_model(
+        run_pricing,
+        run_id=str(case["run_id"]),
+        model_key=str(case["model_key"]),
+        model_id=cell.get("model_id"),
+        effective_model_id=cell.get("effective_model_id"),
+        provider_key=cell.get("provider_key"),
+    )
+    if resolved is None:
+        return None
+    _, entry, _ = resolved
+    try:
+        input_price = float(entry["input"])
+        output_price = float(entry["output"])
+        cached_price = float(entry.get("cached_input", entry["input"]))
+    except (KeyError, TypeError, ValueError):
         return None
 
-    candidates = (model_key, model_id, effective_model_id)
-    for candidate in candidates:
-        if not candidate:
+    input_tokens = case.get("input_tokens")
+    output_tokens = case.get("output_tokens")
+    if input_tokens is None and output_tokens is None:
+        return None
+
+    input_total = max(int(input_tokens or 0), 0)
+    output_total = max(int(output_tokens or 0), 0)
+    cached = min(max(int(case.get("cached_input_tokens") or 0), 0), input_total)
+    uncached = input_total - cached
+    return (
+        uncached * input_price
+        + cached * cached_price
+        + output_total * output_price
+    ) / 1_000_000
+
+
+def _backfill_case_costs(
+    cases: list[dict[str, Any]],
+    cell_by_key: dict[tuple[str, str, str], dict[str, Any]],
+    run_pricing: dict[str, dict[str, Any]],
+) -> int:
+    reconstructed = 0
+    for case in cases:
+        if _number(case.get("estimated_cost_usd")) is not None:
             continue
-        entry = prices.get(str(candidate))
-        if isinstance(entry, dict) and str(entry.get("match") or "exact") == "exact":
-            return {
-                "price_key": str(candidate),
-                "source": entry.get("source"),
-                "source_url": entry.get("source_url"),
-                "currency": snapshot.get("currency"),
-                "as_of": snapshot.get("as_of"),
-                "processing": snapshot.get("processing"),
-            }
-
-    for price_key, entry in prices.items():
-        if (
-            isinstance(entry, dict)
-            and str(entry.get("match") or "") == "provider"
-            and str(price_key) == str(provider_key)
-        ):
-            return {
-                "price_key": str(price_key),
-                "source": entry.get("source"),
-                "source_url": entry.get("source_url"),
-                "currency": snapshot.get("currency"),
-                "as_of": snapshot.get("as_of"),
-                "processing": snapshot.get("processing"),
-            }
-    return None
-
+        cell = cell_by_key.get(
+            (
+                str(case["run_id"]),
+                str(case["model_key"]),
+                str(case["capability_id"]),
+            )
+        )
+        if cell is None:
+            continue
+        estimated = _estimate_case_cost_from_frozen_pricing(
+            case,
+            cell,
+            run_pricing,
+        )
+        if estimated is None:
+            continue
+        case["estimated_cost_usd"] = estimated
+        reconstructed += 1
+    return reconstructed
 
 def _load_environments(
     connection: Any,
@@ -431,6 +517,7 @@ def build_decision_overview(
         ): row
         for row in cells
     }
+    _backfill_case_costs(cases, cell_by_key, run_pricing)
     cases_by_model: dict[str, list[dict[str, Any]]] = defaultdict(list)
     cases_by_cell: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     cases_by_dataset: dict[
