@@ -588,7 +588,12 @@ export function DatasetPerformanceLandscape({
                   winner {row.winner_model_key ?? '—'} · spread {row.spread?.toFixed(1) ?? '—'}
                 </small>
               </div>
-              <div className="dataset-landscape-track">
+              <div
+                className="dataset-landscape-track"
+                style={{
+                  height: Math.max(44, Math.min(220, models.length * 10 + 20)),
+                }}
+              >
                 {models.map((model, modelIndex) => {
                   const value = row.values.find((item) => item.model_key === model.model_key);
                   const scoreValue = value?.normalized_quality_score ?? null;
