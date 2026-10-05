@@ -510,6 +510,190 @@ nav { display: grid; gap: 5px; }
   place-items: center;
 }
 
+
+.share-workspace {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 760px);
+  gap: 18px;
+  align-items: start;
+}
+
+.share-options {
+  display: grid;
+  gap: 8px;
+}
+
+.share-options > strong {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.share-options > span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.share-options code {
+  font-size: 9px;
+  background: #f3f4f7;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.share-option {
+  text-align: left;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 7px;
+  padding: 9px 10px;
+  color: #3d4657;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.share-option.active {
+  border-color: #bbb9ff;
+  background: var(--primary-soft);
+  color: #4b49c8;
+}
+
+.linkedin-card {
+  aspect-ratio: 4 / 5;
+  width: min(100%, 680px);
+  background:
+    radial-gradient(circle at 78% 12%, rgba(94, 97, 255, .23), transparent 25%),
+    linear-gradient(160deg, #08152b 0%, #0d1d3a 55%, #102949 100%);
+  color: white;
+  border-radius: 14px;
+  padding: 34px;
+  box-shadow: 0 18px 60px rgba(16, 31, 61, .2);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.share-brand {
+  font-size: 11px;
+  color: #aebcda;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.linkedin-card h2 {
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1.03;
+  letter-spacing: -.04em;
+  margin: 0;
+  max-width: 90%;
+}
+
+.share-score-grid {
+  display: grid;
+  grid-template-columns: 1fr 44px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.share-score-grid > div:not(.share-vs) {
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .055);
+  border-radius: 11px;
+  padding: 16px;
+  display: grid;
+  gap: 4px;
+}
+
+.share-score-grid span {
+  font-size: 11px;
+  color: #cad4e9;
+}
+
+.share-score-grid strong {
+  font-size: 34px;
+  color: #6fe0ad;
+}
+
+.share-score-grid small {
+  color: #8fa2c1;
+  font-size: 9px;
+}
+
+.share-vs {
+  text-align: center;
+  color: #7589aa;
+  font-size: 11px;
+}
+
+.share-delta {
+  text-align: center;
+  color: #72e0ae;
+  font-size: 20px;
+  font-weight: 800;
+  display: grid;
+  gap: 5px;
+}
+
+.share-delta small {
+  color: #aebcda;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.share-families {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  padding-top: 16px;
+}
+
+.share-family {
+  display: grid;
+  grid-template-columns: 90px 1fr 42px 1fr 42px;
+  gap: 8px;
+  align-items: center;
+  font-size: 9px;
+}
+
+.share-family > span {
+  color: #c9d4e7;
+  text-transform: capitalize;
+}
+
+.share-family > div {
+  height: 7px;
+  background: rgba(255, 255, 255, .08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.share-family > div i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: #7376ff;
+}
+
+.share-family > div:nth-of-type(2) i {
+  background: #38ca8a;
+}
+
+.share-family em {
+  font-style: normal;
+  text-align: right;
+  color: #b8c6dc;
+}
+
+.linkedin-card footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  padding-top: 12px;
+  color: #7e91b1;
+  font-size: 8px;
+  letter-spacing: .02em;
+}
+
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
 
@@ -528,7 +712,8 @@ nav { display: grid; gap: 5px; }
   .two-col,
   .hero-grid,
   .disagreement-layout,
-  .case-columns {
+  .case-columns,
+  .share-workspace {
     grid-template-columns: 1fr;
   }
 
