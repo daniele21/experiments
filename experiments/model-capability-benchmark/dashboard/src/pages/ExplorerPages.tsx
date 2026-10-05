@@ -34,6 +34,7 @@ import {
   usd,
 } from '../utils';
 import {
+  DatasetDeltaSlopegraph,
   DatasetHeatmap,
   DeploymentBadge,
   MethodologyAccordion,
@@ -625,9 +626,15 @@ export function ComparePage() {
             </div>
           </section>
 
+          <DatasetDeltaSlopegraph
+            datasets={decisionDatasets}
+            modelA={modelA}
+            modelB={modelB}
+          />
+
           <section className="two-panel-grid">
             <div className="analysis-card">
-              <SectionTitle title="Dataset delta" description="Where the quality difference comes from." />
+              <SectionTitle title="Dataset delta table" description="Exact values behind the slopegraph." />
               <div className="dataset-delta-table">
                 {datasetsA.map((a) => {
                   const b = datasetsB.get(a.capability_id + '::' + a.dataset_id);
