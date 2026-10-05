@@ -248,6 +248,14 @@ def _create_schema(connection: Any) -> None:
             PRIMARY KEY (run_id, execution_signature)
         );
 
+        CREATE TABLE IF NOT EXISTS run_pricing (
+            run_id VARCHAR PRIMARY KEY,
+            currency VARCHAR,
+            as_of VARCHAR,
+            processing VARCHAR,
+            prices_json VARCHAR
+        );
+
         CREATE TABLE IF NOT EXISTS benchmark_cells (
             run_id VARCHAR,
             model_key VARCHAR,
@@ -437,6 +445,7 @@ def _clear_run(connection: Any, run_id: str) -> None:
         "cases",
         "aggregates",
         "benchmark_cells",
+        "run_pricing",
         "execution_environments",
         "models",
         "runs",
@@ -476,6 +485,14 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
     }
 
     _clear_run(connection, run_id)
+    environment_path = run_dir / "environment.json"
+    environment_payload = (
+        json.loads(environment_path.read_text(encoding="utf-8"))
+        if environment_path.is_file()
+        else {}
+    )
+    pricing_payload = _mapping(_mapping(environment_payload).get("pricing"))
+
     connection.execute(
         """
         INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -500,6 +517,24 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
             "VALID",
         ],
     )
+
+    if pricing_payload:
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO run_pricing
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [
+                run_id,
+                _text(pricing_payload.get("currency")) or None,
+                _text(pricing_payload.get("as_of")) or None,
+                _text(pricing_payload.get("processing")) or None,
+                json.dumps(
+                    pricing_payload.get("prices_per_million_tokens") or {},
+                    sort_keys=True,
+                ),
+            ],
+        )
 
     model_sig_by_key: dict[str, str] = {}
     execution_sig_by_key: dict[str, str] = {}
