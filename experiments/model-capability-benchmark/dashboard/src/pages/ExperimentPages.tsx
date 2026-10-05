@@ -159,7 +159,7 @@ function FrontierChart({
 
 export function FrontierPage() {
   const payload = overview.frontier;
-  const [metric, setMetric] = useState<FrontierMetric>('artifact_size_bytes');
+  const [metric, setMetric] = useState<FrontierMetric>('parameters_b');
   const [mode, setMode] = useState<FrontierMode>('family');
   const [family, setFamily] = useState('all');
 
