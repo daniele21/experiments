@@ -7,19 +7,28 @@ import type {
 import { bytes, milliseconds, points, score } from '../utils';
 import { PageHeader } from '../components/Shell';
 
-type FrontierMetric = 'artifact_size_bytes' | 'peak_rss_bytes' | 'latency_p50_ms';
+type FrontierMetric =
+  | 'parameters_b'
+  | 'artifact_size_bytes'
+  | 'peak_rss_bytes'
+  | 'latency_p50_ms';
 type FrontierMode = 'family' | 'compression';
 
 const FRONTIER_METRICS: Record<
   FrontierMetric,
   { label: string; format: (value: number | null) => string }
 > = {
+  parameters_b: {
+    label: 'Parameters',
+    format: (value) => value == null ? '—' : `${value}B`,
+  },
   artifact_size_bytes: { label: 'Artifact size', format: bytes },
   peak_rss_bytes: { label: 'Peak RAM', format: bytes },
   latency_p50_ms: { label: 'P50 latency', format: milliseconds },
 };
 
 function paretoFor(point: FrontierPoint, metric: FrontierMetric): boolean {
+  if (metric === 'parameters_b') return point.pareto_parameters;
   if (metric === 'artifact_size_bytes') return point.pareto_artifact_size;
   if (metric === 'peak_rss_bytes') return point.pareto_peak_rss;
   return point.pareto_latency;
