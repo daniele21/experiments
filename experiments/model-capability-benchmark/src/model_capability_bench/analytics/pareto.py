@@ -74,6 +74,7 @@ def build_frontier_payload(
         points.append(point)
 
     for x_key, flag_key in (
+        ("parameters_b", "pareto_parameters"),
         ("artifact_size_bytes", "pareto_artifact_size"),
         ("peak_rss_bytes", "pareto_peak_rss"),
         ("latency_p50_ms", "pareto_latency"),
