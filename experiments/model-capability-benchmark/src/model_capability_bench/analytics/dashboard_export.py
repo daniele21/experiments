@@ -121,6 +121,9 @@ def export_dashboard_data(
                 "capability_id": capability_id,
                 "cells": cells,
                 "benchmark_signatures": benchmark_signatures,
+                "cases": [],
+                "family_breakdown": [],
+                "disagreements": [],
             }
             if len(benchmark_signatures) == 1:
                 sig = benchmark_signatures[0]
