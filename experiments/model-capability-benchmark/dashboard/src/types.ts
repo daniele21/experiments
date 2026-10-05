@@ -94,3 +94,56 @@ export interface CapabilityPayload {
   disagreements: Disagreement[];
   comparison?: PairwiseComparison;
 }
+
+export interface ModelPayload {
+  schema_version: string;
+  model_signature: string;
+  model: (DashboardModel & {
+    run_id?: string;
+    completed_at_utc?: string;
+    run_status?: string;
+    git_commit?: string | null;
+    quantization?: string | null;
+    artifact_format?: string | null;
+  }) | null;
+  current_cells: CapabilityCell[];
+  history: Array<CapabilityCell & { result_state: string }>;
+}
+
+export interface RunPayload {
+  schema_version: string;
+  run: {
+    run_id: string;
+    run_group?: string;
+    created_at_utc?: string;
+    completed_at_utc?: string;
+    status: string;
+    suite_id?: string;
+    suite_version?: string;
+    profile?: string;
+    git_commit?: string | null;
+  };
+  models: Array<DashboardModel & {
+    run_id?: string;
+    execution_signature?: string;
+    quantization?: string | null;
+  }>;
+  cells: Array<CapabilityCell & { status: string }>;
+  timeline: Array<{
+    event_type: string;
+    timestamp_utc: string;
+    model_key?: string | null;
+    capability_id?: string | null;
+    status?: string | null;
+    duration_ms?: number | null;
+    error_type?: string | null;
+    error_message?: string | null;
+  }>;
+  failure_summary: Array<{
+    event_type: string;
+    error_type: string;
+    count: number;
+    first_at: string;
+    last_at: string;
+  }>;
+}
