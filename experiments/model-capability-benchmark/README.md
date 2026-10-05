@@ -179,7 +179,7 @@ A persisted run can be rendered again without provider credentials or a running 
 
 ```bash
 uv run model-bench report \
-  --run-dir results/runs/capability-smoke
+  --run-dir results/runs/<run-id>
 ```
 
 Unknown provider cost remains `null`. The pricing snapshot is checksumed into each run manifest, and local hardware/runtime cost is intentionally separate from API token pricing.
