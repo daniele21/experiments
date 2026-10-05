@@ -25,6 +25,8 @@ import {
   TradeoffScatter,
 } from '../components/DecisionComponents';
 import { AppLink, PageHeader } from '../components/Shell';
+import { ModelFilterBar, type DeploymentFilter } from '../components/ModelExplorerControls';
+import { currentQuery, updateQuery } from '../queryState';
 
 function fallbackDecision(payload: OverviewPayload): DecisionPayload {
   const byModel = new Map<string, typeof payload.cells>();
@@ -108,14 +110,29 @@ function fallbackDecision(payload: OverviewPayload): DecisionPayload {
 
 export function OverviewPage() {
   const decision = overview.decision ?? fallbackDecision(overview);
-  const [deployment, setDeployment] = useState<'all' | 'local' | 'api'>('all');
-  const visibleModels = useMemo(
+  const initialQuery = currentQuery();
+  const [deployment, setDeployment] = useState<DeploymentFilter>(() => {
+    const value = initialQuery.get('deployment');
+    return value === 'local' || value === 'api' ? value : 'all';
+  });
+  const [visibleSignatures, setVisibleSignatures] = useState<string[]>(() => {
+    const value = initialQuery.get('models');
+    return value ? value.split(',').filter(Boolean) : [];
+  });
+  const [hoveredSignature, setHoveredSignature] = useState<string | null>(null);
+
+  const deploymentModels = useMemo(
     () =>
       decision.model_summaries.filter(
         (model) => deployment === 'all' || model.deployment === deployment,
       ),
     [decision.model_summaries, deployment],
   );
+  const visibleModels = useMemo(() => {
+    if (visibleSignatures.length === 0) return deploymentModels;
+    const requested = new Set(visibleSignatures);
+    return deploymentModels.filter((model) => requested.has(model.model_signature));
+  }, [deploymentModels, visibleSignatures]);
   const ranked = [...visibleModels].sort(
     (a, b) => (b.overall_quality_score ?? -1) - (a.overall_quality_score ?? -1),
   );
@@ -143,15 +160,33 @@ export function OverviewPage() {
         Number(a.provider_cost_per_1k_cases_usd) -
         Number(b.provider_cost_per_1k_cases_usd),
     )[0];
-  const [selectedSignature, setSelectedSignature] = useState<string | null>(
-    bestLocal?.model_signature ?? bestQuality?.model_signature ?? null,
-  );
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(() => {
+    return (
+      initialQuery.get('selected') ??
+      bestLocal?.model_signature ??
+      bestQuality?.model_signature ??
+      null
+    );
+  });
   const selected =
     visibleModels.find((model) => model.model_signature === selectedSignature) ??
     ranked[0] ??
     null;
 
-  const selectModel = (signature: string) => setSelectedSignature(signature);
+  const selectModel = (signature: string) => {
+    setSelectedSignature(signature);
+    updateQuery({ selected: signature });
+  };
+  const changeDeployment = (value: DeploymentFilter) => {
+    setDeployment(value);
+    setHoveredSignature(null);
+    updateQuery({ deployment: value === 'all' ? null : value });
+  };
+  const changeVisibleModels = (signatures: string[]) => {
+    setVisibleSignatures(signatures);
+    setHoveredSignature(null);
+    updateQuery({ models: signatures.length ? signatures.join(',') : null });
+  };
 
   return (
     <>
@@ -168,22 +203,22 @@ export function OverviewPage() {
         description="Decision-first analysis across quality, observed latency, known provider cost and dataset-level strengths."
         actions={
           <>
-            <div className="segmented">
-              {(['all', 'local', 'api'] as const).map((value) => (
-                <button
-                  type="button"
-                  key={value}
-                  className={deployment === value ? 'active' : ''}
-                  onClick={() => setDeployment(value)}
-                >
-                  {value === 'all' ? 'All' : value === 'local' ? 'Local' : 'API'}
-                </button>
-              ))}
-            </div>
             <span className="header-chip">MCB v2</span>
             <span className="header-chip current">CURRENT only</span>
           </>
         }
+      />
+
+      <ModelFilterBar
+        models={decision.model_summaries}
+        visibleSignatures={visibleSignatures}
+        deployment={deployment}
+        onVisibleSignaturesChange={changeVisibleModels}
+        onDeploymentChange={changeDeployment}
+        hoveredModel={hoveredSignature}
+        selectedModel={selected?.model_signature}
+        onHover={setHoveredSignature}
+        onSelect={selectModel}
       />
 
       <section className="kpi-grid">
@@ -241,7 +276,9 @@ export function OverviewPage() {
         <QualityLeaderboard
           models={visibleModels}
           selectedModel={selected?.model_signature}
+          hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onHover={setHoveredSignature}
         />
         <TradeoffScatter
           title="Quality × latency"
@@ -249,7 +286,9 @@ export function OverviewPage() {
           models={visibleModels}
           xMetric="latency"
           selectedModel={selected?.model_signature}
+          hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onHover={setHoveredSignature}
         />
         <TradeoffScatter
           title="Quality × cost"
@@ -257,7 +296,9 @@ export function OverviewPage() {
           models={visibleModels}
           xMetric="cost"
           selectedModel={selected?.model_signature}
+          hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onHover={setHoveredSignature}
         />
       </section>
 
@@ -266,6 +307,10 @@ export function OverviewPage() {
           visibleModels.some((model) => model.model_key === dataset.model_key),
         )}
         models={visibleModels}
+        selectedModel={selected?.model_signature}
+        hoveredModel={hoveredSignature}
+        onSelect={selectModel}
+        onHover={setHoveredSignature}
       />
 
       <section className="overview-lower-grid">
@@ -274,6 +319,10 @@ export function OverviewPage() {
             visibleModels.some((model) => model.model_key === dataset.model_key),
           )}
           models={visibleModels}
+          selectedModel={selected?.model_signature}
+          hoveredModel={hoveredSignature}
+          onSelect={selectModel}
+          onHover={setHoveredSignature}
         />
 
         <aside className="analysis-card selected-model-card">
