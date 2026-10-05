@@ -19,8 +19,8 @@ from model_capability_bench import (
     build_task_registry,
     load_capability_suite,
 )
-from model_capability_bench.runner.capability_data import load_capability_datasets
 from model_capability_bench.datasets.selection import select_samples
+from model_capability_bench.runner.capability_data import load_capability_datasets
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASETS = ROOT / "datasets.yaml"
