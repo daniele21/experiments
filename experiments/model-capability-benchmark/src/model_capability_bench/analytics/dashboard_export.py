@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from model_capability_bench.runner.comparison import paired_binary_comparison
+
 
 def _duckdb():
     try:
@@ -227,6 +229,41 @@ def export_dashboard_data(
                             }
                         )
                 payload["disagreements"] = disagreements
+                if len(comparable_models) == 2:
+                    model_a, model_b = comparable_models
+
+                    def comparison_evidence(model_key: str) -> list[dict[str, Any]]:
+                        return [
+                            {
+                                "state": {
+                                    "metadata": {
+                                        "sample_id": row["sample_id"],
+                                    }
+                                },
+                                "evaluation": {
+                                    "record": {
+                                        "metrics": [
+                                            {
+                                                "name": primary_by_model[model_key],
+                                                "value": row["value"],
+                                            }
+                                        ]
+                                    }
+                                },
+                            }
+                            for row in primary_rows
+                            if row["model_key"] == model_key
+                        ]
+
+                    payload["comparison"] = paired_binary_comparison(
+                        comparison_evidence(model_a),
+                        comparison_evidence(model_b),
+                        metric_name=primary_by_model[model_a],
+                        practical_delta=None,
+                    ) | {
+                        "model_a": model_a,
+                        "model_b": model_b,
+                    }
             (capability_dir / f"{capability_id}.json").write_text(
                 json.dumps(payload, indent=2, sort_keys=True),
                 encoding="utf-8",
