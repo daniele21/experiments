@@ -304,6 +304,18 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert overview["cells"][0]["primary_value"] == 0.8
     assert overview["models"][0]["model_key"] == "model-a"
 
+    index = json.loads((output / "index.json").read_text())
+    model_file = output / index["models"]["sha256:model:model-a"]
+    run_file = output / index["runs"]["run-current"]
+    model_payload = json.loads(model_file.read_text())
+    run_payload = json.loads(run_file.read_text())
+
+    assert model_payload["model_signature"] == "sha256:model:model-a"
+    assert model_payload["current_cells"][0]["primary_value"] == 0.8
+    assert model_payload["history"][0]["result_state"] == "CURRENT"
+    assert run_payload["run"]["run_id"] == "run-current"
+    assert run_payload["timeline"][0]["event_type"] == "run.completed"
+
 
 def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> None:
     results = tmp_path / "results"
