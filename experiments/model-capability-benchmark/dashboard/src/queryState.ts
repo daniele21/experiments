@@ -7,7 +7,6 @@ export function currentQuery(): URLSearchParams {
 
 export function updateQuery(
   updates: Record<string, string | null>,
-  *,
   replace = true,
 ): void {
   const params = currentQuery();
