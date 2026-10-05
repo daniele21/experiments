@@ -124,7 +124,11 @@ def _annotate_pareto(
         y_key=y_key,
     )
     cost_frontier = _pareto_membership(
-        [row for row in rows if bool(row.get("provider_cost_known"))],
+        [
+            row
+            for row in rows
+            if row.get("provider_cost_status") == "complete"
+        ],
         x_key="provider_cost_per_1k_cases_usd",
         y_key=y_key,
     )
@@ -248,10 +252,21 @@ def _aggregate_case_metrics(
         for row in cases
         if _number(row.get("estimated_cost_usd")) is not None
     ]
-    provider_cost_known = (
-        deployment != "local"
-        and bool(cases)
-        and len(costs) == len(cases)
+    priced_case_count = len(costs)
+    total_case_count = len(cases)
+    if deployment == "local":
+        provider_cost_status = "local_not_applicable"
+    elif total_case_count == 0 or priced_case_count == 0:
+        provider_cost_status = "unavailable"
+    elif priced_case_count == total_case_count:
+        provider_cost_status = "complete"
+    else:
+        provider_cost_status = "partial"
+    provider_cost_known = provider_cost_status in {"complete", "partial"}
+    provider_cost_coverage_rate = (
+        priced_case_count / total_case_count
+        if total_case_count
+        else None
     )
     invalid = sum(
         1
@@ -269,22 +284,23 @@ def _aggregate_case_metrics(
         for row in cases
         if isinstance(row.get("output_tokens"), int)
     ]
-    total_cost = sum(costs) if provider_cost_known else None
+    observed_total_cost = sum(costs) if provider_cost_known else None
+    mean_priced_cost = _mean(costs) if provider_cost_known else None
     return {
         "observed_case_count": len(cases),
         "latency_p50_ms": _quantile(latency, 0.50),
         "latency_p95_ms": _quantile(latency, 0.95),
         "latency_mean_ms": _mean(latency),
+        "provider_cost_status": provider_cost_status,
         "provider_cost_known": provider_cost_known,
-        "provider_cost_total_usd": total_cost,
-        "provider_cost_per_case_usd": (
-            total_cost / len(cases)
-            if total_cost is not None and cases
-            else None
-        ),
+        "provider_cost_priced_cases": priced_case_count,
+        "provider_cost_total_cases": total_case_count,
+        "provider_cost_coverage_rate": provider_cost_coverage_rate,
+        "provider_cost_total_usd": observed_total_cost,
+        "provider_cost_per_case_usd": mean_priced_cost,
         "provider_cost_per_1k_cases_usd": (
-            total_cost * 1000 / len(cases)
-            if total_cost is not None and cases
+            mean_priced_cost * 1000
+            if mean_priced_cost is not None
             else None
         ),
         "input_tokens_total": sum(input_tokens) if input_tokens else None,
