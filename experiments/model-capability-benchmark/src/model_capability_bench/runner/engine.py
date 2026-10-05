@@ -61,7 +61,9 @@ def _configured_generation(base: Any, config: RunnerConfig) -> Any:
             extra[key] = overrides.pop(key)
 
     stop = overrides.pop("stop", base.stop)
-    if isinstance(stop, str):
+    if stop is None:
+        stop = ()
+    elif isinstance(stop, str):
         stop = (stop,)
     else:
         stop = tuple(stop)
