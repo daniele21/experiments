@@ -27,6 +27,12 @@ class KorgisControlClient:
         self.transport = JsonHttpTransport(
             TransportPolicy(max_retries=0, timeout_seconds=timeout_seconds)
         )
+        self.resource_transport = JsonHttpTransport(
+            TransportPolicy(
+                max_retries=0,
+                timeout_seconds=min(timeout_seconds, 2.0),
+            )
+        )
 
     def health(self) -> dict[str, Any]:
         payload = self.transport.request("GET", f"{self.root}/health").body
@@ -35,7 +41,7 @@ class KorgisControlClient:
         return payload
 
     def resources(self) -> dict[str, Any]:
-        payload = self.transport.request(
+        payload = self.resource_transport.request(
             "GET",
             f"{self.root}/api/v1/resources",
         ).body
@@ -120,6 +126,13 @@ class KorgisManagedRuntime:
                 f"{activation}"
             )
         provider = self.provider_builder(model, self.environ)
+        telemetry_enabled = self.environ.get(
+            "MCB_RESOURCE_TELEMETRY",
+            "1",
+        ).strip().lower() not in {"0", "false", "no", "off"}
+        if not telemetry_enabled:
+            return provider
+
         interval_ms = float(
             self.environ.get("MCB_RESOURCE_SAMPLE_INTERVAL_MS", "250")
         )
