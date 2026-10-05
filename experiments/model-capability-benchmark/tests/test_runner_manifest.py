@@ -32,6 +32,16 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         model_keys=("qwen3.5-2b-q4km", "gpt-5.6-luna"),
         capability_ids=("structured-output", "mathematical-reasoning"),
         seed=7,
+        configuration_id="fixture-config",
+        inference_config={"temperature": 0.2, "max_output_tokens": 512},
+        runtime_config={"ctx_size": 8192},
+        metadata={
+            "experiment_kind": "sensitivity",
+            "sweep_id": "fixture-sweep",
+            "sweep_label": "runtime.ctx_size=8192",
+            "changed_dimension": "runtime.ctx_size",
+            "is_baseline": False,
+        },
     )
     summary = RunnerSummary(
         run_id="run-1",
@@ -91,6 +101,10 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
     assert environment["pricing"]["as_of"] == "2026-09-20"
     assert environment["pricing"]["currency"] == "USD"
     assert manifest["run"]["run_id"] == "run-1"
+    assert manifest["configuration"]["configuration_id"] == "fixture-config"
+    assert manifest["configuration"]["experiment_kind"] == "sensitivity"
+    assert manifest["configuration"]["runtime"]["ctx_size"] == 8192
+    assert manifest["configuration"]["inference"]["max_output_tokens"] == 512
     assert manifest["evidence"]["resource_samples"] == "resource_samples.jsonl"
     assert manifest["evidence"]["resource_summary"] == "resource_summary.jsonl"
     assert {model["model_key"] for model in manifest["models"]} == {
@@ -116,6 +130,8 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         model for model in manifest["models"]
         if model["model_key"] == "qwen3.5-2b-q4km"
     )
+    assert qwen["family"] == "qwen3.5"
+    assert qwen["parameters_b"] == 2
     assert qwen["execution_metadata"]["runtime_source"] == "korgis"
     assert (
         qwen["execution_metadata"]["runtime_identity"]["identity"]["backend"]["version"]
@@ -128,6 +144,7 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         "profiles.yaml",
         "suite.yaml",
         "runner.yaml",
+        "sweeps.yaml",
         "reporting.yaml",
         "pricing_snapshot.json",
     }
