@@ -91,6 +91,7 @@ export interface DecisionModelSummary extends DashboardModel {
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
   provider_cost_pricing: ProviderCostPricing | null;
+  provider_cost_observed_total_usd: number | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
@@ -132,6 +133,7 @@ export interface DecisionCapabilitySummary {
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
   provider_cost_pricing: ProviderCostPricing | null;
+  provider_cost_observed_total_usd: number | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
@@ -161,6 +163,7 @@ export interface DecisionDatasetSummary {
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
   provider_cost_pricing: ProviderCostPricing | null;
+  provider_cost_observed_total_usd: number | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
