@@ -1159,3 +1159,52 @@ Il contratto dettagliato è in `MCB_12_EFFICIENCY_TELEMETRY_SHARE_RENDERER.md`.
 - rendering da snapshot immutabile senza provider call;
 - output PNG e PDF con provenance;
 - visual regression e gate dedicati.
+
+---
+
+## MCB-13 — Premium decision dashboard UX/UI 🔜 PLANNED
+
+### Obiettivo
+
+Evolvere la dashboard MCB da benchmark explorer tecnico a prodotto decisionale premium, mantenendo immutabili i contratti di evidence/comparability costruiti in MCB-11/12.
+
+La gerarchia target è:
+
+```text
+DECIDE → UNDERSTAND → DIAGNOSE → AUDIT
+```
+
+Il primo vertical slice è la nuova Overview:
+
+- KPI decisionali;
+- benchmark quality leaderboard con policy esplicita/versionata;
+- observed quality × latency;
+- quality × known provider cost;
+- performance by dataset;
+- dettaglio human-readable del modello selezionato;
+- metodologia/provenance in progressive disclosure.
+
+Il workstream include inoltre:
+
+- dataset come drill-down first-class;
+- premium Model detail;
+- premium Capability detail;
+- Compare workspace per 2–4 modelli;
+- refactor del frontend monolitico;
+- proiezioni P50/P95, cost/1k cases, dataset summary ed execution environment;
+- semantic guardrails per observed vs comparable efficiency;
+- visual regression e real-Chrome screenshot gate.
+
+Il contratto dettagliato è in `MCB_13_PREMIUM_DECISION_DASHBOARD.md`.
+
+### Definition of Done
+
+- decision-first Overview validata su evidence reale;
+- overall quality disponibile solo tramite policy esplicita/versionata;
+- local provider cost mai rappresentato come zero;
+- trade-off cross-environment marcati come observed;
+- dataset drill-down disponibile;
+- runtime/hardware locale leggibile senza dover interpretare signature hash;
+- App.tsx decomposto in pagine/componenti condivisi;
+- visual regression delle viste premium principali.
+
