@@ -318,15 +318,18 @@ class _FakeControl:
     def __init__(self, *, base_url: str, timeout_seconds: float):
         self.base_url = base_url
         self.timeout_seconds = timeout_seconds
-        self.calls: list[tuple[str, str | None]] = []
+        self.calls: list[tuple[str, object | None]] = []
+        self.current_config: dict[str, object] = {"ctx_size": 4096}
         self.__class__.instances.append(self)
 
     def health(self):
         self.calls.append(("health", None))
-        return {"ok": True}
+        return {"ok": True, **self.current_config}
 
-    def activate(self, model_key: str):
-        self.calls.append(("activate", model_key))
+    def activate(self, model_key: str, runtime_config=None):
+        runtime_config = dict(runtime_config or {})
+        self.current_config.update(runtime_config)
+        self.calls.append(("activate", (model_key, runtime_config)))
         return {
             "ok": True,
             "key": model_key,
@@ -403,6 +406,7 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
         control_factory=_FakeControl,
     )
 
+    runtime.configure({"ctx_size": 8192, "n_batch": 256})
     provider = runtime.prepare(model)
     execution_metadata = runtime.execution_metadata(model)
     runtime.release(model)
@@ -416,11 +420,20 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
     )
     assert execution_metadata["backend"] == "llama_server"
     assert execution_metadata["quantization"] == "PTQ1_0"
+    assert execution_metadata["runtime_config"]["ctx_size"] == 8192
+    assert execution_metadata["runtime_config"]["n_batch"] == 256
     assert built == ["qwen3.5-2b-q4km"]
     control = _FakeControl.instances[-1]
     assert control.timeout_seconds == 9.0
     assert control.calls == [
         ("health", None),
-        ("activate", "qwen3.5-2b-q4km"),
+        (
+            "activate",
+            (
+                "qwen3.5-2b-q4km",
+                {"ctx_size": 8192, "n_batch": 256},
+            ),
+        ),
+        ("health", None),
         ("unload", "qwen3.5-2b-q4km"),
     ]
