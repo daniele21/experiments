@@ -29,6 +29,9 @@ class RunnerConfig:
     resume: bool = True
     retry_failures: bool = False
     run_id: str | None = None
+    configuration_id: str = "default"
+    inference_config: Mapping[str, object] = field(default_factory=dict)
+    runtime_config: Mapping[str, object] = field(default_factory=dict)
     metadata: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -44,6 +47,8 @@ class RunnerConfig:
             not capability_id.strip() for capability_id in self.capability_ids
         ):
             raise ValueError("capability_ids must not contain empty values")
+        if not self.configuration_id.strip():
+            raise ValueError("configuration_id must not be empty")
 
 
 @dataclass(frozen=True)
