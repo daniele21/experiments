@@ -62,6 +62,9 @@ export interface Disagreement {
   case_b: string;
   value_a: number | null;
   value_b: number | null;
+  expected?: unknown;
+  prediction_a?: unknown;
+  prediction_b?: unknown;
 }
 
 export interface PairwiseComparison {
