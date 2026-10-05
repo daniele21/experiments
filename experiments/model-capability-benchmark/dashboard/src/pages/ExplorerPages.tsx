@@ -234,6 +234,21 @@ export function ModelPage({ signature }: { signature: string }) {
             <div><dt>Architecture</dt><dd>{summary?.execution_environment?.machine ?? '—'}</dd></div>
             <div><dt>Operating system</dt><dd>{summary?.execution_environment?.system ?? '—'} {summary?.execution_environment?.release ?? ''}</dd></div>
             <div><dt>Memory</dt><dd>{bytes(summary?.execution_environment?.total_memory_bytes)}</dd></div>
+            <div>
+              <dt>Pricing snapshot</dt>
+              <dd>
+                {summary?.provider_cost_pricing
+                  ? [
+                      summary.provider_cost_pricing.as_of
+                        ? 'as of ' + summary.provider_cost_pricing.as_of
+                        : null,
+                      summary.provider_cost_pricing.processing,
+                    ].filter(Boolean).join(' · ')
+                  : summary?.deployment === 'local'
+                    ? 'Not applicable'
+                    : 'No frozen price match'}
+              </dd>
+            </div>
             <div><dt>Execution lineages</dt><dd>{summary?.execution_count ?? '—'}</dd></div>
           </dl>
         </div>
@@ -327,6 +342,7 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
           provider_cost_priced_cases: summary.provider_cost_priced_cases,
           provider_cost_total_cases: summary.provider_cost_total_cases,
           provider_cost_coverage_rate: summary.provider_cost_coverage_rate,
+          provider_cost_pricing: summary.provider_cost_pricing,
           provider_cost_total_usd: summary.provider_cost_total_usd,
           provider_cost_per_case_usd: summary.provider_cost_per_case_usd,
           provider_cost_per_1k_cases_usd: summary.provider_cost_per_1k_cases_usd,
@@ -470,6 +486,7 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
           provider_cost_priced_cases: row.provider_cost_priced_cases,
           provider_cost_total_cases: row.provider_cost_total_cases,
           provider_cost_coverage_rate: row.provider_cost_coverage_rate,
+          provider_cost_pricing: row.provider_cost_pricing,
           provider_cost_total_usd: row.provider_cost_total_usd,
           provider_cost_per_case_usd: row.provider_cost_per_case_usd,
           provider_cost_per_1k_cases_usd: row.provider_cost_per_1k_cases_usd,
