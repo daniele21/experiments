@@ -450,16 +450,16 @@ function DisagreementsPage() {
               <div className="case-columns">
                 <article>
                   <span>Expected contract</span>
-                  <pre>{'{\n  "merchant": "Fitzone",\n  "amount": 29.80,\n  "currency": "EUR",\n  "category": "fitness"\n}'}</pre>
+                  <pre>{JSON.stringify(items[0].expected ?? {}, null, 2)}</pre>
                 </article>
                 <article className="wrong-panel">
                   <span>{items[0].model_a}</span>
-                  <pre>{'{\n  "merchant": "gym",\n  "amount": 29,\n  "currency": "EUR"\n}'}</pre>
+                  <pre>{JSON.stringify(items[0].prediction_a ?? {}, null, 2)}</pre>
                   <small>Incorrect · missing normalized fields</small>
                 </article>
                 <article className="right-panel">
                   <span>{items[0].model_b}</span>
-                  <pre>{'{\n  "merchant": "Fitzone",\n  "amount": 29.80,\n  "currency": "EUR",\n  "category": "fitness"\n}'}</pre>
+                  <pre>{JSON.stringify(items[0].prediction_b ?? {}, null, 2)}</pre>
                   <small>Correct</small>
                 </article>
               </div>
