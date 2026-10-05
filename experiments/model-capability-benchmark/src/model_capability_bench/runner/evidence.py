@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,6 +24,7 @@ def _now() -> str:
 @dataclass
 class EvidenceStore:
     root: Path
+    on_event: Callable[[BenchmarkEvent], None] | None = field(default=None, repr=False)
     _latest_state: dict[str, dict[str, Any]] = field(
         init=False,
         default_factory=dict,
@@ -74,17 +76,20 @@ class EvidenceStore:
     def resource_summary_path(self) -> Path:
         return self.root / "resource_summary.jsonl"
 
-    def should_skip(self, case_id: str, *, retry_failures: bool) -> bool:
+    def case_status(self, case_id: str) -> str | None:
         state = self._latest_state.get(case_id)
-        if state is None:
-            return False
-        status = state.get("status")
+        return str(state["status"]) if state and state.get("status") else None
+
+    def should_skip(self, case_id: str, *, retry_failures: bool) -> bool:
+        status = self.case_status(case_id)
         if status == "completed":
             return True
         return status == "failed" and not retry_failures
 
     def record_typed_event(self, event: BenchmarkEvent) -> None:
         append_jsonl_record(event.to_record(), self.events_path)
+        if self.on_event is not None:
+            self.on_event(event)
 
     def record_stage_event(
         self,

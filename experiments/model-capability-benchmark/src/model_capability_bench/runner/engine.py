@@ -192,6 +192,14 @@ class CapabilityRunner:
                     capability = capability_by_id[arm.capability_id]
                     task = self.suite.tasks.get(capability.spec.task_id)
 
+                    self.evidence_store.record_stage_event(
+                        "capability.loading.started",
+                        metadata={
+                            **model_metadata,
+                            "capability_id": capability.spec.capability_id,
+                        },
+                        status="started",
+                    )
                     try:
                         loaded_for_capability = load_capability_datasets(
                             suite=self.suite,
@@ -248,7 +256,13 @@ class CapabilityRunner:
                     }
                     self.evidence_store.record_stage_event(
                         "capability.started",
-                        metadata=capability_metadata,
+                        metadata={
+                            **capability_metadata,
+                            "planned_cases": sum(
+                                len(loaded_for_capability[dataset_id].samples)
+                                for dataset_id in capability.spec.dataset_ids
+                            ),
+                        },
                         status="started",
                     )
 
@@ -298,6 +312,17 @@ class CapabilityRunner:
                                 )
                             ):
                                 skipped_cases += 1
+                                self.evidence_store.record_stage_event(
+                                    "case.skipped",
+                                    metadata={
+                                        **capability_metadata,
+                                        "case_id": case_id,
+                                        "sample_id": sample.sample_id,
+                                        "dataset_id": dataset_id,
+                                        "previous_status": self.evidence_store.case_status(case_id),
+                                    },
+                                    status="skipped",
+                                )
                                 continue
 
                             case_metadata = {

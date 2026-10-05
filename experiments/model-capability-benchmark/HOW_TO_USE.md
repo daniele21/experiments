@@ -266,6 +266,18 @@ The result is stored under:
 results/runs/<run-id>/
 ~~~
 
+`run` shows live terminal progress by default: current model/capability and phase,
+completed/failed/resumed cases, percentage, elapsed run time and ETA for the current
+capability. Counts use the actual loaded samples. ETA appears after the first newly
+executed case and uses observed case durations; resumed cases advance progress without
+contributing to the timing estimate. Dataset loading, model preparation/release and report
+rendering show their phase with elapsed time. ETA estimates case execution, not setup or
+report rendering, and remains approximate when cases have different difficulty.
+
+Progress refreshes every second in an interactive terminal, including during long provider
+calls. Redirected stderr gets periodic plain-text updates (every 10 seconds plus lifecycle
+boundaries). The final JSON stays on stdout. Use `--no-progress` to silence progress.
+
 Inspect:
 
 ~~~bash
@@ -421,6 +433,30 @@ Local efficiency:
 - telemetry sample count;
 - telemetry errors;
 - execution signature/hardware lineage.
+
+Run and Model details now show the captured benchmark host CPU/chip, installed RAM,
+architecture, OS and software versions. Compare shows each result's benchmark device
+and links to its run evidence. These are captured run facts, not the machine currently
+opening the dashboard; older runs without hardware evidence display unavailable values.
+
+Korgis `/api/v1/resources` supplies runtime backend/scope, process CPU time and RSS,
+host total/available RAM, and accelerator memory when supported. MCB samples it during
+inference and persists `resource_samples.jsonl` and `resource_summary.jsonl`. Expand the
+resource details for average/peak RSS, minimum available RAM, accelerator memory,
+sampling interval, sample/error counts and measurement source. CPU percentages are
+process CPU time divided by wall time (100% = one CPU core), and capability averages
+are means of per-case measurements. RSS is process resident memory, not GPU memory.
+Shared-server measurements may include other workloads. Loading and idle periods are
+outside inference sampling.
+
+The Korgis API currently does not provide a remote server's CPU/chip identity. The
+benchmark host hardware is therefore labelled separately from runtime observations;
+do not attribute the client machine's chip to a remote Korgis server. Thermal pressure
+is available in the Korgis API but is not yet collected in MCB resource summaries.
+
+Projecting existing runs backfills hardware from their captured manifests and Korgis
+samples; no inference rerun is needed. Run `project --export-dashboard` followed by
+`dashboard-build` to refresh the HTML.
 
 Never interpret null telemetry as zero.
 

@@ -37,6 +37,7 @@ class ResourceSample:
     system_available_memory_bytes: float | None
     accelerator_memory_bytes: float | None
     sources: Mapping[str, str]
+    platform: str | None = None
 
     def to_record(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -119,6 +120,7 @@ def parse_korgis_resource_sample(
             "system_available_memory_bytes": available_source,
             "accelerator_memory_bytes": accelerator_source,
         },
+        platform=str(observation["platform"]) if observation.get("platform") else None,
     )
 
 

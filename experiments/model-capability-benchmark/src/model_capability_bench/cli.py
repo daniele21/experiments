@@ -30,6 +30,7 @@ from model_capability_bench.runner import (
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
 from model_capability_bench.runner.planning import plan_benchmark
+from model_capability_bench.runner.progress import TerminalProgress
 from model_capability_bench.runtimes import RegistryRuntimeResolver
 from model_capability_bench.sharing import create_share_snapshot, render_share_snapshot
 from model_capability_bench.suite import load_capability_suite
@@ -62,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--run-id")
     run.add_argument("--output-dir", type=Path)
     run.add_argument("--cache-dir", type=Path)
+    run.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Show live status, case progress and estimated remaining time on stderr.",
+    )
     run.add_argument(
         "--resume",
         action=argparse.BooleanOptionalAction,
@@ -486,28 +493,31 @@ def main() -> int:
         retry_failures=retry_failures,
         run_id=resolved_run_id,
     )
-    runtime_resolver = RegistryRuntimeResolver(os.environ)
-    runner = CapabilityRunner(
-        suite=bundle,
-        runtime_resolver=runtime_resolver,
-        evidence_store=EvidenceStore(output_dir),
-        cache_dir=cache_dir,
-        environ=os.environ,
-    )
-    summary = runner.run(config)
-    write_run_artifacts(
-        suite=bundle,
-        config=config,
-        summary=summary,
-        output_dir=output_dir,
-    )
-    reporting_config = load_reporting_config(root)
-    report = load_benchmark_report(output_dir, reporting_config)
-    outputs = write_report(
-        report,
-        reporting_config,
-        output_dir,
-    )
+    with TerminalProgress(enabled=args.progress) as progress:
+        runtime_resolver = RegistryRuntimeResolver(os.environ)
+        runner = CapabilityRunner(
+            suite=bundle,
+            runtime_resolver=runtime_resolver,
+            evidence_store=EvidenceStore(output_dir, on_event=progress.on_event),
+            cache_dir=cache_dir,
+            environ=os.environ,
+        )
+        summary = runner.run(config)
+        progress.phase("writing manifest")
+        write_run_artifacts(
+            suite=bundle,
+            config=config,
+            summary=summary,
+            output_dir=output_dir,
+        )
+        progress.phase("rendering report")
+        reporting_config = load_reporting_config(root)
+        report = load_benchmark_report(output_dir, reporting_config)
+        outputs = write_report(
+            report,
+            reporting_config,
+            output_dir,
+        )
     _json(
         {
             "summary": summary,

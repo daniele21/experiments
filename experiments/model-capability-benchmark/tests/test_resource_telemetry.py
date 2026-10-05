@@ -18,6 +18,7 @@ def _payload(
 ) -> dict:
     return {
         "observation": {
+            "platform": "darwin",
             "captured_at_utc": f"2026-10-05T08:00:{captured:02.0f}+00:00",
             "captured_at_monotonic": captured,
             "system": {
@@ -70,6 +71,7 @@ def test_resource_sample_parser_and_summary_preserve_measurement_semantics():
     )
 
     assert first is not None and second is not None
+    assert first.platform == "darwin"
     summary = summarize_resource_samples([first, second])
 
     assert summary.scope == "owned_backend_process"

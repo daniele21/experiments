@@ -55,6 +55,23 @@ runtimes:
       runtime_type: provider-api
 
 models:
+  qwen3.5-0.8b-q4km:
+    model_id: unsloth/qwen3.5-0.8b
+    runtime_model_id: qwen3.5-0.8b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 0.8
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - small
+
   qwen3.5-2b-q4km:
     model_id: unsloth/qwen3.5-2b
     runtime_model_id: qwen3.5-2b-q4km
@@ -88,6 +105,39 @@ models:
       - open-weight
       - nemotron
       - small
+
+  nemotron-nano-4b-q8:
+    model_id: nvidia/nemotron-3-nano-4b-q8
+    runtime_model_id: nemotron-nano-4b-q8
+    runtime: korgis-local
+    family: nemotron-nano
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q8_0
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - nemotron
+      - medium
+
+  qwen3.5-9b-q4km:
+    model_id: qwen/qwen3.5-9b
+    runtime_model_id: qwen3.5-9b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 9
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
 
   gpt-5.6-luna:
     model_id: gpt-5.6-luna

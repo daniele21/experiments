@@ -110,6 +110,51 @@ def _runner(
     )
 
 
+def test_cli_live_progress_preserves_json_and_tracks_resume(
+    tmp_path: Path, monkeypatch, capsys,
+) -> None:
+    import json
+    import sys
+
+    from model_capability_bench.cli import main
+
+    runtime = _FakeRuntime()
+    monkeypatch.setenv("KORGIS_BASE_URL", "http://fake.local/v1")
+    monkeypatch.setattr(
+        "model_capability_bench.cli.RegistryRuntimeResolver",
+        lambda environ: lambda model: runtime,
+    )
+    arguments = [
+        "model-bench", "run", "--run-group", "progress-test",
+        "--run-id", "progress-test", "--models", "qwen3.5-2b-q4km",
+        "--capabilities", "structured-output", "--profile", "smoke",
+        "--output-dir", str(tmp_path / "evidence"),
+        "--cache-dir", str(tmp_path / "cache"),
+    ]
+    monkeypatch.setattr(sys, "argv", arguments)
+    assert main() == 0
+    first = capsys.readouterr()
+    assert json.loads(first.out)["summary"]["completed_cases"] == 12
+    assert "12/12 100%" in first.err
+    assert "COMPLETED" in first.err
+    assert "ETA" in first.err
+    events = read_jsonl_records(tmp_path / "evidence" / "events.jsonl")
+    start = next(event for event in events if event["event_type"] == "capability.started")
+    assert start["metadata"]["planned_cases"] == 12
+
+    assert main() == 0
+    resumed = capsys.readouterr()
+    assert json.loads(resumed.out)["summary"]["skipped_cases"] == 12
+    assert "12/12 100%" in resumed.err
+    assert "ok 0 failed 0 resumed 12" in resumed.err
+
+    monkeypatch.setattr(sys, "argv", [*arguments, "--no-progress"])
+    assert main() == 0
+    silent = capsys.readouterr()
+    assert json.loads(silent.out)["summary"]["skipped_cases"] == 12
+    assert silent.err == ""
+
+
 def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     runtime = _FakeRuntime()
     runner = _runner(tmp_path, runtime=runtime)
