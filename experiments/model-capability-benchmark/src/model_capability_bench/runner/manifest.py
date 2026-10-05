@@ -24,6 +24,7 @@ CONFIG_FILES = (
     "profiles.yaml",
     "suite.yaml",
     "runner.yaml",
+    "sweeps.yaml",
     "reporting.yaml",
     "pricing_snapshot.json",
 )
@@ -66,6 +67,13 @@ def write_run_artifacts(
                 "provider_key": resolved.provider.provider_key,
                 "deployment": resolved.runtime.deployment,
                 "lifecycle": resolved.runtime.lifecycle,
+                "family": resolved.model.family,
+                "parameters_b": resolved.model.parameters_b,
+                "artifact_size_bytes": (
+                    resolved.model.artifact.size_bytes
+                    if resolved.model.artifact is not None
+                    else None
+                ),
                 "model_signature": model_signatures.get(model_key),
                 "execution_signature": execution_signatures.get(model_key),
                 "execution_metadata": execution_metadata.get(model_key),
@@ -142,6 +150,9 @@ def write_run_artifacts(
             "resume": config.resume,
             "retry_failures": config.retry_failures,
             "generation": to_jsonable(suite.suite.generation),
+            "configuration_id": config.configuration_id,
+            "inference_config": to_jsonable(config.inference_config),
+            "runtime_config": to_jsonable(config.runtime_config),
         },
         pricing=pricing,
         packages=(
@@ -168,6 +179,18 @@ def write_run_artifacts(
             "seed": config.seed,
         },
         "models": resolved_models,
+        "configuration": {
+            "configuration_id": config.configuration_id,
+            "experiment_kind": str(
+                config.metadata.get("experiment_kind") or "standard"
+            ),
+            "sweep_id": config.metadata.get("sweep_id"),
+            "label": config.metadata.get("sweep_label"),
+            "changed_dimension": config.metadata.get("changed_dimension"),
+            "is_baseline": bool(config.metadata.get("is_baseline", False)),
+            "inference": to_jsonable(config.inference_config),
+            "runtime": to_jsonable(config.runtime_config),
+        },
         "capabilities": selected_capabilities,
         "signatures": signatures,
         "config_checksums": _config_checksums(suite.root),
