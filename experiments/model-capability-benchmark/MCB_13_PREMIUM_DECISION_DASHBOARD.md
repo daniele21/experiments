@@ -1,6 +1,6 @@
 # MCB-13 — Premium Decision Dashboard UX/UI
 
-Status: **FIRST SLICE IMPLEMENTED — CI GREEN**
+Status: **CORE COMPLETE — CI GREEN**
 
 Depends on:
 
@@ -10,7 +10,7 @@ Depends on:
 
 ## 0. Implementation status
 
-Implemented in the first MCB-13 slice:
+Implemented in MCB-13:
 
 - decision analytics payload v2 with explicit quality/cohort policy;
 - model, capability and dataset summaries;
@@ -24,7 +24,7 @@ Implemented in the first MCB-13 slice:
 - dedicated Python/frontend/Chrome visual gate;
 - compatibility gates green for MCB-11 and MCB-12.
 
-Still intentionally iterative:
+Optional follow-up iterations:
 
 - expand Compare from 2 models to the planned 2–4 model workspace;
 - add stricter pixel/perceptual visual baselines beyond deterministic screenshots;
