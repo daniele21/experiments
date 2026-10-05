@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -102,6 +101,26 @@ def _signature_catalog(manifest: Mapping[str, Any]) -> Mapping[str, Any]:
     metadata = _mapping(run.get("metadata"))
     signatures = metadata.get("signatures")
     return signatures if isinstance(signatures, Mapping) else {}
+
+
+def _run_event_times(
+    run_dir: Path,
+    run_id: str,
+) -> tuple[str | None, str | None]:
+    started: str | None = None
+    completed: str | None = None
+    for event in read_jsonl_records(run_dir / "events.jsonl"):
+        metadata = _mapping(event.get("metadata"))
+        event_run_id = _text(event.get("run_id") or metadata.get("run_id"))
+        if event_run_id != run_id:
+            continue
+        event_type = _text(event.get("event_type") or event.get("event"))
+        timestamp = _text(event.get("timestamp_utc")) or None
+        if event_type in {"run.started", "run_started"} and timestamp is not None:
+            started = min(started, timestamp) if started is not None else timestamp
+        if event_type in {"run.completed", "run_completed"} and timestamp is not None:
+            completed = max(completed, timestamp) if completed is not None else timestamp
+    return started, completed
 
 
 def _status(manifest: Mapping[str, Any]) -> str:
@@ -372,8 +391,10 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
     benchmark_sigs = _mapping(signatures.get("benchmarks"))
 
     status = _status(manifest)
-    created_at = _text(manifest.get("created_at_utc"))
-    completed_at = created_at
+    manifest_created_at = _text(manifest.get("created_at_utc"))
+    event_started_at, event_completed_at = _run_event_times(run_dir, run_id)
+    created_at = event_started_at or manifest_created_at
+    completed_at = event_completed_at or manifest_created_at
     primary_by_capability = _primary_metrics(capabilities)
     capability_by_id = {
         _text(item.get("capability_id")): item for item in capabilities
