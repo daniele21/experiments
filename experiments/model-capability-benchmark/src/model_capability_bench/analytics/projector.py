@@ -254,7 +254,7 @@ def _create_schema(connection: Any) -> None:
             value DOUBLE,
             sample_count BIGINT,
             failure_count BIGINT,
-            primary BOOLEAN
+            "primary" BOOLEAN
         );
 
         CREATE TABLE IF NOT EXISTS cases (
@@ -292,7 +292,7 @@ def _create_schema(connection: Any) -> None:
             attempt BIGINT,
             metric VARCHAR,
             value DOUBLE,
-            primary BOOLEAN
+            "primary" BOOLEAN
         );
 
         CREATE TABLE IF NOT EXISTS events (
