@@ -1,0 +1,81 @@
+name: MCB-11 observability explorer checks
+
+on:
+  pull_request:
+    paths:
+      - "packages/benchmark-core/**"
+      - "experiments/model-capability-benchmark/**"
+      - ".github/workflows/mcb11-observability-explorer-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  observability-explorer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/model-capability-benchmark
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
+
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      - name: Sync Python dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff MCB-11
+        run: >
+          uv run ruff check
+          ../../packages/benchmark-core/src
+          ../../packages/benchmark-core/tests
+          src
+          tests/test_observability.py
+          tests/test_projector.py
+          tests/test_dashboard_build.py
+          tests/test_comparison.py
+          tests/test_unified_runner.py
+          tests/test_runner_manifest.py
+
+      - name: Compile MCB-11
+        run: >
+          uv run python -m compileall -q
+          src/model_capability_bench/analytics
+          src/model_capability_bench/observability
+          src/model_capability_bench/sharing
+          src/model_capability_bench/runner
+
+      - name: MCB-11 Python tests
+        run: >
+          uv run pytest
+          tests/test_observability.py
+          tests/test_projector.py
+          tests/test_dashboard_build.py
+          tests/test_comparison.py
+          tests/test_unified_runner.py
+          tests/test_runner_manifest.py
+
+      - name: Install dashboard dependencies
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm ci
+
+      - name: Lint dashboard
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm run lint
+
+      - name: Build dashboard
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm run build
