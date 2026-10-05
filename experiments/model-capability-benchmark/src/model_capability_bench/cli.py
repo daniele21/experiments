@@ -13,6 +13,7 @@ from benchmark_core import (
     to_jsonable,
 )
 
+from model_capability_bench.analytics.dashboard_build import build_dashboard
 from model_capability_bench.analytics.dashboard_export import export_dashboard_data
 from model_capability_bench.analytics.projector import project_results
 from model_capability_bench.reporting import (
@@ -120,6 +121,18 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_data.add_argument("--results-root", type=Path)
     dashboard_data.add_argument("--database", type=Path)
     dashboard_data.add_argument("--output-dir", type=Path)
+
+    dashboard_build = sub.add_parser(
+        "dashboard-build",
+        help="Build a single-file dashboard with projected CURRENT payloads.",
+    )
+    dashboard_build.add_argument("--results-root", type=Path)
+    dashboard_build.add_argument("--data-dir", type=Path)
+    dashboard_build.add_argument("--output", type=Path)
+    dashboard_build.add_argument(
+        "--capability",
+        default="structured-output",
+    )
 
     share = sub.add_parser(
         "share",
@@ -241,6 +254,32 @@ def main() -> int:
             export_dashboard_data(
                 database_path=database,
                 output_dir=output_dir,
+            )
+        )
+        return 0
+
+    if args.command == "dashboard-build":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        data_dir = (
+            args.data_dir.resolve()
+            if args.data_dir is not None
+            else results_root / "analytics" / "dashboard"
+        )
+        output = (
+            args.output.resolve()
+            if args.output is not None
+            else results_root / "analytics" / "dashboard.html"
+        )
+        _json(
+            build_dashboard(
+                root=root,
+                dashboard_data_dir=data_dir,
+                output_path=output,
+                capability_id=args.capability,
             )
         )
         return 0
