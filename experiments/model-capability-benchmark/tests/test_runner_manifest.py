@@ -76,6 +76,8 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
     assert environment["pricing"]["as_of"] == "2026-09-20"
     assert environment["pricing"]["currency"] == "USD"
     assert manifest["run"]["run_id"] == "run-1"
+    assert manifest["evidence"]["resource_samples"] == "resource_samples.jsonl"
+    assert manifest["evidence"]["resource_summary"] == "resource_summary.jsonl"
     assert {model["model_key"] for model in manifest["models"]} == {
         "qwen3.5-2b-q4km",
         "gpt-5.6-luna",
