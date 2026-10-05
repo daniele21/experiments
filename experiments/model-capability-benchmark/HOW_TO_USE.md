@@ -90,6 +90,7 @@ Current model keys:
 ~~~text
 qwen3.5-2b-q4km
 nemotron-nano-4b
+ternary-bonsai2-27b-ptq1
 gpt-5.6-luna
 minicpm-v-4.6-1b
 ~~~
@@ -143,8 +144,47 @@ For Nemotron, download once:
 uv run --frozen local-llm download nemotron-nano-4b
 ~~~
 
+For Ternary Bonsai 2 27B PTQ1_0, use the PrismML llama.cpp fork. Stock
+llama.cpp does not support the PTQ1_0 ternary kernels. Korgis deliberately
+requires a model-specific binary so other local models can keep using the normal
+llama.cpp runtime:
+
+~~~bash
+export PRISM_LLAMA_SERVER_BIN="/absolute/path/to/prism-llama.cpp/build/bin/llama-server"
+
+uv run --frozen local-llm download ternary-bonsai2-27b-ptq1
+
+uv run --frozen local-llm serve \
+  --model ternary-bonsai2-27b-ptq1 \
+  --enable-admin-api \
+  --no-download
+~~~
+
+Then, in the MCB terminal:
+
+~~~bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235/v1
+export MODEL=ternary-bonsai2-27b-ptq1
+
+uv run model-bench validate-config --models "$MODEL"
+uv run model-bench estimate \
+  --models "$MODEL" \
+  --profile core \
+  --capabilities structured-output \
+  --pilot-cases 3
+~~~
+
+Start with the normal smoke profile before changing generation settings. Bonsai 2
+can spend a large part of a short output budget on reasoning; if the smoke run
+returns empty answers, record that as evidence first rather than silently giving
+this model a different benchmark configuration. Any later model-specific
+reasoning/output override must create a distinct benchmark lineage.
+
 MCB activates/releases the selected Korgis model. The Korgis server process remains
-outside the benchmark.
+outside the benchmark. Korgis activation now returns a privacy-safe runtime identity;
+MCB folds that fingerprint and backend build into the execution signature, so runs
+made with different PrismML llama.cpp builds do not count as equivalent efficiency
+experiments.
 
 For fair local efficiency comparisons, keep the same Mac, Korgis version, MCB commit and
 system conditions across models.
