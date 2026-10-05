@@ -168,6 +168,29 @@ models:
       - open-weight
       - qwen
 
+  ternary-bonsai2-27b-ptq1:
+    model_id: prism-ml/Ternary-Bonsai-2-27B-gguf
+    runtime_model_id: ternary-bonsai2-27b-ptq1
+    runtime: korgis-local
+    family: ternary-bonsai-2
+    parameters_b: 27
+    artifact:
+      format: gguf
+      quantization: PTQ1_0
+      size_bytes: 5946648928
+      metadata:
+        sha256: 53107f530aa52eb00912263ab1ee29bd199261c87cd7b4ad4ca1318c1fe33ee3
+        resolved_by: korgis-model-registry
+        required_runtime: prismml-llama.cpp
+    tags:
+      - local
+      - open-weight
+      - ternary
+      - bonsai
+      - prismml
+      - q1
+      - 27b
+
   gpt-5.6-luna:
     model_id: gpt-5.6-luna
     runtime: openai-api
