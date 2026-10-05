@@ -816,7 +816,7 @@ Questo slice deve dimostrare che una run partial più recente non sostituisce l'
 - [x] event lifecycle tipizzato e versionato;
 - [x] signature deterministiche con golden tests;
 - [x] latest comparable policy coperta da test;
-- [ ] DuckDB rebuild == incremental projection;
+- [x] DuckDB rebuild == incremental projection;
 - [ ] Overview/Capability/Model/Run routes deep-linkable; Overview/Capability completate nel primo slice;
 - [x] disagreement explorer basato su exact paired sample IDs;
 - [ ] history non unisce benchmark lineage incompatibili;
