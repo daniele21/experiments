@@ -11,7 +11,6 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  capabilityPayloads,
   modelPayloads,
   overview,
   runPayloads,
