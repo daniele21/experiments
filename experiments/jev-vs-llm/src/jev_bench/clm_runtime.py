@@ -47,7 +47,7 @@ class CLMLocalRuntimeSpec:
         cls,
         runtime_id: str,
         payload: dict[str, Any],
-    ) -> "CLMLocalRuntimeSpec":
+    ) -> CLMLocalRuntimeSpec:
         head = payload.get("head") or {}
         encoder = payload.get("encoder") or {}
         clm = payload.get("clm") or {}
@@ -102,11 +102,11 @@ def load_clm_runtime_spec(path: Path, runtime_id: str) -> CLMLocalRuntimeSpec:
     payload = load_yaml_mapping(path)
     runtimes = payload.get("runtimes")
     if not isinstance(runtimes, dict):
-        raise ValueError(f"{path}: missing runtimes mapping")
+        raise TypeError(f"{path}: missing runtimes mapping")
     raw = runtimes.get(runtime_id)
     if not isinstance(raw, dict):
         available = ", ".join(sorted(str(key) for key in runtimes)) or "<none>"
-        raise ValueError(
+        raise TypeError(
             f"Unknown CLM runtime {runtime_id!r}. Available: {available}"
         )
     return CLMLocalRuntimeSpec.from_mapping(runtime_id, raw)
