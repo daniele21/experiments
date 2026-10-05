@@ -26,6 +26,8 @@ from model_capability_bench.runner import (
     EvidenceStore,
     RunnerConfig,
     estimate_benchmark,
+    expand_sweep,
+    load_sweep,
 )
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
@@ -90,6 +92,25 @@ def build_parser() -> argparse.ArgumentParser:
     estimate.add_argument("--pilot-cases", type=int, default=5)
     estimate.add_argument("--seed", type=int)
     estimate.add_argument("--cache-dir", type=Path)
+
+    sweep = sub.add_parser(
+        "sweep",
+        help="Execute a controlled parameter-sensitivity experiment for one model.",
+    )
+    sweep.add_argument("--model", required=True)
+    sweep.add_argument("--sweep", default="generation-sensitivity")
+    sweep.add_argument("--capabilities", default="all")
+    sweep.add_argument("--profile")
+    sweep.add_argument("--seed", type=int)
+    sweep.add_argument("--run-group", required=True)
+    sweep.add_argument("--output-root", type=Path)
+    sweep.add_argument("--cache-dir", type=Path)
+    sweep.add_argument("--plan-only", action="store_true")
+    sweep.add_argument(
+        "--progress",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
 
     validate = sub.add_parser(
         "validate-config",
@@ -403,6 +424,127 @@ def main() -> int:
         return 0
 
     available_models = list(bundle.models.models)
+
+    if args.command == "sweep":
+        if args.model not in available_models:
+            raise ValueError(
+                f"Unknown model {args.model!r}; available: "
+                + ", ".join(sorted(available_models))
+            )
+        capability_ids = _selection(
+            args.capabilities,
+            [
+                capability.spec.capability_id
+                for capability in bundle.resolved_capabilities
+            ],
+        )
+        profile = args.profile or defaults.default_profile
+        seed = args.seed if args.seed is not None else defaults.default_seed
+        cache_dir = (
+            args.cache_dir.resolve()
+            if args.cache_dir is not None
+            else defaults.cache_dir
+        )
+        sweep_spec = load_sweep(root, args.sweep)
+        points = expand_sweep(sweep_spec)
+        if args.plan_only:
+            _json(
+                {
+                    "sweep_id": args.sweep,
+                    "strategy": sweep_spec.strategy,
+                    "model": args.model,
+                    "point_count": len(points),
+                    "points": points,
+                }
+            )
+            return 0
+
+        output_root = (
+            args.output_root.resolve()
+            if args.output_root is not None
+            else defaults.output_root
+        )
+        results: list[dict[str, Any]] = []
+        failed = False
+        for point in points:
+            identity = create_run_identity(
+                run_group=args.run_group,
+                suite=bundle.suite.suite_id,
+                runner_location="model-capability-benchmark",
+            )
+            output_dir = output_root / identity.run_id
+            config = RunnerConfig(
+                run_group=args.run_group,
+                profile=profile,
+                model_keys=(args.model,),
+                capability_ids=capability_ids,
+                seed=seed,
+                resume=defaults.resume,
+                retry_failures=defaults.retry_failures,
+                run_id=identity.run_id,
+                configuration_id=point.configuration_id,
+                inference_config=point.inference_config,
+                runtime_config=point.runtime_config,
+                metadata={
+                    "experiment_kind": "sensitivity",
+                    "sweep_id": point.sweep_id,
+                    "sweep_label": point.label,
+                    "changed_dimension": point.changed_dimension,
+                    "is_baseline": point.is_baseline,
+                },
+            )
+            with TerminalProgress(enabled=args.progress) as progress:
+                runner = CapabilityRunner(
+                    suite=bundle,
+                    runtime_resolver=RegistryRuntimeResolver(os.environ),
+                    evidence_store=EvidenceStore(
+                        output_dir,
+                        on_event=progress.on_event,
+                    ),
+                    cache_dir=cache_dir,
+                    environ=os.environ,
+                )
+                summary = runner.run(config)
+                progress.phase("writing manifest")
+                write_run_artifacts(
+                    suite=bundle,
+                    config=config,
+                    summary=summary,
+                    output_dir=output_dir,
+                )
+                progress.phase("rendering report")
+                reporting_config = load_reporting_config(root)
+                report = load_benchmark_report(output_dir, reporting_config)
+                outputs = write_report(report, reporting_config, output_dir)
+            failed = (
+                failed
+                or summary.failed_cases > 0
+                or summary.model_failures > 0
+            )
+            results.append(
+                {
+                    "configuration_id": point.configuration_id,
+                    "label": point.label,
+                    "changed_dimension": point.changed_dimension,
+                    "is_baseline": point.is_baseline,
+                    "run_id": summary.run_id,
+                    "summary": summary,
+                    "report": {
+                        "html_path": outputs.html_path,
+                        "json_path": outputs.json_path,
+                    },
+                }
+            )
+        _json(
+            {
+                "sweep_id": args.sweep,
+                "model": args.model,
+                "point_count": len(points),
+                "results": results,
+            }
+        )
+        return 1 if failed else 0
+
     model_keys = _selection(args.models, available_models)
 
     if args.command == "estimate":
