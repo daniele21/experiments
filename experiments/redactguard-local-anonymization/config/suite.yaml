@@ -13,9 +13,10 @@ suite:
     - qwen3.5-4b-q4km
     - qwen3.5-9b-q4km
 
-  # The suite runs "local-llm download <model>" from the Korgis repository
-  # before benchmarking. Already downloaded artifacts are reused by Korgis.
-  ensure_models: true
+  # Benchmarking is offline-by-default. The suite first inspects Korgis local
+  # model inventory and fails clearly when an artifact is missing.
+  # Set true, or use --download-missing, only when network provisioning is wanted.
+  download_missing_models: false
   korgis_startup_timeout_seconds: 600
 
   # Every model gets its own fresh Korgis process. This prevents resident

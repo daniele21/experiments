@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from redact_bench.history import append_history, load_history
 from redact_bench.history_dashboard import write_history_dashboard
-from redact_bench.korgis_process import resolve_korgis_repo
+from redact_bench.korgis_process import prepare_korgis_models, resolve_korgis_repo
 from redact_bench.suite import load_suite_config
 from redact_bench.suite_artifacts import combine_model_runs
 
@@ -38,7 +40,7 @@ suite:
   results_dir: results
   korgis_base_url: http://127.0.0.1:12435/v1
   models: [a, b]
-  ensure_models: true
+  download_missing_models: false
   quality_warmups: 1
   latency:
     case_ids: [x]
@@ -53,6 +55,7 @@ suite:
     assert loaded.dataset == (tmp_path / "data/realistic").resolve()
     assert loaded.latency_repeats == 3
     assert loaded.korgis_base_url == "http://127.0.0.1:12435/v1"
+    assert loaded.download_missing_models is False
 
 
 def test_history_is_append_only_and_dashboard_uses_latest(tmp_path: Path):
@@ -173,3 +176,65 @@ def test_combine_model_runs_builds_one_comparison(tmp_path: Path):
     assert manifest["models"] == ["a", "b"]
     assert manifest["runtime_strategy"] == "restart_per_model"
     assert (output / "report.html").exists()
+
+
+
+def test_prepare_models_never_downloads_without_opt_in(monkeypatch, tmp_path: Path):
+    inventory = {
+        "a": {"key": "a", "downloaded": True, "path": "/models/a"},
+        "b": {"key": "b", "downloaded": False, "path": "/models/b"},
+    }
+    calls = []
+
+    monkeypatch.setattr(
+        "redact_bench.korgis_process.inspect_korgis_models",
+        lambda repo, models: inventory,
+    )
+    monkeypatch.setattr(
+        "redact_bench.korgis_process.run_korgis_cli",
+        lambda repo, *args, **kwargs: calls.append(args),
+    )
+
+    with pytest.raises(FileNotFoundError, match="does not download models by default"):
+        prepare_korgis_models(tmp_path, ["a", "b"], download_missing=False)
+
+    assert calls == []
+
+
+def test_prepare_models_downloads_only_missing_when_explicit(monkeypatch, tmp_path: Path):
+    state = {"b_downloaded": False}
+    calls = []
+
+    def inspect(repo, models):
+        return {
+            "a": {"key": "a", "downloaded": True, "path": "/models/a"},
+            "b": {
+                "key": "b",
+                "downloaded": state["b_downloaded"],
+                "path": "/models/b",
+            },
+        }
+
+    def run(repo, *args, **kwargs):
+        calls.append(args)
+        if args == ("download", "b"):
+            state["b_downloaded"] = True
+
+    monkeypatch.setattr(
+        "redact_bench.korgis_process.inspect_korgis_models",
+        inspect,
+    )
+    monkeypatch.setattr(
+        "redact_bench.korgis_process.run_korgis_cli",
+        run,
+    )
+
+    inventory = prepare_korgis_models(
+        tmp_path,
+        ["a", "b"],
+        download_missing=True,
+    )
+
+    assert calls == [("download", "b")]
+    assert inventory["a"]["downloaded"] is True
+    assert inventory["b"]["downloaded"] is True
