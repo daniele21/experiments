@@ -52,3 +52,29 @@ export function compactDate(value: string | null | undefined): string {
     year: 'numeric',
   }).format(date);
 }
+
+
+export function providerCostValue(
+  status: 'complete' | 'partial' | 'unavailable' | 'local_not_applicable' | undefined,
+  value: number | null | undefined,
+): string {
+  if (status === 'local_not_applicable') return 'N/A';
+  if (status === 'unavailable' || value == null) return '—';
+  return (status === 'partial' ? '~' : '') + usd(value);
+}
+
+export function providerCostCoverage(
+  status: 'complete' | 'partial' | 'unavailable' | 'local_not_applicable' | undefined,
+  pricedCases: number | undefined,
+  totalCases: number | undefined,
+  coverageRate: number | null | undefined,
+): string {
+  if (status === 'local_not_applicable') return 'local runtime';
+  if (status === 'unavailable') return 'pricing unavailable';
+  if (status === 'complete') return 'complete pricing coverage';
+  if (status === 'partial') {
+    const pct = coverageRate == null ? 'partial' : (coverageRate * 100).toFixed(1) + '%';
+    return pct + ' · ' + (pricedCases ?? 0) + '/' + (totalCases ?? 0) + ' cases priced';
+  }
+  return 'pricing unavailable';
+}

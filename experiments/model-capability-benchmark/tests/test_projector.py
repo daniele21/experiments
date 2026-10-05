@@ -119,6 +119,29 @@ def _write_run(
         json.dumps(manifest, indent=2),
         encoding="utf-8",
     )
+    if deployment == "api":
+        (run_dir / "environment.json").write_text(
+            json.dumps(
+                {
+                    "pricing": {
+                        "currency": "USD",
+                        "as_of": "2026-09-20",
+                        "processing": "standard",
+                        "prices_per_million_tokens": {
+                            model_key: {
+                                "match": "exact",
+                                "input": 1.0,
+                                "output": 1.0,
+                                "source": "Fixture frozen pricing",
+                                "source_url": "https://example.com/pricing",
+                            }
+                        },
+                    }
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
     _append(
         run_dir / "aggregates.jsonl",
         {
@@ -351,6 +374,9 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert decision["quality_policy"]["quality_policy_id"] == "core-quality-v1"
     assert decision["model_summaries"][0]["overall_quality_score"] == 80.0
     assert decision["model_summaries"][0]["latency_p50_ms"] == 100.0
+    assert decision["model_summaries"][0]["provider_cost_status"] == (
+        "local_not_applicable"
+    )
     assert decision["model_summaries"][0]["provider_cost_known"] is False
     assert decision["model_summaries"][0]["provider_cost_total_usd"] is None
     assert decision["dataset_summaries"][0]["dataset_id"] == (
@@ -442,6 +468,13 @@ def test_decision_overview_aggregates_known_api_cost(tmp_path: Path) -> None:
     assert model["overall_quality_score"] == 75.0
     assert model["latency_p50_ms"] == 240.0
     assert model["latency_p95_ms"] == 240.0
+    assert model["provider_cost_status"] == "complete"
     assert model["provider_cost_known"] is True
+    assert model["provider_cost_priced_cases"] == 1
+    assert model["provider_cost_total_cases"] == 1
+    assert model["provider_cost_coverage_rate"] == 1.0
+    assert model["provider_cost_observed_total_usd"] == 0.002
     assert model["provider_cost_total_usd"] == 0.002
     assert model["provider_cost_per_1k_cases_usd"] == 2.0
+    assert model["provider_cost_pricing"]["as_of"] == "2026-09-20"
+    assert model["provider_cost_pricing"]["source"] == "Fixture frozen pricing"

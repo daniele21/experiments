@@ -14,9 +14,10 @@ import type {
   DecisionPayload,
   OverviewPayload,
 } from '../types';
-import { bytes, cpu, milliseconds, score, usd } from '../utils';
+import { bytes, cpu, milliseconds, providerCostCoverage, providerCostValue, score } from '../utils';
 import {
   DatasetHeatmap,
+  DatasetPerformanceLandscape,
   DeploymentBadge,
   MethodologyAccordion,
   MetricCard,
@@ -57,7 +58,13 @@ function fallbackDecision(payload: OverviewPayload): DecisionPayload {
       latency_p50_ms: null,
       latency_p95_ms: null,
       latency_mean_ms: null,
+      provider_cost_status: model.deployment === 'local' ? 'local_not_applicable' : 'unavailable',
       provider_cost_known: false,
+      provider_cost_priced_cases: 0,
+      provider_cost_total_cases: cells.reduce((total, cell) => total + cell.sample_count, 0),
+      provider_cost_coverage_rate: 0,
+      provider_cost_pricing: null,
+      provider_cost_observed_total_usd: null,
       provider_cost_total_usd: null,
       provider_cost_per_case_usd: null,
       provider_cost_per_1k_cases_usd: null,
@@ -117,13 +124,21 @@ export function OverviewPage() {
   const fastest = [...visibleModels]
     .filter((model) => model.latency_p50_ms != null)
     .sort((a, b) => Number(a.latency_p50_ms) - Number(b.latency_p50_ms))[0];
-  const cheapest = [...visibleModels]
-    .filter(
-      (model) =>
-        model.provider_cost_known &&
-        model.provider_cost_per_1k_cases_usd != null,
-    )
-    .sort(
+  const pricedApiModels = [...visibleModels].filter(
+    (model) =>
+      model.deployment !== 'local' &&
+      model.provider_cost_known &&
+      model.provider_cost_per_1k_cases_usd != null,
+  );
+  const cheapest =
+    pricedApiModels
+      .filter((model) => model.provider_cost_status === 'complete')
+      .sort(
+        (a, b) =>
+          Number(a.provider_cost_per_1k_cases_usd) -
+          Number(b.provider_cost_per_1k_cases_usd),
+      )[0] ??
+    pricedApiModels.sort(
       (a, b) =>
         Number(a.provider_cost_per_1k_cases_usd) -
         Number(b.provider_cost_per_1k_cases_usd),
@@ -203,8 +218,20 @@ export function OverviewPage() {
           icon={<BadgeDollarSign size={19} />}
           label="Lowest known API cost"
           model={cheapest?.model_key ?? 'No known provider cost'}
-          value={usd(cheapest?.provider_cost_per_1k_cases_usd)}
-          caption="Known provider cost per 1k benchmark cases"
+          value={providerCostValue(
+            cheapest?.provider_cost_status,
+            cheapest?.provider_cost_per_1k_cases_usd,
+          )}
+          caption={
+            cheapest
+              ? providerCostCoverage(
+                  cheapest.provider_cost_status,
+                  cheapest.provider_cost_priced_cases,
+                  cheapest.provider_cost_total_cases,
+                  cheapest.provider_cost_coverage_rate,
+                )
+              : 'No priced API evidence'
+          }
           tone="violet"
           onClick={() => cheapest && selectModel(cheapest.model_signature)}
         />
@@ -233,6 +260,13 @@ export function OverviewPage() {
           onSelect={selectModel}
         />
       </section>
+
+      <DatasetPerformanceLandscape
+        datasets={decision.dataset_summaries.filter((dataset) =>
+          visibleModels.some((model) => model.model_key === dataset.model_key),
+        )}
+        models={visibleModels}
+      />
 
       <section className="overview-lower-grid">
         <DatasetHeatmap
@@ -291,11 +325,34 @@ export function OverviewPage() {
                 <div>
                   <dt><Database size={14} /> Provider cost</dt>
                   <dd>
-                    {selected.provider_cost_known
-                      ? usd(selected.provider_cost_per_1k_cases_usd) + ' / 1k cases'
+                    {providerCostValue(
+                      selected.provider_cost_status,
+                      selected.provider_cost_per_1k_cases_usd,
+                    )}
+                    {selected.provider_cost_known ? ' / 1k cases' : ''}
+                    <small className="cost-coverage-inline">
+                      {providerCostCoverage(
+                        selected.provider_cost_status,
+                        selected.provider_cost_priced_cases,
+                        selected.provider_cost_total_cases,
+                        selected.provider_cost_coverage_rate,
+                      )}
+                    </small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Pricing</dt>
+                  <dd>
+                    {selected.provider_cost_pricing
+                      ? [
+                          selected.provider_cost_pricing.as_of
+                            ? 'as of ' + selected.provider_cost_pricing.as_of
+                            : null,
+                          selected.provider_cost_pricing.processing,
+                        ].filter(Boolean).join(' · ')
                       : selected.deployment === 'local'
-                        ? 'N/A · local runtime'
-                        : 'Unknown'}
+                        ? 'Not applicable'
+                        : 'No frozen price match'}
                   </dd>
                 </div>
               </dl>

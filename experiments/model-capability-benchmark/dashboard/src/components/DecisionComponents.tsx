@@ -1,11 +1,12 @@
-import { ChevronRight, Info, Sparkles } from 'lucide-react';
+import { ChevronRight, Info, Sparkles, Trophy } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppLink } from './Shell';
 import type {
   DecisionDatasetSummary,
   DecisionModelSummary,
 } from '../types';
-import { milliseconds, score, usd } from '../utils';
+import { milliseconds, providerCostCoverage, score, usd } from '../utils';
 
 export function DeploymentBadge({ deployment }: { deployment: string }) {
   const normalized = deployment.toLowerCase();
@@ -171,7 +172,10 @@ export function TradeoffScatter({
                     'scatter-point ' +
                     (model.deployment === 'local' ? 'local ' : 'api ') +
                     (selected ? 'selected ' : '') +
-                    (frontier ? 'frontier' : '')
+                    (frontier ? 'frontier ' : '') +
+                    (xMetric === 'cost' && model.provider_cost_status === 'partial'
+                      ? 'cost-partial'
+                      : '')
                   }
                   onClick={() => onSelect?.(model.model_signature)}
                 >
@@ -180,7 +184,13 @@ export function TradeoffScatter({
                       {model.model_key + ' · quality ' + quality.toFixed(1) +
                         (xMetric === 'latency'
                           ? ' · P50 ' + milliseconds(xValue)
-                          : ' · ' + usd(xValue) + ' / 1k cases')}
+                          : ' · ' + usd(xValue) + ' / 1k cases · ' +
+                            providerCostCoverage(
+                              model.provider_cost_status,
+                              model.provider_cost_priced_cases,
+                              model.provider_cost_total_cases,
+                              model.provider_cost_coverage_rate,
+                            ))}
                     </title>
                   </circle>
                   <text
@@ -269,6 +279,325 @@ export function QualityLeaderboard({
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+
+type DatasetLandscapeView = 'score' | 'delta' | 'rank';
+type DatasetLandscapeSort = 'discriminative' | 'hardest' | 'alphabetical';
+
+interface DatasetLandscapeRow {
+  capability_id: string;
+  dataset_id: string;
+  sample_count: number;
+  best_score: number | null;
+  worst_score: number | null;
+  average_score: number | null;
+  spread: number | null;
+  winner_model_key: string | null;
+  best_local_model_key: string | null;
+  values: DecisionDatasetSummary[];
+}
+
+function buildDatasetLandscapeRows(
+  datasets: DecisionDatasetSummary[],
+  models: DecisionModelSummary[],
+): DatasetLandscapeRow[] {
+  const grouped = new Map<string, DecisionDatasetSummary[]>();
+  datasets.forEach((row) => {
+    const key = row.capability_id + '::' + row.dataset_id;
+    grouped.set(key, [...(grouped.get(key) ?? []), row]);
+  });
+  const localKeys = new Set(
+    models.filter((model) => model.deployment === 'local').map((model) => model.model_key),
+  );
+  return [...grouped.entries()].map(([key, values]) => {
+    const scored = values.filter((row) => row.normalized_quality_score != null);
+    const sorted = [...scored].sort(
+      (a, b) => Number(b.normalized_quality_score) - Number(a.normalized_quality_score),
+    );
+    const local = sorted.find((row) => localKeys.has(row.model_key));
+    const scores = scored.map((row) => Number(row.normalized_quality_score));
+    const best = scores.length ? Math.max(...scores) : null;
+    const worst = scores.length ? Math.min(...scores) : null;
+    const [capability_id, dataset_id] = key.split('::');
+    return {
+      capability_id,
+      dataset_id,
+      sample_count: values[0]?.sample_count ?? 0,
+      best_score: best,
+      worst_score: worst,
+      average_score: scores.length
+        ? scores.reduce((total, value) => total + value, 0) / scores.length
+        : null,
+      spread: best != null && worst != null ? best - worst : null,
+      winner_model_key: sorted[0]?.model_key ?? null,
+      best_local_model_key: local?.model_key ?? null,
+      values,
+    };
+  });
+}
+
+export function DatasetPerformanceLandscape({
+  datasets,
+  models,
+}: {
+  datasets: DecisionDatasetSummary[];
+  models: DecisionModelSummary[];
+}) {
+  const [view, setView] = useState<DatasetLandscapeView>('score');
+  const [sortMode, setSortMode] = useState<DatasetLandscapeSort>('discriminative');
+  const rows = useMemo(
+    () => buildDatasetLandscapeRows(datasets, models),
+    [datasets, models],
+  );
+  const sortedRows = useMemo(() => {
+    const result = [...rows];
+    if (sortMode === 'hardest') {
+      return result.sort(
+        (a, b) => Number(a.average_score ?? 999) - Number(b.average_score ?? 999),
+      );
+    }
+    if (sortMode === 'alphabetical') {
+      return result.sort((a, b) => a.dataset_id.localeCompare(b.dataset_id));
+    }
+    return result.sort((a, b) => Number(b.spread ?? -1) - Number(a.spread ?? -1));
+  }, [rows, sortMode]);
+
+  const winCounts = new Map<string, number>();
+  rows.forEach((row) => {
+    if (row.winner_model_key) {
+      winCounts.set(row.winner_model_key, (winCounts.get(row.winner_model_key) ?? 0) + 1);
+    }
+  });
+  const mostWins = [...winCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const hardest = [...rows]
+    .filter((row) => row.average_score != null)
+    .sort((a, b) => Number(a.average_score) - Number(b.average_score))[0];
+  const discriminative = [...rows]
+    .filter((row) => row.spread != null)
+    .sort((a, b) => Number(b.spread) - Number(a.spread))[0];
+  const localWins = new Map<string, number>();
+  rows.forEach((row) => {
+    if (row.best_local_model_key) {
+      localWins.set(
+        row.best_local_model_key,
+        (localWins.get(row.best_local_model_key) ?? 0) + 1,
+      );
+    }
+  });
+  const bestLocal = [...localWins.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  return (
+    <section className="analysis-card dataset-landscape-card">
+      <div className="section-heading">
+        <div>
+          <h2>Dataset performance landscape</h2>
+          <p>See who wins where, how large each gap is and which datasets discriminate most.</p>
+        </div>
+        <div className="dataset-landscape-controls">
+          <div className="segmented">
+            {(['score', 'delta', 'rank'] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={view === item ? 'active' : ''}
+                onClick={() => setView(item)}
+              >
+                {item === 'score' ? 'Score' : item === 'delta' ? 'Delta vs best' : 'Rank'}
+              </button>
+            ))}
+          </div>
+          <select
+            value={sortMode}
+            onChange={(event) => setSortMode(event.target.value as DatasetLandscapeSort)}
+          >
+            <option value="discriminative">Most discriminative</option>
+            <option value="hardest">Hardest</option>
+            <option value="alphabetical">Alphabetical</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="dataset-insight-chips">
+        <div><Trophy size={14}/><span>Most wins</span><strong>{mostWins ? mostWins[0] + ' · ' + mostWins[1] : '—'}</strong></div>
+        <div><span>Best local</span><strong>{bestLocal ? bestLocal[0] : '—'}</strong></div>
+        <div><span>Hardest</span><strong>{hardest?.dataset_id ?? '—'}</strong></div>
+        <div><span>Most discriminative</span><strong>{discriminative?.dataset_id ?? '—'}</strong></div>
+      </div>
+
+      <div className="dataset-landscape-list">
+        {sortedRows.map((row) => {
+          const ranked = [...row.values]
+            .filter((item) => item.normalized_quality_score != null)
+            .sort(
+              (a, b) =>
+                Number(b.normalized_quality_score) - Number(a.normalized_quality_score),
+            );
+          const rankMap = new Map(ranked.map((item, index) => [item.model_key, index + 1]));
+          return (
+            <AppLink
+              key={row.capability_id + row.dataset_id}
+              href={'/datasets/' + encodeURIComponent(row.dataset_id)}
+              className="dataset-landscape-row"
+            >
+              <div className="dataset-landscape-meta">
+                <span>{row.capability_id.replaceAll('-', ' ')}</span>
+                <strong>{row.dataset_id}</strong>
+                <small>
+                  winner {row.winner_model_key ?? '—'} · spread {row.spread?.toFixed(1) ?? '—'}
+                </small>
+              </div>
+              <div className="dataset-landscape-track">
+                {models.map((model, modelIndex) => {
+                  const value = row.values.find((item) => item.model_key === model.model_key);
+                  const scoreValue = value?.normalized_quality_score ?? null;
+                  const delta =
+                    scoreValue != null && row.best_score != null
+                      ? scoreValue - row.best_score
+                      : null;
+                  const display =
+                    view === 'rank'
+                      ? rankMap.has(model.model_key) ? '#' + rankMap.get(model.model_key) : '—'
+                      : view === 'delta'
+                        ? delta == null ? '—' : delta === 0 ? 'best' : delta.toFixed(1)
+                        : score(scoreValue);
+                  return scoreValue == null ? null : (
+                    <div
+                      key={model.model_signature}
+                      className={'dataset-landscape-point ' + model.deployment}
+                      style={{
+                        left: Math.max(0, Math.min(100, scoreValue)) + '%',
+                        top: ((modelIndex + 1) / (models.length + 1)) * 100 + '%',
+                      }}
+                      title={model.model_key + ' · ' + display}
+                    >
+                      <i/>
+                      <span>{display}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <ChevronRight size={14}/>
+            </AppLink>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function DatasetDeltaSlopegraph({
+  datasets,
+  modelA,
+  modelB,
+}: {
+  datasets: DecisionDatasetSummary[];
+  modelA: DecisionModelSummary;
+  modelB: DecisionModelSummary;
+}) {
+  const pairs = datasets
+    .filter((row) => row.model_key === modelA.model_key)
+    .map((a) => {
+      const b = datasets.find(
+        (row) =>
+          row.model_key === modelB.model_key &&
+          row.capability_id === a.capability_id &&
+          row.dataset_id === a.dataset_id,
+      );
+      if (a.normalized_quality_score == null || b?.normalized_quality_score == null) {
+        return null;
+      }
+      return {
+        capability_id: a.capability_id,
+        dataset_id: a.dataset_id,
+        a: Number(a.normalized_quality_score),
+        b: Number(b.normalized_quality_score),
+        delta: Number(a.normalized_quality_score) - Number(b.normalized_quality_score),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item != null)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  const aWins = pairs.filter((pair) => pair.delta > 0.05).length;
+  const bWins = pairs.filter((pair) => pair.delta < -0.05).length;
+  const ties = pairs.filter((pair) => Math.abs(pair.delta) <= 0.05).length;
+  const y = (value: number) => 7 + ((100 - value) / 60) * 30;
+
+  return (
+    <section className="analysis-card dataset-slope-card">
+      <div className="section-heading">
+        <div>
+          <h2>Dataset delta slopegraph</h2>
+          <p>Sorted by absolute gap. Each row shows where Model A gains or loses against Model B.</p>
+        </div>
+        <div className="slope-summary">
+          <span><b>{aWins}</b> A wins</span>
+          <span><b>{bWins}</b> B wins</span>
+          <span><b>{ties}</b> ties</span>
+        </div>
+      </div>
+      {pairs.length ? (
+        <>
+          <div className="slopegraph-column-head">
+            <span>Dataset</span>
+            <div><strong>{shortModelLabel(modelA.model_key)}</strong><small>Model A</small></div>
+            <div><strong>{shortModelLabel(modelB.model_key)}</strong><small>Model B</small></div>
+            <span>Δ A − B</span>
+          </div>
+          <div className="slopegraph-rows">
+            {pairs.map((pair) => {
+              const state =
+                Math.abs(pair.delta) <= 0.05
+                  ? 'tie'
+                  : pair.delta > 0
+                    ? 'a-win'
+                    : 'b-win';
+              return (
+                <div
+                  key={pair.capability_id + pair.dataset_id}
+                  className={'slopegraph-row ' + state}
+                >
+                  <div className="slope-dataset-meta">
+                    <strong>{pair.dataset_id}</strong>
+                    <small>{pair.capability_id.replaceAll('-', ' ')}</small>
+                  </div>
+                  <div className="slope-mini">
+                    <svg viewBox="0 0 420 44" role="img" aria-label={pair.dataset_id}>
+                      <line className="slope-midline" x1="20" x2="400" y1="22" y2="22"/>
+                      <line
+                        className="slope-segment"
+                        x1="24"
+                        y1={y(pair.a)}
+                        x2="396"
+                        y2={y(pair.b)}
+                      />
+                      <circle className="slope-point-a" cx="24" cy={y(pair.a)} r="5"/>
+                      <circle className="slope-point-b" cx="396" cy={y(pair.b)} r="5"/>
+                      <text x="36" y={y(pair.a) + 3}>{score(pair.a)}</text>
+                      <text x="384" y={y(pair.b) + 3} textAnchor="end">{score(pair.b)}</text>
+                      <title>
+                        {pair.dataset_id + ' · A ' + score(pair.a) + ' · B ' + score(pair.b)}
+                      </title>
+                    </svg>
+                  </div>
+                  <em className={state}>
+                    {pair.delta > 0 ? '+' : ''}{pair.delta.toFixed(1)}
+                  </em>
+                </div>
+              );
+            })}
+          </div>
+          <div className="slope-legend">
+            <span className="a-win">A advantage</span>
+            <span className="b-win">B advantage</span>
+            <span className="tie">Near tie</span>
+          </div>
+        </>
+      ) : (
+        <div className="empty-visual">No common dataset evidence for the selected models.</div>
+      )}
     </section>
   );
 }
@@ -390,8 +719,20 @@ export function DatasetHeatmap({
                               'score ' + score(value),
                               'P50 ' + milliseconds(cell.latency_p50_ms),
                               cell.provider_cost_known
-                                ? usd(cell.provider_cost_per_1k_cases_usd) + ' / 1k cases'
-                                : 'provider cost N/A',
+                                ? usd(cell.provider_cost_per_1k_cases_usd) +
+                                  ' / 1k cases · ' +
+                                  providerCostCoverage(
+                                    cell.provider_cost_status,
+                                    cell.provider_cost_priced_cases,
+                                    cell.provider_cost_total_cases,
+                                    cell.provider_cost_coverage_rate,
+                                  )
+                                : providerCostCoverage(
+                                    cell.provider_cost_status,
+                                    cell.provider_cost_priced_cases,
+                                    cell.provider_cost_total_cases,
+                                    cell.provider_cost_coverage_rate,
+                                  ),
                             ].join(' · ')
                           : 'No CURRENT comparable result'
                       }

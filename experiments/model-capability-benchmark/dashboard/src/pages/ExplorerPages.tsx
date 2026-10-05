@@ -30,10 +30,13 @@ import {
   milliseconds,
   percent,
   points,
+  providerCostCoverage,
+  providerCostValue,
   score,
   usd,
 } from '../utils';
 import {
+  DatasetDeltaSlopegraph,
   DatasetHeatmap,
   DeploymentBadge,
   MethodologyAccordion,
@@ -103,11 +106,19 @@ export function ModelsPage() {
               <span>{milliseconds(model.latency_p50_ms)}</span>
               <span>{milliseconds(model.latency_p95_ms)}</span>
               <span>
-                {model.provider_cost_known
-                  ? usd(model.provider_cost_per_1k_cases_usd)
-                  : model.deployment === 'local'
-                    ? 'N/A · local'
-                    : 'Unknown'}
+                {providerCostValue(
+                  model.provider_cost_status,
+                  model.provider_cost_per_1k_cases_usd,
+                )}
+                {model.provider_cost_known ? ' / 1k' : ''}
+                <small className="table-cost-coverage">
+                  {providerCostCoverage(
+                    model.provider_cost_status,
+                    model.provider_cost_priced_cases,
+                    model.provider_cost_total_cases,
+                    model.provider_cost_coverage_rate,
+                  )}
+                </small>
               </span>
               <span>{model.execution_environment?.cpu_model ?? model.runtime_key}</span>
             </AppLink>
@@ -170,8 +181,20 @@ export function ModelPage({ signature }: { signature: string }) {
         </div>
         <div className="mini-kpi">
           <span>Provider cost</span>
-          <strong>{summary?.provider_cost_known ? usd(summary.provider_cost_per_1k_cases_usd) : '—'}</strong>
-          <small>{summary?.deployment === 'local' ? 'N/A · local runtime' : 'per 1k cases'}</small>
+          <strong>{providerCostValue(
+            summary?.provider_cost_status,
+            summary?.provider_cost_per_1k_cases_usd,
+          )}</strong>
+          <small>
+            {summary
+              ? providerCostCoverage(
+                  summary.provider_cost_status,
+                  summary.provider_cost_priced_cases,
+                  summary.provider_cost_total_cases,
+                  summary.provider_cost_coverage_rate,
+                )
+              : 'pricing unavailable'}
+          </small>
         </div>
       </section>
 
@@ -211,6 +234,21 @@ export function ModelPage({ signature }: { signature: string }) {
             <div><dt>Architecture</dt><dd>{summary?.execution_environment?.machine ?? '—'}</dd></div>
             <div><dt>Operating system</dt><dd>{summary?.execution_environment?.system ?? '—'} {summary?.execution_environment?.release ?? ''}</dd></div>
             <div><dt>Memory</dt><dd>{bytes(summary?.execution_environment?.total_memory_bytes)}</dd></div>
+            <div>
+              <dt>Pricing snapshot</dt>
+              <dd>
+                {summary?.provider_cost_pricing
+                  ? [
+                      summary.provider_cost_pricing.as_of
+                        ? 'as of ' + summary.provider_cost_pricing.as_of
+                        : null,
+                      summary.provider_cost_pricing.processing,
+                    ].filter(Boolean).join(' · ')
+                  : summary?.deployment === 'local'
+                    ? 'Not applicable'
+                    : 'No frozen price match'}
+              </dd>
+            </div>
             <div><dt>Execution lineages</dt><dd>{summary?.execution_count ?? '—'}</dd></div>
           </dl>
         </div>
@@ -299,7 +337,13 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
           latency_p50_ms: summary.latency_p50_ms,
           latency_p95_ms: summary.latency_p95_ms,
           latency_mean_ms: summary.latency_mean_ms,
+          provider_cost_status: summary.provider_cost_status,
           provider_cost_known: summary.provider_cost_known,
+          provider_cost_priced_cases: summary.provider_cost_priced_cases,
+          provider_cost_total_cases: summary.provider_cost_total_cases,
+          provider_cost_coverage_rate: summary.provider_cost_coverage_rate,
+          provider_cost_pricing: summary.provider_cost_pricing,
+          provider_cost_observed_total_usd: summary.provider_cost_observed_total_usd,
           provider_cost_total_usd: summary.provider_cost_total_usd,
           provider_cost_per_case_usd: summary.provider_cost_per_case_usd,
           provider_cost_per_1k_cases_usd: summary.provider_cost_per_1k_cases_usd,
@@ -438,7 +482,13 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
           latency_p50_ms: row.latency_p50_ms,
           latency_p95_ms: row.latency_p95_ms,
           latency_mean_ms: row.latency_mean_ms,
+          provider_cost_status: row.provider_cost_status,
           provider_cost_known: row.provider_cost_known,
+          provider_cost_priced_cases: row.provider_cost_priced_cases,
+          provider_cost_total_cases: row.provider_cost_total_cases,
+          provider_cost_coverage_rate: row.provider_cost_coverage_rate,
+          provider_cost_pricing: row.provider_cost_pricing,
+          provider_cost_observed_total_usd: row.provider_cost_observed_total_usd,
           provider_cost_total_usd: row.provider_cost_total_usd,
           provider_cost_per_case_usd: row.provider_cost_per_case_usd,
           provider_cost_per_1k_cases_usd: row.provider_cost_per_1k_cases_usd,
@@ -466,7 +516,16 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
                 <span className="rank">{index + 1}</span>
                 <strong>{row.model_key}</strong>
                 <span>{score(row.normalized_quality_score)}</span>
-                <small>{milliseconds(row.latency_p50_ms)} · {row.provider_cost_known ? usd(row.provider_cost_per_1k_cases_usd) + '/1k' : 'cost N/A'}</small>
+                <small>
+                  {milliseconds(row.latency_p50_ms)} · {providerCostValue(
+                    row.provider_cost_status,
+                    row.provider_cost_per_1k_cases_usd,
+                  )}
+                  {row.provider_cost_known ? '/1k' : ''}
+                  {row.provider_cost_status === 'partial'
+                    ? ' · ' + Math.round((row.provider_cost_coverage_rate ?? 0) * 100) + '% priced'
+                    : ''}
+                </small>
               </div>
             ))}
           </div>
@@ -592,7 +651,22 @@ export function ComparePage() {
                 <div className="compare-mini-grid">
                   <div><small>Quality</small><b>{score(model.overall_quality_score)}</b></div>
                   <div><small>P50</small><b>{milliseconds(model.latency_p50_ms)}</b></div>
-                  <div><small>Cost / 1k</small><b>{model.provider_cost_known ? usd(model.provider_cost_per_1k_cases_usd) : 'N/A'}</b></div>
+                  <div>
+                    <small>Cost / 1k</small>
+                    <b>{providerCostValue(
+                      model.provider_cost_status,
+                      model.provider_cost_per_1k_cases_usd,
+                    )}</b>
+                    <em className={'cost-status ' + model.provider_cost_status}>
+                      {model.provider_cost_status === 'partial'
+                        ? Math.round((model.provider_cost_coverage_rate ?? 0) * 100) + '% priced'
+                        : model.provider_cost_status === 'complete'
+                          ? 'complete'
+                          : model.provider_cost_status === 'local_not_applicable'
+                            ? 'local'
+                            : 'unavailable'}
+                    </em>
+                  </div>
                   <div><small>Failures</small><b>{percent(model.failure_rate)}</b></div>
                 </div>
               </div>
@@ -625,9 +699,15 @@ export function ComparePage() {
             </div>
           </section>
 
+          <DatasetDeltaSlopegraph
+            datasets={decisionDatasets}
+            modelA={modelA}
+            modelB={modelB}
+          />
+
           <section className="two-panel-grid">
             <div className="analysis-card">
-              <SectionTitle title="Dataset delta" description="Where the quality difference comes from." />
+              <SectionTitle title="Dataset delta table" description="Exact values behind the slopegraph." />
               <div className="dataset-delta-table">
                 {datasetsA.map((a) => {
                   const b = datasetsB.get(a.capability_id + '::' + a.dataset_id);

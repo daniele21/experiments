@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from typing import Any
 
@@ -124,7 +125,11 @@ def _annotate_pareto(
         y_key=y_key,
     )
     cost_frontier = _pareto_membership(
-        [row for row in rows if bool(row.get("provider_cost_known"))],
+        [
+            row
+            for row in rows
+            if row.get("provider_cost_status") == "complete"
+        ],
         x_key="provider_cost_per_1k_cases_usd",
         y_key=y_key,
     )
@@ -210,6 +215,95 @@ def _load_case_evidence(
     return cases, metric_map
 
 
+def _load_pricing(
+    connection: Any,
+    cells: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    run_ids = sorted({str(row["run_id"]) for row in cells})
+    if not run_ids:
+        return {}
+    exists = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_name = 'run_pricing'
+        """
+    ).fetchone()[0]
+    if not exists:
+        return {}
+    placeholders = ", ".join("?" for _ in run_ids)
+    rows = _rows(
+        connection,
+        f"""
+        SELECT run_id, currency, as_of, processing, prices_json
+        FROM run_pricing
+        WHERE run_id IN ({placeholders})
+        """,
+        run_ids,
+    )
+    result: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        try:
+            prices = json.loads(str(row.get("prices_json") or "{}"))
+        except json.JSONDecodeError:
+            prices = {}
+        result[str(row["run_id"])] = {
+            "currency": row.get("currency"),
+            "as_of": row.get("as_of"),
+            "processing": row.get("processing"),
+            "prices_per_million_tokens": prices if isinstance(prices, dict) else {},
+        }
+    return result
+
+
+def _pricing_for_model(
+    run_pricing: dict[str, dict[str, Any]],
+    *,
+    run_id: str,
+    model_key: str,
+    model_id: Any,
+    effective_model_id: Any,
+    provider_key: Any,
+) -> dict[str, Any] | None:
+    snapshot = run_pricing.get(run_id)
+    if not snapshot:
+        return None
+    prices = snapshot.get("prices_per_million_tokens")
+    if not isinstance(prices, dict):
+        return None
+
+    candidates = (model_key, model_id, effective_model_id)
+    for candidate in candidates:
+        if not candidate:
+            continue
+        entry = prices.get(str(candidate))
+        if isinstance(entry, dict) and str(entry.get("match") or "exact") == "exact":
+            return {
+                "price_key": str(candidate),
+                "source": entry.get("source"),
+                "source_url": entry.get("source_url"),
+                "currency": snapshot.get("currency"),
+                "as_of": snapshot.get("as_of"),
+                "processing": snapshot.get("processing"),
+            }
+
+    for price_key, entry in prices.items():
+        if (
+            isinstance(entry, dict)
+            and str(entry.get("match") or "") == "provider"
+            and str(price_key) == str(provider_key)
+        ):
+            return {
+                "price_key": str(price_key),
+                "source": entry.get("source"),
+                "source_url": entry.get("source_url"),
+                "currency": snapshot.get("currency"),
+                "as_of": snapshot.get("as_of"),
+                "processing": snapshot.get("processing"),
+            }
+    return None
+
+
 def _load_environments(
     connection: Any,
     cells: list[dict[str, Any]],
@@ -248,10 +342,21 @@ def _aggregate_case_metrics(
         for row in cases
         if _number(row.get("estimated_cost_usd")) is not None
     ]
-    provider_cost_known = (
-        deployment != "local"
-        and bool(cases)
-        and len(costs) == len(cases)
+    priced_case_count = len(costs)
+    total_case_count = len(cases)
+    if deployment == "local":
+        provider_cost_status = "local_not_applicable"
+    elif total_case_count == 0 or priced_case_count == 0:
+        provider_cost_status = "unavailable"
+    elif priced_case_count == total_case_count:
+        provider_cost_status = "complete"
+    else:
+        provider_cost_status = "partial"
+    provider_cost_known = provider_cost_status in {"complete", "partial"}
+    provider_cost_coverage_rate = (
+        priced_case_count / total_case_count
+        if total_case_count
+        else None
     )
     invalid = sum(
         1
@@ -269,22 +374,28 @@ def _aggregate_case_metrics(
         for row in cases
         if isinstance(row.get("output_tokens"), int)
     ]
-    total_cost = sum(costs) if provider_cost_known else None
+    observed_total_cost = sum(costs) if provider_cost_known else None
+    mean_priced_cost = _mean(costs) if provider_cost_known else None
     return {
         "observed_case_count": len(cases),
         "latency_p50_ms": _quantile(latency, 0.50),
         "latency_p95_ms": _quantile(latency, 0.95),
         "latency_mean_ms": _mean(latency),
+        "provider_cost_status": provider_cost_status,
         "provider_cost_known": provider_cost_known,
-        "provider_cost_total_usd": total_cost,
-        "provider_cost_per_case_usd": (
-            total_cost / len(cases)
-            if total_cost is not None and cases
+        "provider_cost_priced_cases": priced_case_count,
+        "provider_cost_total_cases": total_case_count,
+        "provider_cost_coverage_rate": provider_cost_coverage_rate,
+        "provider_cost_observed_total_usd": observed_total_cost,
+        "provider_cost_total_usd": (
+            observed_total_cost
+            if provider_cost_status == "complete"
             else None
         ),
+        "provider_cost_per_case_usd": mean_priced_cost,
         "provider_cost_per_1k_cases_usd": (
-            total_cost * 1000 / len(cases)
-            if total_cost is not None and cases
+            mean_priced_cost * 1000
+            if mean_priced_cost is not None
             else None
         ),
         "input_tokens_total": sum(input_tokens) if input_tokens else None,
@@ -301,6 +412,7 @@ def build_decision_overview(
     selected_signatures, cells = _selected_cohorts(current)
     cases, metric_map = _load_case_evidence(connection, cells)
     environments = _load_environments(connection, cells)
+    run_pricing = _load_pricing(connection, cells)
 
     cell_by_key = {
         (
@@ -401,6 +513,14 @@ def build_decision_overview(
             if _number(row.get("process_rss_bytes_peak")) is not None
         ]
 
+        pricing = _pricing_for_model(
+            run_pricing,
+            run_id=str(latest_cell["run_id"]),
+            model_key=model_key,
+            model_id=meta.get("model_id"),
+            effective_model_id=meta.get("effective_model_id"),
+            provider_key=meta.get("provider_key"),
+        )
         model_summaries.append(
             {
                 **meta,
@@ -412,6 +532,7 @@ def build_decision_overview(
                 "quality_total_datasets": len(dataset_ids),
                 "quality_coverage_complete": complete,
                 **observed,
+                "provider_cost_pricing": pricing,
                 "execution_count": len(execution_pairs),
                 "execution_environment": latest_environment,
                 "resource_summary": {
@@ -435,6 +556,14 @@ def build_decision_overview(
             cases_by_cell[(model_key, capability_id)],
             deployment=str(cell.get("deployment") or ""),
         )
+        capability_pricing = _pricing_for_model(
+            run_pricing,
+            run_id=str(cell["run_id"]),
+            model_key=model_key,
+            model_id=cell.get("model_id"),
+            effective_model_id=cell.get("effective_model_id"),
+            provider_key=cell.get("provider_key"),
+        )
         capability_summaries.append(
             {
                 "run_id": cell["run_id"],
@@ -453,6 +582,7 @@ def build_decision_overview(
                 "sample_count": cell["sample_count"],
                 "failure_count": cell["failure_count"],
                 **observed,
+                "provider_cost_pricing": capability_pricing,
             }
         )
 
@@ -490,6 +620,14 @@ def build_decision_overview(
             dataset_cases,
             deployment=str(sample_cell.get("deployment") or ""),
         )
+        dataset_pricing = _pricing_for_model(
+            run_pricing,
+            run_id=str(sample_cell["run_id"]),
+            model_key=model_key,
+            model_id=sample_cell.get("model_id"),
+            effective_model_id=sample_cell.get("effective_model_id"),
+            provider_key=sample_cell.get("provider_key"),
+        )
         dataset_summaries.append(
             {
                 "model_key": model_key,
@@ -503,6 +641,7 @@ def build_decision_overview(
                 ),
                 "sample_count": len(dataset_cases),
                 **observed,
+                "provider_cost_pricing": dataset_pricing,
             }
         )
 
