@@ -24,6 +24,7 @@ declare global {
   interface Window {
     __MCB_OVERVIEW__?: OverviewPayload;
     __MCB_CAPABILITY__?: CapabilityPayload;
+    __MCB_CAPABILITIES__?: Record<string, CapabilityPayload>;
     __MCB_MODELS__?: Record<string, ModelPayload>;
     __MCB_RUNS__?: Record<string, RunPayload>;
   }
@@ -33,6 +34,10 @@ const overview =
   (window.__MCB_OVERVIEW__ ?? overviewFixture) as OverviewPayload;
 const capability =
   (window.__MCB_CAPABILITY__ ?? capabilityFixture) as CapabilityPayload;
+const capabilityPayloads: Record<string, CapabilityPayload> =
+  window.__MCB_CAPABILITIES__ ?? {
+    [capability.capability_id]: capability,
+  };
 const modelPayloads = window.__MCB_MODELS__ ?? {};
 const runPayloads = window.__MCB_RUNS__ ?? {};
 
@@ -44,6 +49,13 @@ function points(value: number | null): string {
   if (value === null) return '—';
   const sign = value > 0 ? '+' : '';
   return sign + (value * 100).toFixed(1) + ' pp';
+}
+
+function capabilityLabel(value: string): string {
+  return value
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function Link({
@@ -261,10 +273,10 @@ function OverviewPage() {
   );
 }
 
-function CapabilityPage() {
-  const comparison = capability.comparison;
+function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
+  const comparison = payload.comparison;
   const families = Array.from(
-    new Set(capability.family_breakdown.map((row) => row.family)),
+    new Set(payload.family_breakdown.map((row) => row.family)),
   );
 
   return (
@@ -273,14 +285,14 @@ function CapabilityPage() {
       <header className="page-header">
         <div>
           <div className="eyebrow">Capability detail</div>
-          <h1>Structured output</h1>
+          <h1>{capabilityLabel(payload.capability_id)}</h1>
           <p>
             Exact-match quality, paired comparison and failure-family
             breakdown.
           </p>
         </div>
         <Link
-          href="/capabilities/structured-output/disagreements"
+          href={'/capabilities/' + payload.capability_id + '/disagreements'}
           className="primary-button"
         >
           Explore disagreements
@@ -288,7 +300,7 @@ function CapabilityPage() {
       </header>
 
       <div className="hero-grid">
-        {capability.cells.map((cell) => (
+        {payload.cells.map((cell) => (
           <section className="score-card" key={cell.model_signature}>
             <span>{cell.model_key}</span>
             <strong>{percent(cell.primary_value)}</strong>
@@ -322,15 +334,15 @@ function CapabilityPage() {
         <div className="family-table">
           <div className="family-row family-head">
             <div>Family</div>
-            {capability.cells.map((cell) => (
+            {payload.cells.map((cell) => (
               <div key={cell.model_key}>{cell.model_key}</div>
             ))}
           </div>
           {families.map((family) => (
             <div className="family-row" key={family}>
               <div><strong>{family}</strong></div>
-              {capability.cells.map((cell) => {
-                const row = capability.family_breakdown.find(
+              {payload.cells.map((cell) => {
+                const row = payload.family_breakdown.find(
                   (item) =>
                     item.family === family &&
                     item.model_key === cell.model_key,
@@ -355,7 +367,7 @@ function CapabilityPage() {
       <section className="card methodology-strip">
         <div>
           <strong>Same benchmark signature</strong>
-          <span>{capability.benchmark_signatures[0]}</span>
+          <span>{payload.benchmark_signatures[0]}</span>
         </div>
         <div>
           <strong>McNemar p</strong>
@@ -381,11 +393,11 @@ function OutcomeBadge({ outcome }: { outcome: Disagreement['outcome'] }) {
   return <span className={'outcome ' + outcome}>{labels[outcome]}</span>;
 }
 
-function DisagreementsPage() {
+function DisagreementsPage({ payload }: { payload: CapabilityPayload }) {
   const [filter, setFilter] = useState<Disagreement['outcome'] | 'all'>(
     'all',
   );
-  const items = capability.disagreements.filter(
+  const items = payload.disagreements.filter(
     (item) => filter === 'all' || item.outcome === filter,
   );
 
@@ -402,7 +414,7 @@ function DisagreementsPage() {
           </p>
         </div>
         <Link
-          href="/capabilities/structured-output"
+          href={'/capabilities/' + payload.capability_id}
           className="secondary-button"
         >
           Back to capability
@@ -413,8 +425,8 @@ function DisagreementsPage() {
         {(
           [
             ['all', 'All'],
-            ['b_only_correct', 'GPT only correct'],
-            ['a_only_correct', 'Qwen only correct'],
+            ['b_only_correct', 'Model B only'],
+            ['a_only_correct', 'Model A only'],
             ['both_wrong', 'Both wrong'],
             ['pipeline_failure', 'Pipeline failures'],
           ] as const
@@ -856,6 +868,216 @@ function SharePage() {
   );
 }
 
+function ComparePage() {
+  const capabilityIds = Object.keys(capabilityPayloads).sort();
+  const initialCapabilityId =
+    capabilityIds[0] ?? capability.capability_id;
+  const [capabilityId, setCapabilityId] = useState(initialCapabilityId);
+  const payload = capabilityPayloads[capabilityId] ?? capability;
+
+  const modelKeys = payload.cells.map((cell) => cell.model_key);
+  const [modelAKey, setModelAKey] = useState(modelKeys[0] ?? '');
+  const [modelBKey, setModelBKey] = useState(
+    modelKeys[1] ?? modelKeys[0] ?? '',
+  );
+
+  const modelA =
+    payload.cells.find((cell) => cell.model_key === modelAKey) ??
+    payload.cells[0] ??
+    null;
+  const modelB =
+    payload.cells.find(
+      (cell) =>
+        cell.model_key === modelBKey &&
+        cell.model_key !== modelA?.model_key,
+    ) ??
+    payload.cells.find((cell) => cell.model_key !== modelA?.model_key) ??
+    null;
+
+  const delta =
+    modelA?.primary_value !== null &&
+    modelA?.primary_value !== undefined &&
+    modelB?.primary_value !== null &&
+    modelB?.primary_value !== undefined
+      ? modelB.primary_value - modelA.primary_value
+      : null;
+  const comparable = Boolean(
+    modelA &&
+      modelB &&
+      modelA.benchmark_signature === modelB.benchmark_signature,
+  );
+  const families = Array.from(
+    new Set(payload.family_breakdown.map((row) => row.family)),
+  );
+
+  const changeCapability = (nextId: string) => {
+    setCapabilityId(nextId);
+    const nextPayload = capabilityPayloads[nextId];
+    const nextModels = nextPayload?.cells.map((cell) => cell.model_key) ?? [];
+    setModelAKey(nextModels[0] ?? '');
+    setModelBKey(nextModels[1] ?? nextModels[0] ?? '');
+  };
+
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Same-lineage comparison</div>
+          <h1>Compare models</h1>
+          <p>
+            Compare two CURRENT model results only inside the same benchmark
+            signature. No cross-task overall score is synthesized.
+          </p>
+        </div>
+        <span className={comparable ? 'status-chip good' : 'status-chip'}>
+          {comparable ? 'Comparable' : 'Not comparable'}
+        </span>
+      </header>
+
+      <section className="card compare-controls">
+        <label>
+          <span>Capability</span>
+          <select
+            value={capabilityId}
+            onChange={(event) => changeCapability(event.target.value)}
+          >
+            {capabilityIds.map((id) => (
+              <option key={id} value={id}>
+                {capabilityLabel(id)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Model A</span>
+          <select
+            value={modelA?.model_key ?? ''}
+            onChange={(event) => setModelAKey(event.target.value)}
+          >
+            {modelKeys.map((modelKey) => (
+              <option key={modelKey} value={modelKey}>
+                {modelKey}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Model B</span>
+          <select
+            value={modelB?.model_key ?? ''}
+            onChange={(event) => setModelBKey(event.target.value)}
+          >
+            {modelKeys
+              .filter((modelKey) => modelKey !== modelA?.model_key)
+              .map((modelKey) => (
+                <option key={modelKey} value={modelKey}>
+                  {modelKey}
+                </option>
+              ))}
+          </select>
+        </label>
+      </section>
+
+      <div className="hero-grid">
+        {[modelA, modelB].map((cell, index) => (
+          <section
+            className="score-card"
+            key={cell?.model_signature ?? 'missing-' + index}
+          >
+            <span>{index === 0 ? 'Model A' : 'Model B'} · {cell?.model_key ?? '—'}</span>
+            <strong>{percent(cell?.primary_value ?? null)}</strong>
+            <small>
+              {cell?.primary_metric ?? '—'} · n={cell?.sample_count ?? 0} ·
+              failures={cell?.failure_count ?? 0}
+            </small>
+          </section>
+        ))}
+        <section className="score-card comparison-card">
+          <span>B − A</span>
+          <strong>{points(delta)}</strong>
+          <small>
+            {comparable ? 'same benchmark signature' : 'comparison blocked'}
+          </small>
+        </section>
+      </div>
+
+      <section className="card methodology-strip">
+        <div>
+          <strong>Capability</strong>
+          <span>{capabilityLabel(payload.capability_id)}</span>
+        </div>
+        <div>
+          <strong>Benchmark lineage</strong>
+          <span>
+            {comparable ? modelA?.benchmark_signature : 'NON_COMPARABLE'}
+          </span>
+        </div>
+        <div>
+          <strong>Execution lineage</strong>
+          <span>
+            {modelA?.execution_signature === modelB?.execution_signature
+              ? 'same'
+              : 'different / quality only'}
+          </span>
+        </div>
+      </section>
+
+      {comparable && families.length > 0 ? (
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Family breakdown</h2>
+              <p>See where the quality delta comes from.</p>
+            </div>
+            <Link
+              href={'/capabilities/' + payload.capability_id}
+              className="secondary-button"
+            >
+              Open capability
+            </Link>
+          </div>
+          <div className="family-table">
+            <div className="family-row family-head">
+              <div>Family</div>
+              <div>{modelA?.model_key ?? 'Model A'}</div>
+              <div>{modelB?.model_key ?? 'Model B'}</div>
+            </div>
+            {families.map((family) => {
+              const a = payload.family_breakdown.find(
+                (row) =>
+                  row.family === family &&
+                  row.model_key === modelA?.model_key,
+              );
+              const b = payload.family_breakdown.find(
+                (row) =>
+                  row.family === family &&
+                  row.model_key === modelB?.model_key,
+              );
+              return (
+                <div className="family-row" key={family}>
+                  <div><strong>{family}</strong></div>
+                  {[a, b].map((row, index) => (
+                    <div key={index}>
+                      <div className="bar-track">
+                        <div
+                          className="bar-fill"
+                          style={{ width: percent(row?.value ?? null) }}
+                        />
+                      </div>
+                      <span>{percent(row?.value ?? null)}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+    </>
+  );
+}
+
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <>
@@ -877,16 +1099,30 @@ function PlaceholderPage({ title }: { title: string }) {
 
 export function App() {
   const pathname = usePathname();
+  const disagreementMatch = pathname.match(
+    /^\/capabilities\/([^/]+)\/disagreements$/,
+  );
+  const capabilityMatch = pathname.match(/^\/capabilities\/([^/]+)$/);
 
   let page: ReactNode;
   if (pathname === '/' || pathname === '/overview') {
     page = <OverviewPage />;
-  } else if (
-    pathname === '/capabilities/structured-output/disagreements'
-  ) {
-    page = <DisagreementsPage />;
-  } else if (pathname === '/capabilities/structured-output') {
-    page = <CapabilityPage />;
+  } else if (disagreementMatch) {
+    const capabilityId = decodeURIComponent(disagreementMatch[1]);
+    const payload = capabilityPayloads[capabilityId];
+    page = payload ? (
+      <DisagreementsPage payload={payload} />
+    ) : (
+      <PlaceholderPage title="Capability not found" />
+    );
+  } else if (capabilityMatch) {
+    const capabilityId = decodeURIComponent(capabilityMatch[1]);
+    const payload = capabilityPayloads[capabilityId];
+    page = payload ? (
+      <CapabilityPage payload={payload} />
+    ) : (
+      <PlaceholderPage title="Capability not found" />
+    );
   } else if (pathname === '/models') {
     page = <ModelsPage />;
   } else if (pathname.startsWith('/models/')) {
@@ -902,7 +1138,7 @@ export function App() {
       <RunPage runId={decodeURIComponent(pathname.slice('/runs/'.length))} />
     );
   } else if (pathname === '/compare') {
-    page = <PlaceholderPage title="Compare" />;
+    page = <ComparePage />;
   } else if (pathname === '/share' || pathname.startsWith('/share/')) {
     page = <SharePage />;
   } else {
