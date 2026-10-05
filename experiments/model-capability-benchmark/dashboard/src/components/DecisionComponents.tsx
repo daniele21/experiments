@@ -335,11 +335,15 @@ export function TradeoffScatter({
 export function QualityLeaderboard({
   models,
   selectedModel,
+  hoveredModel,
   onSelect,
+  onHover,
 }: {
   models: DecisionModelSummary[];
   selectedModel?: string | null;
+  hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const ranked = [...models].sort((a, b) => {
     if (a.quality_coverage_complete !== b.quality_coverage_complete) {
@@ -366,15 +370,17 @@ export function QualityLeaderboard({
             type="button"
             key={model.model_signature}
             className={
-              selectedModel === model.model_signature
-                ? 'leader-row selected'
-                : 'leader-row'
+              'leader-row ' +
+              (selectedModel === model.model_signature ? 'selected ' : '') +
+              (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
             }
             onClick={() => onSelect?.(model.model_signature)}
+            onMouseEnter={() => onHover?.(model.model_signature)}
+            onMouseLeave={() => onHover?.(null)}
           >
             <span className="rank">{index + 1}</span>
             <span className="leader-name">
-              <strong>{model.model_key}</strong>
+              <strong><ModelMarker signature={model.model_signature} /> {model.model_key}</strong>
               <span>
                 <DeploymentBadge deployment={model.deployment} />
                 {!model.quality_coverage_complete ? (
@@ -387,6 +393,7 @@ export function QualityLeaderboard({
                 style={{
                   width:
                     ((model.overall_quality_score ?? 0) / max) * 100 + '%',
+                  background: modelVisual(model.model_signature).color,
                 }}
               />
             </span>
@@ -457,9 +464,17 @@ function buildDatasetLandscapeRows(
 export function DatasetPerformanceLandscape({
   datasets,
   models,
+  selectedModel,
+  hoveredModel,
+  onSelect,
+  onHover,
 }: {
   datasets: DecisionDatasetSummary[];
   models: DecisionModelSummary[];
+  selectedModel?: string | null;
+  hoveredModel?: string | null;
+  onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const [view, setView] = useState<DatasetLandscapeView>('score');
   const [sortMode, setSortMode] = useState<DatasetLandscapeSort>('discriminative');
@@ -535,6 +550,15 @@ export function DatasetPerformanceLandscape({
         </div>
       </div>
 
+      <ModelLegend
+        models={models}
+        hoveredModel={hoveredModel}
+        selectedModel={selectedModel}
+        onHover={onHover}
+        onSelect={onSelect}
+        compact={models.length > 8}
+      />
+
       <div className="dataset-insight-chips">
         <div><Trophy size={14}/><span>Most wins</span><strong>{mostWins ? mostWins[0] + ' · ' + mostWins[1] : '—'}</strong></div>
         <div><span>Best local</span><strong>{bestLocal ? bestLocal[0] : '—'}</strong></div>
@@ -578,18 +602,40 @@ export function DatasetPerformanceLandscape({
                       : view === 'delta'
                         ? delta == null ? '—' : delta === 0 ? 'best' : delta.toFixed(1)
                         : score(scoreValue);
+                  const hovered = hoveredModel === model.model_signature;
+                  const selected = selectedModel === model.model_signature;
+                  const dimmed = Boolean(hoveredModel && !hovered);
+                  const showValue =
+                    hovered ||
+                    selected ||
+                    row.winner_model_key === model.model_key ||
+                    models.length <= 4;
                   return scoreValue == null ? null : (
                     <div
                       key={model.model_signature}
-                      className={'dataset-landscape-point ' + model.deployment}
+                      className={
+                        'dataset-landscape-point ' +
+                        (selected ? 'selected ' : '') +
+                        (hovered ? 'hovered ' : '') +
+                        (dimmed ? 'dimmed' : '')
+                      }
                       style={{
                         left: Math.max(0, Math.min(100, scoreValue)) + '%',
                         top: ((modelIndex + 1) / (models.length + 1)) * 100 + '%',
                       }}
                       title={model.model_key + ' · ' + display}
+                      role="button"
+                      tabIndex={0}
+                      onMouseEnter={() => onHover?.(model.model_signature)}
+                      onMouseLeave={() => onHover?.(null)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onSelect?.(model.model_signature);
+                      }}
                     >
-                      <i/>
-                      <span>{display}</span>
+                      <ModelMarker signature={model.model_signature} size={10} />
+                      {showValue ? <span>{display}</span> : null}
                     </div>
                   );
                 })}
@@ -717,14 +763,30 @@ export function DatasetDeltaSlopegraph({
   );
 }
 
+function performanceBand(value: number | null): string {
+  if (value == null) return 'unavailable';
+  if (value < 40) return 'poor';
+  if (value < 60) return 'weak';
+  if (value < 80) return 'good';
+  return 'excellent';
+}
+
 export function DatasetHeatmap({
   datasets,
   models,
   view = 'score',
+  selectedModel,
+  hoveredModel,
+  onSelect,
+  onHover,
 }: {
   datasets: DecisionDatasetSummary[];
   models: DecisionModelSummary[];
   view?: 'score' | 'delta' | 'rank';
+  selectedModel?: string | null;
+  hoveredModel?: string | null;
+  onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
   const modelKeys = models.map((model) => model.model_key);
   const rows = Array.from(
@@ -760,6 +822,13 @@ export function DatasetHeatmap({
         </div>
         <span className="semantic-chip">{view === 'score' ? 'Score' : view}</span>
       </div>
+      <div className="performance-legend">
+        <span><i className="performance-poor" /> Poor &lt;40</span>
+        <span><i className="performance-weak" /> Weak 40–59</span>
+        <span><i className="performance-good" /> Good 60–79</span>
+        <span><i className="performance-excellent" /> Excellent 80–100</span>
+        <span><i className="performance-unavailable" /> No comparable result</span>
+      </div>
       <div className="heatmap-scroll">
         <div
           className="heatmap-grid"
@@ -768,8 +837,20 @@ export function DatasetHeatmap({
           <div className="heatmap-head">Capability / dataset</div>
           <div className="heatmap-head samples">n</div>
           {models.map((model) => (
-            <div className="heatmap-head model" key={model.model_signature}>
-              <span>{model.model_key}</span>
+            <div
+              className={
+                'heatmap-head model ' +
+                (selectedModel === model.model_signature ? 'selected ' : '') +
+                (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
+              }
+              key={model.model_signature}
+              role="button"
+              tabIndex={0}
+              onMouseEnter={() => onHover?.(model.model_signature)}
+              onMouseLeave={() => onHover?.(null)}
+              onClick={() => onSelect?.(model.model_signature)}
+            >
+              <span><ModelMarker signature={model.model_signature} /> {model.model_key}</span>
               <DeploymentBadge deployment={model.deployment} />
             </div>
           ))}
@@ -803,6 +884,7 @@ export function DatasetHeatmap({
                 </AppLink>
                 <div className="heatmap-samples">{row.sample_count}</div>
                 {modelKeys.map((modelKey) => {
+                  const model = models.find((item) => item.model_key === modelKey);
                   const cell = byCell.get(
                     modelKey + '::' + row.capability_id + '::' + row.dataset_id,
                   );
@@ -821,12 +903,23 @@ export function DatasetHeatmap({
                             ? 'best'
                             : delta.toFixed(1)
                         : score(value);
-                  const heat = value == null ? 0 : Math.max(0, Math.min(1, value / 100));
+                  const isWinner = value != null && best != null && value === best;
+                  const signature = model?.model_signature ?? modelKey;
+                  const dimmed = Boolean(
+                    hoveredModel && hoveredModel !== signature,
+                  );
                   return (
                     <div
                       key={modelKey}
-                      className="heatmap-cell"
-                      style={{ '--heat': heat } as CSSProperties}
+                      className={
+                        'heatmap-cell performance-' + performanceBand(value) + ' ' +
+                        (isWinner ? 'winner ' : '') +
+                        (selectedModel === signature ? 'selected ' : '') +
+                        (dimmed ? 'dimmed' : '')
+                      }
+                      onMouseEnter={() => onHover?.(signature)}
+                      onMouseLeave={() => onHover?.(null)}
+                      onClick={() => onSelect?.(signature)}
                       title={
                         cell
                           ? [
@@ -852,6 +945,7 @@ export function DatasetHeatmap({
                           : 'No CURRENT comparable result'
                       }
                     >
+                      {isWinner && view === 'score' ? <span className="cell-winner">★</span> : null}
                       {display}
                     </div>
                   );
