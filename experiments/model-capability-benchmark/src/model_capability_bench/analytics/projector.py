@@ -220,6 +220,8 @@ def _create_schema(connection: Any) -> None:
             status VARCHAR,
             primary_metric VARCHAR,
             primary_value DOUBLE,
+            comparison_metric VARCHAR,
+            practical_delta DOUBLE,
             completed_at_utc VARCHAR,
             PRIMARY KEY (run_id, model_key, capability_id)
         );
@@ -474,7 +476,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
             connection.execute(
                 """
                 INSERT INTO benchmark_cells
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     run_id,
@@ -490,6 +492,16 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     cell_status,
                     primary_metric,
                     float(value) if isinstance(value, (int, float)) else None,
+                    _text(_mapping(capability.get("comparison")).get("metric"))
+                    or None,
+                    (
+                        float(_mapping(capability.get("comparison")).get("practical_delta"))
+                        if isinstance(
+                            _mapping(capability.get("comparison")).get("practical_delta"),
+                            (int, float),
+                        )
+                        else None
+                    ),
                     completed_at,
                 ],
             )
