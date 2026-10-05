@@ -511,6 +511,260 @@ nav { display: grid; gap: 5px; }
 }
 
 
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.model-card {
+  display: grid;
+  gap: 16px;
+}
+
+.model-card > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.model-card > div:first-child span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.model-capabilities {
+  display: grid;
+  gap: 7px;
+}
+
+.model-capabilities span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.model-capabilities b {
+  color: var(--green);
+}
+
+.profile-list {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto 54px;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 9px;
+}
+
+.profile-list > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-list span { font-size: 11px; }
+.profile-list strong { color: var(--green); }
+.profile-list small { color: var(--muted); text-align: right; }
+
+.metadata-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.metadata-list div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+  font-size: 10px;
+}
+
+.metadata-list dt { color: var(--muted); }
+.metadata-list dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-table {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.history-table > div {
+  display: grid;
+  grid-template-columns: 180px 1fr 90px 100px;
+  gap: 12px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  font-size: 10px;
+}
+
+.history-table > div:last-child { border-bottom: 0; }
+.history-table span,
+.history-table em { color: var(--muted); font-style: normal; }
+.history-table b { color: var(--green); }
+
+.muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.run-table {
+  display: grid;
+  grid-template-columns: 1.4fr .7fr .6fr 1.1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.run-head {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px 10px;
+}
+
+.run-row {
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+}
+
+.run-row:last-child { border-bottom: 0; }
+.run-row:hover { background: #fafbff; }
+
+.run-status {
+  width: fit-content;
+  border-radius: 6px;
+  padding: 4px 6px;
+  background: #eef1f5;
+}
+
+.run-status.completed {
+  background: var(--green-soft);
+  color: #08794b;
+}
+
+.run-status.partial {
+  background: #fff6e7;
+  color: #a9610e;
+}
+
+.run-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.run-kpis > div {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.run-kpis span {
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.run-kpis strong { font-size: 18px; }
+
+.run-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.run-timeline > div {
+  display: grid;
+  grid-template-columns: 150px 14px 1fr auto;
+  gap: 8px;
+  min-height: 43px;
+  align-items: start;
+  font-size: 10px;
+}
+
+.run-timeline > div > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.run-timeline i {
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  position: relative;
+}
+
+.run-timeline i::after {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 36px;
+  background: #dde2ea;
+  left: 3px;
+  top: 7px;
+}
+
+.run-timeline > div:last-child i::after { display: none; }
+
+.run-timeline > div > div {
+  display: grid;
+  gap: 3px;
+}
+
+.run-timeline small,
+.run-timeline em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 9px;
+}
+
+.failure-list {
+  display: grid;
+  gap: 8px;
+}
+
+.failure-list > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  border: 1px solid var(--border);
+  padding: 9px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.failure-list span { color: var(--muted); }
+
+.empty-success {
+  min-height: 100px;
+  display: grid;
+  place-items: center;
+  background: var(--green-soft);
+  color: #08794b;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
 .share-workspace {
   display: grid;
   grid-template-columns: 260px minmax(0, 760px);
