@@ -48,6 +48,10 @@ def write_run_artifacts(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     grouped_models: dict[str, list[str]] = defaultdict(list)
+    signatures = summary.metadata.get("signatures") or {}
+    model_signatures = signatures.get("models") or {}
+    execution_signatures = signatures.get("executions") or {}
+    benchmark_signatures = signatures.get("benchmarks") or {}
     resolved_models: list[dict[str, Any]] = []
     for model_key in config.model_keys:
         resolved = suite.models.resolve(model_key)
@@ -61,6 +65,18 @@ def write_run_artifacts(
                 "provider_key": resolved.provider.provider_key,
                 "deployment": resolved.runtime.deployment,
                 "lifecycle": resolved.runtime.lifecycle,
+                "model_signature": model_signatures.get(model_key),
+                "execution_signature": execution_signatures.get(model_key),
+                "artifact_format": (
+                    resolved.model.artifact.format
+                    if resolved.model.artifact is not None
+                    else None
+                ),
+                "quantization": (
+                    resolved.model.artifact.quantization
+                    if resolved.model.artifact is not None
+                    else None
+                ),
             }
         )
 
@@ -77,6 +93,9 @@ def write_run_artifacts(
             "capability_id": capability.spec.capability_id,
             "task_id": capability.spec.task_id,
             "dataset_ids": list(capability.spec.dataset_ids),
+            "benchmark_signature": benchmark_signatures.get(
+                capability.spec.capability_id
+            ),
             "benchmark": {
                 tier_id: to_jsonable(tier)
                 for tier_id, tier in capability.spec.benchmark_tiers.items()
@@ -143,6 +162,7 @@ def write_run_artifacts(
         },
         "models": resolved_models,
         "capabilities": selected_capabilities,
+        "signatures": signatures,
         "config_checksums": _config_checksums(suite.root),
         "evidence": {
             "state": "state.jsonl",
