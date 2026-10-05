@@ -15,13 +15,17 @@ import { navigate, usePathname } from './router';
 import type {
   CapabilityPayload,
   Disagreement,
+  ModelPayload,
   OverviewPayload,
+  RunPayload,
 } from './types';
 
 declare global {
   interface Window {
     __MCB_OVERVIEW__?: OverviewPayload;
     __MCB_CAPABILITY__?: CapabilityPayload;
+    __MCB_MODELS__?: Record<string, ModelPayload>;
+    __MCB_RUNS__?: Record<string, RunPayload>;
   }
 }
 
@@ -29,6 +33,8 @@ const overview =
   (window.__MCB_OVERVIEW__ ?? overviewFixture) as OverviewPayload;
 const capability =
   (window.__MCB_CAPABILITY__ ?? capabilityFixture) as CapabilityPayload;
+const modelPayloads = window.__MCB_MODELS__ ?? {};
+const runPayloads = window.__MCB_RUNS__ ?? {};
 
 function percent(value: number | null): string {
   return value === null ? '—' : (value * 100).toFixed(1) + '%';
@@ -477,6 +483,279 @@ function DisagreementsPage() {
   );
 }
 
+function ModelsPage() {
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Current model signatures</div>
+          <h1>Models</h1>
+          <p>
+            Each profile is tied to an exact model signature; quantization
+            changes create a distinct identity.
+          </p>
+        </div>
+      </header>
+      <div className="model-grid">
+        {overview.models.map((model) => {
+          const cells = overview.cells.filter(
+            (cell) => cell.model_signature === model.model_signature,
+          );
+          return (
+            <Link
+              key={model.model_signature}
+              href={'/models/' + encodeURIComponent(model.model_signature)}
+              className="card model-card"
+            >
+              <div>
+                <strong>{model.model_key}</strong>
+                <span>{model.deployment} · {model.runtime_key}</span>
+              </div>
+              <div className="model-capabilities">
+                {cells.map((cell) => (
+                  <span key={cell.capability_id}>
+                    {cell.capability_id}
+                    <b>{percent(cell.primary_value)}</b>
+                  </span>
+                ))}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function ModelPage({ signature }: { signature: string }) {
+  const payload = Object.values(modelPayloads).find(
+    (item) => item.model_signature === signature,
+  );
+  const model = payload?.model ??
+    overview.models.find((item) => item.model_signature === signature) ??
+    null;
+  const currentCells = payload?.current_cells ??
+    overview.cells.filter((item) => item.model_signature === signature);
+  const history = payload?.history ?? [];
+
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Exact model signature</div>
+          <h1>{model?.model_key ?? 'Model'}</h1>
+          <p>{model?.model_id ?? signature}</p>
+        </div>
+        <span className="status-chip good">
+          {model?.deployment ?? 'unknown'}
+        </span>
+      </header>
+      <div className="two-col">
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Capability profile</h2>
+              <p>CURRENT values only, with no cross-task overall score.</p>
+            </div>
+          </div>
+          <div className="profile-list">
+            {currentCells.map((cell) => (
+              <div key={cell.capability_id}>
+                <span>{cell.capability_id}</span>
+                <strong>{percent(cell.primary_value)}</strong>
+                <small>n={cell.sample_count}</small>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Execution identity</h2>
+              <p>Performance should only be compared inside this lineage.</p>
+            </div>
+          </div>
+          <dl className="metadata-list">
+            <div><dt>Runtime</dt><dd>{model?.runtime_key ?? '—'}</dd></div>
+            <div><dt>Provider</dt><dd>{model?.provider_key ?? '—'}</dd></div>
+            <div>
+              <dt>Quantization</dt>
+              <dd>{payload?.model?.quantization ?? '—'}</dd>
+            </div>
+            <div><dt>Signature</dt><dd>{signature}</dd></div>
+          </dl>
+        </section>
+      </div>
+      <section className="card">
+        <div className="section-heading">
+          <div>
+            <h2>Comparable history</h2>
+            <p>
+              Lines are not connected across benchmark signatures.
+            </p>
+          </div>
+        </div>
+        {history.length ? (
+          <div className="history-table">
+            {history.map((row) => (
+              <div key={row.run_id + row.capability_id}>
+                <span>{row.completed_at_utc}</span>
+                <strong>{row.capability_id}</strong>
+                <b>{percent(row.primary_value)}</b>
+                <em>{row.result_state}</em>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">
+            History appears after projected real runs are injected.
+          </p>
+        )}
+      </section>
+    </>
+  );
+}
+
+function RunsPage() {
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Operational observability</div>
+          <h1>Runs</h1>
+          <p>
+            Completed, historical and partial executions stay visible without
+            changing CURRENT quality results.
+          </p>
+        </div>
+      </header>
+      <section className="card">
+        <div className="run-table run-head">
+          <span>Run</span><span>Status</span><span>Profile</span>
+          <span>Completed</span><span>Commit</span>
+        </div>
+        {overview.runs.map((run) => {
+          const runId = String(run.run_id ?? '');
+          return (
+            <Link
+              key={runId}
+              href={'/runs/' + encodeURIComponent(runId)}
+              className="run-table run-row"
+            >
+              <strong>{runId}</strong>
+              <span className={'run-status ' + String(run.status).toLowerCase()}>
+                {String(run.status ?? 'UNKNOWN')}
+              </span>
+              <span>{String(run.profile ?? '—')}</span>
+              <span>{String(run.completed_at_utc ?? '—')}</span>
+              <span>{String(run.git_commit ?? '—')}</span>
+            </Link>
+          );
+        })}
+      </section>
+    </>
+  );
+}
+
+function RunPage({ runId }: { runId: string }) {
+  const payload = runPayloads[runId];
+  const summary = payload?.run ??
+    overview.runs.find((run) => String(run.run_id) === runId);
+
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Run detail</div>
+          <h1>{runId}</h1>
+          <p>
+            Lifecycle timeline is separated from model-quality evidence.
+          </p>
+        </div>
+        <span className="status-chip">
+          {String(summary?.status ?? 'UNKNOWN')}
+        </span>
+      </header>
+      <div className="run-kpis">
+        <div><span>Models</span><strong>{payload?.models.length ?? '—'}</strong></div>
+        <div><span>Cells</span><strong>{payload?.cells.length ?? '—'}</strong></div>
+        <div>
+          <span>Failures</span>
+          <strong>
+            {payload?.failure_summary.reduce(
+              (total, item) => total + item.count,
+              0,
+            ) ?? '—'}
+          </strong>
+        </div>
+        <div><span>Profile</span><strong>{String(summary?.profile ?? '—')}</strong></div>
+      </div>
+      <div className="two-col run-columns">
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Lifecycle timeline</h2>
+              <p>Case-level events stay collapsed out of the default view.</p>
+            </div>
+          </div>
+          {payload?.timeline.length ? (
+            <div className="run-timeline">
+              {payload.timeline.map((event, index) => (
+                <div key={event.timestamp_utc + event.event_type + index}>
+                  <span>{event.timestamp_utc}</span>
+                  <i />
+                  <div>
+                    <strong>{event.event_type}</strong>
+                    <small>
+                      {[event.model_key, event.capability_id]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </small>
+                  </div>
+                  <em>
+                    {event.duration_ms == null
+                      ? event.status ?? ''
+                      : Math.round(event.duration_ms) + ' ms'}
+                  </em>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">
+              Detailed timeline is available after projecting real typed events.
+            </p>
+          )}
+        </section>
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Failures</h2>
+              <p>Grouped by lifecycle stage and typed error.</p>
+            </div>
+          </div>
+          {payload?.failure_summary.length ? (
+            <div className="failure-list">
+              {payload.failure_summary.map((failure) => (
+                <div key={failure.event_type + failure.error_type}>
+                  <strong>{failure.event_type}</strong>
+                  <span>{failure.error_type}</span>
+                  <b>{failure.count}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-success">No lifecycle failures recorded.</div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
 function SharePage() {
   const comparison = capability.comparison;
   const first = capability.cells[0];
@@ -609,9 +888,19 @@ export function App() {
   } else if (pathname === '/capabilities/structured-output') {
     page = <CapabilityPage />;
   } else if (pathname === '/models') {
-    page = <PlaceholderPage title="Models" />;
+    page = <ModelsPage />;
+  } else if (pathname.startsWith('/models/')) {
+    page = (
+      <ModelPage
+        signature={decodeURIComponent(pathname.slice('/models/'.length))}
+      />
+    );
   } else if (pathname === '/runs') {
-    page = <PlaceholderPage title="Runs" />;
+    page = <RunsPage />;
+  } else if (pathname.startsWith('/runs/')) {
+    page = (
+      <RunPage runId={decodeURIComponent(pathname.slice('/runs/'.length))} />
+    );
   } else if (pathname === '/compare') {
     page = <PlaceholderPage title="Compare" />;
   } else if (pathname === '/share' || pathname.startsWith('/share/')) {
