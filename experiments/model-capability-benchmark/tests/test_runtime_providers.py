@@ -351,6 +351,7 @@ class _FakeControl:
             "cfg": {
                 "backend": "llama_server",
                 "quantization": "PTQ1_0",
+                "model_path": "/tmp/nonexistent-fixture.gguf",
             },
         }
 
