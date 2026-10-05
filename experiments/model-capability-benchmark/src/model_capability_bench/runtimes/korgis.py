@@ -81,6 +81,7 @@ class KorgisManagedRuntime:
         self.provider_builder = provider_builder
         self.control_factory = control_factory
         self._control_by_runtime: dict[str, KorgisControlClient] = {}
+        self._activation_by_model: dict[str, dict[str, Any]] = {}
 
     def _control(self, model: ResolvedModel) -> KorgisControlClient:
         runtime_key = model.runtime.runtime_key
@@ -125,6 +126,7 @@ class KorgisManagedRuntime:
                 f"Korgis failed to activate {model.effective_model_id!r}: "
                 f"{activation}"
             )
+        self._activation_by_model[model.model.model_key] = dict(activation)
         provider = self.provider_builder(model, self.environ)
         telemetry_enabled = self.environ.get(
             "MCB_RESOURCE_TELEMETRY",
@@ -149,6 +151,26 @@ class KorgisManagedRuntime:
             interval_seconds=interval_ms / 1000.0,
         )
 
+    def execution_metadata(self, model: ResolvedModel) -> dict[str, Any]:
+        activation = self._activation_by_model.get(model.model.model_key) or {}
+        metadata: dict[str, Any] = {"runtime_source": "korgis"}
+
+        runtime_identity = activation.get("runtime_identity")
+        if isinstance(runtime_identity, Mapping):
+            metadata["runtime_identity"] = dict(runtime_identity)
+
+        cfg = activation.get("cfg")
+        if isinstance(cfg, Mapping):
+            for key in ("backend", "quantization"):
+                value = cfg.get(key)
+                if value is not None:
+                    metadata[key] = value
+
+        activation_key = activation.get("key")
+        if activation_key:
+            metadata["runtime_key"] = str(activation_key)
+        return metadata
+
     def release(self, model: ResolvedModel) -> None:
         control = self._control(model)
         unloaded = control.unload(model.effective_model_id)
@@ -156,3 +178,4 @@ class KorgisManagedRuntime:
             raise RuntimeError(
                 f"Korgis failed to unload {model.effective_model_id!r}: {unloaded}"
             )
+        self._activation_by_model.pop(model.model.model_key, None)
