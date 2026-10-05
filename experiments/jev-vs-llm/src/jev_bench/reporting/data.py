@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import math
 from functools import lru_cache
 from pathlib import Path
@@ -28,7 +28,7 @@ def load_benchmark_registry() -> dict[str, Any]:
                 with c.open("r", encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {}
                     return data.get("models", {})
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - best-effort config discovery
                 pass
     return {}
 
@@ -45,7 +45,7 @@ def load_experiments_config() -> dict[str, Any]:
             try:
                 with c.open("r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - best-effort config discovery
                 pass
     return {}
 
@@ -63,7 +63,7 @@ def _get_manifest_parameters(run_group: str) -> dict[str, Any]:
                 with c.open("r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("parameters", {})
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - best-effort config discovery
                 pass
     return {}
 
@@ -303,8 +303,8 @@ def compute_overview(rows: pd.DataFrame) -> pd.DataFrame:
         )
 
         # Conditioned accuracy: evaluated strictly on valid requests
-        valid = group[group["valid"] == True]  # noqa: E712
-        primary_valid = valid[valid["primary_metric"].fillna(False) == True]  # noqa: E712
+        valid = group[group["valid"] == True]
+        primary_valid = valid[valid["primary_metric"].fillna(False) == True]
         valid_acc = (
             float(primary_valid["correct"].mean())
             if len(primary_valid) > 0
