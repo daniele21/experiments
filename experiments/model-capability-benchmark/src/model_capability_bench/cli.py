@@ -31,7 +31,7 @@ from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
 from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runtimes import RegistryRuntimeResolver
-from model_capability_bench.sharing import create_share_snapshot
+from model_capability_bench.sharing import create_share_snapshot, render_share_snapshot
 from model_capability_bench.suite import load_capability_suite
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -149,6 +149,15 @@ def build_parser() -> argparse.ArgumentParser:
     share_create.add_argument("--title")
     share_create.add_argument("--results-root", type=Path)
     share_create.add_argument("--database", type=Path)
+
+    share_render = share_sub.add_parser(
+        "render",
+        help="Render an immutable share snapshot into PNG cards and/or PDF.",
+    )
+    share_render.add_argument("--snapshot", required=True)
+    share_render.add_argument("--format", default="png,pdf")
+    share_render.add_argument("--results-root", type=Path)
+    share_render.add_argument("--chrome")
 
     sub.add_parser("models", help="List configured models.")
     sub.add_parser("tasks", help="List configured tasks.")
@@ -291,33 +300,55 @@ def main() -> int:
         return 0
 
     if args.command == "share":
-        if args.share_command != "create":
-            raise ValueError(f"Unsupported share command: {args.share_command}")
         results_root = (
             args.results_root.resolve()
             if args.results_root is not None
             else root / "results"
         )
-        database = (
-            args.database.resolve()
-            if args.database is not None
-            else results_root / "analytics" / "benchmark.duckdb"
-        )
-        model_keys = tuple(
-            value.strip()
-            for value in args.models.split(",")
-            if value.strip()
-        )
-        _json(
-            create_share_snapshot(
-                results_root=results_root,
-                database_path=database,
-                capability_id=args.capability,
-                model_keys=model_keys,
-                title=args.title,
+        if args.share_command == "create":
+            database = (
+                args.database.resolve()
+                if args.database is not None
+                else results_root / "analytics" / "benchmark.duckdb"
             )
-        )
-        return 0
+            model_keys = tuple(
+                value.strip()
+                for value in args.models.split(",")
+                if value.strip()
+            )
+            _json(
+                create_share_snapshot(
+                    results_root=results_root,
+                    database_path=database,
+                    capability_id=args.capability,
+                    model_keys=model_keys,
+                    title=args.title,
+                )
+            )
+            return 0
+
+        if args.share_command == "render":
+            snapshot_arg = Path(args.snapshot)
+            snapshot_path = (
+                snapshot_arg.resolve()
+                if snapshot_arg.is_file()
+                else results_root / "shares" / args.snapshot / "snapshot.json"
+            )
+            formats = tuple(
+                value.strip()
+                for value in args.format.split(",")
+                if value.strip()
+            )
+            _json(
+                render_share_snapshot(
+                    snapshot_path=snapshot_path,
+                    formats=formats,
+                    chrome_binary=args.chrome,
+                )
+            )
+            return 0
+
+        raise ValueError(f"Unsupported share command: {args.share_command}")
 
     if args.command == "report":
         reporting_config = load_reporting_config(root)
