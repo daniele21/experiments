@@ -96,8 +96,17 @@ def create_share_snapshot(
         "title": title or f"{capability_id}: model comparison",
         "capability_id": capability_id,
         "model_keys": list(model_keys),
+        "model_signatures": [
+            str(cell["model_signature"])
+            for cell in cells
+        ],
+        "execution_signatures": [
+            str(cell["execution_signature"])
+            for cell in cells
+        ],
         "run_ids": run_ids,
         "benchmark_signature": benchmark_signatures[0],
+        "profile": cells[0].get("profile") if cells else None,
         "cells": cells,
         "comparison": comparison,
         "family_breakdown": [
@@ -110,8 +119,12 @@ def create_share_snapshot(
             "source": "CURRENT projected benchmark evidence",
         },
         "sources": {
-            "database": str(database_path.resolve()),
-            "capability_payload": str(capability_path),
+            "database": str(
+                database_path.resolve().relative_to(results_root)
+            ),
+            "capability_payload": str(
+                capability_path.relative_to(results_root)
+            ),
             "capability_payload_sha256": sha256_file(capability_path),
         },
     }
