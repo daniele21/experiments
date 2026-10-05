@@ -137,11 +137,96 @@ def export_dashboard_data(
                      AND cm.attempt = c.attempt
                     WHERE c.capability_id = ?
                       AND c.benchmark_signature = ?
+                      AND c.run_id IN (
+                          SELECT run_id
+                          FROM v_current_quality_results
+                          WHERE capability_id = ?
+                            AND benchmark_signature = ?
+                      )
                     ORDER BY c.sample_id, c.model_key, cm.metric
                     """,
-                    [capability_id, sig],
+                    [capability_id, sig, capability_id, sig],
                 )
                 payload["cases"] = case_rows
+
+                primary_by_model = {
+                    row["model_key"]: row["primary_metric"]
+                    for row in cells
+                }
+                primary_rows = [
+                    row
+                    for row in case_rows
+                    if row["metric"] == primary_by_model.get(row["model_key"])
+                    and row["value"] is not None
+                ]
+                grouped: dict[tuple[str, str], list[float]] = {}
+                for row in primary_rows:
+                    family = row["family"] or "unclassified"
+                    grouped.setdefault(
+                        (row["model_key"], family),
+                        [],
+                    ).append(float(row["value"]))
+                payload["family_breakdown"] = [
+                    {
+                        "model_key": model_key,
+                        "family": family,
+                        "value": sum(values) / len(values),
+                        "sample_count": len(values),
+                    }
+                    for (model_key, family), values in sorted(grouped.items())
+                ]
+
+                comparable_models = sorted(
+                    {row["model_key"] for row in primary_rows}
+                )
+                disagreements: list[dict[str, Any]] = []
+                if len(comparable_models) == 2:
+                    model_a, model_b = comparable_models
+                    by_sample: dict[str, dict[str, dict[str, Any]]] = {}
+                    for row in primary_rows:
+                        by_sample.setdefault(row["sample_id"], {})[
+                            row["model_key"]
+                        ] = row
+                    for sample_id, pair in sorted(by_sample.items()):
+                        if model_a not in pair or model_b not in pair:
+                            continue
+                        a = pair[model_a]
+                        b = pair[model_b]
+                        if not (
+                            a["inference_valid"]
+                            and a["evaluation_valid"]
+                            and b["inference_valid"]
+                            and b["evaluation_valid"]
+                        ):
+                            outcome = "pipeline_failure"
+                        else:
+                            a_ok = float(a["value"]) == 1.0
+                            b_ok = float(b["value"]) == 1.0
+                            if a_ok and b_ok:
+                                outcome = "both_correct"
+                            elif a_ok:
+                                outcome = "a_only_correct"
+                            elif b_ok:
+                                outcome = "b_only_correct"
+                            else:
+                                outcome = "both_wrong"
+                        disagreements.append(
+                            {
+                                "sample_id": sample_id,
+                                "model_a": model_a,
+                                "model_b": model_b,
+                                "outcome": outcome,
+                                "family": a["family"],
+                                "difficulty": a["difficulty"],
+                                "challenge_type": a["challenge_type"],
+                                "dataset_id": a["dataset_id"],
+                                "case_a": a["case_id"],
+                                "case_b": b["case_id"],
+                                "value_a": a["value"],
+                                "value_b": b["value"],
+                            }
+                        )
+                payload["disagreements"] = disagreements
             (capability_dir / f"{capability_id}.json").write_text(
                 json.dumps(payload, indent=2, sort_keys=True),
                 encoding="utf-8",
