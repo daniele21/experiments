@@ -71,12 +71,21 @@ def _selected_cohorts(
         if ranked:
             selected[capability_id] = ranked[0][0]
 
-    filtered = [
-        row
-        for row in current
-        if selected.get(str(row["capability_id"]))
-        == str(row["benchmark_signature"])
-    ]
+    by_cap_model: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in current:
+        by_cap_model[(str(row["capability_id"]), str(row["model_key"]))].append(row)
+
+    filtered: list[dict[str, Any]] = []
+    for (cap_id, _), rows in by_cap_model.items():
+        canonical_sig = selected.get(cap_id)
+        matching = [
+            r for r in rows if str(r.get("benchmark_signature")) == canonical_sig
+        ]
+        if matching:
+            filtered.append(matching[0])
+        else:
+            latest = max(rows, key=lambda r: str(r.get("completed_at_utc") or ""))
+            filtered.append(latest)
     return selected, filtered
 
 

@@ -118,6 +118,23 @@ models:
       - qwen
       - small
 
+  qwen3.5-4b-q4km:
+    model_id: unsloth/qwen3.5-4b
+    runtime_model_id: qwen3.5-4b-q4km
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - 4b
+
   nemotron-nano-4b:
     model_id: nvidia/nemotron-3-nano-4b
     runtime_model_id: nemotron-nano-4b
