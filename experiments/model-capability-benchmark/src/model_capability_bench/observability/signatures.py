@@ -134,6 +134,6 @@ def benchmark_signature(
         "profile": profile_id,
         "generation": generation,
         "seed": seed,
-        "comparison": capability.spec.comparison,
+        "comparison_metric": capability.spec.comparison.metric,
     }
     return stable_signature("benchmark", payload)
