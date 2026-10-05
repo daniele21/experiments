@@ -40,6 +40,13 @@ def inject_dashboard_payloads(
         else None
     )
     data_root = overview_path.parent
+    capabilities = {
+        path.stem: json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted((data_root / "capabilities").glob("*.json"))
+    } if (data_root / "capabilities").is_dir() else {}
+    if capability is not None:
+        capability_id = str(capability.get("capability_id") or capability_path.stem)
+        capabilities.setdefault(capability_id, capability)
     models = {
         path.stem: json.loads(path.read_text(encoding="utf-8"))
         for path in sorted((data_root / "models").glob("*.json"))
@@ -56,6 +63,7 @@ def inject_dashboard_payloads(
             if capability is not None
             else ""
         )
+        + f"window.__MCB_CAPABILITIES__={_safe_json(capabilities)};"
         + f"window.__MCB_MODELS__={_safe_json(models)};"
         + f"window.__MCB_RUNS__={_safe_json(runs)};"
         + "</script>"
