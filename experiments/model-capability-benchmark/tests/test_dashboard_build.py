@@ -55,5 +55,7 @@ def test_dashboard_injection_embeds_projected_payloads_before_runtime(
     rendered = html.read_text(encoding="utf-8")
     assert "window.__MCB_OVERVIEW__=" in rendered
     assert "window.__MCB_CAPABILITY__=" in rendered
+    assert "window.__MCB_CAPABILITIES__=" in rendered
+    assert '"structured-output"' in rendered
     assert "\\u003c/script>" in rendered
     assert "</script><unsafe>" not in rendered
