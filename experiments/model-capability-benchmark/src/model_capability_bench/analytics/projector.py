@@ -110,37 +110,6 @@ def _run_event_times(
 ) -> tuple[str | None, str | None]:
     started: str | None = None
     completed: str | None = None
-    for item in _read_resource_summaries(run_dir, run_id):
-        metadata = _mapping(item.get("metadata"))
-        summary = _mapping(item.get("summary"))
-        connection.execute(
-            """
-            INSERT INTO resource_summaries VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-            """,
-            [
-                run_id,
-                _text(item.get("case_id")),
-                int(item.get("attempt") or 0),
-                _text(metadata.get("model_key")),
-                _text(metadata.get("model_signature")) or None,
-                _text(metadata.get("execution_signature")) or None,
-                _text(metadata.get("capability_id")),
-                _text(metadata.get("runtime_key")) or None,
-                _text(summary.get("source")) or None,
-                _text(summary.get("scope")) or None,
-                int(summary.get("sample_count") or 0),
-                summary.get("sample_interval_ms"),
-                summary.get("process_cpu_percent_avg"),
-                summary.get("process_rss_bytes_avg"),
-                summary.get("process_rss_bytes_peak"),
-                summary.get("system_available_memory_bytes_min"),
-                summary.get("accelerator_memory_bytes_peak"),
-                int(summary.get("sampling_error_count") or 0),
-            ],
-        )
-
     for event in read_jsonl_records(run_dir / "events.jsonl"):
         metadata = _mapping(event.get("metadata"))
         event_run_id = _text(event.get("run_id") or metadata.get("run_id"))
@@ -722,6 +691,37 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     bool(metric.get("primary")),
                 ],
             )
+
+    for item in _read_resource_summaries(run_dir, run_id):
+        metadata = _mapping(item.get("metadata"))
+        summary = _mapping(item.get("summary"))
+        connection.execute(
+            """
+            INSERT INTO resource_summaries VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            [
+                run_id,
+                _text(item.get("case_id")),
+                int(item.get("attempt") or 0),
+                _text(metadata.get("model_key")),
+                _text(metadata.get("model_signature")) or None,
+                _text(metadata.get("execution_signature")) or None,
+                _text(metadata.get("capability_id")),
+                _text(metadata.get("runtime_key")) or None,
+                _text(summary.get("source")) or None,
+                _text(summary.get("scope")) or None,
+                int(summary.get("sample_count") or 0),
+                summary.get("sample_interval_ms"),
+                summary.get("process_cpu_percent_avg"),
+                summary.get("process_rss_bytes_avg"),
+                summary.get("process_rss_bytes_peak"),
+                summary.get("system_available_memory_bytes_min"),
+                summary.get("accelerator_memory_bytes_peak"),
+                int(summary.get("sampling_error_count") or 0),
+            ],
+        )
 
     for event in read_jsonl_records(run_dir / "events.jsonl"):
         metadata = _mapping(event.get("metadata"))
