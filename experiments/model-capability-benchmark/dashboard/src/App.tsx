@@ -3,6 +3,7 @@ import { capabilityPayloads } from './data';
 import { usePathname } from './router';
 import { Shell } from './components/Shell';
 import { OverviewPage } from './pages/OverviewPage';
+import { FrontierPage, SensitivityPage } from './pages/ExperimentPages';
 import {
   CapabilityPage,
   ComparePage,
@@ -51,6 +52,10 @@ export function App() {
     );
   } else if (datasetMatch) {
     page = <DatasetPage datasetId={decodeURIComponent(datasetMatch[1])} />;
+  } else if (pathname === '/frontier') {
+    page = <FrontierPage />;
+  } else if (pathname === '/sensitivity') {
+    page = <SensitivityPage />;
   } else if (pathname === '/compare') {
     page = <ComparePage />;
   } else if (pathname === '/runs') {
