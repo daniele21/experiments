@@ -74,6 +74,6 @@ def load_capability_datasets(
                     ),
                 )
             loaded[dataset_id] = cache[cache_key]
-        except Exception as exc:  # noqa: BLE001 - dataset plugin boundary
+        except Exception as exc:
             raise CapabilityDatasetLoadError(dataset_id, exc) from exc
     return loaded
