@@ -45,7 +45,7 @@ def _mapping(value: Any, *, field: str) -> dict[str, Any]:
     if value is None:
         return {}
     if not isinstance(value, dict):
-        raise ValueError(f"{field} must be a mapping")
+        raise TypeError(f"{field} must be a mapping")
     return dict(value)
 
 
