@@ -726,6 +726,9 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 .family-group i { display:block; height:6px; border-radius:6px; background:#edf0f5; overflow:hidden; }
 .family-group i b { display:block; height:100%; background:#5a6ff0; border-radius:6px; }
+.family-group i b.family-model-1 { background:#28aa73; }
+.family-group i b.family-model-2 { background:#8a63e9; }
+.family-group i b.family-model-3 { background:#d59a2c; }
 .family-group em { color:#68748a; font-style:normal; text-align:right; }
 
 .disagreement-preview { display:grid; }
