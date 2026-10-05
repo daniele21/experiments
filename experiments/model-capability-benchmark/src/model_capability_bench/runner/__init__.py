@@ -15,6 +15,12 @@ from model_capability_bench.runner.estimate import estimate_benchmark
 from model_capability_bench.runner.evidence import EvidenceStore
 from model_capability_bench.runner.manifest import write_run_artifacts
 from model_capability_bench.runner.planning import plan_benchmark
+from model_capability_bench.runner.sweeps import (
+    SweepPoint,
+    SweepSpec,
+    expand_sweep,
+    load_sweep,
+)
 
 __all__ = [
     "CapabilityRunner",
@@ -24,9 +30,13 @@ __all__ = [
     "RunnerDefaults",
     "RunnerSummary",
     "RuntimeResolver",
+    "SweepPoint",
+    "SweepSpec",
     "aggregate_capability",
     "estimate_benchmark",
+    "expand_sweep",
     "load_runner_defaults",
+    "load_sweep",
     "paired_binary_comparison",
     "plan_benchmark",
     "reduce_metric",
