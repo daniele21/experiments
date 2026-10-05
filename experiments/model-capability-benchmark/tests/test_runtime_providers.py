@@ -159,6 +159,17 @@ class _FakeControl:
         self.calls.append(("activate", model_key))
         return {"ok": True}
 
+    def resources(self):
+        self.calls.append(("resources", None))
+        return {
+            "observation": {
+                "captured_at_utc": "2026-10-05T08:00:00+00:00",
+                "captured_at_monotonic": 1.0,
+                "system": {},
+                "runtimes": [],
+            }
+        }
+
     def unload(self, model_key: str):
         self.calls.append(("unload", model_key))
         return {"ok": True}
