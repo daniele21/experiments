@@ -477,6 +477,106 @@ function DisagreementsPage() {
   );
 }
 
+function SharePage() {
+  const comparison = capability.comparison;
+  const first = capability.cells[0];
+  const second = capability.cells[1];
+  const families = Array.from(
+    new Set(capability.family_breakdown.map((row) => row.family)),
+  );
+
+  return (
+    <>
+      <FixtureBanner />
+      <header className="page-header">
+        <div>
+          <div className="eyebrow">Immutable share snapshot</div>
+          <h1>LinkedIn result card</h1>
+          <p>
+            This layout is intentionally separate from the analytical
+            dashboard and is rendered from frozen snapshot data.
+          </p>
+        </div>
+      </header>
+
+      <div className="share-workspace">
+        <aside className="share-options card">
+          <strong>Template</strong>
+          <button type="button" className="share-option active">
+            Result comparison
+          </button>
+          <button type="button" className="share-option">
+            Capability deep dive
+          </button>
+          <button type="button" className="share-option">
+            Efficiency comparison
+          </button>
+          <button type="button" className="share-option">
+            Methodology
+          </button>
+          <span>
+            Production snapshots are created with
+            <code> model-bench share create </code>
+            and never follow live CURRENT results afterward.
+          </span>
+        </aside>
+
+        <section className="linkedin-card">
+          <div className="share-brand">MCB · Model Capability Benchmark</div>
+          <h2>Can a 2B local model replace GPT for structured output?</h2>
+          <div className="share-score-grid">
+            <div>
+              <span>{first?.model_key}</span>
+              <strong>{percent(first?.primary_value ?? null)}</strong>
+              <small>Local · Q4KM</small>
+            </div>
+            <div className="share-vs">vs</div>
+            <div>
+              <span>{second?.model_key}</span>
+              <strong>{percent(second?.primary_value ?? null)}</strong>
+              <small>API</small>
+            </div>
+          </div>
+          <div className="share-delta">
+            Δ {points(comparison?.delta_b_minus_a ?? null)}
+            <small>
+              95% CI [{points(comparison?.ci95_low ?? null)}, {' '}
+              {points(comparison?.ci95_high ?? null)}] · paired n=
+              {comparison?.paired_count ?? '—'}
+            </small>
+          </div>
+          <div className="share-families">
+            {families.map((family) => {
+              const a = capability.family_breakdown.find(
+                (row) => row.family === family && row.model_key === first?.model_key,
+              );
+              const b = capability.family_breakdown.find(
+                (row) => row.family === family && row.model_key === second?.model_key,
+              );
+              return (
+                <div className="share-family" key={family}>
+                  <span>{family}</span>
+                  <div>
+                    <i style={{ width: percent(a?.value ?? null) }} />
+                  </div>
+                  <em>{percent(a?.value ?? null)}</em>
+                  <div>
+                    <i style={{ width: percent(b?.value ?? null) }} />
+                  </div>
+                  <em>{percent(b?.value ?? null)}</em>
+                </div>
+              );
+            })}
+          </div>
+          <footer>
+            MCB v2 · core · n=60 · same-case paired benchmark · fixture snapshot
+          </footer>
+        </section>
+      </div>
+    </>
+  );
+}
+
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <>
@@ -514,8 +614,8 @@ export function App() {
     page = <PlaceholderPage title="Runs" />;
   } else if (pathname === '/compare') {
     page = <PlaceholderPage title="Compare" />;
-  } else if (pathname === '/share') {
-    page = <PlaceholderPage title="Share" />;
+  } else if (pathname === '/share' || pathname.startsWith('/share/')) {
+    page = <SharePage />;
   } else {
     page = <PlaceholderPage title="Not found" />;
   }
