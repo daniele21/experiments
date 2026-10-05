@@ -293,6 +293,140 @@ def export_dashboard_data(
                 encoding="utf-8",
             )
 
+        model_dir = output_dir / "models"
+        model_dir.mkdir(parents=True, exist_ok=True)
+        model_index: dict[str, str] = {}
+        current_model_signatures = sorted(models)
+        for model_signature in current_model_signatures:
+            model_rows = _rows(
+                connection,
+                """
+                SELECT
+                    m.*,
+                    r.completed_at_utc,
+                    r.status AS run_status,
+                    r.git_commit
+                FROM models m
+                JOIN runs r ON r.run_id = m.run_id
+                WHERE m.model_signature = ?
+                ORDER BY r.completed_at_utc DESC, m.run_id DESC
+                """,
+                [model_signature],
+            )
+            history = _rows(
+                connection,
+                """
+                SELECT *
+                FROM v_model_history
+                WHERE model_signature = ?
+                ORDER BY capability_id, completed_at_utc, run_id
+                """,
+                [model_signature],
+            )
+            current_cells = [
+                row
+                for row in current
+                if row["model_signature"] == model_signature
+            ]
+            file_id = model_signature.split(":")[-1][:20]
+            filename = f"{file_id}.json"
+            model_index[model_signature] = f"models/{filename}"
+            (model_dir / filename).write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1",
+                        "model_signature": model_signature,
+                        "model": model_rows[0] if model_rows else None,
+                        "current_cells": current_cells,
+                        "history": history,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+
+        run_dir = output_dir / "runs"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        run_index: dict[str, str] = {}
+        lifecycle_prefixes = (
+            "run.",
+            "model.",
+            "capability.",
+            "projection.",
+            "share.",
+        )
+        for run in runs:
+            run_id = str(run["run_id"])
+            run_index[run_id] = f"runs/{run_id}.json"
+            run_models = _rows(
+                connection,
+                """
+                SELECT *
+                FROM models
+                WHERE run_id = ?
+                ORDER BY model_key
+                """,
+                [run_id],
+            )
+            run_cells = _rows(
+                connection,
+                """
+                SELECT *
+                FROM benchmark_cells
+                WHERE run_id = ?
+                ORDER BY model_key, capability_id
+                """,
+                [run_id],
+            )
+            lifecycle_events = _rows(
+                connection,
+                """
+                SELECT *
+                FROM events
+                WHERE run_id = ?
+                ORDER BY timestamp_utc, event_type
+                """,
+                [run_id],
+            )
+            lifecycle_events = [
+                event
+                for event in lifecycle_events
+                if str(event["event_type"]).startswith(lifecycle_prefixes)
+            ]
+            failures = _rows(
+                connection,
+                """
+                SELECT
+                    event_type,
+                    COALESCE(error_type, 'unknown') AS error_type,
+                    COUNT(*) AS count,
+                    MIN(timestamp_utc) AS first_at,
+                    MAX(timestamp_utc) AS last_at
+                FROM events
+                WHERE run_id = ?
+                  AND error_type IS NOT NULL
+                GROUP BY event_type, error_type
+                ORDER BY count DESC, event_type
+                """,
+                [run_id],
+            )
+            (run_dir / f"{run_id}.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1",
+                        "run": run,
+                        "models": run_models,
+                        "cells": run_cells,
+                        "timeline": lifecycle_events,
+                        "failure_summary": failures,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+
         index_path = output_dir / "index.json"
         index_path.write_text(
             json.dumps(
@@ -303,6 +437,8 @@ def export_dashboard_data(
                         capability_id: f"capabilities/{capability_id}.json"
                         for capability_id in capabilities
                     },
+                    "models": model_index,
+                    "runs": run_index,
                 },
                 indent=2,
                 sort_keys=True,
