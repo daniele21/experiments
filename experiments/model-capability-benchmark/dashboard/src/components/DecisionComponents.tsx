@@ -441,7 +441,7 @@ export function DatasetPerformanceLandscape({
                 </small>
               </div>
               <div className="dataset-landscape-track">
-                {models.map((model) => {
+                {models.map((model, modelIndex) => {
                   const value = row.values.find((item) => item.model_key === model.model_key);
                   const scoreValue = value?.normalized_quality_score ?? null;
                   const delta =
@@ -458,7 +458,10 @@ export function DatasetPerformanceLandscape({
                     <div
                       key={model.model_signature}
                       className={'dataset-landscape-point ' + model.deployment}
-                      style={{ left: Math.max(0, Math.min(100, scoreValue)) + '%' }}
+                      style={{
+                        left: Math.max(0, Math.min(100, scoreValue)) + '%',
+                        top: ((modelIndex + 1) / (models.length + 1)) * 100 + '%',
+                      }}
                       title={model.model_key + ' · ' + display}
                     >
                       <i/>
@@ -494,7 +497,9 @@ export function DatasetDeltaSlopegraph({
           row.capability_id === a.capability_id &&
           row.dataset_id === a.dataset_id,
       );
-      if (a.normalized_quality_score == null || b?.normalized_quality_score == null) return null;
+      if (a.normalized_quality_score == null || b?.normalized_quality_score == null) {
+        return null;
+      }
       return {
         capability_id: a.capability_id,
         dataset_id: a.dataset_id,
@@ -506,17 +511,17 @@ export function DatasetDeltaSlopegraph({
     .filter((item): item is NonNullable<typeof item> => item != null)
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
-  const y = (value: number) => 36 + ((100 - value) / 60) * 228;
-  const aWins = pairs.filter((pair) => pair.delta > 0).length;
-  const bWins = pairs.filter((pair) => pair.delta < 0).length;
-  const ties = pairs.filter((pair) => Math.abs(pair.delta) < 0.05).length;
+  const aWins = pairs.filter((pair) => pair.delta > 0.05).length;
+  const bWins = pairs.filter((pair) => pair.delta < -0.05).length;
+  const ties = pairs.filter((pair) => Math.abs(pair.delta) <= 0.05).length;
+  const y = (value: number) => 7 + ((100 - value) / 60) * 30;
 
   return (
     <section className="analysis-card dataset-slope-card">
       <div className="section-heading">
         <div>
           <h2>Dataset delta slopegraph</h2>
-          <p>Each line is a dataset. Slope and color reveal where the quality gap comes from.</p>
+          <p>Sorted by absolute gap. Each row shows where Model A gains or loses against Model B.</p>
         </div>
         <div className="slope-summary">
           <span><b>{aWins}</b> A wins</span>
@@ -525,52 +530,62 @@ export function DatasetDeltaSlopegraph({
         </div>
       </div>
       {pairs.length ? (
-        <div className="slopegraph-wrap">
-          <div className="slopegraph-model-head">
+        <>
+          <div className="slopegraph-column-head">
+            <span>Dataset</span>
             <div><strong>{shortModelLabel(modelA.model_key)}</strong><small>Model A</small></div>
             <div><strong>{shortModelLabel(modelB.model_key)}</strong><small>Model B</small></div>
+            <span>Δ A − B</span>
           </div>
-          <svg className="dataset-slopegraph" viewBox="0 0 760 310" role="img" aria-label="Dataset score slopegraph">
-            {[40, 60, 80, 100].map((tick) => (
-              <g key={tick}>
-                <line className="slope-grid" x1="188" x2="572" y1={y(tick)} y2={y(tick)}/>
-                <text className="slope-axis-label" x="165" y={y(tick) + 3}>{tick}</text>
-                <text className="slope-axis-label" x="580" y={y(tick) + 3}>{tick}</text>
-              </g>
-            ))}
-            {pairs.map((pair, index) => {
-              const leftY = y(pair.a);
-              const rightY = y(pair.b);
+          <div className="slopegraph-rows">
+            {pairs.map((pair) => {
               const state =
-                Math.abs(pair.delta) < 0.05 ? 'tie' : pair.delta > 0 ? 'a-win' : 'b-win';
+                Math.abs(pair.delta) <= 0.05
+                  ? 'tie'
+                  : pair.delta > 0
+                    ? 'a-win'
+                    : 'b-win';
               return (
-                <g key={pair.capability_id + pair.dataset_id} className={'slope-line ' + state}>
-                  <line x1="205" y1={leftY} x2="555" y2={rightY}/>
-                  <circle cx="205" cy={leftY} r="5"/>
-                  <circle cx="555" cy={rightY} r="5"/>
-                  <text x="195" y={leftY + (index % 2 ? 13 : -8)} textAnchor="end">
-                    {score(pair.a)}
-                  </text>
-                  <text x="565" y={rightY + (index % 2 ? -8 : 13)} textAnchor="start">
-                    {score(pair.b)}
-                  </text>
-                  <text className="slope-dataset-label" x="380" y={(leftY + rightY) / 2 - 5} textAnchor="middle">
-                    {pair.dataset_id}
-                  </text>
-                  <title>
-                    {pair.dataset_id + ' · A ' + score(pair.a) + ' · B ' + score(pair.b) +
-                      ' · Δ ' + (pair.delta > 0 ? '+' : '') + pair.delta.toFixed(1)}
-                  </title>
-                </g>
+                <div
+                  key={pair.capability_id + pair.dataset_id}
+                  className={'slopegraph-row ' + state}
+                >
+                  <div className="slope-dataset-meta">
+                    <strong>{pair.dataset_id}</strong>
+                    <small>{pair.capability_id.replaceAll('-', ' ')}</small>
+                  </div>
+                  <div className="slope-mini">
+                    <svg viewBox="0 0 420 44" role="img" aria-label={pair.dataset_id}>
+                      <line className="slope-midline" x1="20" x2="400" y1="22" y2="22"/>
+                      <line
+                        className="slope-segment"
+                        x1="24"
+                        y1={y(pair.a)}
+                        x2="396"
+                        y2={y(pair.b)}
+                      />
+                      <circle className="slope-point-a" cx="24" cy={y(pair.a)} r="5"/>
+                      <circle className="slope-point-b" cx="396" cy={y(pair.b)} r="5"/>
+                      <text x="36" y={y(pair.a) + 3}>{score(pair.a)}</text>
+                      <text x="384" y={y(pair.b) + 3} textAnchor="end">{score(pair.b)}</text>
+                      <title>
+                        {pair.dataset_id + ' · A ' + score(pair.a) + ' · B ' + score(pair.b)}
+                      </title>
+                    </svg>
+                  </div>
+                  <em className={state}>
+                    {pair.delta > 0 ? '+' : ''}{pair.delta.toFixed(1)}
+                  </em>
+                </div>
               );
             })}
-          </svg>
+          </div>
           <div className="slope-legend">
             <span className="a-win">A advantage</span>
             <span className="b-win">B advantage</span>
             <span className="tie">Near tie</span>
           </div>
-        </div>
+        </>
       ) : (
         <div className="empty-visual">No common dataset evidence for the selected models.</div>
       )}
