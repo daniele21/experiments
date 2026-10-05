@@ -185,7 +185,7 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
     provider = runtime.prepare(model)
     runtime.release(model)
 
-    assert isinstance(provider, _FakeProvider)
+    assert isinstance(provider.delegate, _FakeProvider)
     assert built == ["qwen3.5-2b-q4km"]
     control = _FakeControl.instances[-1]
     assert control.timeout_seconds == 9.0
