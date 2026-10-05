@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from benchmark_core import CapabilityComparisonSpec, CapabilityMetricSpec
+
 from model_capability_bench.analytics.latest import (
     ResultCandidate,
     canonical_latest,
@@ -134,18 +136,17 @@ def test_benchmark_signature_ignores_practical_delta_but_tracks_metric_semantics
                 capability_id="cap",
                 dataset_ids=("dataset",),
                 metrics=(
-                    SimpleNamespace(
+                    CapabilityMetricSpec(
                         name="accuracy",
                         source="task_metric",
                         reducer=reducer,
                         field="accuracy",
                         primary=True,
-                        options={},
                     ),
                 ),
                 context_bindings=(),
                 options={},
-                comparison=SimpleNamespace(
+                comparison=CapabilityComparisonSpec(
                     metric="accuracy",
                     practical_delta=practical_delta,
                 ),
