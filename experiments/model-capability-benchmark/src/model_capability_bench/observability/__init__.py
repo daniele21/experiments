@@ -12,9 +12,9 @@ from model_capability_bench.observability.signatures import (
 )
 
 __all__ = [
+    "SIGNATURE_SCHEMA_VERSION",
     "BenchmarkEvent",
     "EvidenceRef",
-    "SIGNATURE_SCHEMA_VERSION",
     "benchmark_signature",
     "build_event",
     "execution_signature",
