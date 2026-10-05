@@ -113,6 +113,13 @@ def create_share_snapshot(
             for cell in cells
         ],
         "run_ids": run_ids,
+        "git_commits": sorted(
+            {
+                str(cell["git_commit"])
+                for cell in cells
+                if cell.get("git_commit")
+            }
+        ),
         "benchmark_signature": benchmark_signatures[0],
         "profile": cells[0].get("profile") if cells else None,
         "cells": cells,
