@@ -81,18 +81,41 @@ jobs:
               --disable-gpu \
               --hide-scrollbars \
               --window-size=1600,1000 \
-              --screenshot="/tmp/mcb13-$name.png" \
+              --screenshot="/tmp/mcb13-$name-1600.png" \
               "file://$HTML#/$route"
-            test -s "/tmp/mcb13-$name.png"
+            test -s "/tmp/mcb13-$name-1600.png"
           done
+
+          for spec in "1280,1100" "1024,1200"; do
+            width="${spec%%,*}"
+            height="${spec##*,}"
+            "$CHROME" \
+              --headless \
+              --no-sandbox \
+              --disable-gpu \
+              --hide-scrollbars \
+              --window-size="$width,$height" \
+              --screenshot="/tmp/mcb13-overview-$width.png" \
+              "file://$HTML#/overview"
+            test -s "/tmp/mcb13-overview-$width.png"
+          done
+
           uv run python - <<'PY'
           from pathlib import Path
 
-          for path in sorted(Path("/tmp").glob("mcb13-*.png")):
+          expected = {
+              "mcb13-overview-1600.png": (1600, 1000),
+              "mcb13-capabilities-structured-output-1600.png": (1600, 1000),
+              "mcb13-compare-1600.png": (1600, 1000),
+              "mcb13-overview-1280.png": (1280, 1100),
+              "mcb13-overview-1024.png": (1024, 1200),
+          }
+          for name, (width, height) in expected.items():
+              path = Path("/tmp") / name
               data = path.read_bytes()
               assert data[:8] == b"\x89PNG\r\n\x1a\n"
-              assert int.from_bytes(data[16:20], "big") == 1600
-              assert int.from_bytes(data[20:24], "big") == 1000
+              assert int.from_bytes(data[16:20], "big") == width
+              assert int.from_bytes(data[20:24], "big") == height
           PY
 
       - name: Upload visual review artifacts
