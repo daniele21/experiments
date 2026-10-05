@@ -17,6 +17,7 @@ import type {
 import { bytes, cpu, milliseconds, score, usd } from '../utils';
 import {
   DatasetHeatmap,
+  DatasetPerformanceLandscape,
   DeploymentBadge,
   MethodologyAccordion,
   MetricCard,
@@ -233,6 +234,13 @@ export function OverviewPage() {
           onSelect={selectModel}
         />
       </section>
+
+      <DatasetPerformanceLandscape
+        datasets={decision.dataset_summaries.filter((dataset) =>
+          visibleModels.some((model) => model.model_key === dataset.model_key),
+        )}
+        models={visibleModels}
+      />
 
       <section className="overview-lower-grid">
         <DatasetHeatmap
