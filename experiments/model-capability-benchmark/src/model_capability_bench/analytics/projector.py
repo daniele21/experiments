@@ -504,7 +504,6 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         [run_id],
     ).fetchone()[0]
     if partial_cells:
-        status = "PARTIAL"
         connection.execute(
             "UPDATE runs SET status = 'PARTIAL' WHERE run_id = ?",
             [run_id],
