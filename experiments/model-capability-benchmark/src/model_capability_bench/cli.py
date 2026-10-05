@@ -111,6 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     project.add_argument("--results-root", type=Path)
     project.add_argument("--database", type=Path)
+    project.add_argument("--run-dir", type=Path, action="append")
     project.add_argument("--rebuild", action="store_true")
     project.add_argument("--export-dashboard", action="store_true")
 
@@ -224,6 +225,11 @@ def main() -> int:
             results_root=results_root,
             database_path=database,
             rebuild=args.rebuild,
+            run_dirs=(
+                tuple(path.resolve() for path in args.run_dir)
+                if args.run_dir
+                else None
+            ),
         )
         payload: dict[str, Any] = {"projection": summary}
         if args.export_dashboard:
