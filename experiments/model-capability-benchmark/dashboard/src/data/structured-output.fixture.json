@@ -276,7 +276,11 @@
         "output_tokens_total": 4200,
         "failure_rate": 0,
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "provider_cost_status": "unavailable",
+        "provider_cost_priced_cases": 0,
+        "provider_cost_total_cases": 60,
+        "provider_cost_coverage_rate": 0
       },
       {
         "run_id": "fixture-gpt-current",
@@ -302,7 +306,11 @@
         "output_tokens_total": 3900,
         "failure_rate": 0,
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": true
+        "known_provider_cost_quality_pareto": true,
+        "provider_cost_status": "complete",
+        "provider_cost_priced_cases": 60,
+        "provider_cost_total_cases": 60,
+        "provider_cost_coverage_rate": 1
       }
     ],
     "dataset_summaries": [
@@ -328,7 +336,11 @@
         "failure_count": 0,
         "failure_rate": 0,
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "provider_cost_status": "unavailable",
+        "provider_cost_priced_cases": 0,
+        "provider_cost_total_cases": 60,
+        "provider_cost_coverage_rate": 0
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -352,7 +364,11 @@
         "failure_count": 0,
         "failure_rate": 0,
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": true
+        "known_provider_cost_quality_pareto": true,
+        "provider_cost_status": "complete",
+        "provider_cost_priced_cases": 60,
+        "provider_cost_total_cases": 60,
+        "provider_cost_coverage_rate": 1
       }
     ]
   }
