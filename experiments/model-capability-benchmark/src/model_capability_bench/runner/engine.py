@@ -128,6 +128,7 @@ class CapabilityRunner:
         signature_catalog: dict[str, Any] = {
             "models": {},
             "executions": {},
+            "execution_metadata": {},
             "benchmarks": {},
             "execution_environment": execution_environment,
         }
@@ -138,19 +139,12 @@ class CapabilityRunner:
                 continue
 
             model_sig = model_signature(model)
-            execution_sig = execution_signature(
-                model,
-                execution_metadata=config.metadata,
-                execution_environment=execution_environment,
-            )
             signature_catalog["models"][model.model.model_key] = model_sig
-            signature_catalog["executions"][model.model.model_key] = execution_sig
             model_metadata = {
                 "run_id": identity.run_id,
                 "run_group": identity.run_group,
                 "model_key": model.model.model_key,
                 "model_signature": model_sig,
-                "execution_signature": execution_sig,
                 "runtime_key": model.runtime.runtime_key,
                 "provider_key": model.provider.provider_key,
             }
@@ -168,6 +162,33 @@ class CapabilityRunner:
                         f"Runtime {model.runtime.runtime_key!r} did not return "
                         "an InferenceProvider"
                     )
+
+                runtime_execution_metadata: dict[str, Any] = {}
+                runtime_metadata_getter = getattr(runtime, "execution_metadata", None)
+                if callable(runtime_metadata_getter):
+                    resolved_runtime_metadata = runtime_metadata_getter(model)
+                    if resolved_runtime_metadata:
+                        runtime_execution_metadata = dict(resolved_runtime_metadata)
+
+                merged_execution_metadata = {
+                    **dict(config.metadata),
+                    **runtime_execution_metadata,
+                }
+                execution_sig = execution_signature(
+                    model,
+                    execution_metadata=merged_execution_metadata,
+                    execution_environment=execution_environment,
+                )
+                signature_catalog["executions"][model.model.model_key] = execution_sig
+                signature_catalog["execution_metadata"][
+                    model.model.model_key
+                ] = merged_execution_metadata
+                model_metadata["execution_signature"] = execution_sig
+                if runtime_execution_metadata:
+                    model_metadata["runtime_execution_metadata"] = (
+                        runtime_execution_metadata
+                    )
+
                 self.evidence_store.record_stage_event(
                     "model.prepare.completed",
                     metadata=model_metadata,
