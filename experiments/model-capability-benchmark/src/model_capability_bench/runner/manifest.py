@@ -51,6 +51,7 @@ def write_run_artifacts(
     signatures = summary.metadata.get("signatures") or {}
     model_signatures = signatures.get("models") or {}
     execution_signatures = signatures.get("executions") or {}
+    execution_metadata = signatures.get("execution_metadata") or {}
     benchmark_signatures = signatures.get("benchmarks") or {}
     resolved_models: list[dict[str, Any]] = []
     for model_key in config.model_keys:
@@ -67,6 +68,7 @@ def write_run_artifacts(
                 "lifecycle": resolved.runtime.lifecycle,
                 "model_signature": model_signatures.get(model_key),
                 "execution_signature": execution_signatures.get(model_key),
+                "execution_metadata": execution_metadata.get(model_key),
                 "artifact_format": (
                     resolved.model.artifact.format
                     if resolved.model.artifact is not None
