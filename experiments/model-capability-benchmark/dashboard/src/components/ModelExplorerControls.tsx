@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { DecisionModelSummary } from '../types';
 import { modelShortLabel, modelVisual } from '../modelVisuals';
 
@@ -19,7 +20,7 @@ export function ModelMarker({
       style={{
         '--model-color': visual.color,
         '--marker-size': size + 'px',
-      } as React.CSSProperties}
+      } as CSSProperties}
       aria-hidden="true"
     />
   );
