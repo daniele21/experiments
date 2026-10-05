@@ -20,6 +20,14 @@ class ShareSnapshotSummary:
     model_keys: tuple[str, ...]
 
 
+def _portable_path(path: Path, root: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(root.resolve()))
+    except ValueError:
+        return resolved.name
+
+
 def _snapshot_id(payload: dict[str, Any]) -> str:
     canonical = json.dumps(
         payload,
@@ -119,11 +127,10 @@ def create_share_snapshot(
             "source": "CURRENT projected benchmark evidence",
         },
         "sources": {
-            "database": str(
-                database_path.resolve().relative_to(results_root)
-            ),
-            "capability_payload": str(
-                capability_path.relative_to(results_root)
+            "database": _portable_path(database_path, results_root),
+            "capability_payload": _portable_path(
+                capability_path,
+                results_root,
             ),
             "capability_payload_sha256": sha256_file(capability_path),
         },
