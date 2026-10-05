@@ -276,7 +276,7 @@ export function OverviewPage() {
         />
       </section>
 
-      <section className="overview-main-grid">
+      <section className="overview-quality-row">
         <QualityLeaderboard
           models={visibleModels}
           selectedModel={selected?.model_signature}
@@ -284,6 +284,9 @@ export function OverviewPage() {
           onSelect={selectModel}
           onHover={setHoveredSignature}
         />
+      </section>
+
+      <section className="overview-tradeoff-grid">
         <TradeoffScatter
           title="Quality × latency"
           description="Observed trade-off. Higher quality and lower P50 are better."
