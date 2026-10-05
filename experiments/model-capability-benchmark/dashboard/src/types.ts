@@ -56,6 +56,15 @@ export interface CapabilityCell {
   resource_summary?: ResourceSummary | null;
 }
 
+export interface ProviderCostPricing {
+  price_key: string;
+  source: string | null;
+  source_url: string | null;
+  currency: string | null;
+  as_of: string | null;
+  processing: string | null;
+}
+
 export interface QualityPolicy {
   quality_policy_id: string;
   label: string;
@@ -81,6 +90,7 @@ export interface DecisionModelSummary extends DashboardModel {
   provider_cost_priced_cases: number;
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
+  provider_cost_pricing: ProviderCostPricing | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
@@ -121,6 +131,7 @@ export interface DecisionCapabilitySummary {
   provider_cost_priced_cases: number;
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
+  provider_cost_pricing: ProviderCostPricing | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
@@ -149,6 +160,7 @@ export interface DecisionDatasetSummary {
   provider_cost_priced_cases: number;
   provider_cost_total_cases: number;
   provider_cost_coverage_rate: number | null;
+  provider_cost_pricing: ProviderCostPricing | null;
   provider_cost_total_usd: number | null;
   provider_cost_per_case_usd: number | null;
   provider_cost_per_1k_cases_usd: number | null;
