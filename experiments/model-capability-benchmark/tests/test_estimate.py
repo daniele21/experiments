@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from benchmark_core import InferenceResult, ResolvedModel, TokenUsage
 
 from model_capability_bench import load_capability_suite
