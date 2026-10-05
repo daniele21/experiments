@@ -161,8 +161,9 @@ uv run --frozen local-llm serve \
 If Korgis reports that the discovered llama-server is older than build 10828,
 update the normal llama.cpp installation or set `LOCAL_LLM_SERVER_BIN` to a
 newer executable. Spark's native context is much larger than the benchmark
-needs; the built-in Korgis profile intentionally uses 131072 tokens rather than
-the full 1M context to keep local resource use practical and comparable.
+needs; the built-in Korgis benchmark profile intentionally uses 8192 tokens so
+KV-cache overhead stays closer to the other local comparison models instead of
+benchmarking an unnecessary long-context allocation.
 
 Spark-X2.5 enables thinking in its upstream chat template by default. The Korgis
 benchmark profile explicitly starts with thinking disabled, matching the
