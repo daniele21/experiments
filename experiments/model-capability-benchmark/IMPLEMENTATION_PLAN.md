@@ -1162,7 +1162,7 @@ Il contratto dettagliato è in `MCB_12_EFFICIENCY_TELEMETRY_SHARE_RENDERER.md`.
 
 ---
 
-## MCB-13 — Premium decision dashboard UX/UI 🔜 PLANNED
+## MCB-13 — Premium decision dashboard UX/UI 🟢 FIRST SLICE IMPLEMENTED
 
 ### Obiettivo
 

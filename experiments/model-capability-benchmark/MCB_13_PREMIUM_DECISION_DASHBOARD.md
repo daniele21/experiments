@@ -1,12 +1,35 @@
 # MCB-13 — Premium Decision Dashboard UX/UI
 
-Status: **PLANNED**
+Status: **FIRST SLICE IMPLEMENTED — CI GREEN**
 
 Depends on:
 
 - MCB-10 vertical benchmark hardening;
 - MCB-11 observability/results explorer;
 - MCB-12 efficiency telemetry/share renderer.
+
+## 0. Implementation status
+
+Implemented in the first MCB-13 slice:
+
+- decision analytics payload v2 with explicit quality/cohort policy;
+- model, capability and dataset summaries;
+- P50/P95 latency and known provider-cost aggregation;
+- Pareto membership for observed latency and known provider cost;
+- human-readable execution environment projection;
+- premium decision-first Overview;
+- premium Models, Model, Capability, Dataset, Compare, Runs/Run, Disagreements and Share surfaces;
+- decomposed React application shell/pages/components;
+- Vite 8-compatible single-file build;
+- dedicated Python/frontend/Chrome visual gate;
+- compatibility gates green for MCB-11 and MCB-12.
+
+Still intentionally iterative:
+
+- expand Compare from 2 models to the planned 2–4 model workspace;
+- add stricter pixel/perceptual visual baselines beyond deterministic screenshots;
+- validate density and ranking behavior on a larger set of real CURRENT model runs;
+- continue accessibility and mobile read-mode refinement.
 
 ## 1. Objective
 
