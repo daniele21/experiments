@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from model_capability_bench.analytics.decision_summary import _aggregate_case_metrics
+from model_capability_bench.analytics.decision_summary import (
+    _aggregate_case_metrics,
+    _backfill_case_costs,
+)
 
 
 def _case(cost: float | None) -> dict[str, object]:
@@ -79,3 +82,46 @@ def test_local_provider_cost_is_not_api_cost_even_if_zero_is_recorded() -> None:
     assert result["provider_cost_observed_total_usd"] is None
     assert result["provider_cost_total_usd"] is None
     assert result["provider_cost_per_1k_cases_usd"] is None
+
+
+
+def test_historical_cost_is_reconstructed_from_frozen_pricing() -> None:
+    cases = [
+        {
+            "run_id": "run-api",
+            "model_key": "gpt-5.6-luna",
+            "capability_id": "structured-output",
+            "estimated_cost_usd": None,
+            "input_tokens": 1_000,
+            "cached_input_tokens": 200,
+            "output_tokens": 100,
+        }
+    ]
+    cell_by_key = {
+        ("run-api", "gpt-5.6-luna", "structured-output"): {
+            "model_id": "gpt-5.6-luna",
+            "effective_model_id": "gpt-5.6-luna",
+            "provider_key": "openai",
+        }
+    }
+    pricing = {
+        "run-api": {
+            "currency": "USD",
+            "as_of": "2026-09-20",
+            "processing": "standard",
+            "prices_per_million_tokens": {
+                "gpt-5.6-luna": {
+                    "match": "exact",
+                    "input": 1.0,
+                    "cached_input": 0.5,
+                    "output": 2.0,
+                }
+            },
+        }
+    }
+
+    reconstructed = _backfill_case_costs(cases, cell_by_key, pricing)
+
+    assert reconstructed == 1
+    # 800 uncached * 1 + 200 cached * .5 + 100 output * 2 = 1100 / 1e6
+    assert cases[0]["estimated_cost_usd"] == pytest.approx(0.0011)
