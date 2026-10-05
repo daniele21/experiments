@@ -253,6 +253,8 @@ def _create_schema(connection: Any) -> None:
             challenge_type VARCHAR,
             inference_valid BOOLEAN,
             evaluation_valid BOOLEAN,
+            expected_json VARCHAR,
+            prediction_json VARCHAR,
             latency_ms DOUBLE,
             input_tokens BIGINT,
             cached_input_tokens BIGINT,
@@ -546,7 +548,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         connection.execute(
             """
             INSERT INTO cases VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
             [
@@ -565,6 +567,16 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(metadata.get("challenge_type")) or None,
                 bool(raw_record.get("valid")),
                 bool(evaluation_record.get("valid")),
+                json.dumps(
+                    evaluation_record.get("expected"),
+                    sort_keys=True,
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    evaluation_record.get("prediction"),
+                    sort_keys=True,
+                    ensure_ascii=False,
+                ),
                 float(raw_record.get("latency_ms") or 0.0),
                 raw_record.get("input_tokens"),
                 raw_record.get("cached_input_tokens"),
