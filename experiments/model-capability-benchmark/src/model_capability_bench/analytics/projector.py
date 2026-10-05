@@ -627,6 +627,7 @@ def project_results(
     results_root: Path,
     database_path: Path | None = None,
     rebuild: bool = False,
+    run_dirs: tuple[Path, ...] | None = None,
 ) -> ProjectionSummary:
     results_root = results_root.resolve()
     database_path = (
@@ -640,14 +641,46 @@ def project_results(
 
     duckdb = _duckdb()
     connection = duckdb.connect(str(database_path))
-    discovered = _run_dirs(results_root)
+    discovered = (
+        sorted({path.resolve() for path in run_dirs})
+        if run_dirs is not None
+        else _run_dirs(results_root)
+    )
     projected = 0
     quarantined = 0
     skipped = 0
     try:
         _create_schema(connection)
         for run_dir in discovered:
+            manifest_path = run_dir / "run_manifest.json"
+            if not manifest_path.is_file():
+                quarantined += 1
+                continue
             try:
+                manifest = json.loads(
+                    manifest_path.read_text(encoding="utf-8")
+                )
+                run_id = _text(_mapping(manifest.get("run")).get("run_id"))
+                manifest_checksum = sha256_file(manifest_path)
+                existing = (
+                    connection.execute(
+                        """
+                        SELECT manifest_checksum
+                        FROM runs
+                        WHERE run_id = ?
+                        """,
+                        [run_id],
+                    ).fetchone()
+                    if run_id
+                    else None
+                )
+                if (
+                    not rebuild
+                    and existing is not None
+                    and existing[0] == manifest_checksum
+                ):
+                    skipped += 1
+                    continue
                 ok, _ = _project_one(connection, run_dir)
             except (OSError, ValueError, TypeError, json.JSONDecodeError):
                 quarantined += 1
