@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from time import perf_counter
 from collections.abc import Mapping
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from benchmark_core import (
