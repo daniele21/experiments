@@ -176,6 +176,8 @@ def write_run_artifacts(
             "aggregates": "aggregates.jsonl",
             "report_index": "report_index.jsonl",
             "events": "events.jsonl",
+            "resource_samples": "resource_samples.jsonl",
+            "resource_summary": "resource_summary.jsonl",
         },
     }
     (output_dir / "run_manifest.json").write_text(
