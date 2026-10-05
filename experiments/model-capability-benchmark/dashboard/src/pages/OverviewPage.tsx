@@ -266,7 +266,7 @@ export function OverviewPage() {
                 </div>
                 <div>
                   <dt>Hardware</dt>
-                  <dd>{selected.execution_environment?.cpu_model ?? 'Provider managed / unavailable'}</dd>
+                  <dd>{selected.deployment === 'local' ? (selected.execution_environment?.cpu_model ?? 'Unavailable') : 'Provider managed / unavailable'}</dd>
                 </div>
                 <div>
                   <dt>Memory</dt>
