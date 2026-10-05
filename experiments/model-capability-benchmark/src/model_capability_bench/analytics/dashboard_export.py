@@ -48,6 +48,8 @@ def export_dashboard_data(
                 q.failure_count,
                 q.primary_metric,
                 q.primary_value,
+                q.comparison_metric,
+                q.practical_delta,
                 q.completed_at_utc,
                 m.model_id,
                 m.effective_model_id,
@@ -259,7 +261,12 @@ def export_dashboard_data(
                         comparison_evidence(model_a),
                         comparison_evidence(model_b),
                         metric_name=primary_by_model[model_a],
-                        practical_delta=None,
+                        practical_delta=(
+                            float(cells[0]["practical_delta"])
+                            if cells
+                            and cells[0].get("practical_delta") is not None
+                            else None
+                        ),
                     ) | {
                         "model_a": model_a,
                         "model_b": model_b,
