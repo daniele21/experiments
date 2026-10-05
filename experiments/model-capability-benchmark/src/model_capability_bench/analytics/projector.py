@@ -237,6 +237,17 @@ def _create_schema(connection: Any) -> None:
             PRIMARY KEY (run_id, model_key)
         );
 
+        CREATE TABLE IF NOT EXISTS execution_environments (
+            run_id VARCHAR,
+            execution_signature VARCHAR,
+            system VARCHAR,
+            release VARCHAR,
+            machine VARCHAR,
+            cpu_model VARCHAR,
+            total_memory_bytes BIGINT,
+            PRIMARY KEY (run_id, execution_signature)
+        );
+
         CREATE TABLE IF NOT EXISTS benchmark_cells (
             run_id VARCHAR,
             model_key VARCHAR,
@@ -426,6 +437,7 @@ def _clear_run(connection: Any, run_id: str) -> None:
         "cases",
         "aggregates",
         "benchmark_cells",
+        "execution_environments",
         "models",
         "runs",
     ):
@@ -451,6 +463,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
     model_sigs = _mapping(signatures.get("models"))
     execution_sigs = _mapping(signatures.get("executions"))
     benchmark_sigs = _mapping(signatures.get("benchmarks"))
+    execution_environment = _mapping(signatures.get("execution_environment"))
 
     status = _status(manifest)
     manifest_created_at = _text(manifest.get("created_at_utc"))
@@ -512,6 +525,28 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(model.get("deployment")),
                 _text(model.get("quantization")) or None,
                 _text(model.get("artifact_format")) or None,
+            ],
+        )
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO execution_environments
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                run_id,
+                execution_sig,
+                _text(execution_environment.get("system")) or None,
+                _text(execution_environment.get("release")) or None,
+                _text(execution_environment.get("machine")) or None,
+                _text(execution_environment.get("cpu_model")) or None,
+                (
+                    int(execution_environment.get("total_memory_bytes"))
+                    if isinstance(
+                        execution_environment.get("total_memory_bytes"),
+                        (int, float),
+                    )
+                    else None
+                ),
             ],
         )
 
