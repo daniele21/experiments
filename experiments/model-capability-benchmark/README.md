@@ -1,5 +1,7 @@
 # Model Capability Benchmark
 
+For day-to-day execution, start with **[HOW_TO_USE.md](HOW_TO_USE.md)**. It describes the recommended model-by-model flow: preflight → estimate → scratch smoke → canonical core verticals → projection → comparison → share rendering.
+
 A reusable benchmark suite for comparing local and API-hosted models across multiple
 capabilities, datasets and evaluators.
 
