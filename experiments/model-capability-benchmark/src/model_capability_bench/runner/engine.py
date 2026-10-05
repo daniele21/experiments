@@ -39,6 +39,7 @@ from model_capability_bench.runner.contracts import (
 from model_capability_bench.runner.evidence import EvidenceStore
 from model_capability_bench.runner.pricing import enrich_inference_cost
 from model_capability_bench.suite import CapabilitySuiteBundle
+
 _DIRECT_GENERATION_KEYS = {"temperature", "max_output_tokens", "seed", "stop"}
 _EXTRA_GENERATION_KEYS = {"top_p", "top_k", "min_p", "repeat_penalty"}
 
