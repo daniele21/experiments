@@ -423,7 +423,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .scatter-svg { width:100%; height:auto; overflow:visible; }
 .scatter-grid line { stroke: #e9edf4; stroke-width:1; }
 .pareto-line { fill:none; stroke:#aab7d1; stroke-width:1.2; stroke-dasharray:4 4; opacity:.9; }
-.pareto-label { fill:#8795ad; font-size:9px; transform:rotate(-19deg); transform-origin:100px 100px; }
+.pareto-label { fill:#8795ad; font-size:9px; font-weight:700; }
 .scatter-point { cursor:pointer; }
 .scatter-point circle { fill:#5b72ef; stroke:white; stroke-width:2; filter:drop-shadow(0 2px 4px rgba(30,50,90,.12)); }
 .scatter-point.local circle { fill:#26ad74; }
@@ -726,6 +726,9 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 .family-group i { display:block; height:6px; border-radius:6px; background:#edf0f5; overflow:hidden; }
 .family-group i b { display:block; height:100%; background:#5a6ff0; border-radius:6px; }
+.family-group i b.family-model-1 { background:#28aa73; }
+.family-group i b.family-model-2 { background:#8a63e9; }
+.family-group i b.family-model-3 { background:#d59a2c; }
 .family-group em { color:#68748a; font-style:normal; text-align:right; }
 
 .disagreement-preview { display:grid; }

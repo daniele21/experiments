@@ -119,6 +119,8 @@ export interface DecisionCapabilitySummary {
   input_tokens_total: number | null;
   output_tokens_total: number | null;
   failure_rate: number | null;
+  observed_quality_latency_pareto: boolean;
+  known_provider_cost_quality_pareto: boolean;
 }
 
 export interface DecisionDatasetSummary {
@@ -142,6 +144,8 @@ export interface DecisionDatasetSummary {
   output_tokens_total: number | null;
   failure_count: number;
   failure_rate: number | null;
+  observed_quality_latency_pareto: boolean;
+  known_provider_cost_quality_pareto: boolean;
 }
 
 export interface DecisionPayload {

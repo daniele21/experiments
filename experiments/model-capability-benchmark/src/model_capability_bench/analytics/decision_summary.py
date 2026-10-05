@@ -113,6 +113,27 @@ def _pareto_membership(
     return frontier
 
 
+def _annotate_pareto(
+    rows: list[dict[str, Any]],
+    *,
+    y_key: str,
+) -> None:
+    latency_frontier = _pareto_membership(
+        rows,
+        x_key="latency_p50_ms",
+        y_key=y_key,
+    )
+    cost_frontier = _pareto_membership(
+        [row for row in rows if bool(row.get("provider_cost_known"))],
+        x_key="provider_cost_per_1k_cases_usd",
+        y_key=y_key,
+    )
+    for row in rows:
+        signature = str(row["model_signature"])
+        row["observed_quality_latency_pareto"] = signature in latency_frontier
+        row["known_provider_cost_quality_pareto"] = signature in cost_frontier
+
+
 def _load_case_evidence(
     connection: Any,
     cells: list[dict[str, Any]],
@@ -404,24 +425,7 @@ def build_decision_overview(
             }
         )
 
-    latency_frontier = _pareto_membership(
-        model_summaries,
-        x_key="latency_p50_ms",
-        y_key="overall_quality_score",
-    )
-    cost_frontier = _pareto_membership(
-        [
-            row
-            for row in model_summaries
-            if bool(row.get("provider_cost_known"))
-        ],
-        x_key="provider_cost_per_1k_cases_usd",
-        y_key="overall_quality_score",
-    )
-    for row in model_summaries:
-        signature = str(row["model_signature"])
-        row["observed_quality_latency_pareto"] = signature in latency_frontier
-        row["known_provider_cost_quality_pareto"] = signature in cost_frontier
+    _annotate_pareto(model_summaries, y_key="overall_quality_score")
 
     capability_summaries: list[dict[str, Any]] = []
     for cell in cells:
@@ -451,6 +455,12 @@ def build_decision_overview(
                 **observed,
             }
         )
+
+    capability_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in capability_summaries:
+        capability_groups[str(row["capability_id"])].append(row)
+    for rows in capability_groups.values():
+        _annotate_pareto(rows, y_key="normalized_quality_score")
 
     dataset_summaries: list[dict[str, Any]] = []
     for (model_key, capability_id, dataset_id), dataset_cases in sorted(
@@ -495,6 +505,14 @@ def build_decision_overview(
                 **observed,
             }
         )
+
+    dataset_groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in dataset_summaries:
+        dataset_groups[
+            (str(row["capability_id"]), str(row["dataset_id"]))
+        ].append(row)
+    for rows in dataset_groups.values():
+        _annotate_pareto(rows, y_key="normalized_quality_score")
 
     return {
         "schema_version": "2",

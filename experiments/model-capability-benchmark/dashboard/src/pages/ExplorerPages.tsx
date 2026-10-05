@@ -9,6 +9,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { navigate } from '../router';
 import type { ReactNode } from 'react';
 import {
   modelPayloads,
@@ -304,6 +305,10 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
           provider_cost_per_1k_cases_usd: summary.provider_cost_per_1k_cases_usd,
           failure_count: summary.failure_count,
           failure_rate: summary.failure_rate,
+          observed_quality_latency_pareto:
+            summary.observed_quality_latency_pareto,
+          known_provider_cost_quality_pareto:
+            summary.known_provider_cost_quality_pareto,
         }
       : model;
   });
@@ -375,14 +380,19 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
             {families.map((family) => (
               <div className="family-group" key={family}>
                 <strong>{family}</strong>
-                {payload.cells.map((cell) => {
+                {payload.cells.map((cell, modelIndex) => {
                   const row = payload.family_breakdown.find(
                     (item) => item.family === family && item.model_key === cell.model_key,
                   );
                   return (
                     <div key={cell.model_key}>
                       <span>{cell.model_key}</span>
-                      <i><b style={{ width: ((row?.value ?? 0) * 100) + '%' }} /></i>
+                      <i>
+                        <b
+                          className={'family-model-' + (modelIndex % 4)}
+                          style={{ width: ((row?.value ?? 0) * 100) + '%' }}
+                        />
+                      </i>
                       <em>{percent(row?.value)}</em>
                     </div>
                   );
@@ -419,6 +429,27 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
   const ranked = [...rows].sort(
     (a, b) => (b.normalized_quality_score ?? -1) - (a.normalized_quality_score ?? -1),
   );
+  const datasetTradeoffModels = models.map((model) => {
+    const row = rows.find((item) => item.model_signature === model.model_signature);
+    return row
+      ? {
+          ...model,
+          overall_quality_score: row.normalized_quality_score,
+          latency_p50_ms: row.latency_p50_ms,
+          latency_p95_ms: row.latency_p95_ms,
+          latency_mean_ms: row.latency_mean_ms,
+          provider_cost_known: row.provider_cost_known,
+          provider_cost_total_usd: row.provider_cost_total_usd,
+          provider_cost_per_case_usd: row.provider_cost_per_case_usd,
+          provider_cost_per_1k_cases_usd: row.provider_cost_per_1k_cases_usd,
+          failure_count: row.failure_count,
+          failure_rate: row.failure_rate,
+          observed_quality_latency_pareto: row.observed_quality_latency_pareto,
+          known_provider_cost_quality_pareto:
+            row.known_provider_cost_quality_pareto,
+        }
+      : model;
+  });
   return (
     <>
       <PageHeader
@@ -449,6 +480,20 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
           </dl>
         </div>
       </section>
+      <section className="two-panel-grid">
+        <TradeoffScatter
+          title="Quality × latency"
+          description="Observed trade-off for this dataset only."
+          models={datasetTradeoffModels}
+          xMetric="latency"
+        />
+        <TradeoffScatter
+          title="Quality × cost"
+          description="Known provider cost for this dataset only."
+          models={datasetTradeoffModels}
+          xMetric="cost"
+        />
+      </section>
       <section className="analysis-card">
         <SectionTitle title="Models on this dataset" description="Quality, observed latency and known provider cost." />
         <DatasetHeatmap datasets={rows} models={models} />
@@ -456,6 +501,11 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
       <MethodologyAccordion policyLabel={overview.decision?.quality_policy.label} />
     </>
   );
+}
+
+function compareHref(modelA: string, modelB: string): string {
+  const params = new URLSearchParams({ modelA, modelB });
+  return '/compare?' + params.toString();
 }
 
 function queryParam(name: string): string | null {
@@ -468,10 +518,16 @@ function queryParam(name: string): string | null {
 }
 
 export function ComparePage() {
-  const models = decisionModels;
+  const models = [...decisionModels].sort(
+    (a, b) => (b.overall_quality_score ?? -1) - (a.overall_quality_score ?? -1),
+  );
   const initialA = queryParam('modelA') ?? models[0]?.model_key ?? '';
   const initialB =
     queryParam('modelB') ??
+    models.find(
+      (model) =>
+        model.model_key !== initialA && model.deployment === 'local',
+    )?.model_key ??
     models.find((model) => model.model_key !== initialA)?.model_key ??
     '';
   const [modelAKey, setModelAKey] = useState(initialA);
@@ -500,11 +556,25 @@ export function ComparePage() {
         description="Compare finalists across quality, dataset performance, observed latency, cost and execution semantics."
         actions={
           <div className="compare-selectors">
-            <select value={modelA?.model_key ?? ''} onChange={(event) => setModelAKey(event.target.value)}>
+            <select
+              value={modelA?.model_key ?? ''}
+              onChange={(event) => {
+                const next = event.target.value;
+                setModelAKey(next);
+                navigate(compareHref(next, modelB?.model_key ?? ''));
+              }}
+            >
               {models.map((model) => <option key={model.model_key}>{model.model_key}</option>)}
             </select>
             <span>vs</span>
-            <select value={modelB?.model_key ?? ''} onChange={(event) => setModelBKey(event.target.value)}>
+            <select
+              value={modelB?.model_key ?? ''}
+              onChange={(event) => {
+                const next = event.target.value;
+                setModelBKey(next);
+                navigate(compareHref(modelA?.model_key ?? '', next));
+              }}
+            >
               {models.filter((model) => model.model_key !== modelA?.model_key).map((model) => (
                 <option key={model.model_key}>{model.model_key}</option>
               ))}
