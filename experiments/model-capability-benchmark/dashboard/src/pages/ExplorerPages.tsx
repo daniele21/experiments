@@ -304,6 +304,10 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
           provider_cost_per_1k_cases_usd: summary.provider_cost_per_1k_cases_usd,
           failure_count: summary.failure_count,
           failure_rate: summary.failure_rate,
+          observed_quality_latency_pareto:
+            summary.observed_quality_latency_pareto,
+          known_provider_cost_quality_pareto:
+            summary.known_provider_cost_quality_pareto,
         }
       : model;
   });
@@ -419,6 +423,27 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
   const ranked = [...rows].sort(
     (a, b) => (b.normalized_quality_score ?? -1) - (a.normalized_quality_score ?? -1),
   );
+  const datasetTradeoffModels = models.map((model) => {
+    const row = rows.find((item) => item.model_signature === model.model_signature);
+    return row
+      ? {
+          ...model,
+          overall_quality_score: row.normalized_quality_score,
+          latency_p50_ms: row.latency_p50_ms,
+          latency_p95_ms: row.latency_p95_ms,
+          latency_mean_ms: row.latency_mean_ms,
+          provider_cost_known: row.provider_cost_known,
+          provider_cost_total_usd: row.provider_cost_total_usd,
+          provider_cost_per_case_usd: row.provider_cost_per_case_usd,
+          provider_cost_per_1k_cases_usd: row.provider_cost_per_1k_cases_usd,
+          failure_count: row.failure_count,
+          failure_rate: row.failure_rate,
+          observed_quality_latency_pareto: row.observed_quality_latency_pareto,
+          known_provider_cost_quality_pareto:
+            row.known_provider_cost_quality_pareto,
+        }
+      : model;
+  });
   return (
     <>
       <PageHeader
@@ -448,6 +473,20 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
             <div><dt>Samples / model</dt><dd>{rows[0]?.sample_count ?? '—'}</dd></div>
           </dl>
         </div>
+      </section>
+      <section className="two-panel-grid">
+        <TradeoffScatter
+          title="Quality × latency"
+          description="Observed trade-off for this dataset only."
+          models={datasetTradeoffModels}
+          xMetric="latency"
+        />
+        <TradeoffScatter
+          title="Quality × cost"
+          description="Known provider cost for this dataset only."
+          models={datasetTradeoffModels}
+          xMetric="cost"
+        />
       </section>
       <section className="analysis-card">
         <SectionTitle title="Models on this dataset" description="Quality, observed latency and known provider cost." />
