@@ -1,8 +1,35 @@
 # MCB-11 — Benchmark Observability, Results Explorer & Shareable Insights
 
-Status: **PLANNED**
+Status: **IN PROGRESS — FOUNDATION VERTICAL SLICE IMPLEMENTED**
 
 Depends on: **MCB-10 — Vertical Benchmark Hardening & Efficiency**
+
+Implemented in the first vertical slice:
+
+- typed lifecycle event envelope with raw/evaluation evidence references;
+- deterministic model / benchmark / execution signatures;
+- benchmark identity excludes presentation-only practical-delta thresholds;
+- one immutable folder per generated run ID by default;
+- CURRENT/HISTORICAL/PARTIAL canonical selection;
+- expected-cell validation so incomplete runs cannot become CURRENT;
+- rebuildable DuckDB projector with MCB-10 fallback signatures;
+- typed overview/capability dashboard export;
+- backend-derived family breakdown, disagreements and paired statistics;
+- React/Vite routes for Overview, Structured Output, Disagreements and Share preview;
+- single-file dashboard data injection;
+- immutable `share create` snapshot contract;
+- fixture, projection and integration tests authored.
+
+Still pending in later slices:
+
+- Model profile/history;
+- full Run explorer/timeline UI;
+- Compare UI;
+- resource telemetry;
+- STALE/NON_COMPARABLE presentation across all screens;
+- PNG/PDF headless share renderer and visual regression;
+- expansion from structured-output to all five capabilities;
+- local Python/frontend gate execution and visual validation.
 
 ## 1. Objective
 
