@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from model_capability_bench.analytics.decision_summary import build_decision_overview
 from model_capability_bench.runner.comparison import paired_binary_comparison
 
 
@@ -121,12 +122,14 @@ def export_dashboard_data(
                 "deployment": row["deployment"],
             }
 
+        decision = build_decision_overview(connection, current)
         overview = {
-            "schema_version": "1",
+            "schema_version": "2",
             "models": list(models.values()),
             "capabilities": capabilities,
             "cells": current,
             "runs": runs[:12],
+            "decision": decision,
         }
         overview_path = output_dir / "overview.json"
         overview_path.write_text(
@@ -142,13 +145,25 @@ def export_dashboard_data(
                 {row["benchmark_signature"] for row in cells}
             )
             payload = {
-                "schema_version": "1",
+                "schema_version": "2",
                 "capability_id": capability_id,
                 "cells": cells,
                 "benchmark_signatures": benchmark_signatures,
                 "cases": [],
                 "family_breakdown": [],
                 "disagreements": [],
+                "decision": {
+                    "capability_summaries": [
+                        row
+                        for row in decision["capability_summaries"]
+                        if row["capability_id"] == capability_id
+                    ],
+                    "dataset_summaries": [
+                        row
+                        for row in decision["dataset_summaries"]
+                        if row["capability_id"] == capability_id
+                    ],
+                },
             }
             if len(benchmark_signatures) == 1:
                 sig = benchmark_signatures[0]
@@ -366,11 +381,19 @@ def export_dashboard_data(
             (model_dir / filename).write_text(
                 json.dumps(
                     {
-                        "schema_version": "1",
+                        "schema_version": "2",
                         "model_signature": model_signature,
                         "model": model_rows[0] if model_rows else None,
                         "current_cells": current_cells,
                         "history": history,
+                        "decision_summary": next(
+                            (
+                                row
+                                for row in decision["model_summaries"]
+                                if row["model_signature"] == model_signature
+                            ),
+                            None,
+                        ),
                     },
                     indent=2,
                     sort_keys=True,
@@ -490,7 +513,7 @@ def export_dashboard_data(
         index_path.write_text(
             json.dumps(
                 {
-                    "schema_version": "1",
+                    "schema_version": "2",
                     "overview": "overview.json",
                     "capabilities": {
                         capability_id: f"capabilities/{capability_id}.json"
