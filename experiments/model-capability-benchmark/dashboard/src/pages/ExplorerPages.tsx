@@ -9,6 +9,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   capabilityPayloads,
   modelPayloads,
@@ -50,7 +51,7 @@ function SectionTitle({
 }: {
   title: string;
   description?: string;
-  aside?: React.ReactNode;
+  aside?: ReactNode;
 }) {
   return (
     <div className="section-heading">
