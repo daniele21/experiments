@@ -222,6 +222,15 @@ def _load_pricing(
     run_ids = sorted({str(row["run_id"]) for row in cells})
     if not run_ids:
         return {}
+    exists = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_name = 'run_pricing'
+        """
+    ).fetchone()[0]
+    if not exists:
+        return {}
     placeholders = ", ".join("?" for _ in run_ids)
     rows = _rows(
         connection,
