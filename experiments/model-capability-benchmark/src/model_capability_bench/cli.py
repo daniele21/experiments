@@ -6,8 +6,15 @@ import os
 from pathlib import Path
 from typing import Any
 
-from benchmark_core import parse_csv_selection, preflight_models, to_jsonable
+from benchmark_core import (
+    create_run_identity,
+    parse_csv_selection,
+    preflight_models,
+    to_jsonable,
+)
 
+from model_capability_bench.analytics.dashboard_export import export_dashboard_data
+from model_capability_bench.analytics.projector import project_results
 from model_capability_bench.reporting import (
     load_benchmark_report,
     load_reporting_config,
@@ -96,6 +103,23 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--html", type=Path)
     report.add_argument("--json", type=Path)
 
+    project = sub.add_parser(
+        "project",
+        help="Build or refresh the rebuildable cross-run DuckDB analytics model.",
+    )
+    project.add_argument("--results-root", type=Path)
+    project.add_argument("--database", type=Path)
+    project.add_argument("--rebuild", action="store_true")
+    project.add_argument("--export-dashboard", action="store_true")
+
+    dashboard_data = sub.add_parser(
+        "dashboard-data",
+        help="Export typed dashboard JSON from the analytics database.",
+    )
+    dashboard_data.add_argument("--results-root", type=Path)
+    dashboard_data.add_argument("--database", type=Path)
+    dashboard_data.add_argument("--output-dir", type=Path)
+
     sub.add_parser("models", help="List configured models.")
     sub.add_parser("tasks", help="List configured tasks.")
     sub.add_parser("datasets", help="List configured datasets.")
@@ -155,6 +179,55 @@ def _catalog_payload(bundle, command: str) -> Any:
 def main() -> int:
     args = build_parser().parse_args()
     root = args.root.resolve()
+
+    if args.command == "project":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        database = (
+            args.database.resolve()
+            if args.database is not None
+            else results_root / "analytics" / "benchmark.duckdb"
+        )
+        summary = project_results(
+            results_root=results_root,
+            database_path=database,
+            rebuild=args.rebuild,
+        )
+        payload: dict[str, Any] = {"projection": summary}
+        if args.export_dashboard:
+            payload["dashboard"] = export_dashboard_data(
+                database_path=database,
+                output_dir=results_root / "analytics" / "dashboard",
+            )
+        _json(payload)
+        return 0
+
+    if args.command == "dashboard-data":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        database = (
+            args.database.resolve()
+            if args.database is not None
+            else results_root / "analytics" / "benchmark.duckdb"
+        )
+        output_dir = (
+            args.output_dir.resolve()
+            if args.output_dir is not None
+            else results_root / "analytics" / "dashboard"
+        )
+        _json(
+            export_dashboard_data(
+                database_path=database,
+                output_dir=output_dir,
+            )
+        )
+        return 0
 
     if args.command == "report":
         reporting_config = load_reporting_config(root)
@@ -264,10 +337,17 @@ def main() -> int:
         if args.retry_failures is None
         else args.retry_failures
     )
+    resolved_run_id = args.run_id
+    if resolved_run_id is None:
+        resolved_run_id = create_run_identity(
+            run_group=args.run_group,
+            suite=bundle.suite.suite_id,
+            runner_location="model-capability-benchmark",
+        ).run_id
     output_dir = (
         args.output_dir.resolve()
         if args.output_dir is not None
-        else defaults.output_root / args.run_group
+        else defaults.output_root / resolved_run_id
     )
     cache_dir = (
         args.cache_dir.resolve()
@@ -283,7 +363,7 @@ def main() -> int:
         seed=seed,
         resume=resume,
         retry_failures=retry_failures,
-        run_id=args.run_id,
+        run_id=resolved_run_id,
     )
     runtime_resolver = RegistryRuntimeResolver(os.environ)
     runner = CapabilityRunner(
