@@ -71,8 +71,15 @@ def write_run_artifacts(
                 "parameters_b": resolved.model.parameters_b,
                 "artifact_size_bytes": (
                     resolved.model.artifact.size_bytes
-                    if resolved.model.artifact is not None
-                    else None
+                    if (
+                        resolved.model.artifact is not None
+                        and resolved.model.artifact.size_bytes is not None
+                    )
+                    else (
+                        (execution_metadata.get(model_key) or {}).get(
+                            "artifact_size_bytes"
+                        )
+                    )
                 ),
                 "model_signature": model_signatures.get(model_key),
                 "execution_signature": execution_signatures.get(model_key),
