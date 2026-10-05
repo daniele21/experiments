@@ -205,6 +205,7 @@ export interface FrontierPoint {
   quality: number | null;
   deployment: string;
   compression_group: string | null;
+  pareto_parameters: boolean;
   pareto_artifact_size: boolean;
   pareto_peak_rss: boolean;
   pareto_latency: boolean;
