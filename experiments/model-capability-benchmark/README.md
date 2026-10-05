@@ -24,6 +24,7 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-11 observability/results explorer: core complete with immutable evidence, deterministic projection, multi-capability analysis, model/run history, disagreement explorer, Compare UI and a dedicated Python/frontend CI gate;
 - MCB-12 efficiency telemetry/share renderer: core complete with Korgis CPU/RSS telemetry, hardware-aware execution lineage, Model/Run/Compare efficiency surfaces, immutable 5-card PNG/PDF rendering and a real-Chrome CI gate.
 - MCB-13 premium decision dashboard: core complete and CI-green; decision-first Overview, Models/Model, Capability, Dataset, Compare, Runs/Run, Disagreements and Share surfaces, quality × latency/cost trade-offs, data-driven Pareto frontiers, human-readable local execution context, premium progressive-disclosure UX and multi-route Chrome visual gates.
+- MCB-14 parameter sensitivity/frontier lab: implemented; controlled OVAT/factorial sweeps, real Korgis runtime overrides, sensitivity evidence isolated from canonical CURRENT selection, family/compression Pareto analytics, /sensitivity and /frontier React routes, and a dedicated Python/frontend/visual CI gate.
 
 ## Registry
 
@@ -196,7 +197,9 @@ MCB-0…10 is implemented. The immediate gate is local automated validation foll
 
 MCB-11 now provides typed lifecycle events, model/benchmark/execution signatures, latest-comparable CURRENT selection, a rebuildable DuckDB read model, typed dashboard payloads, the first Overview/Structured Output/Disagreement routes and immutable share snapshots.
 
-MCB-13 now defines the next UI evolution: a premium decision dashboard that keeps benchmark-science guardrails while making overall quality, observed latency, known provider cost, dataset performance and local execution environment immediately legible. See `MCB_13_PREMIUM_DECISION_DASHBOARD.md`.
+MCB-13 defines the premium decision dashboard that keeps benchmark-science guardrails while making overall quality, observed latency, known provider cost, dataset performance and local execution environment immediately legible. See `MCB_13_PREMIUM_DECISION_DASHBOARD.md`.
+
+MCB-14 adds controlled parameter sensitivity and a local deployment frontier. Use `model-bench sweep --plan-only` before running an experiment, then project the immutable runs and inspect `/sensitivity` and `/frontier`. See `MCB_14_SENSITIVITY_FRONTIER.md`.
 
 Build the cross-run read model and dashboard payloads without invoking a model:
 
