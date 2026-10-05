@@ -173,7 +173,7 @@ def _write_run(
                     "metrics": [
                         {
                             "name": "exact_match",
-                            "value": score,
+                            "value": float(score >= 0.5),
                             "primary": True,
                         }
                     ],
