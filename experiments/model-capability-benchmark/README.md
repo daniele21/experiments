@@ -23,6 +23,7 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-10 vertical benchmark hardening: implemented on the v2 task-vertical suite and covered by consolidation gates; controlled real-provider validation remains an operational gate;
 - MCB-11 observability/results explorer: core complete with immutable evidence, deterministic projection, multi-capability analysis, model/run history, disagreement explorer, Compare UI and a dedicated Python/frontend CI gate;
 - MCB-12 efficiency telemetry/share renderer: core complete with Korgis CPU/RSS telemetry, hardware-aware execution lineage, Model/Run/Compare efficiency surfaces, immutable 5-card PNG/PDF rendering and a real-Chrome CI gate.
+- MCB-13 premium decision dashboard: planned; decision-first Overview, dataset drill-down, quality × latency/cost trade-offs, human-readable local execution context and premium progressive-disclosure UX.
 
 ## Registry
 
@@ -194,6 +195,8 @@ See `MCB_8_REPORTING.md` for the evidence/report contract.
 MCB-0…10 is implemented. The immediate gate is local automated validation followed by the controlled real-provider E2E: run `plan`, then `estimate`, and only then execute the same core slice through Korgis and an API model.
 
 MCB-11 now provides typed lifecycle events, model/benchmark/execution signatures, latest-comparable CURRENT selection, a rebuildable DuckDB read model, typed dashboard payloads, the first Overview/Structured Output/Disagreement routes and immutable share snapshots.
+
+MCB-13 now defines the next UI evolution: a premium decision dashboard that keeps benchmark-science guardrails while making overall quality, observed latency, known provider cost, dataset performance and local execution environment immediately legible. See `MCB_13_PREMIUM_DECISION_DASHBOARD.md`.
 
 Build the cross-run read model and dashboard payloads without invoking a model:
 
