@@ -7,6 +7,7 @@ import duckdb
 
 from model_capability_bench.analytics.dashboard_export import export_dashboard_data
 from model_capability_bench.analytics.projector import project_results
+from model_capability_bench.sharing.snapshot import create_share_snapshot
 
 
 def _append(path: Path, payload: dict) -> None:
@@ -22,6 +23,8 @@ def _write_run(
     score: float,
     status: str = "COMPLETED",
     benchmark_signature: str = "sha256:benchmark:fixture-v2",
+    model_key: str = "model-a",
+    model_signature: str = "sha256:model:model-a",
 ) -> Path:
     run_dir = results_root / "runs" / run_id
     run_dir.mkdir(parents=True)
@@ -41,8 +44,8 @@ def _write_run(
             "aggregate_count": 1,
             "metadata": {
                 "signatures": {
-                    "models": {"model-a": "sha256:model:model-a"},
-                    "executions": {"model-a": "sha256:execution:machine-a"},
+                    "models": {model_key: model_signature},
+                    "executions": {model_key: "sha256:execution:machine-a"},
                     "benchmarks": {
                         "structured-output": benchmark_signature,
                     },
@@ -57,13 +60,13 @@ def _write_run(
         },
         "models": [
             {
-                "model_key": "model-a",
-                "model_id": "vendor/model-a",
-                "effective_model_id": "model-a",
+                "model_key": model_key,
+                "model_id": "vendor/" + model_key,
+                "effective_model_id": model_key,
                 "runtime_key": "runtime-a",
                 "provider_key": "provider-a",
                 "deployment": "local",
-                "model_signature": "sha256:model:model-a",
+                "model_signature": model_signature,
                 "execution_signature": "sha256:execution:machine-a",
             }
         ],
@@ -85,8 +88,8 @@ def _write_run(
             }
         ],
         "signatures": {
-            "models": {"model-a": "sha256:model:model-a"},
-            "executions": {"model-a": "sha256:execution:machine-a"},
+            "models": {model_key: model_signature},
+            "executions": {model_key: "sha256:execution:machine-a"},
             "benchmarks": {"structured-output": benchmark_signature},
         },
     }
@@ -98,7 +101,7 @@ def _write_run(
         run_dir / "aggregates.jsonl",
         {
             "run_id": run_id,
-            "model_key": "model-a",
+            "model_key": model_key,
             "capability_id": "structured-output",
             "metric": "exact_match",
             "value": score,
@@ -111,7 +114,7 @@ def _write_run(
         run_dir / "report_index.jsonl",
         {
             "run_id": run_id,
-            "model_key": "model-a",
+            "model_key": model_key,
             "capability_id": "structured-output",
             "task_id": "structured-output",
             "profile": "core",
@@ -127,8 +130,8 @@ def _write_run(
     if status == "COMPLETED":
         metadata = {
             "run_id": run_id,
-            "model_key": "model-a",
-            "model_signature": "sha256:model:model-a",
+            "model_key": model_key,
+            "model_signature": model_signature,
             "execution_signature": "sha256:execution:machine-a",
             "benchmark_signature": benchmark_signature,
             "capability_id": "structured-output",
@@ -291,3 +294,40 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert overview["capabilities"] == ["structured-output"]
     assert overview["cells"][0]["primary_value"] == 0.8
     assert overview["models"][0]["model_key"] == "model-a"
+
+
+def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> None:
+    results = tmp_path / "results"
+    _write_run(
+        results,
+        run_id="run-model-a",
+        completed_at="2026-10-05T09:00:00+00:00",
+        score=0.70,
+        model_key="model-a",
+        model_signature="sha256:model:model-a",
+    )
+    _write_run(
+        results,
+        run_id="run-model-b",
+        completed_at="2026-10-05T09:05:00+00:00",
+        score=0.90,
+        model_key="model-b",
+        model_signature="sha256:model:model-b",
+    )
+    summary = project_results(results_root=results, rebuild=True)
+
+    snapshot = create_share_snapshot(
+        results_root=results,
+        database_path=Path(summary.database_path),
+        capability_id="structured-output",
+        model_keys=("model-a", "model-b"),
+        title="Local vs API structured output",
+    )
+
+    payload = json.loads(Path(snapshot.snapshot_path).read_text())
+    assert payload["snapshot_id"] == snapshot.snapshot_id
+    assert payload["benchmark_signature"] == "sha256:benchmark:fixture-v2"
+    assert payload["model_keys"] == ["model-a", "model-b"]
+    assert set(payload["run_ids"]) == {"run-model-a", "run-model-b"}
+    assert payload["sources"]["capability_payload_sha256"].startswith("sha256:")
+    assert payload["comparison"]["paired_count"] == 1
