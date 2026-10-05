@@ -180,6 +180,29 @@ def _write_run(
                 },
             },
         )
+        _append(
+            run_dir / "resource_summary.jsonl",
+            {
+                "case_id": "case-1",
+                "attempt": 1,
+                "metadata": {
+                    **metadata,
+                    "runtime_key": "runtime-a",
+                },
+                "summary": {
+                    "source": "korgis:/api/v1/resources",
+                    "scope": "owned_backend_process",
+                    "sample_count": 4,
+                    "sample_interval_ms": 250.0,
+                    "process_cpu_percent_avg": 125.0,
+                    "process_rss_bytes_avg": 1_000_000_000.0,
+                    "process_rss_bytes_peak": 1_200_000_000.0,
+                    "system_available_memory_bytes_min": 8_000_000_000.0,
+                    "accelerator_memory_bytes_peak": None,
+                    "sampling_error_count": 0,
+                },
+            },
+        )
     _append(
         run_dir / "events.jsonl",
         {
@@ -303,6 +326,10 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert overview["capabilities"] == ["structured-output"]
     assert overview["cells"][0]["primary_value"] == 0.8
     assert overview["models"][0]["model_key"] == "model-a"
+    resources = overview["cells"][0]["resource_summary"]
+    assert resources["scope"] == "owned_backend_process"
+    assert resources["process_cpu_percent_avg"] == 125.0
+    assert resources["process_rss_bytes_peak"] == 1_200_000_000.0
 
     index = json.loads((output / "index.json").read_text())
     model_file = output / index["models"]["sha256:model:model-a"]
@@ -315,6 +342,8 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert model_payload["history"][0]["result_state"] == "CURRENT"
     assert run_payload["run"]["run_id"] == "run-current"
     assert run_payload["timeline"][0]["event_type"] == "run.completed"
+    assert run_payload["resources"][0]["model_key"] == "model-a"
+    assert run_payload["resources"][0]["sample_count"] == 4
 
 
 def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> None:
