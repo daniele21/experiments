@@ -134,6 +134,9 @@ def benchmark_signature(
         "profile": profile_id,
         "generation": generation,
         "seed": seed,
+        "metrics": capability.spec.metrics,
+        "context_bindings": capability.spec.context_bindings,
+        "capability_options": dict(capability.spec.options),
         "comparison_metric": capability.spec.comparison.metric,
     }
     return stable_signature("benchmark", payload)
