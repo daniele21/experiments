@@ -135,6 +135,168 @@ def test_openai_responses_provider_uses_strict_schema_and_unknown_cost() -> None
     assert result.estimated_cost_usd is None
 
 
+def test_openai_responses_provider_omits_temperature_and_adapts_optional_schema() -> None:
+    bundle = load_capability_suite(ROOT)
+    model = bundle.models.resolve("gpt-5.6-luna")
+    provider = build_inference_provider(
+        model,
+        {
+            "OPENAI_API_KEY": "test-key",
+            "BENCHMARK_MAX_RETRIES": "0",
+            "BENCHMARK_TIMEOUT_SECONDS": "20",
+        },
+    )
+    schema = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "manager": {"type": "string"},
+        },
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+
+    result = provider.generate(
+        InferenceRequest(
+            request_id="req-opt",
+            input={"question": "Employee info"},
+            system_prompt="Return json.",
+            response_schema=schema,
+            generation=InferenceRequest(
+                request_id="sub",
+                input={},
+            ).generation,
+        )
+    )
+
+    client = _FakeOpenAI.instances[-1]
+    call = client.response_calls[0]
+    assert "temperature" not in call
+    assert call["text"]["format"]["strict"] is False
+    assert call["text"]["format"]["schema"] == schema
+    assert result.valid is True
+
+
+def test_typesafe_jev_provider_builds_and_evaluates(monkeypatch) -> None:
+    from model_capability_bench.providers.typesafe_json import TypeSafeJevJsonProvider
+
+    bundle = load_capability_suite(ROOT)
+    model = bundle.models.resolve("jev-1.13.0")
+    provider = build_inference_provider(
+        model,
+        {
+            "TYPESAFE_API_KEY": "test-key",
+            "BENCHMARK_MAX_RETRIES": "0",
+            "BENCHMARK_TIMEOUT_SECONDS": "20",
+        },
+    )
+    assert isinstance(provider, TypeSafeJevJsonProvider)
+
+    class _MockAnswer:
+        choice = "card_arrival"
+        confidence = 0.98
+
+    class _MockResponse:
+        def __init__(self):
+            self.answers = {"intent": _MockAnswer()}
+            self.usage = type("Usage", (), {"input_tokens": 120, "output_tokens": 15})()
+            self.model = "jev-1.13.0"
+
+        def model_dump(self):
+            return {"status": "ok"}
+
+    monkeypatch.setattr(provider.client, "system_one", lambda **kwargs: _MockResponse())
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "intent": {"type": "string", "enum": ["card_arrival", "pin_change"]},
+            "confidence": {"type": "number"},
+        },
+        "required": ["intent", "confidence"],
+    }
+    result = provider.generate(
+        InferenceRequest(
+            request_id="req-jev",
+            input={"text": "When will my card arrive?"},
+            system_prompt="Classify intent",
+            response_schema=schema,
+        )
+    )
+    assert result.valid is True
+    assert result.normalized_output == {"intent": "card_arrival", "confidence": 0.98}
+    assert result.usage.input_tokens == 120
+    assert result.usage.output_tokens == 15
+
+
+def test_decisio_provider_builds_and_evaluates(monkeypatch) -> None:
+    import json
+    from io import StringIO
+
+    from model_capability_bench.providers.decisio_json import DecisioJsonProvider
+
+    bundle = load_capability_suite(ROOT)
+    model = bundle.models.resolve("decisio-qwen3.5-2b-q4km")
+
+    class _MockProc:
+        def __init__(self):
+            self.stdin = StringIO()
+            self.stdout = StringIO(
+                json.dumps({"status": "ready"})
+                + "\n"
+                + json.dumps(
+                    {
+                        "request_id": "req-decisio",
+                        "choice": "card_arrival",
+                        "valid": True,
+                        "generated_tokens": 6,
+                        "latency_ms": 150.0,
+                    }
+                )
+                + "\n"
+            )
+            self.stderr = StringIO()
+
+        def poll(self):
+            return None
+
+        def terminate(self):
+            pass
+
+        def wait(self, timeout=None):
+            pass
+
+    monkeypatch.setattr("subprocess.Popen", lambda *args, **kwargs: _MockProc())
+
+    provider = build_inference_provider(
+        model,
+        {"DECISIO_MODEL_PATH": "/path/to/fake.gguf"},
+    )
+    assert isinstance(provider, DecisioJsonProvider)
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "intent": {"type": "string", "enum": ["card_arrival", "pin_change"]},
+            "confidence": {"type": "number"},
+        },
+        "required": ["intent", "confidence"],
+    }
+    result = provider.generate(
+        InferenceRequest(
+            request_id="req-decisio",
+            input={"text": "When will my card arrive?"},
+            system_prompt="Classify intent",
+            response_schema=schema,
+        )
+    )
+    assert result.valid is True
+    assert result.normalized_output == {"intent": "card_arrival", "confidence": 0.90}
+    assert result.usage.output_tokens == 6
+    assert result.estimated_cost_usd == 0.0
+
+
+
 class _FakeProvider:
     provider_id = "fake"
 

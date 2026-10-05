@@ -79,7 +79,8 @@ class OpenAICompatibleJsonProvider:
                 "messages": messages,
                 "response_format": {"type": "json_object"},
             }
-            if request.generation.temperature is not None:
+            supports_temp = self.resolved.model.metadata.get("supports_temperature", True)
+            if request.generation.temperature is not None and supports_temp is not False:
                 kwargs["temperature"] = request.generation.temperature
             if request.generation.max_output_tokens is not None:
                 kwargs["max_tokens"] = request.generation.max_output_tokens
@@ -91,24 +92,17 @@ class OpenAICompatibleJsonProvider:
                 kwargs["extra_body"] = dict(request.generation.extra)
 
             response = self.client.chat.completions.create(**kwargs)
-            latency_ms = (time.perf_counter() - started) * 1000
-            content = response.choices[0].message.content or ""
-            parsed = json.loads(content)
-            usage = getattr(response, "usage", None)
-            return InferenceResult(
-                provider_id=self.provider_id,
-                model_id=self.model_id,
-                raw_output=response,
-                normalized_output=parsed,
-                latency_ms=latency_ms,
-                usage=TokenUsage(
-                    input_tokens=getattr(usage, "prompt_tokens", None),
-                    output_tokens=getattr(usage, "completion_tokens", None),
-                ),
-                estimated_cost_usd=_local_api_cost(self.resolved),
-                metadata={"protocol": "chat-completions"},
-            )
+            return self._parse_chat_result(response, started)
         except Exception as exc:  # noqa: BLE001 - provider boundary normalizes evidence
+            err_msg = str(exc).lower()
+            if "temperature" in err_msg and "temperature" in kwargs:
+                kwargs.pop("temperature", None)
+                try:
+                    response = self.client.chat.completions.create(**kwargs)
+                    return self._parse_chat_result(response, started)
+                except Exception as retry_exc:  # noqa: BLE001
+                    exc = retry_exc
+
             error = inference_error_from_exception(exc)
             if error.kind == "unknown":
                 error = InferenceError(
@@ -127,6 +121,25 @@ class OpenAICompatibleJsonProvider:
                 estimated_cost_usd=_local_api_cost(self.resolved),
                 metadata={"protocol": "chat-completions"},
             )
+
+    def _parse_chat_result(self, response: Any, started: float) -> InferenceResult:
+        latency_ms = (time.perf_counter() - started) * 1000
+        content = response.choices[0].message.content or ""
+        parsed = json.loads(content)
+        usage = getattr(response, "usage", None)
+        return InferenceResult(
+            provider_id=self.provider_id,
+            model_id=self.model_id,
+            raw_output=response,
+            normalized_output=parsed,
+            latency_ms=latency_ms,
+            usage=TokenUsage(
+                input_tokens=getattr(usage, "prompt_tokens", None),
+                output_tokens=getattr(usage, "completion_tokens", None),
+            ),
+            estimated_cost_usd=_local_api_cost(self.resolved),
+            metadata={"protocol": "chat-completions"},
+        )
 
 
 class OpenAIResponsesJsonProvider:
@@ -163,41 +176,50 @@ class OpenAIResponsesJsonProvider:
             if request.system_prompt:
                 kwargs["instructions"] = request.system_prompt
             if request.response_schema is not None:
+                schema = dict(request.response_schema)
+                properties = schema.get("properties")
+                required = set(schema.get("required") or [])
+                all_required = isinstance(properties, Mapping) and all(
+                    p in required for p in properties
+                )
                 kwargs["text"] = {
                     "format": {
                         "type": "json_schema",
                         "name": "benchmark_response",
-                        "strict": True,
-                        "schema": dict(request.response_schema),
+                        "strict": bool(all_required),
+                        "schema": schema,
                     }
                 }
             if request.generation.max_output_tokens is not None:
                 kwargs["max_output_tokens"] = request.generation.max_output_tokens
-            if request.generation.temperature is not None:
+            supports_temp = self.resolved.model.metadata.get("supports_temperature", True)
+            if request.generation.temperature is not None and supports_temp is not False:
                 kwargs["temperature"] = request.generation.temperature
             kwargs.update(dict(request.generation.extra))
 
             response = self.client.responses.create(**kwargs)
-            latency_ms = (time.perf_counter() - started) * 1000
-            output_text = getattr(response, "output_text", "") or ""
-            parsed = json.loads(output_text)
-            usage = getattr(response, "usage", None)
-            input_details = getattr(usage, "input_tokens_details", None)
-            return InferenceResult(
-                provider_id=self.provider_id,
-                model_id=self.model_id,
-                raw_output=response,
-                normalized_output=parsed,
-                latency_ms=latency_ms,
-                usage=TokenUsage(
-                    input_tokens=getattr(usage, "input_tokens", None),
-                    cached_input_tokens=getattr(input_details, "cached_tokens", None),
-                    output_tokens=getattr(usage, "output_tokens", None),
-                ),
-                estimated_cost_usd=None,
-                metadata={"protocol": "responses"},
-            )
+            return self._parse_responses_result(response, started)
         except Exception as exc:  # noqa: BLE001 - provider boundary normalizes evidence
+            err_msg = str(exc).lower()
+            needs_retry = False
+            if "temperature" in err_msg and "temperature" in kwargs:
+                kwargs.pop("temperature", None)
+                needs_retry = True
+            if (
+                ("invalid_json_schema" in err_msg or "required" in err_msg)
+                and "text" in kwargs
+                and isinstance(kwargs.get("text"), dict)
+                and "format" in kwargs["text"]
+            ):
+                kwargs["text"]["format"]["strict"] = False
+                needs_retry = True
+            if needs_retry:
+                try:
+                    response = self.client.responses.create(**kwargs)
+                    return self._parse_responses_result(response, started)
+                except Exception as retry_exc:  # noqa: BLE001
+                    exc = retry_exc
+
             error = inference_error_from_exception(exc)
             if error.kind == "unknown":
                 error = InferenceError(
@@ -216,3 +238,26 @@ class OpenAIResponsesJsonProvider:
                 estimated_cost_usd=None,
                 metadata={"protocol": "responses"},
             )
+
+    def _parse_responses_result(
+        self, response: Any, started: float
+    ) -> InferenceResult:
+        latency_ms = (time.perf_counter() - started) * 1000
+        output_text = getattr(response, "output_text", "") or ""
+        parsed = json.loads(output_text)
+        usage = getattr(response, "usage", None)
+        input_details = getattr(usage, "input_tokens_details", None)
+        return InferenceResult(
+            provider_id=self.provider_id,
+            model_id=self.model_id,
+            raw_output=response,
+            normalized_output=parsed,
+            latency_ms=latency_ms,
+            usage=TokenUsage(
+                input_tokens=getattr(usage, "input_tokens", None),
+                cached_input_tokens=getattr(input_details, "cached_tokens", None),
+                output_tokens=getattr(usage, "output_tokens", None),
+            ),
+            estimated_cost_usd=None,
+            metadata={"protocol": "responses"},
+        )

@@ -66,9 +66,42 @@ def _openai(
     )
 
 
+def _typesafe(
+    model: ResolvedModel,
+    environ: Mapping[str, str],
+) -> InferenceProvider:
+    from model_capability_bench.providers.typesafe_json import TypeSafeJevJsonProvider
+
+    provider = model.provider
+    api_key = _env_value(environ, provider.api_key_env)
+    if api_key is None:
+        raise ProviderFactoryError(
+            f"Provider {provider.provider_key!r} requires an API key"
+        )
+    return TypeSafeJevJsonProvider(
+        model,
+        api_key=api_key,
+        environ=environ,
+    )
+
+
+def _decisio(
+    model: ResolvedModel,
+    environ: Mapping[str, str],
+) -> InferenceProvider:
+    from model_capability_bench.providers.decisio_json import DecisioJsonProvider
+
+    return DecisioJsonProvider(
+        model,
+        environ=environ,
+    )
+
+
 DEFAULT_PROVIDER_BUILDERS: Mapping[str, ProviderBuilder] = {
     "openai-compatible": _openai_compatible,
     "openai": _openai,
+    "typesafe": _typesafe,
+    "decisio": _decisio,
 }
 
 
@@ -100,4 +133,15 @@ def build_inference_provider(
             f"Provider {model.provider.provider_key!r} uses unsupported "
             f"protocol {protocol!r}"
         )
+    if provider_type == "typesafe" and protocol != "system-one":
+        raise ProviderFactoryError(
+            f"Provider {model.provider.provider_key!r} uses unsupported "
+            f"protocol {protocol!r}"
+        )
+    if provider_type == "decisio" and protocol != "decisio-engine":
+        raise ProviderFactoryError(
+            f"Provider {model.provider.provider_key!r} uses unsupported "
+            f"protocol {protocol!r}"
+        )
     return builder(model, environ)
+

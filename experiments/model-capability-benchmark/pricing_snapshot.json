@@ -3,6 +3,14 @@
   "as_of": "2026-09-20",
   "processing": "standard",
   "prices_per_million_tokens": {
+    "jev": {
+      "match": "prefix",
+      "input": 0.042,
+      "cached_input": 0.042,
+      "output": 0,
+      "source": "TypeSafe AI public pricing: $42 per billion input tokens; output free.",
+      "source_url": "https://typesafe.ai/"
+    },
     "gpt-5.6-luna": {
       "match": "exact",
       "input": 0.2,

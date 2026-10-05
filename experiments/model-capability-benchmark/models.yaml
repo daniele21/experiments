@@ -31,6 +31,20 @@ providers:
       protocol: chat-completions
       default_base_url: https://api.modelbest.cn/v1
 
+  typesafe:
+    type: typesafe
+    api_key_env: TYPESAFE_API_KEY
+    required_env:
+      - TYPESAFE_API_KEY
+    options:
+      protocol: system-one
+
+  decisio:
+    type: decisio
+    options:
+      protocol: decisio-engine
+
+
 runtimes:
   korgis-local:
     provider: korgis
@@ -53,6 +67,21 @@ runtimes:
     lifecycle: external
     options:
       runtime_type: provider-api
+
+  typesafe-api:
+    provider: typesafe
+    deployment: api
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  decisio-local:
+    provider: decisio
+    deployment: local
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
 
 models:
   qwen3.5-0.8b-q4km:
@@ -143,6 +172,8 @@ models:
     model_id: gpt-5.6-luna
     runtime: openai-api
     family: gpt-5.6
+    metadata:
+      supports_temperature: false
     tags:
       - api
       - closed
@@ -158,3 +189,68 @@ models:
       - open-weight
       - minicpm
       - small
+
+  jev-1.13.0:
+    model_id: jev-1.13.0
+    runtime: typesafe-api
+    family: jev
+    tags:
+      - api
+      - closed
+      - typesafe
+      - decision-model
+
+  decisio-qwen3.5-2b-q4km:
+    model_id: unsloth/qwen3.5-2b
+    runtime_model_id: qwen3.5-2b-q4km
+    runtime: decisio-local
+    family: qwen3.5
+    parameters_b: 2
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: decisio-local-runtime
+    tags:
+      - local
+      - decisio
+      - open-weight
+      - qwen
+      - decision-model
+
+  decisio-qwen3.5-4b-q4km:
+    model_id: unsloth/qwen3.5-4b
+    runtime_model_id: qwen3.5-4b-q4km
+    runtime: decisio-local
+    family: qwen3.5
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: decisio-local-runtime
+    tags:
+      - local
+      - decisio
+      - open-weight
+      - qwen
+      - decision-model
+
+  decisio-qwen3.5-9b-q4km:
+    model_id: qwen/qwen3.5-9b
+    runtime_model_id: qwen3.5-9b-q4km
+    runtime: decisio-local
+    family: qwen3.5
+    parameters_b: 9
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: decisio-local-runtime
+    tags:
+      - local
+      - decisio
+      - open-weight
+      - qwen
+      - decision-model
+

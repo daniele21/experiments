@@ -165,7 +165,30 @@ export MINICPM_API_KEY="..."
 # export MINICPM_BASE_URL=https://api.modelbest.cn/v1
 ~~~
 
+TypeSafe Jev (System 1):
+
+~~~bash
+export TYPESAFE_API_KEY="..."
+~~~
+
+Decisio (Local GGUF via in-process Metal):
+
+~~~bash
+# Defaults to sibling checkout and ~/.lmstudio/models GGUFs
+export DECISIO_ROOT="${HOME}/Personal/decisio"
+export DECISIO_DEVICE="metal"
+~~~
+
+> [!NOTE]
+> **Decision Models Scope**: Decision models like TypeSafe Jev (`jev-1.13.0`) and Decisio (`decisio-qwen3.5-2b-q4km`, `decisio-qwen3.5-4b-q4km`, `decisio-qwen3.5-9b-q4km`) evaluate discrete choice / bounded intent routing tasks. They are benchmarked **only** on classification capabilities (`intent-classification`, `oos-calibration`). Free-form generative capabilities (`qa-abstention`, `mathematical-reasoning`, `structured-output`) require autoregressive arbitrary text synthesis and are intentionally excluded.
+>
+> A dedicated launcher script is available:
+> ~~~bash
+> ./scripts/run_classification_benchmarks.sh
+> ~~~
+
 Secrets are read from the environment and are not persisted in benchmark manifests.
+
 
 ## 6. Start one campaign
 
