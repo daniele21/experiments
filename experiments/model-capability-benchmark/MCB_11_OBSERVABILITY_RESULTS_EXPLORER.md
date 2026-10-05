@@ -1,10 +1,10 @@
 # MCB-11 — Benchmark Observability, Results Explorer & Shareable Insights
 
-Status: **IN PROGRESS — FOUNDATION VERTICAL SLICE IMPLEMENTED**
+Status: **CORE COMPLETE — CONSOLIDATION GATE PASSING**
 
 Depends on: **MCB-10 — Vertical Benchmark Hardening & Efficiency**
 
-Implemented in the first vertical slice:
+Implemented in MCB-11 core:
 
 - typed lifecycle event envelope with raw/evaluation evidence references;
 - deterministic model / benchmark / execution signatures;
@@ -12,24 +12,24 @@ Implemented in the first vertical slice:
 - one immutable folder per generated run ID by default;
 - CURRENT/HISTORICAL/PARTIAL canonical selection;
 - expected-cell validation so incomplete runs cannot become CURRENT;
-- rebuildable DuckDB projector with MCB-10 fallback signatures;
-- typed overview/capability dashboard export;
+- rebuildable and checksum-incremental DuckDB projector;
+- typed overview/capability/model/run dashboard exports;
 - backend-derived family breakdown, disagreements and paired statistics;
-- React/Vite routes for Overview, Structured Output, Disagreements and Share preview;
-- single-file dashboard data injection;
-- immutable `share create` snapshot contract;
-- fixture, projection and integration tests authored.
+- React/Vite routes for Overview, every projected Capability, Disagreements, Models, Runs and Compare;
+- model history constrained by benchmark lineage;
+- run lifecycle/timeline and failure summaries;
+- multi-capability single-file dashboard data injection;
+- immutable `share create` snapshot contract with Git provenance;
+- dedicated MCB-11 Python + frontend CI gate;
+- fixture, projection, integration and dashboard build tests.
 
-Still pending in later slices:
+Extracted to MCB-12 as non-blocking enrichment:
 
-- Model profile/history;
-- full Run explorer/timeline UI;
-- Compare UI;
-- resource telemetry;
-- STALE/NON_COMPARABLE presentation across all screens;
-- PNG/PDF headless share renderer and visual regression;
-- expansion from structured-output to all five capabilities;
-- local Python/frontend gate execution and visual validation.
+- runtime resource telemetry (CPU/RAM and runtime-specific resource signals);
+- deterministic PNG/PDF LinkedIn renderer and visual regression;
+- richer STALE/NON_COMPARABLE presentation beyond the comparison guardrails already implemented.
+
+See `MCB_12_EFFICIENCY_TELEMETRY_SHARE_RENDERER.md`.
 
 ## 1. Objective
 
