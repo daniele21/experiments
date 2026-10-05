@@ -24,6 +24,7 @@ export interface CapabilityCell {
   comparison_metric?: string | null;
   practical_delta?: number | null;
   completed_at_utc: string;
+  git_commit?: string | null;
 }
 
 export interface OverviewPayload {
