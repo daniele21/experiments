@@ -179,8 +179,12 @@ export function OverviewPage() {
   };
   const changeDeployment = (value: DeploymentFilter) => {
     setDeployment(value);
+    setVisibleSignatures([]);
     setHoveredSignature(null);
-    updateQuery({ deployment: value === 'all' ? null : value });
+    updateQuery({
+      deployment: value === 'all' ? null : value,
+      models: null,
+    });
   };
   const changeVisibleModels = (signatures: string[]) => {
     setVisibleSignatures(signatures);
