@@ -175,6 +175,24 @@ class _FakeControl:
         return {"ok": True}
 
 
+def test_korgis_resource_telemetry_can_be_disabled() -> None:
+    bundle = load_capability_suite(ROOT)
+    model = bundle.models.resolve("qwen3.5-2b-q4km")
+
+    runtime = KorgisManagedRuntime(
+        environ={
+            "KORGIS_BASE_URL": "http://127.0.0.1:1235/v1",
+            "MCB_RESOURCE_TELEMETRY": "off",
+        },
+        provider_builder=lambda _resolved, _environ: _FakeProvider(),
+        control_factory=_FakeControl,
+    )
+
+    provider = runtime.prepare(model)
+
+    assert isinstance(provider, _FakeProvider)
+
+
 def test_korgis_runtime_manages_model_residency_without_server_process_logic() -> None:
     bundle = load_capability_suite(ROOT)
     model = bundle.models.resolve("qwen3.5-2b-q4km")
