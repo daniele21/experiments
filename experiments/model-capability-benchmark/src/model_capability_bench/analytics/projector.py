@@ -494,6 +494,22 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 ],
             )
 
+    partial_cells = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM benchmark_cells
+        WHERE run_id = ?
+          AND status <> 'COMPLETED'
+        """,
+        [run_id],
+    ).fetchone()[0]
+    if partial_cells:
+        status = "PARTIAL"
+        connection.execute(
+            "UPDATE runs SET status = 'PARTIAL' WHERE run_id = ?",
+            [run_id],
+        )
+
     for raw_item, evaluation_item in _read_case_records(run_dir, run_id):
         raw_record = _mapping(raw_item.get("record"))
         evaluation_record = _mapping(evaluation_item.get("record"))
