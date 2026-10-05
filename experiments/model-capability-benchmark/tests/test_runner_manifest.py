@@ -43,6 +43,22 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         model_failures=0,
         aggregate_count=22,
         output_dir=str(tmp_path),
+        metadata={
+            "signatures": {
+                "models": {
+                    "qwen3.5-2b-q4km": "sha256:model:qwen",
+                    "gpt-5.6-luna": "sha256:model:gpt",
+                },
+                "executions": {
+                    "qwen3.5-2b-q4km": "sha256:execution:qwen",
+                    "gpt-5.6-luna": "sha256:execution:gpt",
+                },
+                "benchmarks": {
+                    "structured-output": "sha256:benchmark:structured",
+                    "mathematical-reasoning": "sha256:benchmark:math",
+                },
+            }
+        },
     )
 
     write_run_artifacts(
@@ -71,6 +87,14 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
     for capability in manifest["capabilities"]:
         assert "benchmark" in capability
         assert "comparison" in capability
+        assert capability["benchmark_signature"]
+    assert manifest["signatures"]["models"]["qwen3.5-2b-q4km"] == (
+        "sha256:model:qwen"
+    )
+    assert {
+        model["model_signature"]
+        for model in manifest["models"]
+    } == {"sha256:model:qwen", "sha256:model:gpt"}
     assert set(manifest["config_checksums"]) == {
         "models.yaml",
         "tasks.yaml",
