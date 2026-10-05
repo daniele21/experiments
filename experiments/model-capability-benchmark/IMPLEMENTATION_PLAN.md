@@ -1133,3 +1133,29 @@ Enhancement successivi, non blocker del core MCB-0…9:
 - local resource telemetry (RAM/VRAM, throughput, startup/switch latency quando misurabile);
 - tutorial operativo per aggiungere model/task/dataset/provider;
 - nuove capability/dataset in base agli esperimenti editoriali.
+
+
+---
+
+## MCB-12 — Efficiency telemetry & share renderer 🔜 PLANNED
+
+### Obiettivo
+
+Completare gli enrichment non bloccanti estratti da MCB-11:
+
+- telemetria CPU/RAM/runtime per modelli locali;
+- comparabilità delle metriche di efficienza vincolata all'execution signature;
+- pannelli efficiency in Model, Run e Compare;
+- renderer deterministico degli share snapshot in PNG/PDF;
+- carousel LinkedIn e visual regression.
+
+Il contratto dettagliato è in `MCB_12_EFFICIENCY_TELEMETRY_SHARE_RENDERER.md`.
+
+### Definition of Done
+
+- resource telemetry opzionale, versionata e non-fatal;
+- nessuna metrica hardware inventata quando il runtime non la espone;
+- performance/resource comparison bloccata quando le execution signature non sono compatibili;
+- rendering da snapshot immutabile senza provider call;
+- output PNG e PDF con provenance;
+- visual regression e gate dedicati.
