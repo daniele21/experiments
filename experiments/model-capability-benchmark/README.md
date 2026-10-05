@@ -18,8 +18,9 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending;
 - MCB-8 neutral capability reporting: complete;
 - MCB-9 Jev consolidation/migration: complete;
-- MCB-10 vertical benchmark hardening: implemented on v2 suite; local automated gates and controlled real-provider validation pending;
-- MCB-11 observability/results explorer: foundation implemented on a structured-output vertical slice; local Python/frontend gates and visual validation pending.
+- MCB-10 vertical benchmark hardening: implemented on the v2 task-vertical suite and covered by consolidation gates; controlled real-provider validation remains an operational gate;
+- MCB-11 observability/results explorer: core complete with immutable evidence, deterministic projection, multi-capability analysis, model/run history, disagreement explorer, Compare UI and a dedicated Python/frontend CI gate;
+- MCB-12 efficiency telemetry/share renderer: planned enrichment for CPU/RAM/runtime telemetry plus deterministic PNG/PDF LinkedIn assets and visual regression.
 
 ## Registry
 
