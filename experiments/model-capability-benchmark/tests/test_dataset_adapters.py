@@ -5,7 +5,6 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
-
 from benchmark_core import (
     DatasetLoadContext,
     InferenceResult,
