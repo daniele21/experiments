@@ -14,7 +14,7 @@ import type {
   DecisionPayload,
   OverviewPayload,
 } from '../types';
-import { bytes, cpu, milliseconds, providerCostCoverage, providerCostValue, score, usd } from '../utils';
+import { bytes, cpu, milliseconds, providerCostCoverage, providerCostValue, score } from '../utils';
 import {
   DatasetHeatmap,
   DatasetPerformanceLandscape,
@@ -63,6 +63,7 @@ function fallbackDecision(payload: OverviewPayload): DecisionPayload {
       provider_cost_priced_cases: 0,
       provider_cost_total_cases: cells.reduce((total, cell) => total + cell.sample_count, 0),
       provider_cost_coverage_rate: 0,
+      provider_cost_pricing: null,
       provider_cost_total_usd: null,
       provider_cost_per_case_usd: null,
       provider_cost_per_1k_cases_usd: null,
@@ -336,6 +337,21 @@ export function OverviewPage() {
                         selected.provider_cost_coverage_rate,
                       )}
                     </small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Pricing</dt>
+                  <dd>
+                    {selected.provider_cost_pricing
+                      ? [
+                          selected.provider_cost_pricing.as_of
+                            ? 'as of ' + selected.provider_cost_pricing.as_of
+                            : null,
+                          selected.provider_cost_pricing.processing,
+                        ].filter(Boolean).join(' · ')
+                      : selected.deployment === 'local'
+                        ? 'Not applicable'
+                        : 'No frozen price match'}
                   </dd>
                 </div>
               </dl>
