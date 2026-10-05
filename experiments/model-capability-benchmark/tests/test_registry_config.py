@@ -25,6 +25,20 @@ def test_committed_registry_resolves_local_and_api_models() -> None:
     assert api.provider.provider_key == "openai"
     assert api.effective_model_id == "gpt-5.6-luna"
 
+    spark = registry.resolve("spark-x2.5-4b-q4km")
+    assert spark.runtime.deployment == "local"
+    assert spark.provider.provider_key == "korgis"
+    assert spark.effective_model_id == "spark-x2.5-4b-q4km"
+    assert spark.model.parameters_b == 4
+    assert spark.model.artifact is not None
+    assert spark.model.artifact.format == "gguf"
+    assert spark.model.artifact.quantization == "Q4_K_M"
+    assert spark.model.artifact.size_bytes == 2_600_224_352
+    assert spark.model.artifact.metadata["sha256"] == (
+        "adfcfa19a4ed6a5985da8bf565fe15f8e1a7e131d79bae2d19d48d1c40109428"
+    )
+    assert spark.model.artifact.metadata["required_runtime"] == "llama.cpp>=b10828"
+
     bonsai = registry.resolve("ternary-bonsai2-27b-ptq1")
     assert bonsai.runtime.deployment == "local"
     assert bonsai.provider.provider_key == "korgis"
