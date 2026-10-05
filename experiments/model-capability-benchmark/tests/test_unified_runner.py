@@ -144,6 +144,35 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     assert len(report_index) == 6
     assert all(item["cases"] for item in report_index)
 
+    raw_records = read_jsonl_records(root / "raw.jsonl")
+    assert all(item["metadata"].get("model_signature") for item in raw_records)
+    assert all(item["metadata"].get("benchmark_signature") for item in raw_records)
+    assert all(item["metadata"].get("execution_signature") for item in raw_records)
+
+    events = read_jsonl_records(root / "events.jsonl")
+    event_types = {item.get("event_type") for item in events}
+    assert {
+        "run.started",
+        "model.prepare.started",
+        "model.prepare.completed",
+        "capability.started",
+        "case.started",
+        "request.built",
+        "inference.started",
+        "inference.completed",
+        "evaluation.started",
+        "evaluation.completed",
+        "case.completed",
+        "capability.completed",
+        "model.release.started",
+        "model.release.completed",
+        "capability.aggregated",
+        "run.completed",
+    }.issubset(event_types)
+    assert first.metadata["signatures"]["models"]
+    assert first.metadata["signatures"]["benchmarks"]
+    assert first.metadata["signatures"]["executions"]
+
     resumed_runtime = _FakeRuntime()
     resumed = _runner(tmp_path, runtime=resumed_runtime).run(config)
 
