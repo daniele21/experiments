@@ -1,4 +1,4 @@
-import { ChevronRight, Info, Sparkles, Trophy } from 'lucide-react';
+import { ChevronRight, Info, Maximize2, Sparkles, Trophy, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppLink } from './Shell';
@@ -7,6 +7,8 @@ import type {
   DecisionModelSummary,
 } from '../types';
 import { milliseconds, providerCostCoverage, score, usd } from '../utils';
+import { modelShortLabel, modelVisual } from '../modelVisuals';
+import { ModelLegend, ModelMarker } from './ModelExplorerControls';
 
 export function DeploymentBadge({ deployment }: { deployment: string }) {
   const normalized = deployment.toLowerCase();
@@ -54,18 +56,6 @@ export function MetricCard({
   );
 }
 
-function shortModelLabel(value: string): string {
-  return value
-    .replace(/-q\d.*$/i, '')
-    .replace(/-nano-/i, ' ')
-    .replace(/-v-?\d+(?:\.\d+)*-/i, ' ')
-    .replace(/-luna$/i, '')
-    .replaceAll('-', ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 18);
-}
-
 function scaleLog(value: number, min: number, max: number): number {
   if (value <= 0) return 0;
   const lo = Math.log10(Math.max(min, Number.MIN_VALUE));
@@ -80,15 +70,20 @@ export function TradeoffScatter({
   models,
   xMetric,
   selectedModel,
+  hoveredModel,
   onSelect,
+  onHover,
 }: {
   title: string;
   description: string;
   models: DecisionModelSummary[];
   xMetric: 'latency' | 'cost';
   selectedModel?: string | null;
+  hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onHover?: (modelSignature: string | null) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const eligible = models.filter((model) => {
     const x =
       xMetric === 'latency'
@@ -101,19 +96,18 @@ export function TradeoffScatter({
       ? Number(model.latency_p50_ms)
       : Number(model.provider_cost_per_1k_cases_usd),
   );
-  const minX = xs.length ? Math.min(...xs) / 1.7 : 0.01;
-  const maxX = xs.length ? Math.max(...xs) * 1.7 : 1000;
+  const minX = xs.length ? Math.min(...xs) / 1.35 : 0.01;
+  const maxX = xs.length ? Math.max(...xs) * 1.35 : 1000;
   const plotted = eligible.map((model) => {
     const xValue =
       xMetric === 'latency'
         ? Number(model.latency_p50_ms)
         : Number(model.provider_cost_per_1k_cases_usd);
     const x =
-      48 +
-      Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 354;
+      72 +
+      Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 468;
     const quality = Number(model.overall_quality_score);
-    const y =
-      210 - Math.max(0, Math.min(1, (quality - 40) / 60)) * 170;
+    const y = 272 - Math.max(0, Math.min(1, quality / 100)) * 220;
     const frontier =
       xMetric === 'latency'
         ? model.observed_quality_latency_pareto
@@ -124,96 +118,217 @@ export function TradeoffScatter({
     .filter((point) => point.frontier)
     .sort((a, b) => a.x - b.x);
 
-  return (
-    <section className="analysis-card scatter-card">
-      <div className="section-heading compact">
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
+  const complete = models.filter((m) => m.provider_cost_status === 'complete').length;
+  const partial = models.filter((m) => m.provider_cost_status === 'partial').length;
+  const local = models.filter((m) => m.provider_cost_status === 'local_not_applicable').length;
+  const unavailable = models.filter((m) => m.provider_cost_status === 'unavailable').length;
+
+  const chart = (
+    <div className={expanded ? 'scatter-wrap expanded' : 'scatter-wrap'}>
+      {xMetric === 'cost' ? (
+        <div className="scatter-coverage-summary">
+          <span><b>{eligible.length}</b> plotted</span>
+          <span><b>{complete}</b> complete</span>
+          <span><b>{partial}</b> partial</span>
+          <span><b>{local}</b> local N/A</span>
+          <span><b>{unavailable}</b> unavailable</span>
         </div>
-        <span className="info-dot" title="Dashed frontier marks non-dominated observed points.">
-          <Info size={14} />
-        </span>
-      </div>
+      ) : null}
       {eligible.length ? (
-        <div className="scatter-wrap">
-          <svg
-            className="scatter-svg"
-            viewBox="0 0 420 250"
-            role="img"
-            aria-label={title}
-          >
-            <g className="scatter-grid">
-              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                <line key={'h' + t} x1="48" x2="402" y1={210 - t * 170} y2={210 - t * 170} />
-              ))}
-              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-                <line key={'v' + t} y1="40" y2="210" x1={48 + t * 354} x2={48 + t * 354} />
-              ))}
-            </g>
-            {frontierPoints.length > 1 ? (
-              <>
-                <polyline
-                  className="pareto-line"
-                  points={frontierPoints
-                    .map((point) => point.x + ',' + point.y)
-                    .join(' ')}
-                />
-              </>
-            ) : null}
-            {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
-              const selected = selectedModel === model.model_signature;
-              const labelRight = x < 300;
-              const labelY = y + (index % 2 === 0 ? -9 : 13);
+        <svg
+          className="scatter-svg"
+          viewBox="0 0 600 330"
+          role="img"
+          aria-label={title}
+        >
+          <g className="scatter-grid">
+            {[0, 25, 50, 75, 100].map((tick) => {
+              const y = 272 - (tick / 100) * 220;
               return (
-                <g
-                  key={model.model_signature}
-                  className={
-                    'scatter-point ' +
-                    (model.deployment === 'local' ? 'local ' : 'api ') +
-                    (selected ? 'selected ' : '') +
-                    (frontier ? 'frontier ' : '') +
-                    (xMetric === 'cost' && model.provider_cost_status === 'partial'
-                      ? 'cost-partial'
-                      : '')
-                  }
-                  onClick={() => onSelect?.(model.model_signature)}
-                >
-                  <circle cx={x} cy={y} r={selected ? 7 : 5.5}>
-                    <title>
-                      {model.model_key + ' · quality ' + quality.toFixed(1) +
-                        (xMetric === 'latency'
-                          ? ' · P50 ' + milliseconds(xValue)
-                          : ' · ' + usd(xValue) + ' / 1k cases · ' +
-                            providerCostCoverage(
-                              model.provider_cost_status,
-                              model.provider_cost_priced_cases,
-                              model.provider_cost_total_cases,
-                              model.provider_cost_coverage_rate,
-                            ))}
-                    </title>
-                  </circle>
-                  <text
-                    x={labelRight ? x + 9 : x - 9}
-                    y={labelY}
-                    textAnchor={labelRight ? 'start' : 'end'}
-                  >
-                    {shortModelLabel(model.model_key)}
-                  </text>
+                <g key={'y' + tick}>
+                  <line x1="72" x2="540" y1={y} y2={y} />
+                  <text className="axis-label" x="42" y={y + 3}>{tick}</text>
                 </g>
               );
             })}
-            <text className="axis-label" x="8" y="30">100</text>
-            <text className="axis-label" x="14" y="214">40</text>
-            <text className="axis-title" x="190" y="242">
-              {xMetric === 'latency' ? 'Observed latency · P50' : 'Known provider cost / 1k cases'}
-            </text>
-          </svg>
-        </div>
+            {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+              <line key={'v' + t} y1="52" y2="272" x1={72 + t * 468} x2={72 + t * 468} />
+            ))}
+          </g>
+          {frontierPoints.length > 1 ? (
+            <polyline
+              className="pareto-line"
+              points={frontierPoints.map((point) => point.x + ',' + point.y).join(' ')}
+            />
+          ) : null}
+          {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
+            const visual = modelVisual(model.model_signature);
+            const selected = selectedModel === model.model_signature;
+            const hovered = hoveredModel === model.model_signature;
+            const dimmed = Boolean(hoveredModel && !hovered);
+            const showLabel = expanded || selected || hovered || frontier || plotted.length <= 6;
+            const labelRight = x < 410;
+            const labelY = y + (index % 2 === 0 ? -10 : 15);
+            return (
+              <g
+                key={model.model_signature}
+                className={
+                  'scatter-point ' +
+                  (selected ? 'selected ' : '') +
+                  (hovered ? 'hovered ' : '') +
+                  (dimmed ? 'dimmed ' : '') +
+                  (frontier ? 'frontier ' : '') +
+                  (xMetric === 'cost' && model.provider_cost_status === 'partial'
+                    ? 'cost-partial'
+                    : '')
+                }
+                onClick={() => onSelect?.(model.model_signature)}
+                onMouseEnter={() => onHover?.(model.model_signature)}
+                onMouseLeave={() => onHover?.(null)}
+              >
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={selected || hovered ? 8 : 6}
+                  style={{ fill: visual.color }}
+                >
+                  <title>
+                    {model.model_key + ' · quality ' + quality.toFixed(1) +
+                      (xMetric === 'latency'
+                        ? ' · P50 ' + milliseconds(xValue)
+                        : ' · ' + usd(xValue) + ' / 1k · ' +
+                          providerCostCoverage(
+                            model.provider_cost_status,
+                            model.provider_cost_priced_cases,
+                            model.provider_cost_total_cases,
+                            model.provider_cost_coverage_rate,
+                          ))}
+                  </title>
+                </circle>
+                {showLabel ? (
+                  <text
+                    x={labelRight ? x + 10 : x - 10}
+                    y={labelY}
+                    textAnchor={labelRight ? 'start' : 'end'}
+                  >
+                    {modelShortLabel(model.model_key)}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
+          <text className="axis-title axis-y-title" x="10" y="160" transform="rotate(-90 10 160)">
+            Quality score
+          </text>
+          <text className="axis-title" x="236" y="318">
+            {xMetric === 'latency'
+              ? 'Observed latency · P50'
+              : 'Known provider cost / 1k cases'}
+          </text>
+        </svg>
       ) : (
-        <div className="empty-visual">No comparable observed points yet.</div>
+        <div className="empty-visual scatter-empty">
+          <strong>No priced models in the current selection.</strong>
+          <span>
+            {xMetric === 'cost'
+              ? 'Select API models with complete or partial frozen pricing, or reset the model filters.'
+              : 'No selected models have observed latency evidence.'}
+          </span>
+        </div>
       )}
-    </section>
+    </div>
+  );
+
+  return (
+    <>
+      <section className="analysis-card scatter-card">
+        <div className="section-heading compact">
+          <div>
+            <h2>{title}</h2>
+            <p>{description}</p>
+          </div>
+          <div className="chart-card-actions">
+            <button
+              type="button"
+              className="info-dot"
+              title="Dashed frontier marks non-dominated comparable points."
+            >
+              <Info size={14} />
+            </button>
+            <button
+              type="button"
+              className="expand-chart-button"
+              onClick={() => setExpanded(true)}
+              title={'Expand ' + title}
+            >
+              <Maximize2 size={15} />
+            </button>
+          </div>
+        </div>
+        {chart}
+        <ModelLegend
+          models={eligible}
+          hoveredModel={hoveredModel}
+          selectedModel={selectedModel}
+          onHover={onHover}
+          onSelect={onSelect}
+          compact
+        />
+      </section>
+
+      {expanded ? (
+        <div className="chart-modal-backdrop" role="presentation" onMouseDown={() => setExpanded(false)}>
+          <section
+            className="chart-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="chart-modal-header">
+              <div>
+                <span className="eyebrow">Analytical workspace</span>
+                <h2>{title}</h2>
+                <p>{description}</p>
+              </div>
+              <button type="button" className="modal-close" onClick={() => setExpanded(false)}>
+                <X size={18} />
+              </button>
+            </header>
+            <div className="chart-modal-grid">
+              <div className="chart-modal-canvas">
+                {chart}
+                <ModelLegend
+                  models={eligible}
+                  hoveredModel={hoveredModel}
+                  selectedModel={selectedModel}
+                  onHover={onHover}
+                  onSelect={onSelect}
+                />
+              </div>
+              <aside className="chart-modal-insights">
+                <h3>What to read</h3>
+                <dl>
+                  <div><dt>Best quality</dt><dd>{[...eligible].sort((a,b) => Number(b.overall_quality_score) - Number(a.overall_quality_score))[0]?.model_key ?? '—'}</dd></div>
+                  <div><dt>{xMetric === 'latency' ? 'Fastest observed' : 'Lowest priced'}</dt><dd>{[...eligible].sort((a,b) => Number(xMetric === 'latency' ? a.latency_p50_ms : a.provider_cost_per_1k_cases_usd) - Number(xMetric === 'latency' ? b.latency_p50_ms : b.provider_cost_per_1k_cases_usd))[0]?.model_key ?? '—'}</dd></div>
+                  <div><dt>Pareto models</dt><dd>{frontierPoints.length}</dd></div>
+                  <div><dt>Visible models</dt><dd>{models.length}</dd></div>
+                </dl>
+                {xMetric === 'cost' ? (
+                  <div className="modal-note">
+                    Local runtime cost is intentionally excluded. Partial pricing is shown, but the cost Pareto frontier uses complete pricing only.
+                  </div>
+                ) : (
+                  <div className="modal-note">
+                    Latency is observed execution performance and can reflect different hardware/runtime environments.
+                  </div>
+                )}
+              </aside>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -542,8 +657,8 @@ export function DatasetDeltaSlopegraph({
         <>
           <div className="slopegraph-column-head">
             <span>Dataset</span>
-            <div><strong>{shortModelLabel(modelA.model_key)}</strong><small>Model A</small></div>
-            <div><strong>{shortModelLabel(modelB.model_key)}</strong><small>Model B</small></div>
+            <div><strong>{modelShortLabel(modelA.model_key)}</strong><small>Model A</small></div>
+            <div><strong>{modelShortLabel(modelB.model_key)}</strong><small>Model B</small></div>
             <span>Δ A − B</span>
           </div>
           <div className="slopegraph-rows">
