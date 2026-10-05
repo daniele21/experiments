@@ -5,11 +5,10 @@ import {
   CheckCircle2,
   Cpu,
   GitCompareArrows,
-  Layers3,
   MemoryStick,
   Share2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   capabilityPayloads,
   modelPayloads,
@@ -18,7 +17,6 @@ import {
 } from '../data';
 import type {
   CapabilityPayload,
-  DecisionModelSummary,
   Disagreement,
   ModelPayload,
   RunPayload,
