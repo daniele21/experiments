@@ -21,6 +21,8 @@ export interface CapabilityCell {
   failure_count: number;
   primary_metric: string;
   primary_value: number | null;
+  comparison_metric?: string | null;
+  practical_delta?: number | null;
   completed_at_utc: string;
 }
 
