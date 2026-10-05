@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,7 @@ from benchmark_core import (
 )
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_benchmark_pricing(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
