@@ -25,6 +25,17 @@ def test_committed_registry_resolves_local_and_api_models() -> None:
     assert api.provider.provider_key == "openai"
     assert api.effective_model_id == "gpt-5.6-luna"
 
+    bonsai = registry.resolve("ternary-bonsai2-27b-ptq1")
+    assert bonsai.runtime.deployment == "local"
+    assert bonsai.provider.provider_key == "korgis"
+    assert bonsai.effective_model_id == "ternary-bonsai2-27b-ptq1"
+    assert bonsai.model.parameters_b == 27
+    assert bonsai.model.artifact is not None
+    assert bonsai.model.artifact.format == "gguf"
+    assert bonsai.model.artifact.quantization == "PTQ1_0"
+    assert bonsai.model.artifact.size_bytes == 5_946_648_928
+    assert bonsai.model.artifact.metadata["required_runtime"] == "prismml-llama.cpp"
+
 
 def test_committed_registry_preflight_is_selection_scoped() -> None:
     registry = load_registry(REGISTRY)
