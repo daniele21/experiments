@@ -71,7 +71,7 @@ def test_share_cards_are_fixed_size_snapshot_only_views():
     assert all("width: 1080px" in card for card in cards)
     assert all("height: 1350px" in card for card in cards)
     assert all("snapshot-fixture" in card for card in cards)
-    assert "same-case paired comparison" in cards[1]
+    assert "same-case paired comparison" in cards[1].lower()
     assert "Execution signatures match" in cards[3]
     assert "sha256:benchmark:fixture" in cards[4]
 
