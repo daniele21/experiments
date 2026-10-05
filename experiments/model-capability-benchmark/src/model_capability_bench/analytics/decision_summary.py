@@ -386,7 +386,12 @@ def _aggregate_case_metrics(
         "provider_cost_priced_cases": priced_case_count,
         "provider_cost_total_cases": total_case_count,
         "provider_cost_coverage_rate": provider_cost_coverage_rate,
-        "provider_cost_total_usd": observed_total_cost,
+        "provider_cost_observed_total_usd": observed_total_cost,
+        "provider_cost_total_usd": (
+            observed_total_cost
+            if provider_cost_status == "complete"
+            else None
+        ),
         "provider_cost_per_case_usd": mean_priced_cost,
         "provider_cost_per_1k_cases_usd": (
             mean_priced_cost * 1000
