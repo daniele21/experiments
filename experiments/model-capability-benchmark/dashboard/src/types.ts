@@ -8,6 +8,19 @@ export interface DashboardModel {
   deployment: string;
 }
 
+export interface ResourceSummary {
+  source: string;
+  scope: string;
+  sample_count: number;
+  sample_interval_ms: number | null;
+  process_cpu_percent_avg: number | null;
+  process_rss_bytes_avg: number | null;
+  process_rss_bytes_peak: number | null;
+  system_available_memory_bytes_min: number | null;
+  accelerator_memory_bytes_peak: number | null;
+  sampling_error_count: number;
+}
+
 export interface CapabilityCell {
   run_id: string;
   model_key: string;
@@ -25,6 +38,7 @@ export interface CapabilityCell {
   practical_delta?: number | null;
   completed_at_utc: string;
   git_commit?: string | null;
+  resource_summary?: ResourceSummary | null;
 }
 
 export interface OverviewPayload {
@@ -129,6 +143,11 @@ export interface RunPayload {
     quantization?: string | null;
   }>;
   cells: Array<CapabilityCell & { status: string }>;
+  resources: Array<ResourceSummary & {
+    model_key: string;
+    capability_id: string;
+    execution_signature?: string | null;
+  }>;
   timeline: Array<{
     event_type: string;
     timestamp_utc: string;
