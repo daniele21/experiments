@@ -28,8 +28,7 @@ def test_complete_api_cost_coverage() -> None:
     assert result["provider_cost_total_cases"] == 2
     assert result["provider_cost_coverage_rate"] == pytest.approx(1.0)
     assert result["provider_cost_observed_total_usd"] == pytest.approx(0.004)
-    assert result["provider_cost_observed_total_usd"] == pytest.approx(0.004)
-    assert result["provider_cost_total_usd"] is None
+    assert result["provider_cost_total_usd"] == pytest.approx(0.004)
     assert result["provider_cost_per_case_usd"] == pytest.approx(0.002)
     assert result["provider_cost_per_1k_cases_usd"] == pytest.approx(2.0)
 
@@ -45,7 +44,8 @@ def test_partial_api_cost_remains_visible_with_coverage() -> None:
     assert result["provider_cost_priced_cases"] == 2
     assert result["provider_cost_total_cases"] == 3
     assert result["provider_cost_coverage_rate"] == pytest.approx(2 / 3)
-    assert result["provider_cost_total_usd"] == pytest.approx(0.004)
+    assert result["provider_cost_observed_total_usd"] == pytest.approx(0.004)
+    assert result["provider_cost_total_usd"] is None
     assert result["provider_cost_per_case_usd"] == pytest.approx(0.002)
     assert result["provider_cost_per_1k_cases_usd"] == pytest.approx(2.0)
 
@@ -76,5 +76,6 @@ def test_local_provider_cost_is_not_api_cost_even_if_zero_is_recorded() -> None:
     assert result["provider_cost_known"] is False
     assert result["provider_cost_priced_cases"] == 2
     assert result["provider_cost_total_cases"] == 2
+    assert result["provider_cost_observed_total_usd"] is None
     assert result["provider_cost_total_usd"] is None
     assert result["provider_cost_per_1k_cases_usd"] is None
