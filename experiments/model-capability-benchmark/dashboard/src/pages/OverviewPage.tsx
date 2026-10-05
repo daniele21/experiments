@@ -64,6 +64,7 @@ function fallbackDecision(payload: OverviewPayload): DecisionPayload {
       provider_cost_total_cases: cells.reduce((total, cell) => total + cell.sample_count, 0),
       provider_cost_coverage_rate: 0,
       provider_cost_pricing: null,
+      provider_cost_observed_total_usd: null,
       provider_cost_total_usd: null,
       provider_cost_per_case_usd: null,
       provider_cost_per_1k_cases_usd: null,
