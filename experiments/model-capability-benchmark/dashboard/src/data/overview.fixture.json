@@ -1,5 +1,5 @@
 {
-  "schema_version": "1",
+  "schema_version": "2",
   "fixture": true,
   "models": [
     {
@@ -21,7 +21,9 @@
       "deployment": "api"
     }
   ],
-  "capabilities": ["structured-output"],
+  "capabilities": [
+    "structured-output"
+  ],
   "cells": [
     {
       "run_id": "fixture-qwen-current",
@@ -55,8 +57,231 @@
     }
   ],
   "runs": [
-    {"run_id":"fixture-current","status":"COMPLETED","completed_at_utc":"2026-10-05T07:37:00Z"},
-    {"run_id":"fixture-history","status":"COMPLETED","completed_at_utc":"2026-10-03T07:20:00Z"},
-    {"run_id":"fixture-newer-partial","status":"PARTIAL","completed_at_utc":"2026-10-05T08:10:00Z"}
-  ]
+    {
+      "run_id": "fixture-current",
+      "status": "COMPLETED",
+      "completed_at_utc": "2026-10-05T07:37:00Z"
+    },
+    {
+      "run_id": "fixture-history",
+      "status": "COMPLETED",
+      "completed_at_utc": "2026-10-03T07:20:00Z"
+    },
+    {
+      "run_id": "fixture-newer-partial",
+      "status": "PARTIAL",
+      "completed_at_utc": "2026-10-05T08:10:00Z"
+    }
+  ],
+  "decision": {
+    "schema_version": "2",
+    "quality_policy": {
+      "quality_policy_id": "core-quality-v1",
+      "label": "Equal-weight capability quality",
+      "aggregation": "mean_normalized_primary_metric",
+      "coverage_requirement": "complete",
+      "normalization": "higher-is-better unit metrics mapped to 0-100"
+    },
+    "cohort_policy": {
+      "policy_id": "max-model-coverage-latest-v1",
+      "description": "Fixture comparable cohort",
+      "benchmark_signatures": {
+        "structured-output": "sha256:benchmark:structured-fixture"
+      }
+    },
+    "model_summaries": [
+      {
+        "model_key": "qwen3.5-2b-q4km",
+        "model_id": "unsloth/qwen3.5-2b",
+        "effective_model_id": "qwen3.5-2b-q4km",
+        "model_signature": "sha256:model:qwen-fixture",
+        "runtime_key": "korgis-local",
+        "provider_key": "openai-compatible-local",
+        "deployment": "local",
+        "quality_policy_id": "core-quality-v1",
+        "overall_quality_score": 71.7,
+        "quality_coverage_capabilities": 1,
+        "quality_total_capabilities": 1,
+        "quality_coverage_datasets": 1,
+        "quality_total_datasets": 1,
+        "quality_coverage_complete": true,
+        "observed_case_count": 60,
+        "latency_p50_ms": 418,
+        "latency_p95_ms": 836,
+        "latency_mean_ms": 472,
+        "provider_cost_known": false,
+        "provider_cost_total_usd": null,
+        "provider_cost_per_case_usd": null,
+        "provider_cost_per_1k_cases_usd": null,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 4200,
+        "failure_count": 0,
+        "failure_rate": 0,
+        "execution_count": 1,
+        "execution_environment": {
+          "run_id": "fixture-qwen-current",
+          "execution_signature": "sha256:execution:qwen-mac",
+          "system": "darwin",
+          "release": "26.0",
+          "machine": "arm64",
+          "cpu_model": "Apple M3 Pro",
+          "total_memory_bytes": 19327352832
+        },
+        "resource_summary": {
+          "process_cpu_percent_avg": 142,
+          "process_rss_bytes_peak": 6764573491
+        },
+        "latest_completed_at_utc": "2026-10-05T07:37:00Z",
+        "current_run_ids": [
+          "fixture-qwen-current"
+        ],
+        "observed_quality_latency_pareto": true,
+        "known_provider_cost_quality_pareto": false
+      },
+      {
+        "model_key": "gpt-5.6-luna",
+        "model_id": "gpt-5.6-luna",
+        "effective_model_id": "gpt-5.6-luna",
+        "model_signature": "sha256:model:gpt-fixture",
+        "runtime_key": "openai-api",
+        "provider_key": "openai",
+        "deployment": "api",
+        "quality_policy_id": "core-quality-v1",
+        "overall_quality_score": 90,
+        "quality_coverage_capabilities": 1,
+        "quality_total_capabilities": 1,
+        "quality_coverage_datasets": 1,
+        "quality_total_datasets": 1,
+        "quality_coverage_complete": true,
+        "observed_case_count": 60,
+        "latency_p50_ms": 620,
+        "latency_p95_ms": 1240,
+        "latency_mean_ms": 688,
+        "provider_cost_known": true,
+        "provider_cost_total_usd": 0.0432,
+        "provider_cost_per_case_usd": 0.00072,
+        "provider_cost_per_1k_cases_usd": 0.72,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 3900,
+        "failure_count": 0,
+        "failure_rate": 0,
+        "execution_count": 1,
+        "execution_environment": {
+          "run_id": "fixture-gpt-current",
+          "execution_signature": "sha256:execution:openai",
+          "system": null,
+          "release": null,
+          "machine": null,
+          "cpu_model": null,
+          "total_memory_bytes": null
+        },
+        "resource_summary": {
+          "process_cpu_percent_avg": null,
+          "process_rss_bytes_peak": null
+        },
+        "latest_completed_at_utc": "2026-10-05T07:37:00Z",
+        "current_run_ids": [
+          "fixture-gpt-current"
+        ],
+        "observed_quality_latency_pareto": true,
+        "known_provider_cost_quality_pareto": true
+      }
+    ],
+    "capability_summaries": [
+      {
+        "run_id": "fixture-qwen-current",
+        "model_key": "qwen3.5-2b-q4km",
+        "model_signature": "sha256:model:qwen-fixture",
+        "capability_id": "structured-output",
+        "benchmark_signature": "sha256:benchmark:structured-fixture",
+        "execution_signature": "sha256:execution:qwen-mac",
+        "primary_metric": "exact_match",
+        "primary_value": 0.717,
+        "normalized_quality_score": 71.7,
+        "sample_count": 60,
+        "failure_count": 0,
+        "observed_case_count": 60,
+        "latency_p50_ms": 418,
+        "latency_p95_ms": 836,
+        "latency_mean_ms": 472,
+        "provider_cost_known": false,
+        "provider_cost_total_usd": null,
+        "provider_cost_per_case_usd": null,
+        "provider_cost_per_1k_cases_usd": null,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 4200,
+        "failure_rate": 0
+      },
+      {
+        "run_id": "fixture-gpt-current",
+        "model_key": "gpt-5.6-luna",
+        "model_signature": "sha256:model:gpt-fixture",
+        "capability_id": "structured-output",
+        "benchmark_signature": "sha256:benchmark:structured-fixture",
+        "execution_signature": "sha256:execution:openai",
+        "primary_metric": "exact_match",
+        "primary_value": 0.9,
+        "normalized_quality_score": 90,
+        "sample_count": 60,
+        "failure_count": 0,
+        "observed_case_count": 60,
+        "latency_p50_ms": 620,
+        "latency_p95_ms": 1240,
+        "latency_mean_ms": 688,
+        "provider_cost_known": true,
+        "provider_cost_total_usd": 0.0432,
+        "provider_cost_per_case_usd": 0.00072,
+        "provider_cost_per_1k_cases_usd": 0.72,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 3900,
+        "failure_rate": 0
+      }
+    ],
+    "dataset_summaries": [
+      {
+        "model_key": "qwen3.5-2b-q4km",
+        "model_signature": "sha256:model:qwen-fixture",
+        "capability_id": "structured-output",
+        "dataset_id": "structured-output-controlled-v2",
+        "primary_metric": "exact_match",
+        "primary_value": 0.717,
+        "normalized_quality_score": 71.7,
+        "sample_count": 60,
+        "observed_case_count": 60,
+        "latency_p50_ms": 418,
+        "latency_p95_ms": 836,
+        "latency_mean_ms": 472,
+        "provider_cost_known": false,
+        "provider_cost_total_usd": null,
+        "provider_cost_per_case_usd": null,
+        "provider_cost_per_1k_cases_usd": null,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 4200,
+        "failure_count": 0,
+        "failure_rate": 0
+      },
+      {
+        "model_key": "gpt-5.6-luna",
+        "model_signature": "sha256:model:gpt-fixture",
+        "capability_id": "structured-output",
+        "dataset_id": "structured-output-controlled-v2",
+        "primary_metric": "exact_match",
+        "primary_value": 0.9,
+        "normalized_quality_score": 90,
+        "sample_count": 60,
+        "observed_case_count": 60,
+        "latency_p50_ms": 620,
+        "latency_p95_ms": 1240,
+        "latency_mean_ms": 688,
+        "provider_cost_known": true,
+        "provider_cost_total_usd": 0.0432,
+        "provider_cost_per_case_usd": 0.00072,
+        "provider_cost_per_1k_cases_usd": 0.72,
+        "input_tokens_total": 10800,
+        "output_tokens_total": 3900,
+        "failure_count": 0,
+        "failure_rate": 0
+      }
+    ]
+  }
 }
