@@ -150,8 +150,13 @@ def write_run_artifacts(
         ),
     )
 
+    environment_payload = json.loads(
+        (output_dir / "environment.json").read_text(encoding="utf-8")
+    )
+
     payload = {
         "schema_version": "1",
+        "git_commit": environment_payload.get("git_commit"),
         "created_at_utc": datetime.now(UTC).isoformat(),
         "run": to_jsonable(summary),
         "suite": {
