@@ -33,6 +33,20 @@ def _parameter_value(
     return source.get(key)
 
 
+def _delta_pct(
+    point: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    key: str,
+) -> float | None:
+    value = point.get(key)
+    base = baseline.get(key)
+    if not isinstance(value, (int, float)):
+        return None
+    if not isinstance(base, (int, float)) or float(base) == 0:
+        return None
+    return (float(value) - float(base)) / float(base) * 100
+
+
 def build_sensitivity_payload(connection: Any) -> dict[str, Any]:
     rows = _rows(
         connection,
@@ -141,17 +155,12 @@ def build_sensitivity_payload(connection: Any) -> dict[str, Any]:
             else None
         )
 
-        def delta_pct(key: str) -> float | None:
-            value = point.get(key)
-            base = baseline.get(key)
-            if not isinstance(value, (int, float)):
-                return None
-            if not isinstance(base, (int, float)) or float(base) == 0:
-                return None
-            return (float(value) - float(base)) / float(base) * 100
-
-        point["latency_delta_pct_vs_baseline"] = delta_pct("latency_p50_ms")
-        point["rss_delta_pct_vs_baseline"] = delta_pct("process_rss_bytes_peak")
+        point["latency_delta_pct_vs_baseline"] = _delta_pct(
+            point, baseline, "latency_p50_ms"
+        )
+        point["rss_delta_pct_vs_baseline"] = _delta_pct(
+            point, baseline, "process_rss_bytes_peak"
+        )
 
     return {
         "schema_version": "1",
