@@ -90,6 +90,7 @@ Current model keys:
 ~~~text
 qwen3.5-2b-q4km
 nemotron-nano-4b
+spark-x2.5-4b-q4km
 ternary-bonsai2-27b-ptq1
 gpt-5.6-luna
 minicpm-v-4.6-1b
@@ -143,6 +144,31 @@ For Nemotron, download once:
 ~~~bash
 uv run --frozen local-llm download nemotron-nano-4b
 ~~~
+
+For Spark-X2.5-4B Q4_K_M, use llama.cpp build 10828 or newer. Korgis
+enforces this model-specific runtime floor before loading the model, so an older
+binary is rejected instead of producing misleading benchmark failures:
+
+~~~bash
+uv run --frozen local-llm download spark-x2.5-4b-q4km
+
+uv run --frozen local-llm serve \
+  --model spark-x2.5-4b-q4km \
+  --enable-admin-api \
+  --no-download
+~~~
+
+If Korgis reports that the discovered llama-server is older than build 10828,
+update the normal llama.cpp installation or set `LOCAL_LLM_SERVER_BIN` to a
+newer executable. Spark's native context is much larger than the benchmark
+needs; the built-in Korgis profile intentionally uses 131072 tokens rather than
+the full 1M context to keep local resource use practical and comparable.
+
+Spark-X2.5 enables thinking in its upstream chat template by default. The Korgis
+benchmark profile explicitly starts with thinking disabled, matching the
+controlled local-model comparison policy. If a separate reasoning-on campaign is
+run later, keep it as a distinct benchmark lineage rather than mixing it into the
+default results.
 
 For Ternary Bonsai 2 27B PTQ1_0, use the PrismML llama.cpp fork. Stock
 llama.cpp does not support the PTQ1_0 ternary kernels. Korgis deliberately
