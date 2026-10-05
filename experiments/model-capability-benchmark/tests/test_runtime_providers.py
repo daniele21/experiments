@@ -319,7 +319,29 @@ class _FakeControl:
 
     def activate(self, model_key: str):
         self.calls.append(("activate", model_key))
-        return {"ok": True}
+        return {
+            "ok": True,
+            "key": model_key,
+            "runtime_identity": {
+                "fingerprint": "a" * 64,
+                "captured_at": 1.0,
+                "identity": {
+                    "schema_version": 1,
+                    "artifact_key": "b" * 64,
+                    "backend": {
+                        "name": "llama_server",
+                        "version": "build-10709@prism123",
+                        "implementation": "LlamaServerEngine",
+                    },
+                    "config_digest": "c" * 64,
+                    "hardware_key": "d" * 64,
+                },
+            },
+            "cfg": {
+                "backend": "llama_server",
+                "quantization": "PTQ1_0",
+            },
+        }
 
     def resources(self):
         self.calls.append(("resources", None))
@@ -374,9 +396,18 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
     )
 
     provider = runtime.prepare(model)
+    execution_metadata = runtime.execution_metadata(model)
     runtime.release(model)
 
     assert isinstance(provider.delegate, _FakeProvider)
+    assert execution_metadata["runtime_source"] == "korgis"
+    assert execution_metadata["runtime_identity"]["fingerprint"] == "a" * 64
+    assert (
+        execution_metadata["runtime_identity"]["identity"]["backend"]["version"]
+        == "build-10709@prism123"
+    )
+    assert execution_metadata["backend"] == "llama_server"
+    assert execution_metadata["quantization"] == "PTQ1_0"
     assert built == ["qwen3.5-2b-q4km"]
     control = _FakeControl.instances[-1]
     assert control.timeout_seconds == 9.0
