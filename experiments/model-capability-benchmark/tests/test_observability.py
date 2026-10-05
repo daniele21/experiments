@@ -224,3 +224,61 @@ def test_benchmark_signature_ignores_practical_delta_but_tracks_metric_semantics
 
     assert first == changed_threshold
     assert first != changed_reducer
+
+
+def test_execution_signature_changes_with_prepared_runtime_identity() -> None:
+    model = SimpleNamespace(
+        runtime=SimpleNamespace(
+            runtime_key="korgis-local",
+            deployment="local",
+            lifecycle="managed",
+            options={"runtime_type": "korgis"},
+        ),
+        provider=SimpleNamespace(
+            provider_key="korgis",
+            provider_type="openai-compatible",
+            options={"protocol": "chat-completions"},
+        ),
+    )
+    environment = {
+        "system": "darwin",
+        "release": "25.0",
+        "machine": "arm64",
+        "cpu_model": "Apple M3 Pro",
+        "total_memory_bytes": 36 * 1024**3,
+    }
+
+    first = execution_signature(
+        model,
+        execution_metadata={
+            "runtime_source": "korgis",
+            "runtime_identity": {
+                "fingerprint": "a" * 64,
+                "identity": {
+                    "backend": {
+                        "name": "llama_server",
+                        "version": "build-10709@prism111",
+                    }
+                },
+            },
+        },
+        execution_environment=environment,
+    )
+    second = execution_signature(
+        model,
+        execution_metadata={
+            "runtime_source": "korgis",
+            "runtime_identity": {
+                "fingerprint": "b" * 64,
+                "identity": {
+                    "backend": {
+                        "name": "llama_server",
+                        "version": "build-10710@prism222",
+                    }
+                },
+            },
+        },
+        execution_environment=environment,
+    )
+
+    assert first != second
