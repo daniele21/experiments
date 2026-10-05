@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from model_capability_bench.analytics.latest import (
     ResultCandidate,
     canonical_latest,
     result_state,
 )
 from model_capability_bench.observability.events import EvidenceRef, build_event
-from model_capability_bench.observability.signatures import stable_signature
+from model_capability_bench.observability.signatures import (
+    benchmark_signature,
+    stable_signature,
+)
 
 
 def test_signature_canonicalization_has_golden_value() -> None:
@@ -98,3 +103,85 @@ def test_latest_policy_keeps_new_benchmark_lineage_separate() -> None:
     assert len(latest) == 2
     assert latest[v2.quality_key].run_id == "run-v2"
     assert latest[v3.quality_key].run_id == "run-v3"
+
+
+def test_benchmark_signature_ignores_practical_delta_but_tracks_metric_semantics() -> None:
+    loaded = {
+        "dataset": SimpleNamespace(
+            spec=SimpleNamespace(
+                version="1",
+                revision="rev-1",
+                split="test",
+            ),
+            selection_fingerprint="sha256:selection",
+            source_checksums={"source": "abc"},
+        )
+    }
+    task = SimpleNamespace(
+        spec=SimpleNamespace(
+            task_id="task",
+            version="2",
+            prompt_id="prompt",
+            prompt_version="1",
+            evaluator_id="eval",
+            evaluator_version="2",
+        )
+    )
+
+    def capability(practical_delta: float, reducer: str = "mean"):
+        return SimpleNamespace(
+            spec=SimpleNamespace(
+                capability_id="cap",
+                dataset_ids=("dataset",),
+                metrics=(
+                    SimpleNamespace(
+                        name="accuracy",
+                        source="task_metric",
+                        reducer=reducer,
+                        field="accuracy",
+                        primary=True,
+                        options={},
+                    ),
+                ),
+                context_bindings=(),
+                options={},
+                comparison=SimpleNamespace(
+                    metric="accuracy",
+                    practical_delta=practical_delta,
+                ),
+            )
+        )
+
+    first = benchmark_signature(
+        suite_id="suite",
+        suite_version="2",
+        capability=capability(0.03),
+        task=task,
+        loaded_datasets=loaded,
+        profile_id="core",
+        generation={"temperature": 0},
+        seed=42,
+    )
+    changed_threshold = benchmark_signature(
+        suite_id="suite",
+        suite_version="2",
+        capability=capability(0.10),
+        task=task,
+        loaded_datasets=loaded,
+        profile_id="core",
+        generation={"temperature": 0},
+        seed=42,
+    )
+    changed_reducer = benchmark_signature(
+        suite_id="suite",
+        suite_version="2",
+        capability=capability(0.03, reducer="rate"),
+        task=task,
+        loaded_datasets=loaded,
+        profile_id="core",
+        generation={"temperature": 0},
+        seed=42,
+    )
+
+    assert first == changed_threshold
+    assert first != changed_reducer
