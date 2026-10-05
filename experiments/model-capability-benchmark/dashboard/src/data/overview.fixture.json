@@ -1,0 +1,62 @@
+{
+  "schema_version": "1",
+  "fixture": true,
+  "models": [
+    {
+      "model_key": "qwen3.5-2b-q4km",
+      "model_id": "unsloth/qwen3.5-2b",
+      "effective_model_id": "qwen3.5-2b-q4km",
+      "model_signature": "sha256:model:qwen-fixture",
+      "runtime_key": "korgis-local",
+      "provider_key": "openai-compatible-local",
+      "deployment": "local"
+    },
+    {
+      "model_key": "gpt-5.6-luna",
+      "model_id": "gpt-5.6-luna",
+      "effective_model_id": "gpt-5.6-luna",
+      "model_signature": "sha256:model:gpt-fixture",
+      "runtime_key": "openai-api",
+      "provider_key": "openai",
+      "deployment": "api"
+    }
+  ],
+  "capabilities": ["structured-output"],
+  "cells": [
+    {
+      "run_id": "fixture-qwen-current",
+      "model_key": "qwen3.5-2b-q4km",
+      "model_signature": "sha256:model:qwen-fixture",
+      "benchmark_signature": "sha256:benchmark:structured-fixture",
+      "execution_signature": "sha256:execution:qwen-mac",
+      "capability_id": "structured-output",
+      "task_id": "structured-output",
+      "profile": "core",
+      "sample_count": 60,
+      "failure_count": 0,
+      "primary_metric": "exact_match",
+      "primary_value": 0.717,
+      "completed_at_utc": "2026-10-05T07:37:00Z"
+    },
+    {
+      "run_id": "fixture-gpt-current",
+      "model_key": "gpt-5.6-luna",
+      "model_signature": "sha256:model:gpt-fixture",
+      "benchmark_signature": "sha256:benchmark:structured-fixture",
+      "execution_signature": "sha256:execution:openai",
+      "capability_id": "structured-output",
+      "task_id": "structured-output",
+      "profile": "core",
+      "sample_count": 60,
+      "failure_count": 0,
+      "primary_metric": "exact_match",
+      "primary_value": 0.9,
+      "completed_at_utc": "2026-10-05T07:37:00Z"
+    }
+  ],
+  "runs": [
+    {"run_id":"fixture-current","status":"COMPLETED","completed_at_utc":"2026-10-05T07:37:00Z"},
+    {"run_id":"fixture-history","status":"COMPLETED","completed_at_utc":"2026-10-03T07:20:00Z"},
+    {"run_id":"fixture-newer-partial","status":"PARTIAL","completed_at_utc":"2026-10-05T08:10:00Z"}
+  ]
+}
