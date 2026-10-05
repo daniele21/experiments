@@ -53,6 +53,18 @@ export function MetricCard({
   );
 }
 
+function shortModelLabel(value: string): string {
+  return value
+    .replace(/-q\d.*$/i, '')
+    .replace(/-nano-/i, ' ')
+    .replace(/-v-?\d+(?:\.\d+)*-/i, ' ')
+    .replace(/-luna$/i, '')
+    .replaceAll('-', ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 18);
+}
+
 function scaleLog(value: number, min: number, max: number): number {
   if (value <= 0) return 0;
   const lo = Math.log10(Math.max(min, Number.MIN_VALUE));
@@ -146,17 +158,12 @@ export function TradeoffScatter({
                     .map((point) => point.x + ',' + point.y)
                     .join(' ')}
                 />
-                <text
-                  className="pareto-label"
-                  x={frontierPoints[0].x + 8}
-                  y={Math.max(32, frontierPoints[0].y - 10)}
-                >
-                  Pareto frontier
-                </text>
               </>
             ) : null}
-            {plotted.map(({ model, xValue, x, quality, y, frontier }) => {
+            {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
               const selected = selectedModel === model.model_signature;
+              const labelRight = x < 300;
+              const labelY = y + (index % 2 === 0 ? -9 : 13);
               return (
                 <g
                   key={model.model_signature}
@@ -176,7 +183,13 @@ export function TradeoffScatter({
                           : ' · ' + usd(xValue) + ' / 1k cases')}
                     </title>
                   </circle>
-                  <text x={Math.min(x + 9, 335)} y={y + 4}>{model.model_key}</text>
+                  <text
+                    x={labelRight ? x + 9 : x - 9}
+                    y={labelY}
+                    textAnchor={labelRight ? 'start' : 'end'}
+                  >
+                    {shortModelLabel(model.model_key)}
+                  </text>
                 </g>
               );
             })}
