@@ -53,6 +53,21 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
                     "qwen3.5-2b-q4km": "sha256:execution:qwen",
                     "gpt-5.6-luna": "sha256:execution:gpt",
                 },
+                "execution_metadata": {
+                    "qwen3.5-2b-q4km": {
+                        "runtime_source": "korgis",
+                        "runtime_identity": {
+                            "fingerprint": "a" * 64,
+                            "identity": {
+                                "backend": {
+                                    "name": "llama_server",
+                                    "version": "build-10709@prism123",
+                                }
+                            },
+                        },
+                    },
+                    "gpt-5.6-luna": {},
+                },
                 "benchmarks": {
                     "structured-output": "sha256:benchmark:structured",
                     "mathematical-reasoning": "sha256:benchmark:math",
@@ -97,6 +112,15 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         model["model_signature"]
         for model in manifest["models"]
     } == {"sha256:model:qwen", "sha256:model:gpt"}
+    qwen = next(
+        model for model in manifest["models"]
+        if model["model_key"] == "qwen3.5-2b-q4km"
+    )
+    assert qwen["execution_metadata"]["runtime_source"] == "korgis"
+    assert (
+        qwen["execution_metadata"]["runtime_identity"]["identity"]["backend"]["version"]
+        == "build-10709@prism123"
+    )
     assert set(manifest["config_checksums"]) == {
         "models.yaml",
         "tasks.yaml",
