@@ -20,7 +20,7 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-9 Jev consolidation/migration: complete;
 - MCB-10 vertical benchmark hardening: implemented on the v2 task-vertical suite and covered by consolidation gates; controlled real-provider validation remains an operational gate;
 - MCB-11 observability/results explorer: core complete with immutable evidence, deterministic projection, multi-capability analysis, model/run history, disagreement explorer, Compare UI and a dedicated Python/frontend CI gate;
-- MCB-12 efficiency telemetry/share renderer: planned enrichment for CPU/RAM/runtime telemetry plus deterministic PNG/PDF LinkedIn assets and visual regression.
+- MCB-12 efficiency telemetry/share renderer: core complete with Korgis CPU/RSS telemetry, hardware-aware execution lineage, Model/Run/Compare efficiency surfaces, immutable 5-card PNG/PDF rendering and a real-Chrome CI gate.
 
 ## Registry
 

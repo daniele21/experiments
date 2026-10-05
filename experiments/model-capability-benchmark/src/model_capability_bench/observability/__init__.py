@@ -6,6 +6,7 @@ from model_capability_bench.observability.events import (
 from model_capability_bench.observability.signatures import (
     SIGNATURE_SCHEMA_VERSION,
     benchmark_signature,
+    execution_environment_identity,
     execution_signature,
     model_signature,
     stable_signature,
@@ -17,6 +18,7 @@ __all__ = [
     "EvidenceRef",
     "benchmark_signature",
     "build_event",
+    "execution_environment_identity",
     "execution_signature",
     "model_signature",
     "stable_signature",

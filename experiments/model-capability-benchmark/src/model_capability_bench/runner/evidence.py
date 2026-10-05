@@ -66,6 +66,14 @@ class EvidenceStore:
     def report_index_path(self) -> Path:
         return self.root / "report_index.jsonl"
 
+    @property
+    def resource_samples_path(self) -> Path:
+        return self.root / "resource_samples.jsonl"
+
+    @property
+    def resource_summary_path(self) -> Path:
+        return self.root / "resource_summary.jsonl"
+
     def should_skip(self, case_id: str, *, retry_failures: bool) -> bool:
         state = self._latest_state.get(case_id)
         if state is None:
@@ -306,6 +314,41 @@ class EvidenceStore:
             status="failed" if error is not None else None,
             error=error,
         )
+
+    def record_resource_telemetry(
+        self,
+        case_id: str,
+        attempt: int,
+        telemetry: dict[str, Any],
+        *,
+        metadata: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        samples = telemetry.get("samples")
+        if isinstance(samples, list):
+            for sample in samples:
+                if not isinstance(sample, dict):
+                    continue
+                append_jsonl_record(
+                    {
+                        "case_id": case_id,
+                        "attempt": attempt,
+                        "metadata": to_jsonable(metadata),
+                        "sample": to_jsonable(sample),
+                    },
+                    self.resource_samples_path,
+                )
+
+        summary = telemetry.get("summary")
+        if not isinstance(summary, dict):
+            return None
+        record = {
+            "case_id": case_id,
+            "attempt": attempt,
+            "metadata": to_jsonable(metadata),
+            "summary": to_jsonable(summary),
+        }
+        append_jsonl_record(record, self.resource_summary_path)
+        return dict(summary)
 
     def append_aggregate(self, record: dict[str, Any]) -> None:
         append_jsonl_record(record, self.aggregates_path)

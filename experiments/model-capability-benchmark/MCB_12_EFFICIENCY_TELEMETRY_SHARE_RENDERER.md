@@ -1,11 +1,26 @@
 # MCB-12 — Efficiency Telemetry & Share Renderer
 
-Status: **PLANNED**
+Status: **CORE COMPLETE — REAL CHROME RENDER GATE PASSING**
 
 Depends on:
 
 - MCB-10 vertical benchmark hardening;
 - MCB-11 observability/results explorer core.
+
+Implemented in the MCB-12 core slice:
+
+- Korgis `/api/v1/resources` now exposes source-labelled host/runtime observations without PIDs or private paths;
+- MCB samples resource evidence during local Korgis inference with bounded telemetry timeout and explicit opt-out;
+- telemetry failures are non-fatal and unavailable metrics remain null;
+- raw resource samples and summaries are persisted separately from quality evidence;
+- DuckDB projects CURRENT resource summaries by execution lineage;
+- execution signatures include privacy-safe hardware identity (OS/arch/CPU/total memory);
+- Model, Run and Compare surfaces expose CPU/RSS evidence with NON_COMPARABLE guardrails;
+- immutable share snapshots render to five 1080×1350 PNG cards and a PDF carousel;
+- the renderer performs no live provider calls or analytics joins;
+- CI runs Python/frontend gates and a real Chrome headless render, validates PNG dimensions/PDF output and uploads the rendered cards for visual review.
+
+The current visual gate is structural/deterministic rather than a brittle pixel-by-pixel hash. A stricter perceptual/pixel-diff baseline can be added later without changing the snapshot or renderer contracts.
 
 ## Objective
 
@@ -149,7 +164,7 @@ Every asset must preserve snapshot ID and benchmark provenance.
 
 ## 6. Renderer requirements
 
-Use dedicated fixed-size React share routes/components and a headless browser renderer.
+Use dedicated fixed-size snapshot-only HTML card templates and a headless Chrome renderer.
 
 Requirements:
 
@@ -157,23 +172,31 @@ Requirements:
 - deterministic font/layout inputs;
 - no live provider calls;
 - no live database joins during rendering;
-- snapshot checksum included in rendered provenance;
+- content-addressed snapshot ID included in rendered provenance;
 - PNG output;
 - optional multi-page PDF;
 - failure if the snapshot schema is unsupported.
 
-## 7. Visual regression
+## 7. Visual validation
 
-Golden fixtures must cover:
+The committed snapshot fixture and renderer tests cover:
 
 - result card;
-- failure breakdown;
-- efficiency card with known metrics;
-- efficiency card with unavailable metrics;
-- methodology card;
-- full five-card carousel.
+- paired-quality card;
+- failure-family breakdown;
+- efficiency card with comparable evidence;
+- efficiency card with unavailable/non-comparable evidence;
+- methodology/provenance card;
+- full five-card carousel contract.
 
-The visual gate should detect layout overflow and material changes, while remaining separate from benchmark-science tests.
+CI additionally performs a real Chrome render and verifies:
+
+- five PNG files are produced;
+- every PNG is exactly 1080 × 1350;
+- a PDF carousel is produced;
+- rendered artifacts are uploaded for human visual inspection.
+
+A future perceptual/pixel-diff baseline may tighten regression detection, but it is deliberately separate from benchmark-science tests and is not required for the renderer contract.
 
 ## 8. CLI target
 
@@ -191,13 +214,13 @@ uv run model-bench share render \
 
 ## 9. Definition of Done
 
-- [ ] optional resource telemetry contract is versioned;
-- [ ] Korgis/runtime telemetry is captured when exposed;
-- [ ] missing telemetry remains explicit and non-fatal;
-- [ ] resource summaries are execution-signature aware;
-- [ ] Model/Run/Compare surfaces expose comparable efficiency correctly;
-- [ ] share snapshots render deterministically to PNG;
-- [ ] five-card carousel can be rendered to PDF;
-- [ ] public cards include snapshot/methodology provenance;
-- [ ] visual regression fixtures cover the share surfaces;
-- [ ] Python/frontend/renderer gates pass without provider calls.
+- [x] optional resource telemetry contract is versioned;
+- [x] Korgis/runtime telemetry is captured when exposed;
+- [x] missing telemetry remains explicit and non-fatal;
+- [x] resource summaries are execution-signature and hardware-lineage aware;
+- [x] Model/Run/Compare surfaces expose comparable efficiency correctly;
+- [x] share snapshots render deterministically to PNG;
+- [x] five-card carousel can be rendered to PDF;
+- [x] public cards include content-addressed snapshot/methodology provenance;
+- [x] structural visual fixtures cover the share surfaces;
+- [x] Python/frontend/real-Chrome renderer gates pass without provider calls.

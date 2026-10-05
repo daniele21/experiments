@@ -166,6 +166,17 @@ def _read_report_indices(run_dir: Path, run_id: str) -> list[Mapping[str, Any]]:
     ]
 
 
+def _read_resource_summaries(
+    run_dir: Path,
+    run_id: str,
+) -> list[Mapping[str, Any]]:
+    return [
+        item
+        for item in read_jsonl_records(run_dir / "resource_summary.jsonl")
+        if _text(_mapping(item.get("metadata")).get("run_id")) == run_id
+    ]
+
+
 def _read_case_records(
     run_dir: Path,
     run_id: str,
@@ -295,6 +306,27 @@ def _create_schema(connection: Any) -> None:
             "primary" BOOLEAN
         );
 
+        CREATE TABLE IF NOT EXISTS resource_summaries (
+            run_id VARCHAR,
+            case_id VARCHAR,
+            attempt BIGINT,
+            model_key VARCHAR,
+            model_signature VARCHAR,
+            execution_signature VARCHAR,
+            capability_id VARCHAR,
+            runtime_key VARCHAR,
+            source VARCHAR,
+            scope VARCHAR,
+            sample_count BIGINT,
+            sample_interval_ms DOUBLE,
+            process_cpu_percent_avg DOUBLE,
+            process_rss_bytes_avg DOUBLE,
+            process_rss_bytes_peak DOUBLE,
+            system_available_memory_bytes_min DOUBLE,
+            accelerator_memory_bytes_peak DOUBLE,
+            sampling_error_count BIGINT
+        );
+
         CREATE TABLE IF NOT EXISTS events (
             run_id VARCHAR,
             event_id VARCHAR,
@@ -354,6 +386,34 @@ def _create_schema(connection: Any) -> None:
          AND q.model_signature = b.model_signature
          AND q.benchmark_signature = b.benchmark_signature
          AND q.capability_id = b.capability_id;
+
+
+        CREATE OR REPLACE VIEW v_current_resource_results AS
+        SELECT
+            r.run_id,
+            r.model_key,
+            r.capability_id,
+            p.execution_signature,
+            MAX(r.source) AS source,
+            MAX(r.scope) AS scope,
+            SUM(r.sample_count) AS sample_count,
+            AVG(r.sample_interval_ms) AS sample_interval_ms,
+            AVG(r.process_cpu_percent_avg) AS process_cpu_percent_avg,
+            AVG(r.process_rss_bytes_avg) AS process_rss_bytes_avg,
+            MAX(r.process_rss_bytes_peak) AS process_rss_bytes_peak,
+            MIN(r.system_available_memory_bytes_min) AS system_available_memory_bytes_min,
+            MAX(r.accelerator_memory_bytes_peak) AS accelerator_memory_bytes_peak,
+            SUM(r.sampling_error_count) AS sampling_error_count
+        FROM resource_summaries r
+        JOIN v_current_performance_results p
+          ON p.run_id = r.run_id
+         AND p.model_key = r.model_key
+         AND p.capability_id = r.capability_id
+        GROUP BY
+            r.run_id,
+            r.model_key,
+            r.capability_id,
+            p.execution_signature;
         """
     )
 
@@ -361,6 +421,7 @@ def _create_schema(connection: Any) -> None:
 def _clear_run(connection: Any, run_id: str) -> None:
     for table in (
         "events",
+        "resource_summaries",
         "case_metrics",
         "cases",
         "aggregates",
@@ -630,6 +691,37 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     bool(metric.get("primary")),
                 ],
             )
+
+    for item in _read_resource_summaries(run_dir, run_id):
+        metadata = _mapping(item.get("metadata"))
+        summary = _mapping(item.get("summary"))
+        connection.execute(
+            """
+            INSERT INTO resource_summaries VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            [
+                run_id,
+                _text(item.get("case_id")),
+                int(item.get("attempt") or 0),
+                _text(metadata.get("model_key")),
+                _text(metadata.get("model_signature")) or None,
+                _text(metadata.get("execution_signature")) or None,
+                _text(metadata.get("capability_id")),
+                _text(metadata.get("runtime_key")) or None,
+                _text(summary.get("source")) or None,
+                _text(summary.get("scope")) or None,
+                int(summary.get("sample_count") or 0),
+                summary.get("sample_interval_ms"),
+                summary.get("process_cpu_percent_avg"),
+                summary.get("process_rss_bytes_avg"),
+                summary.get("process_rss_bytes_peak"),
+                summary.get("system_available_memory_bytes_min"),
+                summary.get("accelerator_memory_bytes_peak"),
+                int(summary.get("sampling_error_count") or 0),
+            ],
+        )
 
     for event in read_jsonl_records(run_dir / "events.jsonl"):
         metadata = _mapping(event.get("metadata"))

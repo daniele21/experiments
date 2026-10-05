@@ -159,9 +159,38 @@ class _FakeControl:
         self.calls.append(("activate", model_key))
         return {"ok": True}
 
+    def resources(self):
+        self.calls.append(("resources", None))
+        return {
+            "observation": {
+                "captured_at_utc": "2026-10-05T08:00:00+00:00",
+                "captured_at_monotonic": 1.0,
+                "system": {},
+                "runtimes": [],
+            }
+        }
+
     def unload(self, model_key: str):
         self.calls.append(("unload", model_key))
         return {"ok": True}
+
+
+def test_korgis_resource_telemetry_can_be_disabled() -> None:
+    bundle = load_capability_suite(ROOT)
+    model = bundle.models.resolve("qwen3.5-2b-q4km")
+
+    runtime = KorgisManagedRuntime(
+        environ={
+            "KORGIS_BASE_URL": "http://127.0.0.1:1235/v1",
+            "MCB_RESOURCE_TELEMETRY": "off",
+        },
+        provider_builder=lambda _resolved, _environ: _FakeProvider(),
+        control_factory=_FakeControl,
+    )
+
+    provider = runtime.prepare(model)
+
+    assert isinstance(provider, _FakeProvider)
 
 
 def test_korgis_runtime_manages_model_residency_without_server_process_logic() -> None:
@@ -185,7 +214,7 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
     provider = runtime.prepare(model)
     runtime.release(model)
 
-    assert isinstance(provider, _FakeProvider)
+    assert isinstance(provider.delegate, _FakeProvider)
     assert built == ["qwen3.5-2b-q4km"]
     control = _FakeControl.instances[-1]
     assert control.timeout_seconds == 9.0

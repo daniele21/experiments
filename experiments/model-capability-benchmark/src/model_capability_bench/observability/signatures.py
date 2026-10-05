@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
+import subprocess
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from benchmark_core import ResolvedModel, to_jsonable
@@ -73,10 +77,73 @@ def model_signature(model: ResolvedModel) -> str:
     return stable_signature("model", payload)
 
 
+def _command_text(command: tuple[str, ...]) -> str | None:
+    try:
+        return subprocess.check_output(
+            command,
+            text=True,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+        ).strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _cpu_model() -> str | None:
+    system = platform.system().lower()
+    if system == "darwin":
+        value = _command_text(("sysctl", "-n", "machdep.cpu.brand_string"))
+        if value:
+            return value
+    elif system == "linux":
+        try:
+            lines = Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = []
+        for key in ("model name", "hardware"):
+            for line in lines:
+                if ":" not in line:
+                    continue
+                name, value = line.split(":", 1)
+                if name.strip().lower() == key and value.strip():
+                    return value.strip()
+    return platform.processor() or None
+
+
+def _total_memory_bytes() -> int | None:
+    system = platform.system().lower()
+    if system == "darwin":
+        value = _command_text(("sysctl", "-n", "hw.memsize"))
+        try:
+            return int(value) if value is not None else None
+        except ValueError:
+            return None
+    if system == "linux":
+        try:
+            pages = int(os.sysconf("SC_PHYS_PAGES"))
+            page_size = int(os.sysconf("SC_PAGE_SIZE"))
+            return pages * page_size
+        except (OSError, ValueError):
+            return None
+    return None
+
+
+def execution_environment_identity() -> dict[str, Any]:
+    """Stable, privacy-safe host identity for performance comparability."""
+    return {
+        "system": platform.system().lower() or "unknown",
+        "release": platform.release() or None,
+        "machine": platform.machine() or None,
+        "cpu_model": _cpu_model(),
+        "total_memory_bytes": _total_memory_bytes(),
+    }
+
+
 def execution_signature(
     model: ResolvedModel,
     *,
     execution_metadata: Mapping[str, Any] | None = None,
+    execution_environment: Mapping[str, Any] | None = None,
 ) -> str:
     payload = {
         "runtime": {
@@ -91,6 +158,9 @@ def execution_signature(
             "options": dict(model.provider.options),
         },
         "execution_metadata": dict(execution_metadata or {}),
+        "execution_environment": dict(
+            execution_environment or execution_environment_identity()
+        ),
     }
     return stable_signature("execution", payload)
 

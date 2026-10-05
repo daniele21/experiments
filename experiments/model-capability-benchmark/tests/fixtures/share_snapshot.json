@@ -1,0 +1,116 @@
+{
+  "schema_version": "1",
+  "snapshot_id": "ci-share-fixture",
+  "title": "Can a local model match an API model?",
+  "capability_id": "structured-output",
+  "model_keys": [
+    "local-qwen",
+    "api-gpt"
+  ],
+  "model_signatures": [
+    "sha256:model:local",
+    "sha256:model:api"
+  ],
+  "execution_signatures": [
+    "sha256:execution:local",
+    "sha256:execution:api"
+  ],
+  "run_ids": [
+    "run-local",
+    "run-api"
+  ],
+  "git_commits": [
+    "fixture-commit"
+  ],
+  "benchmark_signature": "sha256:benchmark:fixture",
+  "profile": "core",
+  "cells": [
+    {
+      "run_id": "run-local",
+      "model_key": "local-qwen",
+      "model_signature": "sha256:model:local",
+      "execution_signature": "sha256:execution:local",
+      "benchmark_signature": "sha256:benchmark:fixture",
+      "capability_id": "structured-output",
+      "primary_metric": "exact_match",
+      "primary_value": 0.82,
+      "sample_count": 60,
+      "failure_count": 0,
+      "resource_summary": {
+        "source": "korgis:/api/v1/resources",
+        "scope": "owned_backend_process",
+        "sample_count": 12,
+        "sample_interval_ms": 250,
+        "process_cpu_percent_avg": 145.2,
+        "process_rss_bytes_avg": 1300000000,
+        "process_rss_bytes_peak": 1500000000,
+        "system_available_memory_bytes_min": 7000000000,
+        "accelerator_memory_bytes_peak": null,
+        "sampling_error_count": 0
+      }
+    },
+    {
+      "run_id": "run-api",
+      "model_key": "api-gpt",
+      "model_signature": "sha256:model:api",
+      "execution_signature": "sha256:execution:api",
+      "benchmark_signature": "sha256:benchmark:fixture",
+      "capability_id": "structured-output",
+      "primary_metric": "exact_match",
+      "primary_value": 0.9,
+      "sample_count": 60,
+      "failure_count": 0,
+      "resource_summary": null
+    }
+  ],
+  "comparison": {
+    "model_a": "local-qwen",
+    "model_b": "api-gpt",
+    "paired_count": 60,
+    "delta_b_minus_a": 0.08,
+    "ci95_low": 0.02,
+    "ci95_high": 0.14,
+    "both_correct": 47,
+    "model_a_only": 2,
+    "model_b_only": 7,
+    "both_wrong": 4,
+    "mcnemar_exact_p": 0.18,
+    "practical_delta": 0.05,
+    "exceeds_practical_delta": true
+  },
+  "family_breakdown": [
+    {
+      "model_key": "local-qwen",
+      "family": "nested",
+      "value": 0.75,
+      "sample_count": 20
+    },
+    {
+      "model_key": "api-gpt",
+      "family": "nested",
+      "value": 0.9,
+      "sample_count": 20
+    },
+    {
+      "model_key": "local-qwen",
+      "family": "escaping",
+      "value": 0.85,
+      "sample_count": 20
+    },
+    {
+      "model_key": "api-gpt",
+      "family": "escaping",
+      "value": 0.9,
+      "sample_count": 20
+    }
+  ],
+  "methodology": {
+    "paired_same_cases": true,
+    "source": "CURRENT projected benchmark evidence"
+  },
+  "sources": {
+    "database": "analytics/benchmark.duckdb",
+    "capability_payload": "analytics/dashboard/capabilities/structured-output.json",
+    "capability_payload_sha256": "fixture"
+  }
+}

@@ -22,6 +22,7 @@ from benchmark_core import (
 from model_capability_bench.observability import (
     EvidenceRef,
     benchmark_signature,
+    execution_environment_identity,
     execution_signature,
     model_signature,
 )
@@ -123,10 +124,12 @@ class CapabilityRunner:
         skipped_cases = 0
         model_failures = 0
         planned_case_ids: set[str] = set()
-        signature_catalog: dict[str, dict[str, str]] = {
+        execution_environment = execution_environment_identity()
+        signature_catalog: dict[str, Any] = {
             "models": {},
             "executions": {},
             "benchmarks": {},
+            "execution_environment": execution_environment,
         }
 
         for model in selected_models:
@@ -138,6 +141,7 @@ class CapabilityRunner:
             execution_sig = execution_signature(
                 model,
                 execution_metadata=config.metadata,
+                execution_environment=execution_environment,
             )
             signature_catalog["models"][model.model.model_key] = model_sig
             signature_catalog["executions"][model.model.model_key] = execution_sig
@@ -388,6 +392,29 @@ class CapabilityRunner:
                                     metadata=case_metadata,
                                 )
                                 continue
+
+                            inference_result_metadata = dict(inference.metadata)
+                            resource_telemetry = inference_result_metadata.pop(
+                                "resource_telemetry",
+                                None,
+                            )
+                            if isinstance(resource_telemetry, Mapping):
+                                resource_summary = (
+                                    self.evidence_store.record_resource_telemetry(
+                                        case_id,
+                                        attempt,
+                                        dict(resource_telemetry),
+                                        metadata=case_metadata,
+                                    )
+                                )
+                                if resource_summary is not None:
+                                    inference_result_metadata["resource_summary"] = (
+                                        resource_summary
+                                    )
+                                inference = dataclasses.replace(
+                                    inference,
+                                    metadata=inference_result_metadata,
+                                )
 
                             raw_record = RawInferenceRecord.from_inference_result(
                                 run_id=identity.run_id,

@@ -12,6 +12,7 @@ from model_capability_bench.analytics.latest import (
 from model_capability_bench.observability.events import EvidenceRef, build_event
 from model_capability_bench.observability.signatures import (
     benchmark_signature,
+    execution_signature,
     stable_signature,
 )
 
@@ -28,6 +29,43 @@ def test_signature_canonicalization_has_golden_value() -> None:
     assert signature == stable_signature(
         "fixture",
         {"b": ["x", 2], "a": 1},
+    )
+
+
+def test_execution_signature_changes_with_hardware_identity() -> None:
+    model = SimpleNamespace(
+        runtime=SimpleNamespace(
+            runtime_key="korgis-local",
+            deployment="local",
+            lifecycle="managed",
+            options={"ctx_size": 8192},
+        ),
+        provider=SimpleNamespace(
+            provider_key="korgis",
+            provider_type="openai-compatible",
+            options={},
+        ),
+    )
+    common = {
+        "system": "darwin",
+        "release": "25.0",
+        "machine": "arm64",
+        "total_memory_bytes": 36 * 1024**3,
+    }
+
+    m3 = execution_signature(
+        model,
+        execution_environment={**common, "cpu_model": "Apple M3 Pro"},
+    )
+    m4 = execution_signature(
+        model,
+        execution_environment={**common, "cpu_model": "Apple M4 Pro"},
+    )
+
+    assert m3 != m4
+    assert m3 == execution_signature(
+        model,
+        execution_environment={**common, "cpu_model": "Apple M3 Pro"},
     )
 
 

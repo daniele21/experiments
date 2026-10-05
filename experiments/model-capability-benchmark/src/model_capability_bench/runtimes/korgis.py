@@ -10,6 +10,8 @@ from benchmark_core import (
     TransportPolicy,
 )
 
+from model_capability_bench.telemetry.resources import ResourceSamplingProvider
+
 ProviderBuilder = Callable[[ResolvedModel, Mapping[str, str]], InferenceProvider]
 
 
@@ -25,11 +27,26 @@ class KorgisControlClient:
         self.transport = JsonHttpTransport(
             TransportPolicy(max_retries=0, timeout_seconds=timeout_seconds)
         )
+        self.resource_transport = JsonHttpTransport(
+            TransportPolicy(
+                max_retries=0,
+                timeout_seconds=min(timeout_seconds, 2.0),
+            )
+        )
 
     def health(self) -> dict[str, Any]:
         payload = self.transport.request("GET", f"{self.root}/health").body
         if not isinstance(payload, dict):
             raise TypeError("Korgis health response must be an object")
+        return payload
+
+    def resources(self) -> dict[str, Any]:
+        payload = self.resource_transport.request(
+            "GET",
+            f"{self.root}/api/v1/resources",
+        ).body
+        if not isinstance(payload, dict):
+            raise TypeError("Korgis resources response must be an object")
         return payload
 
     def activate(self, model_key: str) -> dict[str, Any]:
@@ -108,7 +125,29 @@ class KorgisManagedRuntime:
                 f"Korgis failed to activate {model.effective_model_id!r}: "
                 f"{activation}"
             )
-        return self.provider_builder(model, self.environ)
+        provider = self.provider_builder(model, self.environ)
+        telemetry_enabled = self.environ.get(
+            "MCB_RESOURCE_TELEMETRY",
+            "1",
+        ).strip().lower() not in {"0", "false", "no", "off"}
+        if not telemetry_enabled:
+            return provider
+
+        interval_ms = float(
+            self.environ.get("MCB_RESOURCE_SAMPLE_INTERVAL_MS", "250")
+        )
+        if interval_ms <= 0:
+            raise ValueError("MCB_RESOURCE_SAMPLE_INTERVAL_MS must be > 0")
+        return ResourceSamplingProvider(
+            provider,
+            fetch=control.resources,
+            runtime_aliases=(
+                model.effective_model_id,
+                model.model.model_id,
+                model.model.model_key,
+            ),
+            interval_seconds=interval_ms / 1000.0,
+        )
 
     def release(self, model: ResolvedModel) -> None:
         control = self._control(model)
