@@ -1743,3 +1743,161 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
     grid-row: 1;
   }
 }
+
+
+/* MCB-14 · parameter sensitivity and local Pareto frontier */
+.experiment-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.experiment-controls label {
+  min-width: 170px;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+.experiment-controls select {
+  min-height: 38px;
+  padding: 7px 10px;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--panel-strong);
+}
+.experiment-panel {
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.experiment-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.experiment-panel-heading h2 { margin: 0 0 5px; font-size: 16px; }
+.experiment-panel-heading p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.experiment-chart-shell {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-strong);
+}
+.experiment-scatter { min-width: 720px; width: 100%; display: block; }
+.chart-axis { stroke: var(--border-strong); stroke-width: 1; }
+.chart-caption { fill: var(--muted); font-size: 10px; }
+.frontier-family-line {
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+  opacity: .72;
+}
+.frontier-point {
+  stroke: var(--panel-strong);
+  stroke-width: 2;
+}
+.frontier-point.pareto { fill: var(--primary); opacity: 1; }
+.frontier-point.dominated { fill: var(--faint); opacity: .34; }
+.frontier-label { fill: var(--text); font-size: 9px; font-weight: 700; }
+.experiment-legend { display: flex; gap: 12px; color: var(--muted); font-size: 11px; }
+.experiment-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+  border-radius: 999px;
+}
+.legend-dot.pareto { background: var(--primary); }
+.legend-dot.dominated { background: var(--faint); opacity: .45; }
+.experiment-table-wrap { overflow-x: auto; }
+.experiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.experiment-table th {
+  padding: 9px 10px;
+  text-align: left;
+  color: var(--muted);
+  font-weight: 760;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.experiment-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.state-pill {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.state-pill.pareto { color: var(--primary-strong); background: var(--primary-soft); }
+.state-pill.dominated { color: var(--muted); background: var(--bg); }
+.experiment-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.experiment-kpi {
+  min-height: 112px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.experiment-kpi span { color: var(--muted); font-size: 11px; font-weight: 730; }
+.experiment-kpi strong { font-size: 24px; letter-spacing: -.035em; }
+.experiment-kpi small { color: var(--faint); font-size: 10px; }
+.sensitivity-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+.sensitivity-point {
+  fill: var(--primary);
+  stroke: var(--panel-strong);
+  stroke-width: 2;
+}
+.sensitivity-point.baseline {
+  fill: var(--green);
+  stroke-width: 3;
+}
+.experiment-empty {
+  padding: 28px 18px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .experiment-kpis { grid-template-columns: 1fr; }
+  .experiment-panel-heading { display: grid; }
+}
