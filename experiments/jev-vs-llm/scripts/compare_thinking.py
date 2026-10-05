@@ -1,3 +1,4 @@
+# ruff: noqa: C408 - diagnostic script keeps compact dict builders readable
 """Compare three thinking policies on identical public routing cases.
 
 Owns only its dedicated Korgis process group and ports. Saves incremental,
@@ -5,8 +6,6 @@ separate evidence; never appends to the main benchmark reports.
 """
 
 from __future__ import annotations
-
-# ruff: noqa: C408 - diagnostic script keeps compact dict builders readable
 
 import argparse
 import json
