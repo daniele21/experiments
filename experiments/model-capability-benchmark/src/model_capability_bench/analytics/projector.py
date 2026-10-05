@@ -416,7 +416,11 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
             _text(suite.get("version")),
             _text(suite.get("profile")),
             int(suite.get("seed") or 0),
-            _text(_mapping(run.get("metadata")).get("git_commit")) or None,
+            _text(
+                manifest.get("git_commit")
+                or _mapping(run.get("metadata")).get("git_commit")
+            )
+            or None,
             sha256_file(manifest_path),
             "VALID",
         ],
