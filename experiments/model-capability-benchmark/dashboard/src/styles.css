@@ -1092,7 +1092,6 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 .dataset-landscape-point {
   position:absolute;
-  top:50%;
   display:grid;
   justify-items:center;
   gap:2px;
@@ -1131,59 +1130,81 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   font-size:8px;
 }
 .slope-summary b { color:#172033; }
-.slopegraph-wrap { overflow:auto; }
-.slopegraph-model-head {
-  width:min(760px,100%);
-  min-width:650px;
-  margin:auto;
+.slopegraph-column-head {
   display:grid;
-  grid-template-columns:1fr 1fr;
-  padding:0 138px 2px;
-}
-.slopegraph-model-head > div {
-  display:grid;
-  gap:1px;
-}
-.slopegraph-model-head > div:last-child { text-align:right; }
-.slopegraph-model-head strong { color:#202a3c; font-size:10px; }
-.slopegraph-model-head small { color:#8792a5; font-size:7.5px; }
-.dataset-slopegraph {
-  display:block;
-  width:min(760px,100%);
-  min-width:650px;
-  height:auto;
-  margin:auto;
-}
-.slope-grid { stroke:#e8ecf3; stroke-width:1; }
-.slope-axis-label { fill:#8b96a8; font-size:8px; }
-.slope-line line {
-  stroke:#8b96aa;
-  stroke-width:1.7;
-  opacity:.8;
-}
-.slope-line circle {
-  fill:#8b96aa;
-  stroke:white;
-  stroke-width:2;
-}
-.slope-line > text:not(.slope-dataset-label) {
-  fill:#4d596d;
-  font-size:8px;
-  font-weight:800;
-}
-.slope-dataset-label {
-  fill:#596579;
+  grid-template-columns:minmax(210px,1.2fr) minmax(150px,.8fr) minmax(150px,.8fr) 72px;
+  gap:12px;
+  align-items:end;
+  padding:0 10px 7px;
+  color:#8490a3;
   font-size:7.5px;
-  font-weight:700;
+  font-weight:800;
+  text-transform:uppercase;
 }
-.slope-line.a-win line,.slope-line.a-win circle { stroke:#536cf4; fill:#536cf4; }
-.slope-line.b-win line,.slope-line.b-win circle { stroke:#28aa73; fill:#28aa73; }
-.slope-line.tie line,.slope-line.tie circle { stroke:#9aa4b4; fill:#9aa4b4; }
+.slopegraph-column-head > div { display:grid; gap:1px; text-transform:none; }
+.slopegraph-column-head > div:nth-child(3) { text-align:right; }
+.slopegraph-column-head strong { color:#273248; font-size:9px; }
+.slopegraph-column-head small { color:#8a95a7; font-size:7px; font-weight:700; }
+
+.slopegraph-rows { display:grid; gap:6px; }
+.slopegraph-row {
+  display:grid;
+  grid-template-columns:minmax(210px,1.2fr) minmax(300px,1.6fr) 72px;
+  gap:12px;
+  align-items:center;
+  min-height:58px;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:#fff;
+}
+.slope-dataset-meta { display:grid; gap:2px; min-width:0; }
+.slope-dataset-meta strong {
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  color:#253046;
+  font-size:9px;
+}
+.slope-dataset-meta small {
+  color:#8792a5;
+  font-size:7.5px;
+  text-transform:capitalize;
+}
+.slope-mini svg { width:100%; min-width:300px; display:block; }
+.slope-midline { stroke:#edf0f5; stroke-width:1; stroke-dasharray:3 3; }
+.slope-segment { stroke:#8e99aa; stroke-width:2; }
+.slope-mini circle { stroke:white; stroke-width:2; fill:#8e99aa; }
+.slope-mini text { fill:#47546a; font-size:8px; font-weight:850; }
+.slopegraph-row.a-win .slope-segment,
+.slopegraph-row.a-win .slope-point-a,
+.slopegraph-row.a-win .slope-point-b { stroke:#536cf4; fill:#536cf4; }
+.slopegraph-row.b-win .slope-segment,
+.slopegraph-row.b-win .slope-point-a,
+.slopegraph-row.b-win .slope-point-b { stroke:#28aa73; fill:#28aa73; }
+.slopegraph-row.tie .slope-segment,
+.slopegraph-row.tie .slope-point-a,
+.slopegraph-row.tie .slope-point-b { stroke:#9aa4b4; fill:#9aa4b4; }
+.slopegraph-row > em {
+  justify-self:end;
+  min-width:48px;
+  padding:5px 7px;
+  border-radius:7px;
+  background:#f1f3f7;
+  color:#657187;
+  font-size:9px;
+  font-style:normal;
+  font-weight:850;
+  text-align:center;
+}
+.slopegraph-row > em.a-win { color:#4258d4; background:#eef1ff; }
+.slopegraph-row > em.b-win { color:#08794b; background:#eaf9f2; }
+
 .slope-legend {
   display:flex;
   justify-content:center;
   gap:14px;
-  margin-top:3px;
+  margin-top:9px;
   color:#778397;
   font-size:8px;
 }
@@ -1202,10 +1223,15 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 @media (max-width:1024px) {
   .dataset-insight-chips { grid-template-columns:1fr 1fr; }
   .dataset-landscape-row { grid-template-columns:180px minmax(0,1fr) 14px; }
+  .slopegraph-column-head { display:none; }
+  .slopegraph-row { grid-template-columns:180px minmax(260px,1fr) 64px; }
 }
 
 @media (max-width:760px) {
   .dataset-insight-chips { grid-template-columns:1fr; }
   .dataset-landscape-row { grid-template-columns:1fr; }
   .dataset-landscape-track { margin:4px 8px 12px; }
+  .slopegraph-row { grid-template-columns:1fr; }
+  .slopegraph-row > em { justify-self:start; }
+  .slope-mini { overflow:auto; }
 }
