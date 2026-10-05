@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 function currentRoute(): string {
   if (window.location.protocol === 'file:' && window.location.hash) {
-    return window.location.hash.slice(1);
+    return window.location.hash.slice(1).split('?')[0];
   }
   const pathname = window.location.pathname;
   if (window.location.protocol === 'file:' || pathname.endsWith('.html')) {
