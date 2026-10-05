@@ -60,6 +60,7 @@ def export_dashboard_data(
                 q.comparison_metric,
                 q.practical_delta,
                 q.completed_at_utc,
+                r.git_commit,
                 m.model_id,
                 m.effective_model_id,
                 m.runtime_key,
@@ -69,6 +70,8 @@ def export_dashboard_data(
             JOIN models m
               ON m.run_id = q.run_id
              AND m.model_key = q.model_key
+            JOIN runs r
+              ON r.run_id = q.run_id
             ORDER BY q.capability_id, q.model_key
             """,
         )
