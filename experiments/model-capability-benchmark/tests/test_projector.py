@@ -247,6 +247,10 @@ def test_projector_selects_latest_completed_comparable_result(tmp_path: Path) ->
     assert ("run-old", "HISTORICAL") in history
     assert ("run-newer-partial", "PARTIAL") in history
 
+    incremental = project_results(results_root=results)
+    assert incremental.projected_runs == 0
+    assert incremental.skipped_runs == 3
+
 
 def test_projector_keeps_changed_benchmark_lineage_separate(tmp_path: Path) -> None:
     results = tmp_path / "results"
