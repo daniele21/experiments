@@ -747,7 +747,7 @@ Vedi `MCB_10_VERTICAL_BENCHMARK_HARDENING.md`.
 
 ---
 
-## MCB-11 — Benchmark observability, results explorer & shareable insights 🟡 PLANNED
+## MCB-11 — Benchmark observability, results explorer & shareable insights 🟡 IN PROGRESS
 
 ### Obiettivo
 
@@ -813,16 +813,16 @@ Questo slice deve dimostrare che una run partial più recente non sostituisce l'
 
 ### Definition of Done
 
-- [ ] event lifecycle tipizzato e versionato;
-- [ ] signature deterministiche con golden tests;
-- [ ] latest comparable policy coperta da test;
+- [x] event lifecycle tipizzato e versionato;
+- [x] signature deterministiche con golden tests;
+- [x] latest comparable policy coperta da test;
 - [ ] DuckDB rebuild == incremental projection;
-- [ ] Overview/Capability/Model/Run routes deep-linkable;
-- [ ] disagreement explorer basato su exact paired sample IDs;
+- [ ] Overview/Capability/Model/Run routes deep-linkable; Overview/Capability completate nel primo slice;
+- [x] disagreement explorer basato su exact paired sample IDs;
 - [ ] history non unisce benchmark lineage incompatibili;
 - [ ] resource telemetry nullable e execution-signature-aware;
-- [ ] share snapshot immutabile;
-- [ ] card/carousel LinkedIn renderizzabili deterministicamente;
+- [x] share snapshot immutabile;
+- [ ] card/carousel LinkedIn renderizzabili deterministicamente; preview card implementata, PNG/PDF renderer pending;
 - [ ] visual regression per viste/card principali;
 - [ ] gate locali verdi senza dipendenza da GitHub Actions.
 
