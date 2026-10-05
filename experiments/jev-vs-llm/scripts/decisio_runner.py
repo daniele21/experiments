@@ -287,10 +287,18 @@ class RunDisplay:
                 f"• {escape(event['case_id'])} • [cyan]{event['latency_ms']:.0f}ms[/] "
                 f"• got: {escape(str(event['choice']))}, expected: {escape(str(event['expected']))}"
             )
+            outcome = (
+                "correct"
+                if event["correct"]
+                else ("mismatch" if event["valid"] else "invalid")
+            )
             self.progress.update(
                 self.task,
                 completed=event["completed"],
-                status=f"acc: {event['accuracy']:.1%} | lat: {event['latency_ms']:.0f}ms",
+                status=(
+                    f"{outcome} {escape(event['case_id'])} | "
+                    f"acc: {event['accuracy']:.1%} | lat: {event['latency_ms']:.0f}ms"
+                ),
                 counter=f"{event['completed']}/{event['total']}",
             )
         elif kind == "method_done":
