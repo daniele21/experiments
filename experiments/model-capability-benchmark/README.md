@@ -19,7 +19,7 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-8 neutral capability reporting: complete;
 - MCB-9 Jev consolidation/migration: complete;
 - MCB-10 vertical benchmark hardening: implemented on v2 suite; local automated gates and controlled real-provider validation pending;
-- MCB-11 observability/results explorer: planned on top of immutable evidence, comparable-result signatures, DuckDB projections and shareable benchmark snapshots.
+- MCB-11 observability/results explorer: foundation implemented on a structured-output vertical slice; local Python/frontend gates and visual validation pending.
 
 ## Registry
 
@@ -153,8 +153,7 @@ The runner persists `state.jsonl`, `raw.jsonl`, `evaluation.jsonl`,
 `aggregates.jsonl`, `report_index.jsonl`, `events.jsonl`,
 `environment.json` and `run_manifest.json` incrementally.
 
-Re-running the same semantic matrix resumes from completed case identities. Use
-`--retry-failures` to rerun only terminal failed cases.
+New runs are stored by default under `results/runs/<run-id>`, while `run_group` remains a logical label. This preserves immutable cross-run history. To resume the exact same run, pass its existing `--run-id`; use `--retry-failures` to rerun only terminal failed cases.
 
 Korgis model residency is managed through its admin API; the Korgis server process itself
 is intentionally external to this benchmark.
@@ -191,7 +190,32 @@ See `MCB_8_REPORTING.md` for the evidence/report contract.
 
 MCB-0…10 is implemented. The immediate gate is local automated validation followed by the controlled real-provider E2E: run `plan`, then `estimate`, and only then execute the same core slice through Korgis and an API model.
 
-The next product layer is MCB-11: typed observability, cross-run CURRENT/HISTORICAL semantics, a rebuildable DuckDB read model, deep-linkable Results/Runs UI, disagreement analysis and immutable LinkedIn share snapshots. See `MCB_11_OBSERVABILITY_RESULTS_EXPLORER.md`.
+MCB-11 now provides typed lifecycle events, model/benchmark/execution signatures, latest-comparable CURRENT selection, a rebuildable DuckDB read model, typed dashboard payloads, the first Overview/Structured Output/Disagreement routes and immutable share snapshots.
+
+Build the cross-run read model and dashboard payloads without invoking a model:
+
+~~~bash
+uv run model-bench project --rebuild --export-dashboard
+~~~
+
+Build the single-file React dashboard using those projected payloads:
+
+~~~bash
+cd dashboard
+npm ci
+cd ..
+uv run model-bench dashboard-build
+~~~
+
+Create an immutable result snapshot for sharing:
+
+~~~bash
+uv run model-bench share create \
+  --capability structured-output \
+  --models qwen3.5-2b-q4km,gpt-5.6-luna
+~~~
+
+The dashboard still falls back to clearly-labelled fixture data when no projected payload is injected, so demo numbers cannot be mistaken for real benchmark evidence. See `MCB_11_OBSERVABILITY_RESULTS_EXPLORER.md`.
 
 Further benchmark-science enhancements remain a repeated performance microbenchmark, harder near-domain OOS cases and explicit parity-vs-native serving modes. Resource telemetry contracts are included in MCB-11 so the UI can expose local efficiency without conflating it with API cost.
 
