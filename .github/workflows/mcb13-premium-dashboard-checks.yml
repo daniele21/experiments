@@ -42,6 +42,7 @@ jobs:
           src/model_capability_bench/analytics
           tests/test_projector.py
           tests/test_dashboard_build.py
+          tests/test_decision_costs.py
 
       - name: Compile decision analytics
         run: >
@@ -53,6 +54,7 @@ jobs:
           uv run pytest
           tests/test_projector.py
           tests/test_dashboard_build.py
+          tests/test_decision_costs.py
 
       - name: Install dashboard dependencies
         working-directory: experiments/model-capability-benchmark/dashboard

@@ -1235,3 +1235,39 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   .slopegraph-row > em { justify-self:start; }
   .slope-mini { overflow:auto; }
 }
+
+
+.scatter-point.cost-partial circle {
+  stroke-dasharray: 3 2;
+  stroke-width: 2.5;
+}
+
+.cost-coverage-inline {
+  display: block;
+  margin-top: 2px;
+  color: #8a95a7;
+  font-size: 7.5px;
+  font-weight: 600;
+}
+
+.table-cost-coverage {
+  display: block;
+  margin-top: 2px;
+  color: #8a95a7;
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cost-status {
+  display: block;
+  margin-top: 2px;
+  color: #8a95a7;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 700;
+}
+.cost-status.partial { color: #a56d12; }
+.cost-status.complete { color: #17865b; }
+.cost-status.unavailable { color: #8a95a7; }
+.cost-status.local_not_applicable { color: #667185; }

@@ -6,7 +6,7 @@ import type {
   DecisionDatasetSummary,
   DecisionModelSummary,
 } from '../types';
-import { milliseconds, score, usd } from '../utils';
+import { milliseconds, providerCostCoverage, score, usd } from '../utils';
 
 export function DeploymentBadge({ deployment }: { deployment: string }) {
   const normalized = deployment.toLowerCase();
@@ -172,7 +172,10 @@ export function TradeoffScatter({
                     'scatter-point ' +
                     (model.deployment === 'local' ? 'local ' : 'api ') +
                     (selected ? 'selected ' : '') +
-                    (frontier ? 'frontier' : '')
+                    (frontier ? 'frontier ' : '') +
+                    (xMetric === 'cost' && model.provider_cost_status === 'partial'
+                      ? 'cost-partial'
+                      : '')
                   }
                   onClick={() => onSelect?.(model.model_signature)}
                 >
@@ -181,7 +184,13 @@ export function TradeoffScatter({
                       {model.model_key + ' · quality ' + quality.toFixed(1) +
                         (xMetric === 'latency'
                           ? ' · P50 ' + milliseconds(xValue)
-                          : ' · ' + usd(xValue) + ' / 1k cases')}
+                          : ' · ' + usd(xValue) + ' / 1k cases · ' +
+                            providerCostCoverage(
+                              model.provider_cost_status,
+                              model.provider_cost_priced_cases,
+                              model.provider_cost_total_cases,
+                              model.provider_cost_coverage_rate,
+                            ))}
                     </title>
                   </circle>
                   <text
@@ -710,8 +719,20 @@ export function DatasetHeatmap({
                               'score ' + score(value),
                               'P50 ' + milliseconds(cell.latency_p50_ms),
                               cell.provider_cost_known
-                                ? usd(cell.provider_cost_per_1k_cases_usd) + ' / 1k cases'
-                                : 'provider cost N/A',
+                                ? usd(cell.provider_cost_per_1k_cases_usd) +
+                                  ' / 1k cases · ' +
+                                  providerCostCoverage(
+                                    cell.provider_cost_status,
+                                    cell.provider_cost_priced_cases,
+                                    cell.provider_cost_total_cases,
+                                    cell.provider_cost_coverage_rate,
+                                  )
+                                : providerCostCoverage(
+                                    cell.provider_cost_status,
+                                    cell.provider_cost_priced_cases,
+                                    cell.provider_cost_total_cases,
+                                    cell.provider_cost_coverage_rate,
+                                  ),
                             ].join(' · ')
                           : 'No CURRENT comparable result'
                       }
