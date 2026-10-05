@@ -747,6 +747,89 @@ Vedi `MCB_10_VERTICAL_BENCHMARK_HARDENING.md`.
 
 ---
 
+## MCB-11 — Benchmark observability, results explorer & shareable insights 🟡 PLANNED
+
+### Obiettivo
+
+Separare in modo netto source-of-truth, analytics e presentation:
+
+```text
+immutable run evidence
+        ↓
+typed observability + signatures
+        ↓
+DuckDB projector/read model
+        ↓
+typed dashboard payloads
+        ↓
+Results UI / Runs UI / Share snapshots
+```
+
+### Principi chiave
+
+- i JSONL/manifest dei run restano immutabili e ricostruibili;
+- DuckDB è una projection cancellabile e rebuildable, non il source of truth;
+- il browser riceve payload JSON tipizzati e non ricalcola statistiche;
+- "latest" significa latest valid completed **comparable** result;
+- qualità e performance hanno regole di comparabilità distinte;
+- risultati partial/failed restano navigabili ma non sostituiscono il CURRENT;
+- storico e benchmark lineage restano preservati;
+- nessun overall score opaco;
+- share/LinkedIn usa snapshot immutabili, non lo stato live della dashboard.
+
+### Workstream
+
+- MCB-11A typed observability envelope;
+- MCB-11B model/benchmark/execution signatures;
+- MCB-11C run lifecycle + canonical latest policy;
+- MCB-11D DuckDB analytics projector;
+- MCB-11E typed dashboard export;
+- MCB-11F React/Vite dashboard foundation + URL routing;
+- MCB-11G Overview capability matrix;
+- MCB-11H Capability detail;
+- MCB-11I disagreement/case explorer;
+- MCB-11J model profile + benchmark history;
+- MCB-11K Runs/timeline/failure explorer;
+- MCB-11L local resource telemetry contract;
+- MCB-11M immutable share snapshots;
+- MCB-11N LinkedIn PNG/PDF renderer.
+
+### Primo vertical slice
+
+Validare end-to-end con:
+
+- 2 modelli;
+- structured-output;
+- 60 casi paired / 6 famiglie;
+- 2 run storici completati;
+- 1 run più recente partial;
+- CURRENT selection;
+- overview;
+- capability detail;
+- disagreement explorer;
+- 1 share snapshot + 1 LinkedIn card.
+
+Questo slice deve dimostrare che una run partial più recente non sostituisce l'ultimo risultato valido e che una modifica a evaluator/dataset selection apre una nuova benchmark lineage.
+
+### Definition of Done
+
+- [ ] event lifecycle tipizzato e versionato;
+- [ ] signature deterministiche con golden tests;
+- [ ] latest comparable policy coperta da test;
+- [ ] DuckDB rebuild == incremental projection;
+- [ ] Overview/Capability/Model/Run routes deep-linkable;
+- [ ] disagreement explorer basato su exact paired sample IDs;
+- [ ] history non unisce benchmark lineage incompatibili;
+- [ ] resource telemetry nullable e execution-signature-aware;
+- [ ] share snapshot immutabile;
+- [ ] card/carousel LinkedIn renderizzabili deterministicamente;
+- [ ] visual regression per viste/card principali;
+- [ ] gate locali verdi senza dipendenza da GitHub Actions.
+
+Vedi `MCB_11_OBSERVABILITY_RESULTS_EXPLORER.md`.
+
+---
+
 # 6. Dipendenze
 
 ```text

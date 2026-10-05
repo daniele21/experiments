@@ -18,7 +18,8 @@ The suite is being built on top of the shared `benchmark-core` package extracted
 - MCB-7 unified matrix runner: implemented and CI-covered; controlled real Korgis + API validation pending;
 - MCB-8 neutral capability reporting: complete;
 - MCB-9 Jev consolidation/migration: complete;
-- MCB-10 vertical benchmark hardening: implemented on v2 suite; local automated gates and controlled real-provider validation pending.
+- MCB-10 vertical benchmark hardening: implemented on v2 suite; local automated gates and controlled real-provider validation pending;
+- MCB-11 observability/results explorer: planned on top of immutable evidence, comparable-result signatures, DuckDB projections and shareable benchmark snapshots.
 
 ## Registry
 
@@ -190,7 +191,9 @@ See `MCB_8_REPORTING.md` for the evidence/report contract.
 
 MCB-0…10 is implemented. The immediate gate is local automated validation followed by the controlled real-provider E2E: run `plan`, then `estimate`, and only then execute the same core slice through Korgis and an API model.
 
-Further enhancements are a repeated performance microbenchmark, local RAM/VRAM/throughput telemetry, harder near-domain OOS cases and explicit parity-vs-native serving modes.
+The next product layer is MCB-11: typed observability, cross-run CURRENT/HISTORICAL semantics, a rebuildable DuckDB read model, deep-linkable Results/Runs UI, disagreement analysis and immutable LinkedIn share snapshots. See `MCB_11_OBSERVABILITY_RESULTS_EXPLORER.md`.
+
+Further benchmark-science enhancements remain a repeated performance microbenchmark, harder near-domain OOS cases and explicit parity-vs-native serving modes. Resource telemetry contracts are included in MCB-11 so the UI can expose local efficiency without conflating it with API cost.
 
 Jev remains a bounded-decision suite on top of the same core. Its task semantics and rich
 Jev-specific dashboard stay intentionally separate from the generic capability report.
