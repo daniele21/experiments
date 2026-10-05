@@ -41,6 +41,42 @@ from model_capability_bench.runner.pricing import enrich_inference_cost
 from model_capability_bench.suite import CapabilitySuiteBundle
 
 
+_DIRECT_GENERATION_KEYS = {"temperature", "max_output_tokens", "seed", "stop"}
+_EXTRA_GENERATION_KEYS = {"top_p", "top_k", "min_p", "repeat_penalty"}
+
+
+def _configured_generation(base: Any, config: RunnerConfig) -> Any:
+    overrides = dict(config.inference_config)
+    unknown = sorted(
+        set(overrides) - _DIRECT_GENERATION_KEYS - _EXTRA_GENERATION_KEYS
+    )
+    if unknown:
+        raise ValueError(
+            "Unsupported inference configuration keys: " + ", ".join(unknown)
+        )
+
+    extra = dict(base.extra)
+    for key in _EXTRA_GENERATION_KEYS:
+        if key in overrides:
+            extra[key] = overrides.pop(key)
+
+    stop = overrides.pop("stop", base.stop)
+    if isinstance(stop, str):
+        stop = (stop,)
+    else:
+        stop = tuple(stop)
+    return dataclasses.replace(
+        base,
+        temperature=overrides.pop("temperature", base.temperature),
+        max_output_tokens=overrides.pop(
+            "max_output_tokens", base.max_output_tokens
+        ),
+        seed=overrides.pop("seed", config.seed),
+        stop=stop,
+        extra=extra,
+    )
+
+
 class CapabilityRunner:
     def __init__(
         self,
@@ -68,9 +104,9 @@ class CapabilityRunner:
 
     def run(self, config: RunnerConfig) -> RunnerSummary:
         profile = self._profile(config.profile)
-        generation = dataclasses.replace(
+        generation = _configured_generation(
             self.suite.suite.generation,
-            seed=config.seed,
+            config,
         )
         selected_models = self.suite.models.select(
             model_keys=config.model_keys,
@@ -112,6 +148,9 @@ class CapabilityRunner:
                 "suite_version": self.suite.suite.version,
                 "profile": config.profile,
                 "seed": config.seed,
+                "configuration_id": config.configuration_id,
+                "inference_config": dict(config.inference_config),
+                "runtime_config": dict(config.runtime_config),
                 "model_keys": list(config.model_keys),
                 "capability_ids": list(capability_ids),
             },
@@ -156,6 +195,14 @@ class CapabilityRunner:
             prepare_started = perf_counter()
             try:
                 runtime = self.runtime_resolver(model)
+                if config.runtime_config:
+                    runtime_configurer = getattr(runtime, "configure", None)
+                    if not callable(runtime_configurer):
+                        raise ValueError(
+                            f"Runtime {model.runtime.runtime_key!r} does not support "
+                            "runtime configuration overrides"
+                        )
+                    runtime_configurer(config.runtime_config)
                 provider = runtime.prepare(model)
                 if not isinstance(provider, InferenceProvider):
                     raise TypeError(
@@ -172,6 +219,9 @@ class CapabilityRunner:
 
                 merged_execution_metadata = {
                     **dict(config.metadata),
+                    "configuration_id": config.configuration_id,
+                    "inference_config": dict(config.inference_config),
+                    "runtime_config": dict(config.runtime_config),
                     **runtime_execution_metadata,
                 }
                 execution_sig = execution_signature(
@@ -320,6 +370,8 @@ class CapabilityRunner:
                                 metadata={
                                     "context_fingerprints": context_fingerprints,
                                     "context_checksums": context_checksums,
+                                    "configuration_id": config.configuration_id,
+                                    "runtime_config": dict(config.runtime_config),
                                 },
                             )
                             case_id = case_identity.case_id
@@ -367,6 +419,9 @@ class CapabilityRunner:
                                 "sample_id": sample.sample_id,
                                 "profile": config.profile,
                                 "benchmark_tier": config.profile,
+                                "configuration_id": config.configuration_id,
+                                "inference_config": dict(config.inference_config),
+                                "runtime_config": dict(config.runtime_config),
                                 "case_family": sample.metadata.get("family"),
                                 "difficulty": sample.metadata.get("difficulty"),
                                 "challenge_type": sample.metadata.get(
