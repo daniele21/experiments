@@ -442,7 +442,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 468,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -494,7 +496,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 468,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -546,7 +550,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 468,
         "provider_cost_total_cases": 468,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.33696,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -598,7 +611,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 468,
         "provider_cost_total_cases": 468,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.08424,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       }
     ],
     "capability_summaries": [
@@ -630,7 +652,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-qwen3.5-2b-q4km-current",
@@ -660,7 +684,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-qwen3.5-2b-q4km-current",
@@ -690,7 +716,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-qwen3.5-2b-q4km-current",
@@ -720,7 +748,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-qwen3.5-2b-q4km-current",
@@ -750,7 +780,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-nemotron-nano-4b-current",
@@ -780,7 +812,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-nemotron-nano-4b-current",
@@ -810,7 +844,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-nemotron-nano-4b-current",
@@ -840,7 +876,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-nemotron-nano-4b-current",
@@ -870,7 +908,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-nemotron-nano-4b-current",
@@ -900,7 +940,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "run_id": "fixture-gpt-5.6-luna-current",
@@ -930,7 +972,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.11087999999999999,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-gpt-5.6-luna-current",
@@ -960,7 +1011,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.11087999999999999,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-gpt-5.6-luna-current",
@@ -990,7 +1050,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.043199999999999995,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-gpt-5.6-luna-current",
@@ -1020,7 +1089,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.043199999999999995,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-gpt-5.6-luna-current",
@@ -1050,7 +1128,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 40,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.028799999999999996,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-minicpm-v-4.6-1b-current",
@@ -1080,7 +1167,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.027719999999999998,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-minicpm-v-4.6-1b-current",
@@ -1110,7 +1206,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.027719999999999998,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-minicpm-v-4.6-1b-current",
@@ -1140,7 +1245,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.010799999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-minicpm-v-4.6-1b-current",
@@ -1170,7 +1284,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.010799999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "run_id": "fixture-minicpm-v-4.6-1b-current",
@@ -1200,7 +1323,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 40,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.007199999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       }
     ],
     "dataset_summaries": [
@@ -1230,7 +1362,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "qwen3.5-2b-q4km",
@@ -1258,7 +1392,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "qwen3.5-2b-q4km",
@@ -1286,7 +1422,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "qwen3.5-2b-q4km",
@@ -1314,7 +1452,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "qwen3.5-2b-q4km",
@@ -1342,7 +1482,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1370,7 +1512,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1398,7 +1542,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1426,7 +1572,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1454,7 +1602,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1482,7 +1632,9 @@
         "provider_cost_status": "local_not_applicable",
         "provider_cost_priced_cases": 0,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 0
+        "provider_cost_coverage_rate": 0,
+        "provider_cost_observed_total_usd": null,
+        "provider_cost_pricing": null
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1510,7 +1662,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.11087999999999999,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1538,7 +1699,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.11087999999999999,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1566,7 +1736,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.043199999999999995,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1594,7 +1773,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.043199999999999995,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1622,7 +1810,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 40,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.028799999999999996,
+        "provider_cost_pricing": {
+          "price_key": "gpt-5.6-luna",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1650,7 +1847,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.027719999999999998,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1678,7 +1884,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 154,
         "provider_cost_total_cases": 154,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.027719999999999998,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1706,7 +1921,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.010799999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1734,7 +1958,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 60,
         "provider_cost_total_cases": 60,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.010799999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1762,7 +1995,16 @@
         "provider_cost_status": "complete",
         "provider_cost_priced_cases": 40,
         "provider_cost_total_cases": 40,
-        "provider_cost_coverage_rate": 1
+        "provider_cost_coverage_rate": 1,
+        "provider_cost_observed_total_usd": 0.007199999999999999,
+        "provider_cost_pricing": {
+          "price_key": "minicpm-v-4.6-1b",
+          "source": "Frozen visual fixture pricing",
+          "source_url": "https://example.com/pricing",
+          "currency": "USD",
+          "as_of": "2026-09-20",
+          "processing": "standard"
+        }
       }
     ]
   }
