@@ -76,6 +76,10 @@ def _write_run(
                 "task_id": "structured-output",
                 "dataset_ids": ["structured-output-controlled-v2"],
                 "benchmark_signature": benchmark_signature,
+                "comparison": {
+                    "metric": "exact_match",
+                    "practical_delta": 0.05,
+                },
                 "metrics": [
                     {
                         "name": "exact_match",
@@ -331,3 +335,4 @@ def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> No
     assert set(payload["run_ids"]) == {"run-model-a", "run-model-b"}
     assert len(payload["sources"]["capability_payload_sha256"]) == 64
     assert payload["comparison"]["paired_count"] == 1
+    assert payload["comparison"]["practical_delta"] == 0.05
