@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Compare three thinking policies on identical public routing cases.
 
 Owns only its dedicated Korgis process group and ports. Saves incremental,
@@ -6,6 +5,8 @@ separate evidence; never appends to the main benchmark reports.
 """
 
 from __future__ import annotations
+
+# ruff: noqa: C408 - diagnostic script keeps compact dict builders readable
 
 import argparse
 import json
@@ -17,7 +18,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,7 +118,7 @@ def main():
     )
     if "bounded" in args.variants and "--reasoning-budget N" not in help_text:
         parser.error("Installed llama-server does not advertise --reasoning-budget")
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     output = (args.output or ROOT / "results" / "thinking" / stamp).resolve()
     output.mkdir(parents=True, exist_ok=False)
     cases = balanced_banking77_cases(ROOT / "data/cache", max_cases=77, seed=42)[: args.cases]
