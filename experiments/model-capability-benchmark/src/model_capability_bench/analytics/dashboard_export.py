@@ -15,6 +15,15 @@ def _duckdb():
     return duckdb
 
 
+def _decode_json(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
 def _rows(connection: Any, query: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
     cursor = connection.execute(query, params or [])
     columns = [item[0] for item in cursor.description]
@@ -128,6 +137,8 @@ def export_dashboard_data(
                         c.challenge_type,
                         c.inference_valid,
                         c.evaluation_valid,
+                        c.expected_json,
+                        c.prediction_json,
                         c.latency_ms,
                         c.input_tokens,
                         c.output_tokens,
@@ -228,6 +239,9 @@ def export_dashboard_data(
                                 "case_b": b["case_id"],
                                 "value_a": a["value"],
                                 "value_b": b["value"],
+                                "expected": _decode_json(a["expected_json"]),
+                                "prediction_a": _decode_json(a["prediction_json"]),
+                                "prediction_b": _decode_json(b["prediction_json"]),
                             }
                         )
                 payload["disagreements"] = disagreements
