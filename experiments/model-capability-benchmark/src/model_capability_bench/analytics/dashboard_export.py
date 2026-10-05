@@ -251,7 +251,11 @@ def export_dashboard_data(
                 if len(comparable_models) == 2:
                     model_a, model_b = comparable_models
 
-                    def comparison_evidence(model_key: str) -> list[dict[str, Any]]:
+                    def comparison_evidence(
+                        model_key: str,
+                        primary_by_model: dict[str, str] = primary_by_model,
+                        primary_rows: list[dict[str, Any]] = primary_rows,
+                    ) -> list[dict[str, Any]]:
                         return [
                             {
                                 "state": {
