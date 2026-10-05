@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -59,6 +60,7 @@ def _base_css() -> str:
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 1080px; min-height: 1350px; background: #eef1f5; }
 body { overflow: hidden; }
+@page { size: 1080px 1350px; margin: 0; }
 .card {
   width: 1080px;
   height: 1350px;
@@ -443,6 +445,7 @@ def build_share_cards(snapshot: dict[str, Any]) -> tuple[str, ...]:
 def _find_chrome(explicit: str | None = None) -> str:
     candidates = [
         explicit,
+        os.getenv("CHROME_BIN"),
         shutil.which("google-chrome"),
         shutil.which("chromium"),
         shutil.which("chromium-browser"),
@@ -478,6 +481,12 @@ def render_share_snapshot(
     chrome_binary: str | None = None,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
 ) -> ShareRenderSummary:
+    invalid_formats = sorted(set(formats) - {"png", "pdf"})
+    if invalid_formats or not formats:
+        raise ValueError(
+            "formats must contain one or both of: png, pdf"
+        )
+
     snapshot_path = snapshot_path.resolve()
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     cards = build_share_cards(snapshot)
