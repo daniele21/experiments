@@ -383,6 +383,37 @@ nav { display: grid; gap: 5px; }
   text-overflow: ellipsis;
 }
 
+
+.compare-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.compare-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.compare-controls label > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.compare-controls select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
 .filter-row {
   display: flex;
   gap: 7px;
