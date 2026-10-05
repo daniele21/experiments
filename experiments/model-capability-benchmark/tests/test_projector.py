@@ -25,6 +25,9 @@ def _write_run(
     benchmark_signature: str = "sha256:benchmark:fixture-v2",
     model_key: str = "model-a",
     model_signature: str = "sha256:model:model-a",
+    deployment: str = "local",
+    estimated_cost_usd: float | None = None,
+    latency_ms: float = 100.0,
 ) -> Path:
     run_dir = results_root / "runs" / run_id
     run_dir.mkdir(parents=True)
@@ -50,6 +53,13 @@ def _write_run(
                     "benchmarks": {
                         "structured-output": benchmark_signature,
                     },
+                    "execution_environment": {
+                        "system": "darwin",
+                        "release": "fixture",
+                        "machine": "arm64",
+                        "cpu_model": "Fixture CPU",
+                        "total_memory_bytes": 18_000_000_000,
+                    },
                 }
             },
         },
@@ -66,7 +76,7 @@ def _write_run(
                 "effective_model_id": model_key,
                 "runtime_key": "runtime-a",
                 "provider_key": "provider-a",
-                "deployment": "local",
+                "deployment": deployment,
                 "model_signature": model_signature,
                 "execution_signature": "sha256:execution:machine-a",
             }
@@ -96,6 +106,13 @@ def _write_run(
             "models": {model_key: model_signature},
             "executions": {model_key: "sha256:execution:machine-a"},
             "benchmarks": {"structured-output": benchmark_signature},
+            "execution_environment": {
+                "system": "darwin",
+                "release": "fixture",
+                "machine": "arm64",
+                "cpu_model": "Fixture CPU",
+                "total_memory_bytes": 18_000_000_000,
+            },
         },
     }
     (run_dir / "run_manifest.json").write_text(
@@ -154,10 +171,10 @@ def _write_run(
                 "record": {
                     "run_id": run_id,
                     "valid": True,
-                    "latency_ms": 100.0,
+                    "latency_ms": latency_ms,
                     "input_tokens": 20,
                     "output_tokens": 5,
-                    "estimated_cost_usd": None,
+                    "estimated_cost_usd": estimated_cost_usd,
                 },
             },
         )
@@ -330,6 +347,18 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert resources["scope"] == "owned_backend_process"
     assert resources["process_cpu_percent_avg"] == 125.0
     assert resources["process_rss_bytes_peak"] == 1_200_000_000.0
+    decision = overview["decision"]
+    assert decision["quality_policy"]["quality_policy_id"] == "core-quality-v1"
+    assert decision["model_summaries"][0]["overall_quality_score"] == 80.0
+    assert decision["model_summaries"][0]["latency_p50_ms"] == 100.0
+    assert decision["model_summaries"][0]["provider_cost_known"] is False
+    assert decision["model_summaries"][0]["provider_cost_total_usd"] is None
+    assert decision["dataset_summaries"][0]["dataset_id"] == (
+        "structured-output-controlled-v2"
+    )
+    assert decision["model_summaries"][0]["execution_environment"]["cpu_model"] == (
+        "Fixture CPU"
+    )
 
     index = json.loads((output / "index.json").read_text())
     model_file = output / index["models"]["sha256:model:model-a"]
@@ -383,3 +412,36 @@ def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> No
     assert len(payload["sources"]["capability_payload_sha256"]) == 64
     assert payload["comparison"]["paired_count"] == 1
     assert payload["comparison"]["practical_delta"] == 0.05
+
+
+
+def test_decision_overview_aggregates_known_api_cost(tmp_path: Path) -> None:
+    results = tmp_path / "results"
+    _write_run(
+        results,
+        run_id="run-api",
+        completed_at="2026-10-05T09:00:00+00:00",
+        score=0.75,
+        model_key="model-api",
+        model_signature="sha256:model:model-api",
+        deployment="api",
+        estimated_cost_usd=0.002,
+        latency_ms=240.0,
+    )
+    summary = project_results(results_root=results, rebuild=True)
+    output = results / "analytics" / "dashboard"
+
+    exported = export_dashboard_data(
+        database_path=Path(summary.database_path),
+        output_dir=output,
+    )
+
+    overview = json.loads(Path(exported["overview"]).read_text())
+    model = overview["decision"]["model_summaries"][0]
+
+    assert model["overall_quality_score"] == 75.0
+    assert model["latency_p50_ms"] == 240.0
+    assert model["latency_p95_ms"] == 240.0
+    assert model["provider_cost_known"] is True
+    assert model["provider_cost_total_usd"] == 0.002
+    assert model["provider_cost_per_1k_cases_usd"] == 2.0
