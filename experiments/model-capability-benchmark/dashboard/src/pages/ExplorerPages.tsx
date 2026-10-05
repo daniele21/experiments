@@ -207,7 +207,7 @@ export function ModelPage({ signature }: { signature: string }) {
           <dl className="detail-list">
             <div><dt>Deployment</dt><dd>{summary?.deployment ?? model?.deployment ?? '—'}</dd></div>
             <div><dt>Runtime</dt><dd>{summary?.runtime_key ?? model?.runtime_key ?? '—'}</dd></div>
-            <div><dt>Hardware</dt><dd>{summary?.execution_environment?.cpu_model ?? 'Provider managed / unavailable'}</dd></div>
+            <div><dt>Hardware</dt><dd>{summary?.deployment === 'local' ? (summary.execution_environment?.cpu_model ?? 'Unavailable') : 'Provider managed / unavailable'}</dd></div>
             <div><dt>Architecture</dt><dd>{summary?.execution_environment?.machine ?? '—'}</dd></div>
             <div><dt>Operating system</dt><dd>{summary?.execution_environment?.system ?? '—'} {summary?.execution_environment?.release ?? ''}</dd></div>
             <div><dt>Memory</dt><dd>{bytes(summary?.execution_environment?.total_memory_bytes)}</dd></div>
@@ -290,6 +290,24 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
   );
   const summaries = payload.decision?.capability_summaries ?? [];
   const datasets = payload.decision?.dataset_summaries ?? [];
+  const capabilityTradeoffModels = capabilityModels.map((model) => {
+    const summary = summaries.find((item) => item.model_signature === model.model_signature);
+    return summary
+      ? {
+          ...model,
+          overall_quality_score: summary.normalized_quality_score,
+          latency_p50_ms: summary.latency_p50_ms,
+          latency_p95_ms: summary.latency_p95_ms,
+          latency_mean_ms: summary.latency_mean_ms,
+          provider_cost_known: summary.provider_cost_known,
+          provider_cost_total_usd: summary.provider_cost_total_usd,
+          provider_cost_per_case_usd: summary.provider_cost_per_case_usd,
+          provider_cost_per_1k_cases_usd: summary.provider_cost_per_1k_cases_usd,
+          failure_count: summary.failure_count,
+          failure_rate: summary.failure_rate,
+        }
+      : model;
+  });
   const families = Array.from(new Set(payload.family_breakdown.map((row) => row.family)));
   const comparison = payload.comparison;
 
@@ -340,13 +358,13 @@ export function CapabilityPage({ payload }: { payload: CapabilityPayload }) {
         <TradeoffScatter
           title="Quality × latency"
           description="Observed capability-level context."
-          models={capabilityModels}
+          models={capabilityTradeoffModels}
           xMetric="latency"
         />
         <TradeoffScatter
           title="Quality × cost"
           description="Known provider cost only."
-          models={capabilityModels}
+          models={capabilityTradeoffModels}
           xMetric="cost"
         />
       </section>
