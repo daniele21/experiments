@@ -13,6 +13,8 @@ from benchmark_core import (
     to_jsonable,
 )
 
+from model_capability_bench.observability import BenchmarkEvent, EvidenceRef, build_event
+
 
 def _now() -> str:
     return datetime.now(UTC).isoformat()
@@ -73,6 +75,84 @@ class EvidenceStore:
             return True
         return status == "failed" and not retry_failures
 
+    def record_typed_event(self, event: BenchmarkEvent) -> None:
+        append_jsonl_record(event.to_record(), self.events_path)
+
+    def record_stage_event(
+        self,
+        event_type: str,
+        *,
+        metadata: dict[str, Any],
+        status: str | None = None,
+        duration_ms: float | None = None,
+        payload_ref: EvidenceRef | None = None,
+        error: Exception | None = None,
+    ) -> None:
+        run_id = str(metadata.get("run_id") or "")
+        if not run_id:
+            raise ValueError("typed benchmark events require run_id metadata")
+        self.record_typed_event(
+            build_event(
+                event_type,
+                run_id=run_id,
+                run_group=(
+                    str(metadata["run_group"])
+                    if metadata.get("run_group")
+                    else None
+                ),
+                model_key=(
+                    str(metadata["model_key"])
+                    if metadata.get("model_key")
+                    else None
+                ),
+                model_signature=(
+                    str(metadata["model_signature"])
+                    if metadata.get("model_signature")
+                    else None
+                ),
+                capability_id=(
+                    str(metadata["capability_id"])
+                    if metadata.get("capability_id")
+                    else None
+                ),
+                dataset_id=(
+                    str(metadata["dataset_id"])
+                    if metadata.get("dataset_id")
+                    else None
+                ),
+                sample_id=(
+                    str(metadata["sample_id"])
+                    if metadata.get("sample_id")
+                    else None
+                ),
+                case_id=(
+                    str(metadata["case_id"])
+                    if metadata.get("case_id")
+                    else None
+                ),
+                attempt=(
+                    int(metadata["attempt"])
+                    if metadata.get("attempt")
+                    else None
+                ),
+                benchmark_signature=(
+                    str(metadata["benchmark_signature"])
+                    if metadata.get("benchmark_signature")
+                    else None
+                ),
+                execution_signature=(
+                    str(metadata["execution_signature"])
+                    if metadata.get("execution_signature")
+                    else None
+                ),
+                status=status,
+                duration_ms=duration_ms,
+                payload_ref=payload_ref,
+                metadata=metadata,
+                error=error,
+            )
+        )
+
     def begin_case(
         self,
         case_id: str,
@@ -92,6 +172,12 @@ class EvidenceStore:
         }
         append_jsonl_record(record, self.state_path)
         self._latest_state[case_id] = record
+        event_metadata = {**metadata, "case_id": case_id, "attempt": attempt}
+        self.record_stage_event(
+            "case.started",
+            metadata=event_metadata,
+            status="started",
+        )
         return attempt
 
     def record_raw(
@@ -148,6 +234,12 @@ class EvidenceStore:
         }
         append_jsonl_record(record, self.state_path)
         self._latest_state[case_id] = record
+        event_metadata = {**metadata, "case_id": case_id, "attempt": attempt}
+        self.record_stage_event(
+            "case.completed",
+            metadata=event_metadata,
+            status="completed",
+        )
 
     def fail_case(
         self,
@@ -170,6 +262,29 @@ class EvidenceStore:
         }
         append_jsonl_record(record, self.state_path)
         self._latest_state[case_id] = record
+        event_metadata = {
+            **metadata,
+            "case_id": case_id,
+            "attempt": attempt,
+            "failure_stage": stage,
+        }
+        stage_event = {
+            "request": "request.failed",
+            "provider": "inference.failed",
+            "evaluation": "evaluation.failed",
+        }.get(stage, f"{stage}.failed")
+        self.record_stage_event(
+            stage_event,
+            metadata=event_metadata,
+            status="failed",
+            error=error,
+        )
+        self.record_stage_event(
+            "case.failed",
+            metadata=event_metadata,
+            status="failed",
+            error=error,
+        )
 
     def record_event(
         self,
@@ -178,15 +293,19 @@ class EvidenceStore:
         metadata: dict[str, Any],
         error: Exception | None = None,
     ) -> None:
-        payload: dict[str, Any] = {
-            "event": event,
-            "timestamp_utc": _now(),
-            "metadata": metadata,
-        }
-        if error is not None:
-            payload["error_type"] = type(error).__name__
-            payload["error_message"] = str(error)
-        append_jsonl_record(payload, self.events_path)
+        event_type = {
+            "run_started": "run.started",
+            "run_completed": "run.completed",
+            "runtime_prepare_failed": "model.prepare.failed",
+            "runtime_release_failed": "model.release.failed",
+            "dataset_load_failed": "capability.failed",
+        }.get(event, event.replace("_", "."))
+        self.record_stage_event(
+            event_type,
+            metadata=metadata,
+            status="failed" if error is not None else None,
+            error=error,
+        )
 
     def append_aggregate(self, record: dict[str, Any]) -> None:
         append_jsonl_record(record, self.aggregates_path)
