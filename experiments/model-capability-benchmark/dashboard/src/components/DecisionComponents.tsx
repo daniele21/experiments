@@ -90,6 +90,26 @@ export function TradeoffScatter({
   );
   const minX = xs.length ? Math.min(...xs) / 1.7 : 0.01;
   const maxX = xs.length ? Math.max(...xs) * 1.7 : 1000;
+  const plotted = eligible.map((model) => {
+    const xValue =
+      xMetric === 'latency'
+        ? Number(model.latency_p50_ms)
+        : Number(model.provider_cost_per_1k_cases_usd);
+    const x =
+      48 +
+      Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 354;
+    const quality = Number(model.overall_quality_score);
+    const y =
+      210 - Math.max(0, Math.min(1, (quality - 40) / 60)) * 170;
+    const frontier =
+      xMetric === 'latency'
+        ? model.observed_quality_latency_pareto
+        : model.known_provider_cost_quality_pareto;
+    return { model, xValue, x, quality, y, frontier };
+  });
+  const frontierPoints = plotted
+    .filter((point) => point.frontier)
+    .sort((a, b) => a.x - b.x);
 
   return (
     <section className="analysis-card scatter-card">
@@ -118,25 +138,25 @@ export function TradeoffScatter({
                 <line key={'v' + t} y1="40" y2="210" x1={48 + t * 354} x2={48 + t * 354} />
               ))}
             </g>
-            <path
-              className="pareto-line"
-              d="M54 198 C88 128 132 92 202 67 C270 45 332 39 396 34"
-            />
-            <text className="pareto-label" x="82" y="105">Pareto frontier</text>
-            {eligible.map((model) => {
-              const xValue =
-                xMetric === 'latency'
-                  ? Number(model.latency_p50_ms)
-                  : Number(model.provider_cost_per_1k_cases_usd);
-              const x = 48 + Math.max(0, Math.min(1, scaleLog(xValue, minX, maxX))) * 354;
-              const quality = Number(model.overall_quality_score);
-              const y = 210 - Math.max(0, Math.min(1, (quality - 40) / 60)) * 170;
-              const selected =
-                selectedModel === model.model_signature;
-              const frontier =
-                xMetric === 'latency'
-                  ? model.observed_quality_latency_pareto
-                  : model.known_provider_cost_quality_pareto;
+            {frontierPoints.length > 1 ? (
+              <>
+                <polyline
+                  className="pareto-line"
+                  points={frontierPoints
+                    .map((point) => point.x + ',' + point.y)
+                    .join(' ')}
+                />
+                <text
+                  className="pareto-label"
+                  x={frontierPoints[0].x + 8}
+                  y={Math.max(32, frontierPoints[0].y - 10)}
+                >
+                  Pareto frontier
+                </text>
+              </>
+            ) : null}
+            {plotted.map(({ model, xValue, x, quality, y, frontier }) => {
+              const selected = selectedModel === model.model_signature;
               return (
                 <g
                   key={model.model_signature}
