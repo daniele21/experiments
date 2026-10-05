@@ -51,6 +51,14 @@ function points(value: number | null): string {
   return sign + (value * 100).toFixed(1) + ' pp';
 }
 
+function megabytes(value: number | null | undefined): string {
+  return value == null ? '—' : (value / (1024 * 1024)).toFixed(0) + ' MB';
+}
+
+function cpuPercent(value: number | null | undefined): string {
+  return value == null ? '—' : value.toFixed(1) + '%';
+}
+
 function capabilityLabel(value: string): string {
   return value
     .split('-')
@@ -603,6 +611,34 @@ function ModelPage({ signature }: { signature: string }) {
       <section className="card">
         <div className="section-heading">
           <div>
+            <h2>Current efficiency evidence</h2>
+            <p>
+              Resource values are shown only when the runtime emitted measured
+              evidence for this exact execution lineage.
+            </p>
+          </div>
+        </div>
+        <div className="resource-table">
+          {currentCells.map((cell) => {
+            const resource = cell.resource_summary;
+            return (
+              <div key={'resource-' + cell.capability_id}>
+                <strong>{cell.capability_id}</strong>
+                <span>{resource?.scope ?? 'unavailable'}</span>
+                <b>{cpuPercent(resource?.process_cpu_percent_avg)}</b>
+                <b>{megabytes(resource?.process_rss_bytes_peak)}</b>
+                <small>
+                  {resource ? 'n=' + resource.sample_count : 'no telemetry'}
+                </small>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="section-heading">
+          <div>
             <h2>Comparable history</h2>
             <p>
               Lines are not connected across benchmark signatures.
@@ -764,6 +800,46 @@ function RunPage({ runId }: { runId: string }) {
           )}
         </section>
       </div>
+      <section className="card">
+        <div className="section-heading">
+          <div>
+            <h2>Resource telemetry</h2>
+            <p>
+              CPU and RSS are source-backed runtime measurements. Missing
+              accelerator values stay unavailable rather than being inferred.
+            </p>
+          </div>
+        </div>
+        {payload?.resources?.length ? (
+          <div className="resource-table">
+            <div className="resource-head">
+              <strong>Model / capability</strong>
+              <span>Scope</span>
+              <b>CPU avg</b>
+              <b>RSS peak</b>
+              <small>Samples</small>
+            </div>
+            {payload.resources.map((resource) => (
+              <div key={resource.model_key + resource.capability_id}>
+                <strong>
+                  {resource.model_key} · {resource.capability_id}
+                </strong>
+                <span>{resource.scope}</span>
+                <b>{cpuPercent(resource.process_cpu_percent_avg)}</b>
+                <b>{megabytes(resource.process_rss_bytes_peak)}</b>
+                <small>
+                  {resource.sample_count}
+                  {resource.sampling_error_count
+                    ? ' · errors=' + resource.sampling_error_count
+                    : ''}
+                </small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No runtime resource telemetry was captured.</p>
+        )}
+      </section>
     </>
   );
 }
@@ -1001,6 +1077,51 @@ function ComparePage() {
           </small>
         </section>
       </div>
+
+      <section className="card">
+        <div className="section-heading">
+          <div>
+            <h2>Efficiency</h2>
+            <p>
+              Resource comparison is valid only when both results share the
+              same execution signature.
+            </p>
+          </div>
+          <span
+            className={
+              modelA?.execution_signature === modelB?.execution_signature
+                ? 'status-chip good'
+                : 'status-chip'
+            }
+          >
+            {modelA?.execution_signature === modelB?.execution_signature
+              ? 'Comparable'
+              : 'NON_COMPARABLE'}
+          </span>
+        </div>
+        {modelA?.execution_signature === modelB?.execution_signature ? (
+          <div className="efficiency-grid">
+            {[modelA, modelB].map((cell) => (
+              <div key={'efficiency-' + (cell?.model_key ?? 'missing')}>
+                <span>{cell?.model_key ?? '—'}</span>
+                <strong>
+                  {cpuPercent(cell?.resource_summary?.process_cpu_percent_avg)}
+                </strong>
+                <small>CPU avg</small>
+                <strong>
+                  {megabytes(cell?.resource_summary?.process_rss_bytes_peak)}
+                </strong>
+                <small>RSS peak</small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="non-comparable-note">
+            Quality can still be compared because the benchmark signature
+            matches, but runtime efficiency cannot.
+          </div>
+        )}
+      </section>
 
       <section className="card methodology-strip">
         <div>
