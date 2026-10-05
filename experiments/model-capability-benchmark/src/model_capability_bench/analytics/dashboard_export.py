@@ -83,6 +83,31 @@ def export_dashboard_data(
             ORDER BY completed_at_utc DESC, run_id DESC
             """,
         )
+        current_resources = _rows(
+            connection,
+            """
+            SELECT *
+            FROM v_current_resource_results
+            ORDER BY capability_id, model_key
+            """,
+        )
+        resources_by_cell = {
+            (
+                str(row["run_id"]),
+                str(row["model_key"]),
+                str(row["capability_id"]),
+            ): row
+            for row in current_resources
+        }
+        for row in current:
+            row["resource_summary"] = resources_by_cell.get(
+                (
+                    str(row["run_id"]),
+                    str(row["model_key"]),
+                    str(row["capability_id"]),
+                )
+            )
+
         capabilities = sorted({row["capability_id"] for row in current})
         models = {}
         for row in current:
@@ -401,6 +426,32 @@ def export_dashboard_data(
                 for event in lifecycle_events
                 if str(event["event_type"]).startswith(lifecycle_prefixes)
             ]
+            run_resources = _rows(
+                connection,
+                """
+                SELECT
+                    model_key,
+                    capability_id,
+                    MAX(execution_signature) AS execution_signature,
+                    MAX(source) AS source,
+                    MAX(scope) AS scope,
+                    SUM(sample_count) AS sample_count,
+                    AVG(sample_interval_ms) AS sample_interval_ms,
+                    AVG(process_cpu_percent_avg) AS process_cpu_percent_avg,
+                    AVG(process_rss_bytes_avg) AS process_rss_bytes_avg,
+                    MAX(process_rss_bytes_peak) AS process_rss_bytes_peak,
+                    MIN(system_available_memory_bytes_min)
+                        AS system_available_memory_bytes_min,
+                    MAX(accelerator_memory_bytes_peak)
+                        AS accelerator_memory_bytes_peak,
+                    SUM(sampling_error_count) AS sampling_error_count
+                FROM resource_summaries
+                WHERE run_id = ?
+                GROUP BY model_key, capability_id
+                ORDER BY model_key, capability_id
+                """,
+                [run_id],
+            )
             failures = _rows(
                 connection,
                 """
@@ -426,6 +477,7 @@ def export_dashboard_data(
                         "models": run_models,
                         "cells": run_cells,
                         "timeline": lifecycle_events,
+                        "resources": run_resources,
                         "failure_summary": failures,
                     },
                     indent=2,
