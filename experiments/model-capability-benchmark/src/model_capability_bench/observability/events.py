@@ -62,7 +62,9 @@ class BenchmarkEvent:
             raise ValueError("duration_ms must be >= 0")
 
     def to_record(self) -> dict[str, Any]:
-        return to_jsonable(self)
+        record = to_jsonable(self)
+        record["event"] = self.event_type
+        return record
 
 
 def build_event(
