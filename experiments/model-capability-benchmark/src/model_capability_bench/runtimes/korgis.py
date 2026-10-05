@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from benchmark_core import (
@@ -234,6 +235,19 @@ class KorgisManagedRuntime:
         )
         if effective:
             metadata["runtime_config"] = dict(effective)
+        model_path = activation.get("cfg", {}).get("model_path")
+        if not model_path:
+            control = self._control_by_runtime.get(model.runtime.runtime_key)
+            if control is not None:
+                try:
+                    model_path = control.health().get("model_path")
+                except Exception:  # noqa: BLE001 - optional evidence only
+                    model_path = None
+        if model_path:
+            try:
+                metadata["artifact_size_bytes"] = Path(str(model_path)).stat().st_size
+            except OSError:
+                pass
         return metadata
 
     def release(self, model: ResolvedModel) -> None:
