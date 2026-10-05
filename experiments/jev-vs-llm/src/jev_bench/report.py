@@ -68,8 +68,7 @@ def build_report(
     resolved_html = output_html.resolve()
     resolved_str = str(resolved_html)
     is_temp = (
-        resolved_str.startswith("/tmp")
-        or resolved_str.startswith("/var/folders")
+        resolved_str.startswith(("/tmp", "/var/folders"))
         or "pytest" in resolved_str
     )
     should_update_dashboard = (
