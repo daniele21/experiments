@@ -1,0 +1,114 @@
+name: MCB-14 sensitivity and frontier checks
+
+on:
+  pull_request:
+    paths:
+      - "packages/benchmark-core/**"
+      - "experiments/model-capability-benchmark/**"
+      - ".github/workflows/mcb14-sensitivity-frontier-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  sensitivity-frontier:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/model-capability-benchmark
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
+
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff MCB-14
+        run: >
+          uv run ruff check
+          src/model_capability_bench/runner
+          src/model_capability_bench/runtimes/korgis.py
+          src/model_capability_bench/analytics
+          tests/test_sweeps.py
+          tests/test_pareto.py
+          tests/test_runner_manifest.py
+          tests/test_runtime_providers.py
+
+      - name: Compile MCB-14
+        run: >
+          uv run python -m compileall -q
+          src/model_capability_bench/runner
+          src/model_capability_bench/runtimes
+          src/model_capability_bench/analytics
+
+      - name: Parameter and frontier tests
+        run: >
+          uv run pytest
+          tests/test_sweeps.py
+          tests/test_pareto.py
+          tests/test_runner_manifest.py
+          tests/test_runtime_providers.py
+          tests/test_projector.py
+          tests/test_dashboard_build.py
+
+      - name: Sweep planning smoke
+        env:
+          KORGIS_BASE_URL: http://127.0.0.1:1235/v1
+        run: |
+          uv run model-bench sweep \
+            --model qwen3.5-2b-q4km \
+            --sweep generation-sensitivity \
+            --capabilities structured-output \
+            --profile smoke \
+            --run-group ci-mcb14 \
+            --plan-only
+
+      - name: Install dashboard dependencies
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm ci
+
+      - name: Lint dashboard
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm run lint
+
+      - name: Build dashboard
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm run build
+
+      - name: Render experiment routes with Chrome
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || true)"
+          test -n "$CHROME"
+          HTML="$(pwd)/dashboard/dist/index.html"
+          for route in frontier sensitivity; do
+            "$CHROME" \
+              --headless \
+              --no-sandbox \
+              --disable-gpu \
+              --hide-scrollbars \
+              --window-size=1600,1000 \
+              --screenshot="/tmp/mcb14-$route.png" \
+              "file://$HTML#/$route"
+            test -s "/tmp/mcb14-$route.png"
+          done
+
+      - name: Upload visual review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcb14-experiment-routes
+          path: /tmp/mcb14-*.png
+          if-no-files-found: error
