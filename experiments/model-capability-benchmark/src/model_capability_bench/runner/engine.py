@@ -389,6 +389,29 @@ class CapabilityRunner:
                                 )
                                 continue
 
+                            inference_result_metadata = dict(inference.metadata)
+                            resource_telemetry = inference_result_metadata.pop(
+                                "resource_telemetry",
+                                None,
+                            )
+                            if isinstance(resource_telemetry, Mapping):
+                                resource_summary = (
+                                    self.evidence_store.record_resource_telemetry(
+                                        case_id,
+                                        attempt,
+                                        dict(resource_telemetry),
+                                        metadata=case_metadata,
+                                    )
+                                )
+                                if resource_summary is not None:
+                                    inference_result_metadata["resource_summary"] = (
+                                        resource_summary
+                                    )
+                                inference = dataclasses.replace(
+                                    inference,
+                                    metadata=inference_result_metadata,
+                                )
+
                             raw_record = RawInferenceRecord.from_inference_result(
                                 run_id=identity.run_id,
                                 run_group=identity.run_group,
