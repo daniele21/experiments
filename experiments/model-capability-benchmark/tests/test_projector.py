@@ -32,6 +32,7 @@ def _write_run(
     failed = 0 if status == "COMPLETED" else 1
     manifest = {
         "schema_version": "1",
+        "git_commit": "fixture-commit",
         "created_at_utc": completed_at,
         "run": {
             "run_id": run_id,
@@ -336,6 +337,7 @@ def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> No
     assert payload["snapshot_id"] == snapshot.snapshot_id
     assert payload["benchmark_signature"] == "sha256:benchmark:fixture-v2"
     assert payload["model_keys"] == ["model-a", "model-b"]
+    assert payload["git_commits"] == ["fixture-commit"]
     assert set(payload["run_ids"]) == {"run-model-a", "run-model-b"}
     assert len(payload["sources"]["capability_payload_sha256"]) == 64
     assert payload["comparison"]["paired_count"] == 1
