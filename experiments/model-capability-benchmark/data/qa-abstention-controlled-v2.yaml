@@ -1,0 +1,964 @@
+{
+  "cases": [
+    {
+      "sample_id": "qa2-direct-01",
+      "input": {
+        "context": "The Atlas project is led by Elena and started in March 2026.",
+        "question": "Who leads Atlas?"
+      },
+      "expected": {
+        "answer": "Elena",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-02",
+      "input": {
+        "context": "Warehouse W2 opens at 07:30 and closes at 19:00.",
+        "question": "When does W2 open?"
+      },
+      "expected": {
+        "answer": "07:30",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-03",
+      "input": {
+        "context": "Product K weighs 2.4 kg and comes in black.",
+        "question": "How much does Product K weigh?"
+      },
+      "expected": {
+        "answer": "2.4 kg",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-04",
+      "input": {
+        "context": "Train 81 arrives in Rome at 11:15.",
+        "question": "When does train 81 arrive in Rome?"
+      },
+      "expected": {
+        "answer": "11:15",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-05",
+      "input": {
+        "context": "The roadmap review is in room B12.",
+        "question": "Where is the roadmap review?"
+      },
+      "expected": {
+        "answer": "room B12",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-06",
+      "input": {
+        "context": "Plan Gold allows 25 users.",
+        "question": "How many users does Gold allow?"
+      },
+      "expected": {
+        "answer": "25",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "medium",
+        "challenge_type": "direct-number"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-01",
+      "input": {
+        "context": "Atlas started in March. Orion started in May. Elena leads Atlas; Marco leads Orion.",
+        "question": "Who leads Atlas?"
+      },
+      "expected": {
+        "answer": "Elena",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "medium",
+        "challenge_type": "nearby-entity"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-02",
+      "input": {
+        "context": "Room A1 seats 12. Room A2 seats 18. The workshop is in A2.",
+        "question": "How many seats does the workshop room have?"
+      },
+      "expected": {
+        "answer": "18",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "medium",
+        "challenge_type": "multiple-numbers"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-03",
+      "input": {
+        "context": "Invoice I1 totals 80 EUR. Invoice I2 totals 125 EUR and is overdue.",
+        "question": "What is the total of I2?"
+      },
+      "expected": {
+        "answer": "125 EUR",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "medium",
+        "challenge_type": "multiple-entities"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-04",
+      "input": {
+        "context": "Milan office closes at 18:00. Rome closes at 19:00. Sara works in Rome.",
+        "question": "When does Sara's office close?"
+      },
+      "expected": {
+        "answer": "19:00",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "hard",
+        "challenge_type": "coreference"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-05",
+      "input": {
+        "context": "Model A has 8 GB RAM, model B has 16 GB, model C has 32 GB. The selected model is B.",
+        "question": "How much RAM does the selected model have?"
+      },
+      "expected": {
+        "answer": "16 GB",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "hard",
+        "challenge_type": "selection-reference"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-06",
+      "input": {
+        "context": "The first draft said 40 pages. The final report has 52 pages.",
+        "question": "How many pages are in the final report?"
+      },
+      "expected": {
+        "answer": "52",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "hard",
+        "challenge_type": "superseded-value"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-01",
+      "input": {
+        "context": "The meeting starts at 14:00 in room B12.",
+        "question": "Who attends the meeting?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "easy",
+        "challenge_type": "absent-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-02",
+      "input": {
+        "context": "Product X weighs 3 kg.",
+        "question": "What material is Product X made of?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "easy",
+        "challenge_type": "absent-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-03",
+      "input": {
+        "context": "The train departs at 08:10.",
+        "question": "What platform does it use?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "medium",
+        "challenge_type": "absent-operational-detail"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-04",
+      "input": {
+        "context": "Account A is active.",
+        "question": "When was the account created?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "medium",
+        "challenge_type": "absent-date"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-05",
+      "input": {
+        "context": "The contract starts on 2026-01-01.",
+        "question": "When does it expire?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "medium",
+        "challenge_type": "absent-bound"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-06",
+      "input": {
+        "context": "The server is healthy and located in Milan.",
+        "question": "What CPU model does it use?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "hard",
+        "challenge_type": "plausible-but-absent"
+      }
+    },
+    {
+      "sample_id": "qa2-near-01",
+      "input": {
+        "context": "The laptop has 16 GB RAM and a 512 GB SSD.",
+        "question": "What is the CPU model?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "medium",
+        "challenge_type": "related-spec-missing"
+      }
+    },
+    {
+      "sample_id": "qa2-near-02",
+      "input": {
+        "context": "The flight arrives at 10:20 and departs at 08:00.",
+        "question": "What gate does it arrive at?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "medium",
+        "challenge_type": "related-travel-detail"
+      }
+    },
+    {
+      "sample_id": "qa2-near-03",
+      "input": {
+        "context": "Sara manages the Alpha team. The team has 8 members.",
+        "question": "Who founded the Alpha team?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "role-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-near-04",
+      "input": {
+        "context": "Invoice I7 was paid on Monday for 90 EUR.",
+        "question": "When was the invoice issued?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "date-role-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-near-05",
+      "input": {
+        "context": "The service has 99.9% monthly availability.",
+        "question": "What was availability last Tuesday?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "aggregate-vs-instance"
+      }
+    },
+    {
+      "sample_id": "qa2-near-06",
+      "input": {
+        "context": "The building is 42 meters tall and has 12 floors.",
+        "question": "How wide is the building?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "dimension-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-01",
+      "input": {
+        "context": "Status line 1 says ticket T4 is open. Status line 2 says ticket T4 is closed. No timestamp is provided.",
+        "question": "What is the current status of T4?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "hard",
+        "challenge_type": "conflicting-facts"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-02",
+      "input": {
+        "context": "One section lists the budget as 80k EUR; another lists 95k EUR, with neither marked newer.",
+        "question": "What is the project budget?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "hard",
+        "challenge_type": "conflicting-numbers"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-03",
+      "input": {
+        "context": "The profile says Nora works in Milan. A second profile says Nora works in Rome. Both are marked current.",
+        "question": "Where does Nora work?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "hard",
+        "challenge_type": "conflicting-entities"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-04",
+      "input": {
+        "context": "Schedule A says the call starts at 09:00; schedule B says 09:30. No authoritative schedule is identified.",
+        "question": "When does the call start?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "challenge",
+        "challenge_type": "conflicting-times"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-05",
+      "input": {
+        "context": "Inventory record says SKU K is in stock; another current record says it is out of stock.",
+        "question": "Is SKU K in stock?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "challenge",
+        "challenge_type": "conflicting-boolean"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-06",
+      "input": {
+        "context": "Policy copy 1 sets the limit to 10; copy 2 sets it to 12. Both have the same revision.",
+        "question": "What is the limit?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "challenge",
+        "challenge_type": "conflicting-policy"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-01",
+      "input": {
+        "context": "Sara leads Team Blue. Team Blue owns Project Nova. Each project owner approves its releases.",
+        "question": "Who approves releases for Project Nova?"
+      },
+      "expected": {
+        "answer": "Sara",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-02",
+      "input": {
+        "context": "Order O1 belongs to customer C7. Customer C7 is named Luca.",
+        "question": "What is the name of the customer for O1?"
+      },
+      "expected": {
+        "answer": "Luca",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "medium",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-03",
+      "input": {
+        "context": "Server S1 is in rack R3. Rack R3 is in data center West.",
+        "question": "Which data center contains S1?"
+      },
+      "expected": {
+        "answer": "West",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-04",
+      "input": {
+        "context": "Train T1 terminates at Bologna. Bologna is in Emilia-Romagna.",
+        "question": "In which region does T1 terminate?"
+      },
+      "expected": {
+        "answer": "Emilia-Romagna",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-05",
+      "input": {
+        "context": "Document D2 is owned by Team Legal. Team Legal's manager is Ana.",
+        "question": "Who manages the team that owns D2?"
+      },
+      "expected": {
+        "answer": "Ana",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "challenge",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-06",
+      "input": {
+        "context": "Subscription S9 uses plan Pro. Plan Pro includes 50 GB storage.",
+        "question": "How much storage does S9 include?"
+      },
+      "expected": {
+        "answer": "50 GB",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-07",
+      "input": {
+        "context": "Team Red has 14 members.",
+        "question": "How many members are in Team Red?"
+      },
+      "expected": {
+        "answer": "14",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-number"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-08",
+      "input": {
+        "context": "Service API-X uses port 8443.",
+        "question": "Which port does API-X use?"
+      },
+      "expected": {
+        "answer": "8443",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "easy",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-09",
+      "input": {
+        "context": "The contract begins on 2026-02-14.",
+        "question": "When does the contract begin?"
+      },
+      "expected": {
+        "answer": "2026-02-14",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "medium",
+        "challenge_type": "direct-date"
+      }
+    },
+    {
+      "sample_id": "qa2-direct-10",
+      "input": {
+        "context": "Office North is located in Turin.",
+        "question": "Where is Office North?"
+      },
+      "expected": {
+        "answer": "Turin",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "direct",
+        "difficulty": "medium",
+        "challenge_type": "direct-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-07",
+      "input": {
+        "context": "Server A uses port 80, B uses 443, C uses 8080. Production is server B.",
+        "question": "Which port does production use?"
+      },
+      "expected": {
+        "answer": "443",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "medium",
+        "challenge_type": "multiple-numbers"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-08",
+      "input": {
+        "context": "Ana owns D1. Bruno owns D2. D2 is the document under review.",
+        "question": "Who owns the document under review?"
+      },
+      "expected": {
+        "answer": "Bruno",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "medium",
+        "challenge_type": "multiple-entities"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-09",
+      "input": {
+        "context": "Version 1.8 shipped in May; 2.0 shipped in July. The active version is 2.0.",
+        "question": "When did the active version ship?"
+      },
+      "expected": {
+        "answer": "July",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "hard",
+        "challenge_type": "selection-reference"
+      }
+    },
+    {
+      "sample_id": "qa2-dist-10",
+      "input": {
+        "context": "Draft capacity was 200. After inspection the certified capacity is 176.",
+        "question": "What is the certified capacity?"
+      },
+      "expected": {
+        "answer": "176",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "distractor",
+        "difficulty": "hard",
+        "challenge_type": "superseded-value"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-07",
+      "input": {
+        "context": "The employee works in Sales and is active.",
+        "question": "What is the employee's salary?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "easy",
+        "challenge_type": "absent-fact"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-08",
+      "input": {
+        "context": "The device is online with battery at 80%.",
+        "question": "Who manufactured the device?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "medium",
+        "challenge_type": "absent-entity"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-09",
+      "input": {
+        "context": "The event takes place in Florence on Friday.",
+        "question": "How many attendees registered?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "medium",
+        "challenge_type": "absent-number"
+      }
+    },
+    {
+      "sample_id": "qa2-missing-10",
+      "input": {
+        "context": "The database replica is healthy.",
+        "question": "When was the last backup?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "missing",
+        "difficulty": "hard",
+        "challenge_type": "plausible-but-absent"
+      }
+    },
+    {
+      "sample_id": "qa2-near-07",
+      "input": {
+        "context": "The account has a monthly fee of 9 EUR.",
+        "question": "What is its annual interest rate?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "medium",
+        "challenge_type": "financial-field-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-near-08",
+      "input": {
+        "context": "The package arrived on Tuesday.",
+        "question": "When was the package shipped?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "medium",
+        "challenge_type": "date-role-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-near-09",
+      "input": {
+        "context": "The monitor resolution is 4K.",
+        "question": "What is the monitor size in inches?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "related-spec-missing"
+      }
+    },
+    {
+      "sample_id": "qa2-near-10",
+      "input": {
+        "context": "The project has 6 engineers.",
+        "question": "How many designers are on the project?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "near_answer",
+        "difficulty": "hard",
+        "challenge_type": "role-count-confusion"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-07",
+      "input": {
+        "context": "One current source says the region is eu-west; another current source says us-east.",
+        "question": "Which region is configured?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "hard",
+        "challenge_type": "conflicting-entities"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-08",
+      "input": {
+        "context": "Record A marks user verified=true. Record B, same timestamp, marks verified=false.",
+        "question": "Is the user verified?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "hard",
+        "challenge_type": "conflicting-boolean"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-09",
+      "input": {
+        "context": "Two approved copies give invoice total 120 EUR and 128 EUR respectively.",
+        "question": "What is the invoice total?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "challenge",
+        "challenge_type": "conflicting-numbers"
+      }
+    },
+    {
+      "sample_id": "qa2-contr-10",
+      "input": {
+        "context": "Two schedules, both labeled final, list departure at 06:45 and 07:10.",
+        "question": "When is departure?"
+      },
+      "expected": {
+        "answer": "",
+        "answerable": false
+      },
+      "metadata": {
+        "family": "contradiction",
+        "difficulty": "challenge",
+        "challenge_type": "conflicting-times"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-07",
+      "input": {
+        "context": "Issue I4 belongs to Project Delta. Project Delta is led by Kai.",
+        "question": "Who leads the project containing I4?"
+      },
+      "expected": {
+        "answer": "Kai",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-08",
+      "input": {
+        "context": "Machine M2 sits in zone Z3. Zone Z3 is managed by Rita.",
+        "question": "Who manages the zone containing M2?"
+      },
+      "expected": {
+        "answer": "Rita",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-09",
+      "input": {
+        "context": "Customer C4 uses subscription S2. Subscription S2 renews on 2026-12-01.",
+        "question": "When does C4's subscription renew?"
+      },
+      "expected": {
+        "answer": "2026-12-01",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "hard",
+        "challenge_type": "two-hop"
+      }
+    },
+    {
+      "sample_id": "qa2-hop-10",
+      "input": {
+        "context": "Asset A8 is assigned to Team Ops. Team Ops is based in Milan.",
+        "question": "Where is the team responsible for A8 based?"
+      },
+      "expected": {
+        "answer": "Milan",
+        "answerable": true
+      },
+      "metadata": {
+        "family": "multi_hop",
+        "difficulty": "challenge",
+        "challenge_type": "two-hop"
+      }
+    }
+  ]
+}

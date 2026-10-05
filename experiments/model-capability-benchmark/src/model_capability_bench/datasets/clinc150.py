@@ -44,7 +44,7 @@ class Clinc150OosDataset:
 
         rng = seeded_random(context.seed)
         rng.shuffle(candidates)
-        max_cases = context.profile.max_cases_for(self.spec.dataset_id)
+        max_cases = context.max_cases_for(self.spec.dataset_id)
         selected = candidates if max_cases is None else candidates[:max_cases]
 
         samples = tuple(

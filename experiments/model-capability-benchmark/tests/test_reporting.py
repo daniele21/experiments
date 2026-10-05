@@ -155,6 +155,8 @@ def _raw(
                 "capability_id": "reasoning",
                 "dataset_id": "math-dataset",
                 "sample_id": sample_id,
+                "case_family": "arithmetic",
+                "difficulty": "easy",
             },
         },
         run_dir / "raw.jsonl",
@@ -417,6 +419,12 @@ def test_report_uses_exact_indexed_attempts_and_preserves_unknown_cost(
     assert local.cases[0].prediction == "42"
     assert "WRONG-LATER-ATTEMPT" not in str(local.cases[0])
     assert len(report.events) == 1
+    assert len(reasoning.comparisons) == 1
+    comparison = reasoning.comparisons[0]
+    assert comparison.model_a == "local-model"
+    assert comparison.model_b == "api-model"
+    assert comparison.paired_count == 1
+    assert comparison.delta_b_minus_a == 0.0
 
     missing = report.capabilities[1]
     assert all(cell.primary_value is None for cell in missing.cells)
@@ -444,6 +452,9 @@ def test_html_is_neutral_and_exported_with_machine_readable_report(
     assert "local-model" in rendered
     assert "api-model" in rendered
     assert "final_answer_accuracy" in rendered
+    assert "paired model comparisons" in lowered
+    assert "primary metric by family" in lowered
+    assert "arithmetic" in rendered
     assert "unknown cost is null" in lowered
     for banned in ("winner", "leader", "fastest", "sweet spot"):
         assert banned not in lowered
@@ -456,6 +467,7 @@ def test_html_is_neutral_and_exported_with_machine_readable_report(
     assert payload["capabilities"][0]["cells"][1]["metrics"][
         "estimated_cost_usd"
     ] is None
+    assert payload["capabilities"][0]["comparisons"][0]["paired_count"] == 1
 
 
 def test_reporting_config_is_strict(tmp_path: Path) -> None:

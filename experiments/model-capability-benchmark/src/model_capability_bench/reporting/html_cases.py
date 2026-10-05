@@ -24,6 +24,8 @@ def _case_row(case: ReportCase, precision: int) -> str:
         "<tr>"
         f"<td>{escape(case.sample_id)}</td>"
         f"<td>{escape(case.dataset_id)}</td>"
+        f"<td>{escape(case.family or '—')}</td>"
+        f"<td>{escape(case.difficulty or '—')}</td>"
         f"<td><code>{escape(case.case_id[:18])}…</code><br>"
         f"<small>attempt {case.attempt}</small></td>"
         f'<td><pre class="compact">{escape(json_text(case.expected))}</pre></td>'
@@ -57,7 +59,8 @@ def render_case_details(
         body = (
             f"{truncation}"
             '<div class="table-wrap case-table"><table>'
-            "<thead><tr><th>Sample</th><th>Dataset</th><th>Case</th>"
+            "<thead><tr><th>Sample</th><th>Dataset</th><th>Family</th>"
+            "<th>Difficulty</th><th>Case</th>"
             "<th>Expected</th><th>Prediction</th><th>Inference valid</th>"
             "<th>Evaluation valid</th><th>Latency ms</th><th>Error</th>"
             "<th>Evidence</th></tr></thead>"

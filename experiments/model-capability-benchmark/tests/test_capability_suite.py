@@ -37,7 +37,7 @@ def test_real_suite_composes_five_capabilities_and_four_task_families() -> None:
     bundle = load_capability_suite(ROOT)
 
     assert bundle.suite.suite_id == "capability-core"
-    assert bundle.suite.version == "1"
+    assert bundle.suite.version == "2"
     assert len(bundle.resolved_capabilities) == 5
     assert {
         capability.spec.capability_id
@@ -76,9 +76,9 @@ def test_suite_plans_multiple_models_and_capabilities_without_runner_branches() 
         ("intent-classification", "banking77"),
         ("oos-calibration", "banking77"),
         ("oos-calibration", "clinc150-oos"),
-        ("structured-output", "structured-output-controlled-v1"),
-        ("qa-abstention", "qa-abstention-controlled-v1"),
-        ("mathematical-reasoning", "math-reasoning-controlled-v1"),
+        ("structured-output", "structured-output-controlled-v2"),
+        ("qa-abstention", "qa-abstention-controlled-v2"),
+        ("mathematical-reasoning", "math-reasoning-controlled-v2"),
     }
 
 
@@ -189,6 +189,7 @@ def test_qa_and_math_controlled_datasets_execute_task_contracts(
         qa_context,
     )
     qa_metrics = {metric.name: metric.value for metric in qa_result.metrics}
+    assert qa_metrics["qa_correct"] == 1.0
     assert qa_metrics["exact_match"] == 1.0
     assert qa_metrics["answerability_accuracy"] == 1.0
 

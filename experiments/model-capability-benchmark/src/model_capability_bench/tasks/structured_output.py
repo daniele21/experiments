@@ -101,6 +101,13 @@ class StructuredOutputTask:
             else float(schema_valid)
         )
         hallucinated_fields = len(predicted_fields - expected_fields)
+        exact_match = bool(
+            schema_valid
+            and expected_mapping is not None
+            and prediction_mapping is not None
+            and matching_fields == len(expected_fields)
+            and hallucinated_fields == 0
+        )
 
         error = inference.error.message if inference.error is not None else None
         if inference.valid and prediction_mapping is None:
@@ -115,9 +122,13 @@ class StructuredOutputTask:
             expected=expected,
             metrics=(
                 MetricResult(
+                    name="exact_match",
+                    value=float(exact_match),
+                    primary=True,
+                ),
+                MetricResult(
                     name="schema_valid_rate",
                     value=float(schema_valid),
-                    primary=True,
                 ),
                 MetricResult(name="field_accuracy", value=float(field_accuracy)),
                 MetricResult(

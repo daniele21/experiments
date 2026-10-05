@@ -37,6 +37,23 @@ def validate_suite(
         task = tasks.get(capability.task_id)
         declared_task_metrics = {metric.name for metric in task.spec.metrics}
 
+        unknown_tiers = set(capability.benchmark_tiers) - set(profiles)
+        if unknown_tiers:
+            raise SuiteValidationError(
+                f"Capability {capability.capability_id!r} declares benchmark tiers "
+                "without matching profiles: " + ", ".join(sorted(unknown_tiers))
+            )
+
+        if (
+            capability.comparison.metric is not None
+            and capability.comparison.metric not in declared_task_metrics
+        ):
+            raise SuiteValidationError(
+                f"Capability {capability.capability_id!r} comparison metric "
+                f"{capability.comparison.metric!r} is not declared by task "
+                f"{capability.task_id!r}"
+            )
+
         for dataset_id in capability.dataset_ids:
             datasets.get(dataset_id)
             tasks.validate_dataset(capability.task_id, dataset_id)

@@ -233,3 +233,35 @@ def test_public_classification_parsers_reject_invalid_shapes(tmp_path: Path) -> 
     clinc.write_text('{"train":[]}', encoding="utf-8")
     with pytest.raises(TypeError, match="oos_test"):
         load_clinc_rows(clinc, split="oos_test")
+
+
+def test_dataset_load_context_distinguishes_uncapped_override(tmp_path: Path) -> None:
+    profile = DatasetProfileSpec(
+        profile_id="core",
+        default_max_cases=100,
+        dataset_max_cases={"fixture": 50},
+    )
+
+    inherited = DatasetLoadContext(
+        cache_dir=tmp_path,
+        profile=profile,
+        seed=42,
+    )
+    uncapped = DatasetLoadContext(
+        cache_dir=tmp_path,
+        profile=profile,
+        seed=42,
+        max_cases_override=None,
+        max_cases_override_enabled=True,
+    )
+    capped = DatasetLoadContext(
+        cache_dir=tmp_path,
+        profile=profile,
+        seed=42,
+        max_cases_override=7,
+        max_cases_override_enabled=True,
+    )
+
+    assert inherited.max_cases_for("fixture") == 50
+    assert uncapped.max_cases_for("fixture") is None
+    assert capped.max_cases_for("fixture") == 7

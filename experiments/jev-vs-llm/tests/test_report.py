@@ -35,7 +35,7 @@ def test_latest_selection_keeps_failed_runs_and_separate_datasets_and_configurat
 
 
 def test_dashboard_uses_latest_public_runs_in_every_dataset_view(tmp_path, monkeypatch):
-    monkeypatch.setattr("jev_bench.reporting.export._detect_hardware", lambda: {})
+    monkeypatch.setattr("jev_bench.reporting.export._detect_hardware", dict)
     rows = pd.DataFrame([
         _run_row("old", "2026-09-21T10:00:00Z"),
         _run_row("latest", "2026-09-23T10:00:00Z", correct=False, actual="other"),
@@ -59,7 +59,7 @@ def test_dashboard_uses_latest_public_runs_in_every_dataset_view(tmp_path, monke
 
 
 def test_smoke_only_dashboard_has_empty_benchmark_state(tmp_path, monkeypatch):
-    monkeypatch.setattr("jev_bench.reporting.export._detect_hardware", lambda: {})
+    monkeypatch.setattr("jev_bench.reporting.export._detect_hardware", dict)
     raw = tmp_path / "smoke.csv"
     pd.DataFrame([_run_row("smoke", "2026-09-23T10:00:00Z", dataset="",
                            suite="smoke-routing", experiment="01-routing")]).to_csv(raw, index=False)

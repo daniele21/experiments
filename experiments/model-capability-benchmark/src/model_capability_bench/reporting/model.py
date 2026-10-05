@@ -26,6 +26,10 @@ class ReportCase:
     inference_valid: bool
     evaluation_valid: bool
     latency_ms: float | None
+    family: str | None = None
+    difficulty: str | None = None
+    challenge_type: str | None = None
+    metrics: Mapping[str, int | float | bool | None] = field(default_factory=dict)
     error_kind: str | None = None
     error_message: str | None = None
     normalized_output: Any = None
@@ -51,12 +55,32 @@ class ReportCell:
 
 
 @dataclass(frozen=True)
+class ReportPairwiseComparison:
+    capability_id: str
+    model_a: str
+    model_b: str
+    metric: str
+    paired_count: int
+    delta_b_minus_a: float | None
+    ci95_low: float | None
+    ci95_high: float | None
+    both_correct: int
+    model_a_only: int
+    model_b_only: int
+    both_wrong: int
+    mcnemar_exact_p: float | None
+    practical_delta: float | None = None
+    exceeds_practical_delta: bool | None = None
+
+
+@dataclass(frozen=True)
 class CapabilityReport:
     capability_id: str
     task_id: str
     dataset_ids: tuple[str, ...]
     primary_metric: str
     cells: tuple[ReportCell, ...]
+    comparisons: tuple[ReportPairwiseComparison, ...] = ()
 
 
 @dataclass(frozen=True)

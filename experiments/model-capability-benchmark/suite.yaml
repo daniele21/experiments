@@ -1,9 +1,9 @@
 suite:
   id: capability-core
-  version: "1"
+  version: "2"
   description: >-
-    Core text-model capability suite spanning classification, calibration/OOS,
-    structured output, QA with abstention, and mathematical reasoning.
+    Vertical text-model capability suite with task-specific case budgets,
+    deterministic stratification and paired-comparison metadata.
   default_profile: smoke
 
   generation:
@@ -18,6 +18,29 @@ suite:
         - banking77
       description: BANKING77 intent classification with strict structured labels.
       tags: [classification, banking77]
+      benchmark:
+        smoke:
+          datasets:
+            banking77: 77
+          target_local_seconds: 120
+          hard_local_seconds: 180
+          target_api_cost_usd: 0.03
+          hard_api_cost_usd: 0.08
+        core:
+          datasets:
+            banking77: 154
+          target_local_seconds: 180
+          hard_local_seconds: 300
+          target_api_cost_usd: 0.05
+          hard_api_cost_usd: 0.15
+        extended:
+          datasets:
+            banking77: 770
+          hard_local_seconds: 900
+          hard_api_cost_usd: 0.50
+      comparison:
+        practical_delta: 0.03
+        metric: accuracy
       metrics:
         - name: accuracy
           source: task_metric
@@ -53,9 +76,35 @@ suite:
         - banking77
         - clinc150-oos
       description: >-
-        Top-label calibration and out-of-scope discrimination across BANKING77
-        and filtered CLINC150 OOS prompts.
+        Top-label self-reported confidence and out-of-scope discrimination across
+        BANKING77 and filtered CLINC150 OOS prompts.
       tags: [classification, calibration, oos]
+      benchmark:
+        smoke:
+          datasets:
+            banking77: 40
+            clinc150-oos: 40
+          target_local_seconds: 120
+          hard_local_seconds: 180
+          target_api_cost_usd: 0.04
+          hard_api_cost_usd: 0.10
+        core:
+          datasets:
+            banking77: 77
+            clinc150-oos: 77
+          target_local_seconds: 180
+          hard_local_seconds: 300
+          target_api_cost_usd: 0.08
+          hard_api_cost_usd: 0.20
+        extended:
+          datasets:
+            banking77: 154
+            clinc150-oos: 154
+          hard_local_seconds: 900
+          hard_api_cost_usd: 0.60
+      comparison:
+        practical_delta: 0.04
+        metric: oos_correct
       context:
         labels:
           source: dataset_metadata
@@ -96,14 +145,71 @@ suite:
     structured-output:
       task: structured-output
       datasets:
-        - structured-output-controlled-v1
-      description: Strict JSON-object extraction against per-sample schemas.
+        - structured-output-controlled-v2
+      description: >-
+        JSON-schema extraction across flat, nested, array, optional, noisy and
+        adversarial cases.
       tags: [structured-output, extraction]
+      benchmark:
+        smoke:
+          max_cases: 12
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: flat}
+                count: 2
+              - match: {family: nested}
+                count: 2
+              - match: {family: arrays}
+                count: 2
+              - match: {family: optional}
+                count: 2
+              - match: {family: noisy}
+                count: 2
+              - match: {family: adversarial}
+                count: 2
+          target_local_seconds: 120
+          hard_local_seconds: 180
+          target_api_cost_usd: 0.03
+          hard_api_cost_usd: 0.08
+        core:
+          max_cases: 60
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: flat}
+                count: 10
+              - match: {family: nested}
+                count: 10
+              - match: {family: arrays}
+                count: 10
+              - match: {family: optional}
+                count: 10
+              - match: {family: noisy}
+                count: 10
+              - match: {family: adversarial}
+                count: 10
+          target_local_seconds: 360
+          hard_local_seconds: 600
+          target_api_cost_usd: 0.10
+          hard_api_cost_usd: 0.20
+        extended:
+          max_cases: 60
+          selection:
+            strategy: fixed
+          hard_local_seconds: 600
+          hard_api_cost_usd: 0.20
+      comparison:
+        practical_delta: 0.05
+        metric: exact_match
       metrics:
-        - name: schema_valid_rate
+        - name: exact_match
           source: task_metric
           reducer: mean
           primary: true
+        - name: schema_valid_rate
+          source: task_metric
+          reducer: mean
         - name: field_accuracy
           source: task_metric
           reducer: mean
@@ -126,14 +232,71 @@ suite:
     qa-abstention:
       task: qa-abstention
       datasets:
-        - qa-abstention-controlled-v1
-      description: Context-grounded QA with explicit abstention on unanswerable questions.
+        - qa-abstention-controlled-v2
+      description: >-
+        Context-grounded QA across direct, distractor, missing, near-answer,
+        contradiction and multi-hop cases.
       tags: [qa, abstention]
+      benchmark:
+        smoke:
+          max_cases: 12
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: direct}
+                count: 2
+              - match: {family: distractor}
+                count: 2
+              - match: {family: missing}
+                count: 2
+              - match: {family: near_answer}
+                count: 2
+              - match: {family: contradiction}
+                count: 2
+              - match: {family: multi_hop}
+                count: 2
+          target_local_seconds: 120
+          hard_local_seconds: 180
+          target_api_cost_usd: 0.03
+          hard_api_cost_usd: 0.08
+        core:
+          max_cases: 60
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: direct}
+                count: 10
+              - match: {family: distractor}
+                count: 10
+              - match: {family: missing}
+                count: 10
+              - match: {family: near_answer}
+                count: 10
+              - match: {family: contradiction}
+                count: 10
+              - match: {family: multi_hop}
+                count: 10
+          target_local_seconds: 360
+          hard_local_seconds: 600
+          target_api_cost_usd: 0.10
+          hard_api_cost_usd: 0.20
+        extended:
+          max_cases: 60
+          selection:
+            strategy: fixed
+          hard_local_seconds: 600
+          hard_api_cost_usd: 0.20
+      comparison:
+        practical_delta: 0.05
+        metric: qa_correct
       metrics:
-        - name: exact_match
+        - name: qa_correct
           source: task_metric
           reducer: mean
           primary: true
+        - name: exact_match
+          source: task_metric
+          reducer: mean
         - name: answerability_accuracy
           source: task_metric
           reducer: mean
@@ -152,9 +315,63 @@ suite:
     mathematical-reasoning:
       task: mathematical-reasoning
       datasets:
-        - math-reasoning-controlled-v1
-      description: Final-answer-only mathematical reasoning without chain-of-thought scoring.
+        - math-reasoning-controlled-v2
+      description: >-
+        Final-answer-only reasoning across arithmetic, percentages, multi-step,
+        algebra, logic and constrained problems.
       tags: [reasoning, math]
+      benchmark:
+        smoke:
+          max_cases: 12
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: arithmetic}
+                count: 2
+              - match: {family: percentages}
+                count: 2
+              - match: {family: multi_step}
+                count: 2
+              - match: {family: algebra}
+                count: 2
+              - match: {family: logic}
+                count: 2
+              - match: {family: constraints}
+                count: 2
+          target_local_seconds: 180
+          hard_local_seconds: 300
+          target_api_cost_usd: 0.04
+          hard_api_cost_usd: 0.10
+        core:
+          max_cases: 40
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: arithmetic}
+                count: 7
+              - match: {family: percentages}
+                count: 7
+              - match: {family: multi_step}
+                count: 7
+              - match: {family: algebra}
+                count: 7
+              - match: {family: logic}
+                count: 6
+              - match: {family: constraints}
+                count: 6
+          target_local_seconds: 600
+          hard_local_seconds: 900
+          target_api_cost_usd: 0.12
+          hard_api_cost_usd: 0.25
+        extended:
+          max_cases: 40
+          selection:
+            strategy: fixed
+          hard_local_seconds: 900
+          hard_api_cost_usd: 0.25
+      comparison:
+        practical_delta: 0.05
+        metric: final_answer_accuracy
       metrics:
         - name: final_answer_accuracy
           source: task_metric

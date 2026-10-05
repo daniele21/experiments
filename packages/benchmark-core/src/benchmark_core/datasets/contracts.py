@@ -69,6 +69,18 @@ class DatasetLoadContext:
     profile: DatasetProfileSpec
     seed: int
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    max_cases_override: int | None = None
+    selection: Mapping[str, Any] = field(default_factory=dict)
+    max_cases_override_enabled: bool = False
+
+    def __post_init__(self) -> None:
+        if self.max_cases_override is not None and self.max_cases_override <= 0:
+            raise ValueError("max_cases_override must be > 0 or null")
+
+    def max_cases_for(self, dataset_id: str) -> int | None:
+        if self.max_cases_override_enabled or self.max_cases_override is not None:
+            return self.max_cases_override
+        return self.profile.max_cases_for(dataset_id)
 
 
 @dataclass(frozen=True)

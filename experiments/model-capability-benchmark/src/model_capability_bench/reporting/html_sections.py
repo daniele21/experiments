@@ -111,6 +111,122 @@ def _secondary_metrics(
     )
 
 
+def _dimension_breakdown(
+    cells: tuple[ReportCell, ...],
+    report: BenchmarkReport,
+    config: ReportingConfig,
+    *,
+    attribute: str,
+    title: str,
+) -> str:
+    categories = sorted(
+        {
+            str(value)
+            for cell in cells
+            for case in cell.cases
+            if (value := getattr(case, attribute)) is not None
+        }
+    )
+    if not categories:
+        return ""
+
+    header = "".join(
+        f"<th>{escape(model.model_key)}</th>"
+        for model in report.models
+    )
+    by_model = {cell.model_key: cell for cell in cells}
+    rows = []
+    for category in categories:
+        values = []
+        for model in report.models:
+            cell = by_model[model.model_key]
+            scores = [
+                float(value)
+                for case in cell.cases
+                if getattr(case, attribute) == category
+                and (
+                    value := case.metrics.get(cell.primary_metric)
+                ) is not None
+                and isinstance(value, (int, float, bool))
+            ]
+            if scores:
+                mean = sum(scores) / len(scores)
+                rendered = (
+                    f"{format_value(mean, config.numeric_precision)} "
+                    f"(n={len(scores)})"
+                )
+            else:
+                rendered = "—"
+            values.append(f"<td>{escape(rendered)}</td>")
+        rows.append(
+            f'<tr><th class="row-head">{escape(category)}</th>'
+            f"{''.join(values)}</tr>"
+        )
+
+    return (
+        f"<h3>{escape(title)}</h3>"
+        '<div class="table-wrap"><table>'
+        f"<thead><tr><th>{escape(attribute)}</th>{header}</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+    )
+
+
+def _paired_comparisons(
+    capability,
+    config: ReportingConfig,
+) -> str:
+    if not capability.comparisons:
+        return ""
+
+    rows = []
+    for comparison in capability.comparisons:
+        interval = "—"
+        if comparison.ci95_low is not None and comparison.ci95_high is not None:
+            interval = (
+                f"[{format_value(comparison.ci95_low, config.numeric_precision)}, "
+                f"{format_value(comparison.ci95_high, config.numeric_precision)}]"
+            )
+        practical = (
+            format_value(comparison.practical_delta, config.numeric_precision)
+            if comparison.practical_delta is not None
+            else "—"
+        )
+        exceeds = (
+            "yes"
+            if comparison.exceeds_practical_delta is True
+            else "no"
+            if comparison.exceeds_practical_delta is False
+            else "—"
+        )
+        rows.append(
+            "<tr>"
+            f"<td>{escape(comparison.model_a)}</td>"
+            f"<td>{escape(comparison.model_b)}</td>"
+            f"<td>{escape(comparison.metric)}</td>"
+            f"<td>{comparison.paired_count}</td>"
+            f"<td>{escape(format_value(comparison.delta_b_minus_a, config.numeric_precision))}</td>"
+            f"<td>{escape(interval)}</td>"
+            f"<td>{comparison.model_a_only}</td>"
+            f"<td>{comparison.model_b_only}</td>"
+            f"<td>{escape(format_value(comparison.mcnemar_exact_p, config.numeric_precision))}</td>"
+            f"<td>{escape(practical)}</td>"
+            f"<td>{escape(exceeds)}</td>"
+            "</tr>"
+        )
+
+    return (
+        "<h3>Paired model comparisons</h3>"
+        '<p class="section-note">Delta is model B minus model A on the same sample IDs. '
+        "Confidence intervals use a deterministic paired bootstrap; McNemar is shown "
+        "for binary case outcomes.</p>"
+        '<div class="table-wrap"><table>'
+        "<thead><tr><th>Model A</th><th>Model B</th><th>Metric</th><th>Paired n</th>"
+        "<th>Δ B−A</th><th>95% CI</th><th>A only correct</th><th>B only correct</th>"
+        "<th>McNemar p</th><th>Practical Δ</th><th>|Δ| ≥ practical?</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+    )
+
+
 def render_capability_sections(
     report: BenchmarkReport,
     config: ReportingConfig,
@@ -129,6 +245,9 @@ def render_capability_sections(
             f"Datasets: {escape(datasets)} · Primary metric: "
             f"{escape(capability.primary_metric)}</p>"
             f"{_secondary_metrics(capability.cells, report, config)}"
+            f"{_paired_comparisons(capability, config)}"
+            f"{_dimension_breakdown(capability.cells, report, config, attribute='family', title='Primary metric by family')}"
+            f"{_dimension_breakdown(capability.cells, report, config, attribute='difficulty', title='Primary metric by difficulty')}"
             "<h3>Case drill-down</h3>"
             f"{details}</section>"
         )

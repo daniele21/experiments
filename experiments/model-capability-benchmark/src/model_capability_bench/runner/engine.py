@@ -4,11 +4,11 @@ import dataclasses
 import os
 from collections.abc import Mapping
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from benchmark_core import (
     BenchmarkCaseIdentity,
-    DatasetLoadContext,
     EvaluationRecord,
     InferenceProvider,
     InferenceResult,
@@ -19,13 +19,24 @@ from benchmark_core import (
     resolve_capability_context,
 )
 
+from model_capability_bench.observability import (
+    EvidenceRef,
+    benchmark_signature,
+    execution_signature,
+    model_signature,
+)
 from model_capability_bench.runner.aggregation import aggregate_capability
+from model_capability_bench.runner.capability_data import (
+    CapabilityDatasetLoadError,
+    load_capability_datasets,
+)
 from model_capability_bench.runner.contracts import (
     RunnerConfig,
     RunnerSummary,
     RuntimeResolver,
 )
 from model_capability_bench.runner.evidence import EvidenceStore
+from model_capability_bench.runner.pricing import enrich_inference_cost
 from model_capability_bench.suite import CapabilitySuiteBundle
 
 
@@ -105,19 +116,46 @@ class CapabilityRunner:
             },
         )
 
-        dataset_cache: dict[str, Any] = {}
+        dataset_cache: dict[tuple[str, str, str, int], Any] = {}
         planned_cases = 0
         completed_cases = 0
         failed_cases = 0
         skipped_cases = 0
         model_failures = 0
         planned_case_ids: set[str] = set()
+        signature_catalog: dict[str, dict[str, str]] = {
+            "models": {},
+            "executions": {},
+            "benchmarks": {},
+        }
 
         for model in selected_models:
             model_arms = arms_by_model.get(model.model.model_key, [])
             if not model_arms:
                 continue
 
+            model_sig = model_signature(model)
+            execution_sig = execution_signature(
+                model,
+                execution_metadata=config.metadata,
+            )
+            signature_catalog["models"][model.model.model_key] = model_sig
+            signature_catalog["executions"][model.model.model_key] = execution_sig
+            model_metadata = {
+                "run_id": identity.run_id,
+                "run_group": identity.run_group,
+                "model_key": model.model.model_key,
+                "model_signature": model_sig,
+                "execution_signature": execution_sig,
+                "runtime_key": model.runtime.runtime_key,
+                "provider_key": model.provider.provider_key,
+            }
+            self.evidence_store.record_stage_event(
+                "model.prepare.started",
+                metadata=model_metadata,
+                status="started",
+            )
+            prepare_started = perf_counter()
             try:
                 runtime = self.runtime_resolver(model)
                 provider = runtime.prepare(model)
@@ -126,16 +164,17 @@ class CapabilityRunner:
                         f"Runtime {model.runtime.runtime_key!r} did not return "
                         "an InferenceProvider"
                     )
+                self.evidence_store.record_stage_event(
+                    "model.prepare.completed",
+                    metadata=model_metadata,
+                    status="completed",
+                    duration_ms=(perf_counter() - prepare_started) * 1000,
+                )
             except Exception as exc:  # noqa: BLE001 - model/runtime boundary
                 model_failures += 1
                 self.evidence_store.record_event(
                     "runtime_prepare_failed",
-                    metadata={
-                        "run_id": identity.run_id,
-                        "model_key": model.model.model_key,
-                        "runtime_key": model.runtime.runtime_key,
-                        "provider_key": model.provider.provider_key,
-                    },
+                    metadata=model_metadata,
                     error=exc,
                 )
                 continue
@@ -149,35 +188,27 @@ class CapabilityRunner:
                     capability = capability_by_id[arm.capability_id]
                     task = self.suite.tasks.get(capability.spec.task_id)
 
-                    loaded_for_capability: dict[str, Any] = {}
-                    dataset_failed = False
-                    for dataset_id in capability.spec.dataset_ids:
-                        try:
-                            if dataset_id not in dataset_cache:
-                                dataset_cache[dataset_id] = self.suite.datasets.load(
-                                    dataset_id,
-                                    DatasetLoadContext(
-                                        cache_dir=self.cache_dir,
-                                        profile=profile,
-                                        seed=config.seed,
-                                    ),
-                                )
-                            loaded_for_capability[dataset_id] = dataset_cache[dataset_id]
-                        except Exception as exc:  # noqa: BLE001 - dataset boundary
-                            dataset_failed = True
-                            self.evidence_store.record_event(
-                                "dataset_load_failed",
-                                metadata={
-                                    "run_id": identity.run_id,
-                                    "model_key": model.model.model_key,
-                                    "capability_id": capability.spec.capability_id,
-                                    "dataset_id": dataset_id,
-                                },
-                                error=exc,
-                            )
-                            break
-
-                    if dataset_failed:
+                    try:
+                        loaded_for_capability = load_capability_datasets(
+                            suite=self.suite,
+                            capability=capability,
+                            profile=profile,
+                            profile_id=config.profile,
+                            cache_dir=self.cache_dir,
+                            seed=config.seed,
+                            cache=dataset_cache,
+                        )
+                    except CapabilityDatasetLoadError as exc:
+                        self.evidence_store.record_event(
+                            "dataset_load_failed",
+                            metadata={
+                                "run_id": identity.run_id,
+                                "model_key": model.model.model_key,
+                                "capability_id": capability.spec.capability_id,
+                                "dataset_id": exc.dataset_id,
+                            },
+                            error=exc.__cause__ or exc,
+                        )
                         continue
 
                     context_metadata = resolve_capability_context(
@@ -192,6 +223,30 @@ class CapabilityRunner:
                         dataset_id: dict(loaded.source_checksums)
                         for dataset_id, loaded in loaded_for_capability.items()
                     }
+                    benchmark_sig = benchmark_signature(
+                        suite_id=self.suite.suite.suite_id,
+                        suite_version=self.suite.suite.version,
+                        capability=capability,
+                        task=task,
+                        loaded_datasets=loaded_for_capability,
+                        profile_id=config.profile,
+                        generation=generation,
+                        seed=config.seed,
+                    )
+                    signature_catalog["benchmarks"][
+                        capability.spec.capability_id
+                    ] = benchmark_sig
+                    capability_metadata = {
+                        **model_metadata,
+                        "capability_id": capability.spec.capability_id,
+                        "benchmark_signature": benchmark_sig,
+                        "profile": config.profile,
+                    }
+                    self.evidence_store.record_stage_event(
+                        "capability.started",
+                        metadata=capability_metadata,
+                        status="started",
+                    )
 
                     for dataset_id in capability.spec.dataset_ids:
                         loaded = loaded_for_capability[dataset_id]
@@ -248,6 +303,9 @@ class CapabilityRunner:
                                 "suite_version": self.suite.suite.version,
                                 "model_key": model.model.model_key,
                                 "model_id": model.model.model_id,
+                                "model_signature": model_sig,
+                                "execution_signature": execution_sig,
+                                "benchmark_signature": benchmark_sig,
                                 "runtime_key": model.runtime.runtime_key,
                                 "provider_key": model.provider.provider_key,
                                 "capability_id": capability.spec.capability_id,
@@ -258,6 +316,12 @@ class CapabilityRunner:
                                 "dataset_split": loaded.spec.split,
                                 "sample_id": sample.sample_id,
                                 "profile": config.profile,
+                                "benchmark_tier": config.profile,
+                                "case_family": sample.metadata.get("family"),
+                                "difficulty": sample.metadata.get("difficulty"),
+                                "challenge_type": sample.metadata.get(
+                                    "challenge_type"
+                                ),
                             }
                             attempt = self.evidence_store.begin_case(
                                 case_id,
@@ -265,8 +329,21 @@ class CapabilityRunner:
                                 metadata=case_metadata,
                             )
 
+                            request_started = perf_counter()
                             try:
                                 request = task.build_request(sample, task_context)
+                                self.evidence_store.record_stage_event(
+                                    "request.built",
+                                    metadata={
+                                        **case_metadata,
+                                        "case_id": case_id,
+                                        "attempt": attempt,
+                                    },
+                                    status="completed",
+                                    duration_ms=(
+                                        perf_counter() - request_started
+                                    ) * 1000,
+                                )
                             except Exception as exc:  # noqa: BLE001 - task request boundary
                                 failed_cases += 1
                                 self.evidence_store.fail_case(
@@ -278,6 +355,17 @@ class CapabilityRunner:
                                 )
                                 continue
 
+                            inference_metadata = {
+                                **case_metadata,
+                                "case_id": case_id,
+                                "attempt": attempt,
+                            }
+                            self.evidence_store.record_stage_event(
+                                "inference.started",
+                                metadata=inference_metadata,
+                                status="started",
+                            )
+                            inference_started = perf_counter()
                             try:
                                 inference = provider.generate(request)
                                 if not isinstance(inference, InferenceResult):
@@ -285,6 +373,11 @@ class CapabilityRunner:
                                         "InferenceProvider.generate() must return "
                                         "InferenceResult"
                                     )
+                                inference = enrich_inference_cost(
+                                    pricing_path=self.suite.root / "pricing_snapshot.json",
+                                    model=model,
+                                    result=inference,
+                                )
                             except Exception as exc:  # noqa: BLE001 - provider boundary
                                 failed_cases += 1
                                 self.evidence_store.fail_case(
@@ -316,7 +409,26 @@ class CapabilityRunner:
                                 raw_record,
                                 metadata=case_metadata,
                             )
+                            self.evidence_store.record_stage_event(
+                                "inference.completed",
+                                metadata=inference_metadata,
+                                status="completed",
+                                duration_ms=(
+                                    perf_counter() - inference_started
+                                ) * 1000,
+                                payload_ref=EvidenceRef(
+                                    file="raw.jsonl",
+                                    case_id=case_id,
+                                    attempt=attempt,
+                                ),
+                            )
 
+                            self.evidence_store.record_stage_event(
+                                "evaluation.started",
+                                metadata=inference_metadata,
+                                status="started",
+                            )
+                            evaluation_started = perf_counter()
                             try:
                                 task_result = task.evaluate(
                                     sample,
@@ -345,23 +457,49 @@ class CapabilityRunner:
                                 evaluation_record,
                                 metadata=case_metadata,
                             )
+                            self.evidence_store.record_stage_event(
+                                "evaluation.completed",
+                                metadata=inference_metadata,
+                                status="completed",
+                                duration_ms=(
+                                    perf_counter() - evaluation_started
+                                ) * 1000,
+                                payload_ref=EvidenceRef(
+                                    file="evaluation.jsonl",
+                                    case_id=case_id,
+                                    attempt=attempt,
+                                ),
+                            )
                             self.evidence_store.complete_case(
                                 case_id,
                                 attempt,
                                 metadata=case_metadata,
                             )
                             completed_cases += 1
+                    self.evidence_store.record_stage_event(
+                        "capability.completed",
+                        metadata=capability_metadata,
+                        status="completed",
+                    )
             finally:
+                self.evidence_store.record_stage_event(
+                    "model.release.started",
+                    metadata=model_metadata,
+                    status="started",
+                )
+                release_started = perf_counter()
                 try:
                     runtime.release(model)
+                    self.evidence_store.record_stage_event(
+                        "model.release.completed",
+                        metadata=model_metadata,
+                        status="completed",
+                        duration_ms=(perf_counter() - release_started) * 1000,
+                    )
                 except Exception as exc:  # noqa: BLE001 - runtime cleanup boundary
                     self.evidence_store.record_event(
                         "runtime_release_failed",
-                        metadata={
-                            "run_id": identity.run_id,
-                            "model_key": model.model.model_key,
-                            "runtime_key": model.runtime.runtime_key,
-                        },
+                        metadata=model_metadata,
                         error=exc,
                     )
 
@@ -426,8 +564,37 @@ class CapabilityRunner:
                     failure_count=failure_count,
                 )
                 for record in aggregate_records:
+                    record["model_signature"] = signature_catalog["models"].get(
+                        model.model.model_key
+                    )
+                    record["execution_signature"] = signature_catalog[
+                        "executions"
+                    ].get(model.model.model_key)
+                    record["benchmark_signature"] = signature_catalog[
+                        "benchmarks"
+                    ].get(capability_id)
                     self.evidence_store.append_aggregate(record)
                     aggregate_count += 1
+                self.evidence_store.record_stage_event(
+                    "capability.aggregated",
+                    metadata={
+                        "run_id": identity.run_id,
+                        "run_group": identity.run_group,
+                        "model_key": model.model.model_key,
+                        "model_signature": signature_catalog["models"].get(
+                            model.model.model_key
+                        ),
+                        "execution_signature": signature_catalog[
+                            "executions"
+                        ].get(model.model.model_key),
+                        "benchmark_signature": signature_catalog[
+                            "benchmarks"
+                        ].get(capability_id),
+                        "capability_id": capability_id,
+                        "aggregate_count": len(aggregate_records),
+                    },
+                    status="completed",
+                )
 
         self.evidence_store.record_event(
             "run_completed",
@@ -452,5 +619,8 @@ class CapabilityRunner:
             model_failures=model_failures,
             aggregate_count=aggregate_count,
             output_dir=str(self.evidence_store.root),
-            metadata=dict(config.metadata),
+            metadata={
+                **dict(config.metadata),
+                "signatures": signature_catalog,
+            },
         )

@@ -43,6 +43,22 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         model_failures=0,
         aggregate_count=22,
         output_dir=str(tmp_path),
+        metadata={
+            "signatures": {
+                "models": {
+                    "qwen3.5-2b-q4km": "sha256:model:qwen",
+                    "gpt-5.6-luna": "sha256:model:gpt",
+                },
+                "executions": {
+                    "qwen3.5-2b-q4km": "sha256:execution:qwen",
+                    "gpt-5.6-luna": "sha256:execution:gpt",
+                },
+                "benchmarks": {
+                    "structured-output": "sha256:benchmark:structured",
+                    "mathematical-reasoning": "sha256:benchmark:math",
+                },
+            }
+        },
     )
 
     write_run_artifacts(
@@ -57,6 +73,8 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
 
     assert environment["parameters"]["run_id"] == "run-1"
     assert environment["parameters"]["seed"] == 7
+    assert environment["pricing"]["as_of"] == "2026-09-20"
+    assert environment["pricing"]["currency"] == "USD"
     assert manifest["run"]["run_id"] == "run-1"
     assert {model["model_key"] for model in manifest["models"]} == {
         "qwen3.5-2b-q4km",
@@ -66,6 +84,17 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         capability["capability_id"]
         for capability in manifest["capabilities"]
     } == {"structured-output", "mathematical-reasoning"}
+    for capability in manifest["capabilities"]:
+        assert "benchmark" in capability
+        assert "comparison" in capability
+        assert capability["benchmark_signature"]
+    assert manifest["signatures"]["models"]["qwen3.5-2b-q4km"] == (
+        "sha256:model:qwen"
+    )
+    assert {
+        model["model_signature"]
+        for model in manifest["models"]
+    } == {"sha256:model:qwen", "sha256:model:gpt"}
     assert set(manifest["config_checksums"]) == {
         "models.yaml",
         "tasks.yaml",
@@ -74,4 +103,5 @@ def test_run_manifest_contains_config_checksums_and_semantic_selection(
         "suite.yaml",
         "runner.yaml",
         "reporting.yaml",
+        "pricing_snapshot.json",
     }

@@ -6,17 +6,32 @@ import os
 from pathlib import Path
 from typing import Any
 
-from benchmark_core import parse_csv_selection, preflight_models, to_jsonable
+from benchmark_core import (
+    create_run_identity,
+    parse_csv_selection,
+    preflight_models,
+    to_jsonable,
+)
 
+from model_capability_bench.analytics.dashboard_build import build_dashboard
+from model_capability_bench.analytics.dashboard_export import export_dashboard_data
+from model_capability_bench.analytics.projector import project_results
 from model_capability_bench.reporting import (
     load_benchmark_report,
     load_reporting_config,
     write_report,
 )
-from model_capability_bench.runner import CapabilityRunner, EvidenceStore, RunnerConfig
+from model_capability_bench.runner import (
+    CapabilityRunner,
+    EvidenceStore,
+    RunnerConfig,
+    estimate_benchmark,
+)
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
+from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runtimes import RegistryRuntimeResolver
+from model_capability_bench.sharing import create_share_snapshot
 from model_capability_bench.suite import load_capability_suite
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -58,11 +73,29 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
 
+    estimate = sub.add_parser(
+        "estimate",
+        help="Run a small pilot and project runtime/cost for a benchmark tier.",
+    )
+    estimate.add_argument("--models", default="all")
+    estimate.add_argument("--capabilities", default="all")
+    estimate.add_argument("--profile")
+    estimate.add_argument("--pilot-cases", type=int, default=5)
+    estimate.add_argument("--seed", type=int)
+    estimate.add_argument("--cache-dir", type=Path)
+
     validate = sub.add_parser(
         "validate-config",
         help="Validate suite composition and provider environment.",
     )
     validate.add_argument("--models", default="all")
+
+    plan = sub.add_parser(
+        "plan",
+        help="Show vertical case counts and configured budgets without inference.",
+    )
+    plan.add_argument("--capabilities", default="all")
+    plan.add_argument("--profile")
 
     report = sub.add_parser(
         "report",
@@ -71,6 +104,51 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--run-dir", type=Path, required=True)
     report.add_argument("--html", type=Path)
     report.add_argument("--json", type=Path)
+
+    project = sub.add_parser(
+        "project",
+        help="Build or refresh the rebuildable cross-run DuckDB analytics model.",
+    )
+    project.add_argument("--results-root", type=Path)
+    project.add_argument("--database", type=Path)
+    project.add_argument("--run-dir", type=Path, action="append")
+    project.add_argument("--rebuild", action="store_true")
+    project.add_argument("--export-dashboard", action="store_true")
+
+    dashboard_data = sub.add_parser(
+        "dashboard-data",
+        help="Export typed dashboard JSON from the analytics database.",
+    )
+    dashboard_data.add_argument("--results-root", type=Path)
+    dashboard_data.add_argument("--database", type=Path)
+    dashboard_data.add_argument("--output-dir", type=Path)
+
+    dashboard_build = sub.add_parser(
+        "dashboard-build",
+        help="Build a single-file dashboard with projected CURRENT payloads.",
+    )
+    dashboard_build.add_argument("--results-root", type=Path)
+    dashboard_build.add_argument("--data-dir", type=Path)
+    dashboard_build.add_argument("--output", type=Path)
+    dashboard_build.add_argument(
+        "--capability",
+        default="structured-output",
+    )
+
+    share = sub.add_parser(
+        "share",
+        help="Create immutable share artifacts from projected CURRENT results.",
+    )
+    share_sub = share.add_subparsers(dest="share_command", required=True)
+    share_create = share_sub.add_parser(
+        "create",
+        help="Freeze one comparable capability result into a share snapshot.",
+    )
+    share_create.add_argument("--capability", required=True)
+    share_create.add_argument("--models", required=True)
+    share_create.add_argument("--title")
+    share_create.add_argument("--results-root", type=Path)
+    share_create.add_argument("--database", type=Path)
 
     sub.add_parser("models", help="List configured models.")
     sub.add_parser("tasks", help="List configured tasks.")
@@ -132,6 +210,115 @@ def main() -> int:
     args = build_parser().parse_args()
     root = args.root.resolve()
 
+    if args.command == "project":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        database = (
+            args.database.resolve()
+            if args.database is not None
+            else results_root / "analytics" / "benchmark.duckdb"
+        )
+        summary = project_results(
+            results_root=results_root,
+            database_path=database,
+            rebuild=args.rebuild,
+            run_dirs=(
+                tuple(path.resolve() for path in args.run_dir)
+                if args.run_dir
+                else None
+            ),
+        )
+        payload: dict[str, Any] = {"projection": summary}
+        if args.export_dashboard:
+            payload["dashboard"] = export_dashboard_data(
+                database_path=database,
+                output_dir=results_root / "analytics" / "dashboard",
+            )
+        _json(payload)
+        return 0
+
+    if args.command == "dashboard-data":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        database = (
+            args.database.resolve()
+            if args.database is not None
+            else results_root / "analytics" / "benchmark.duckdb"
+        )
+        output_dir = (
+            args.output_dir.resolve()
+            if args.output_dir is not None
+            else results_root / "analytics" / "dashboard"
+        )
+        _json(
+            export_dashboard_data(
+                database_path=database,
+                output_dir=output_dir,
+            )
+        )
+        return 0
+
+    if args.command == "dashboard-build":
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        data_dir = (
+            args.data_dir.resolve()
+            if args.data_dir is not None
+            else results_root / "analytics" / "dashboard"
+        )
+        output = (
+            args.output.resolve()
+            if args.output is not None
+            else results_root / "analytics" / "dashboard.html"
+        )
+        _json(
+            build_dashboard(
+                root=root,
+                dashboard_data_dir=data_dir,
+                output_path=output,
+                capability_id=args.capability,
+            )
+        )
+        return 0
+
+    if args.command == "share":
+        if args.share_command != "create":
+            raise ValueError(f"Unsupported share command: {args.share_command}")
+        results_root = (
+            args.results_root.resolve()
+            if args.results_root is not None
+            else root / "results"
+        )
+        database = (
+            args.database.resolve()
+            if args.database is not None
+            else results_root / "analytics" / "benchmark.duckdb"
+        )
+        model_keys = tuple(
+            value.strip()
+            for value in args.models.split(",")
+            if value.strip()
+        )
+        _json(
+            create_share_snapshot(
+                results_root=results_root,
+                database_path=database,
+                capability_id=args.capability,
+                model_keys=model_keys,
+                title=args.title,
+            )
+        )
+        return 0
+
     if args.command == "report":
         reporting_config = load_reporting_config(root)
         run_dir = args.run_dir.resolve()
@@ -159,8 +346,57 @@ def main() -> int:
         _json(_catalog_payload(bundle, args.command))
         return 0
 
+    if args.command == "plan":
+        capability_ids = _selection(
+            args.capabilities,
+            [
+                capability.spec.capability_id
+                for capability in bundle.resolved_capabilities
+            ],
+        )
+        profile = args.profile or defaults.default_profile
+        _json(
+            plan_benchmark(
+                bundle,
+                profile_id=profile,
+                capability_ids=capability_ids,
+            )
+        )
+        return 0
+
     available_models = list(bundle.models.models)
     model_keys = _selection(args.models, available_models)
+
+    if args.command == "estimate":
+        capability_ids = _selection(
+            args.capabilities,
+            [
+                capability.spec.capability_id
+                for capability in bundle.resolved_capabilities
+            ],
+        )
+        profile = args.profile or defaults.default_profile
+        seed = args.seed if args.seed is not None else defaults.default_seed
+        cache_dir = (
+            args.cache_dir.resolve()
+            if args.cache_dir is not None
+            else defaults.cache_dir
+        )
+        runtime_resolver = RegistryRuntimeResolver(os.environ)
+        _json(
+            estimate_benchmark(
+                bundle,
+                runtime_resolver=runtime_resolver,
+                cache_dir=cache_dir,
+                environ=os.environ,
+                profile_id=profile,
+                model_keys=model_keys,
+                capability_ids=capability_ids,
+                pilot_cases=args.pilot_cases,
+                seed=seed,
+            )
+        )
+        return 0
 
     if args.command == "validate-config":
         models = bundle.models.select(model_keys=model_keys)
@@ -191,10 +427,17 @@ def main() -> int:
         if args.retry_failures is None
         else args.retry_failures
     )
+    resolved_run_id = args.run_id
+    if resolved_run_id is None:
+        resolved_run_id = create_run_identity(
+            run_group=args.run_group,
+            suite=bundle.suite.suite_id,
+            runner_location="model-capability-benchmark",
+        ).run_id
     output_dir = (
         args.output_dir.resolve()
         if args.output_dir is not None
-        else defaults.output_root / args.run_group
+        else defaults.output_root / resolved_run_id
     )
     cache_dir = (
         args.cache_dir.resolve()
@@ -210,7 +453,7 @@ def main() -> int:
         seed=seed,
         resume=resume,
         retry_failures=retry_failures,
-        run_id=args.run_id,
+        run_id=resolved_run_id,
     )
     runtime_resolver = RegistryRuntimeResolver(os.environ)
     runner = CapabilityRunner(

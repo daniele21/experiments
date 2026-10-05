@@ -114,6 +114,12 @@ class QaAbstentionTask:
         else:
             exact_match = None
 
+        qa_correct = bool(
+            abstention_correct
+            if not answerable
+            else exact_match == 1.0 and abstain is False
+        )
+
         error = inference.error.message if inference.error is not None else None
         if inference.valid and not valid:
             error = "normalized output must contain string answer and boolean abstain"
@@ -125,9 +131,13 @@ class QaAbstentionTask:
             expected=sample.expected,
             metrics=(
                 MetricResult(
+                    name="qa_correct",
+                    value=float(qa_correct),
+                    primary=True,
+                ),
+                MetricResult(
                     name="exact_match",
                     value=exact_match,
-                    primary=True,
                 ),
                 MetricResult(
                     name="answerability_accuracy",

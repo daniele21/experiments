@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -126,41 +127,70 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
 
     first = runner.run(config)
 
-    assert first.planned_cases == 64
-    assert first.completed_cases == 64
+    assert first.planned_cases == 72
+    assert first.completed_cases == 72
     assert first.failed_cases == 0
     assert first.skipped_cases == 0
     assert first.model_failures == 0
-    assert first.aggregate_count == 34
+    assert first.aggregate_count == 38
     assert runtime.prepare_calls == ["qwen3.5-2b-q4km", "gpt-5.6-luna"]
     assert runtime.release_calls == runtime.prepare_calls
 
     root = tmp_path / "evidence"
-    assert len(read_jsonl_records(root / "raw.jsonl")) == 64
-    assert len(read_jsonl_records(root / "evaluation.jsonl")) == 64
-    assert len(read_jsonl_records(root / "aggregates.jsonl")) == 34
+    assert len(read_jsonl_records(root / "raw.jsonl")) == 72
+    assert len(read_jsonl_records(root / "evaluation.jsonl")) == 72
+    assert len(read_jsonl_records(root / "aggregates.jsonl")) == 38
     report_index = read_jsonl_records(root / "report_index.jsonl")
     assert len(report_index) == 6
     assert all(item["cases"] for item in report_index)
 
+    raw_records = read_jsonl_records(root / "raw.jsonl")
+    assert all(item["metadata"].get("model_signature") for item in raw_records)
+    assert all(item["metadata"].get("benchmark_signature") for item in raw_records)
+    assert all(item["metadata"].get("execution_signature") for item in raw_records)
+
+    events = read_jsonl_records(root / "events.jsonl")
+    event_types = {item.get("event_type") for item in events}
+    assert {
+        "run.started",
+        "model.prepare.started",
+        "model.prepare.completed",
+        "capability.started",
+        "case.started",
+        "request.built",
+        "inference.started",
+        "inference.completed",
+        "evaluation.started",
+        "evaluation.completed",
+        "case.completed",
+        "capability.completed",
+        "model.release.started",
+        "model.release.completed",
+        "capability.aggregated",
+        "run.completed",
+    }.issubset(event_types)
+    assert first.metadata["signatures"]["models"]
+    assert first.metadata["signatures"]["benchmarks"]
+    assert first.metadata["signatures"]["executions"]
+
     resumed_runtime = _FakeRuntime()
     resumed = _runner(tmp_path, runtime=resumed_runtime).run(config)
 
-    assert resumed.planned_cases == 64
+    assert resumed.planned_cases == 72
     assert resumed.completed_cases == 0
     assert resumed.failed_cases == 0
-    assert resumed.skipped_cases == 64
-    assert resumed.aggregate_count == 34
-    assert len(read_jsonl_records(root / "raw.jsonl")) == 64
-    assert len(read_jsonl_records(root / "evaluation.jsonl")) == 64
+    assert resumed.skipped_cases == 72
+    assert resumed.aggregate_count == 38
+    assert len(read_jsonl_records(root / "raw.jsonl")) == 72
+    assert len(read_jsonl_records(root / "evaluation.jsonl")) == 72
     assert len(read_jsonl_records(root / "report_index.jsonl")) == 12
 
 
 def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
-    failing = _FakeRuntime(fail_sample_ids={"math-003"})
+    failing = _FakeRuntime(fail_sample_ids={"math2-arith-01"})
     config = RunnerConfig(
         run_group="retry-run",
-        profile="smoke",
+        profile="core",
         model_keys=("qwen3.5-2b-q4km",),
         capability_ids=("mathematical-reasoning",),
         seed=42,
@@ -168,15 +198,15 @@ def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
 
     first = _runner(tmp_path, runtime=failing).run(config)
 
-    assert first.planned_cases == 10
-    assert first.completed_cases == 9
+    assert first.planned_cases == 40
+    assert first.completed_cases == 39
     assert first.failed_cases == 1
     assert first.skipped_cases == 0
 
     no_retry = _runner(tmp_path, runtime=_FakeRuntime()).run(config)
     assert no_retry.completed_cases == 0
     assert no_retry.failed_cases == 0
-    assert no_retry.skipped_cases == 10
+    assert no_retry.skipped_cases == 40
 
     retry_config = RunnerConfig(
         run_group=config.run_group,
@@ -190,20 +220,20 @@ def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
 
     assert retried.completed_cases == 1
     assert retried.failed_cases == 0
-    assert retried.skipped_cases == 9
+    assert retried.skipped_cases == 39
 
     states = read_jsonl_records(tmp_path / "evidence" / "state.jsonl")
     failed = [
         state
         for state in states
         if state.get("status") == "failed"
-        and state.get("metadata", {}).get("sample_id") == "math-003"
+        and state.get("metadata", {}).get("sample_id") == "math2-arith-01"
     ]
     completed = [
         state
         for state in states
         if state.get("status") == "completed"
-        and state.get("metadata", {}).get("sample_id") == "math-003"
+        and state.get("metadata", {}).get("sample_id") == "math2-arith-01"
     ]
     assert len(failed) == 1
     assert len(completed) == 1
@@ -240,7 +270,7 @@ def test_invalid_inference_is_evaluated_not_recorded_as_pipeline_failure(
     )
     summary = _runner(tmp_path, runtime=_InvalidRuntime()).run(config)
 
-    assert summary.completed_cases == 10
+    assert summary.completed_cases == 12
     assert summary.failed_cases == 0
 
     raw = read_jsonl_records(tmp_path / "evidence" / "raw.jsonl")
@@ -249,3 +279,35 @@ def test_invalid_inference_is_evaluated_not_recorded_as_pipeline_failure(
     )
     assert all(item["record"]["valid"] is False for item in raw)
     assert all(item["record"]["valid"] is False for item in evaluations)
+
+
+def test_unified_runner_enriches_missing_api_cost_from_snapshot(
+    tmp_path: Path,
+) -> None:
+    class _NoCostProvider(_FakeProvider):
+        def generate(self, request: InferenceRequest) -> InferenceResult:
+            result = super().generate(request)
+            return dataclasses.replace(result, estimated_cost_usd=None)
+
+    class _NoCostRuntime(_FakeRuntime):
+        def prepare(self, model: ResolvedModel) -> _NoCostProvider:
+            self.prepare_calls.append(model.model.model_key)
+            return _NoCostProvider(model.effective_model_id)
+
+    config = RunnerConfig(
+        run_group="pricing-run",
+        profile="smoke",
+        model_keys=("gpt-5.6-luna",),
+        capability_ids=("structured-output",),
+        seed=42,
+    )
+    summary = _runner(tmp_path, runtime=_NoCostRuntime()).run(config)
+
+    assert summary.completed_cases == 12
+    raw = read_jsonl_records(tmp_path / "evidence" / "raw.jsonl")
+    assert raw
+    assert all(item["record"]["estimated_cost_usd"] is not None for item in raw)
+    assert all(
+        item["record"]["metadata"]["pricing"]["as_of"] == "2026-09-20"
+        for item in raw
+    )

@@ -172,6 +172,26 @@ class ReportEvidence:
             inference_valid=bool(raw_record.get("valid")),
             evaluation_valid=bool(evaluation_record.get("valid")),
             latency_ms=latency_ms,
+            family=(
+                str(outer_metadata["case_family"])
+                if outer_metadata.get("case_family")
+                else None
+            ),
+            difficulty=(
+                str(outer_metadata["difficulty"])
+                if outer_metadata.get("difficulty")
+                else None
+            ),
+            challenge_type=(
+                str(outer_metadata["challenge_type"])
+                if outer_metadata.get("challenge_type")
+                else None
+            ),
+            metrics={
+                str(metric.get("name")): metric.get("value")
+                for metric in evaluation_record.get("metrics") or []
+                if isinstance(metric, Mapping) and metric.get("name")
+            },
             error_kind=(
                 str(raw_record["error_kind"])
                 if raw_record.get("error_kind")

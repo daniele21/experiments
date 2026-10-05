@@ -8,6 +8,7 @@ dependencies = [
   "jsonschema>=4.23",
   "openai>=1.0",
   "pyyaml>=6.0.3",
+  "duckdb>=1.2.0",
 ]
 
 [project.scripts]

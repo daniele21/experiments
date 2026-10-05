@@ -690,6 +690,146 @@ Rimuovere duplicazioni transitorie create durante la migrazione.
 
 ---
 
+## MCB-10 — Vertical benchmark hardening & efficiency ✅ IMPLEMENTED / VALIDATION PENDING
+
+### Obiettivo
+
+Rendere la suite decision-grade e verticale per task senza aumentare il benchmark a migliaia di casi, con guardrail espliciti su tempo locale e costo API.
+
+### Implementato
+
+- benchmark tiers capability-specific: smoke/core/extended;
+- core v2 da 468 casi/modello:
+  - 154 intent classification;
+  - 154 OOS/calibration;
+  - 60 structured output;
+  - 60 QA/abstention;
+  - 40 reasoning;
+- selezione deterministica stratificata tramite family/difficulty/challenge_type;
+- dataset controlled v2 versionati;
+- cache dataset capability/profile/seed-aware;
+- budget aggregato core target 28 min, hard 45 min locale;
+- API budget core target USD 0.45, hard USD 1.00;
+- comando plan senza inferenza;
+- comando estimate con pilot reale e proiezione runtime/costo;
+- pricing snapshot versionato usato da estimate e full run;
+- costo sconosciuto preservato come null quando il modello non ha pricing dichiarato;
+- paired bootstrap CI + McNemar su stessi sample ID;
+- practical delta per capability;
+- reporting per family e difficulty;
+- structured-output primary metric semantica exact_match;
+- QA primary metric qa_correct che include i casi unanswerable;
+- comparison metric OOS esplicita oos_correct;
+- version bump degli evaluator modificati e suite v2.
+
+### Definition of Done
+
+- [x] cardinalità core differenziata per task;
+- [x] stessa selezione deterministica per tutti i modelli confrontati;
+- [x] family/difficulty persistite nell'evidence;
+- [x] plan mostra cardinalità e guardrail prima della run;
+- [x] estimate usa pochi casi e proietta runtime/costo senza eseguire il benchmark completo;
+- [x] pricing snapshot è checksumato nel manifest e arricchisce anche la full run;
+- [x] confronti paired ricostruibili offline dagli artifact;
+- [x] metriche primarie structured/QA coprono qualità semantica reale;
+- [x] report mantiene neutralità e non produce ranking globale;
+- [ ] esecuzione dei gate locali ruff/pytest sulla HEAD del branch;
+- [ ] controlled E2E Korgis + API sul profilo core.
+
+### Enhancement successivi
+
+- repeated performance microbenchmark separato dalla quality run;
+- RAM/VRAM, throughput e startup/switch telemetry;
+- OOS near-domain v2 curato;
+- modalità parity vs native per i meccanismi di structured generation.
+
+Vedi `MCB_10_VERTICAL_BENCHMARK_HARDENING.md`.
+
+---
+
+## MCB-11 — Benchmark observability, results explorer & shareable insights 🟡 IN PROGRESS
+
+### Obiettivo
+
+Separare in modo netto source-of-truth, analytics e presentation:
+
+```text
+immutable run evidence
+        ↓
+typed observability + signatures
+        ↓
+DuckDB projector/read model
+        ↓
+typed dashboard payloads
+        ↓
+Results UI / Runs UI / Share snapshots
+```
+
+### Principi chiave
+
+- i JSONL/manifest dei run restano immutabili e ricostruibili;
+- DuckDB è una projection cancellabile e rebuildable, non il source of truth;
+- il browser riceve payload JSON tipizzati e non ricalcola statistiche;
+- "latest" significa latest valid completed **comparable** result;
+- qualità e performance hanno regole di comparabilità distinte;
+- risultati partial/failed restano navigabili ma non sostituiscono il CURRENT;
+- storico e benchmark lineage restano preservati;
+- nessun overall score opaco;
+- share/LinkedIn usa snapshot immutabili, non lo stato live della dashboard.
+
+### Workstream
+
+- MCB-11A typed observability envelope;
+- MCB-11B model/benchmark/execution signatures;
+- MCB-11C run lifecycle + canonical latest policy;
+- MCB-11D DuckDB analytics projector;
+- MCB-11E typed dashboard export;
+- MCB-11F React/Vite dashboard foundation + URL routing;
+- MCB-11G Overview capability matrix;
+- MCB-11H Capability detail;
+- MCB-11I disagreement/case explorer;
+- MCB-11J model profile + benchmark history;
+- MCB-11K Runs/timeline/failure explorer;
+- MCB-11L local resource telemetry contract;
+- MCB-11M immutable share snapshots;
+- MCB-11N LinkedIn PNG/PDF renderer.
+
+### Primo vertical slice
+
+Validare end-to-end con:
+
+- 2 modelli;
+- structured-output;
+- 60 casi paired / 6 famiglie;
+- 2 run storici completati;
+- 1 run più recente partial;
+- CURRENT selection;
+- overview;
+- capability detail;
+- disagreement explorer;
+- 1 share snapshot + 1 LinkedIn card.
+
+Questo slice deve dimostrare che una run partial più recente non sostituisce l'ultimo risultato valido e che una modifica a evaluator/dataset selection apre una nuova benchmark lineage.
+
+### Definition of Done
+
+- [x] event lifecycle tipizzato e versionato;
+- [x] signature deterministiche con golden tests;
+- [x] latest comparable policy coperta da test;
+- [x] DuckDB rebuild == incremental projection;
+- [ ] Overview/Capability/Model/Run routes deep-linkable; Overview/Capability completate nel primo slice;
+- [x] disagreement explorer basato su exact paired sample IDs;
+- [ ] history non unisce benchmark lineage incompatibili;
+- [ ] resource telemetry nullable e execution-signature-aware;
+- [x] share snapshot immutabile;
+- [ ] card/carousel LinkedIn renderizzabili deterministicamente; preview card implementata, PNG/PDF renderer pending;
+- [ ] visual regression per viste/card principali;
+- [ ] gate locali verdi senza dipendenza da GitHub Actions.
+
+Vedi `MCB_11_OBSERVABILITY_RESULTS_EXPLORER.md`.
+
+---
+
 # 6. Dipendenze
 
 ```text
@@ -722,6 +862,9 @@ registry                   |
                  |
                  v
           MCB-9 Jev cleanup
+                 |
+                 v
+          MCB-10 vertical hardening
 ```
 
 MCB-3 e MCB-4 possono procedere in parallelo dopo la stabilizzazione dei contratti core. MCB-5 può procedere in parallelo alla parte finale di MCB-4 una volta fissati Sample e Task contracts.
@@ -944,6 +1087,9 @@ Questo vertical slice deve validare l'architettura generica prima di aggiungere 
 ### Consolidation
 
 - [ ] capability matrix dashboard
+- [x] vertical core tiers + deterministic stratification
+- [x] pre-run plan + pilot estimate
+- [x] paired statistics + vertical breakdown reporting
 - [x] resume/failure hardening
 - [ ] local resource telemetry
 - [x] Jev migration cleanup
@@ -970,7 +1116,7 @@ Il workstream è concluso quando:
 
 # 14. Stato finale e prossime validazioni
 
-Il workstream architetturale **MCB-0…9 è implementato**: contratti, core condiviso,
+Il workstream architetturale **MCB-0…10 è implementato**: contratti, core condiviso,
 registry, task/dataset plugin, capability suite, unified runner, reporting e migrazione Jev
 sono consolidati e coperti dai gate automatici.
 
@@ -987,3 +1133,29 @@ Enhancement successivi, non blocker del core MCB-0…9:
 - local resource telemetry (RAM/VRAM, throughput, startup/switch latency quando misurabile);
 - tutorial operativo per aggiungere model/task/dataset/provider;
 - nuove capability/dataset in base agli esperimenti editoriali.
+
+
+---
+
+## MCB-12 — Efficiency telemetry & share renderer 🔜 PLANNED
+
+### Obiettivo
+
+Completare gli enrichment non bloccanti estratti da MCB-11:
+
+- telemetria CPU/RAM/runtime per modelli locali;
+- comparabilità delle metriche di efficienza vincolata all'execution signature;
+- pannelli efficiency in Model, Run e Compare;
+- renderer deterministico degli share snapshot in PNG/PDF;
+- carousel LinkedIn e visual regression.
+
+Il contratto dettagliato è in `MCB_12_EFFICIENCY_TELEMETRY_SHARE_RENDERER.md`.
+
+### Definition of Done
+
+- resource telemetry opzionale, versionata e non-fatal;
+- nessuna metrica hardware inventata quando il runtime non la espone;
+- performance/resource comparison bloccata quando le execution signature non sono compatibili;
+- rendering da snapshot immutabile senza provider call;
+- output PNG e PDF con provenance;
+- visual regression e gate dedicati.

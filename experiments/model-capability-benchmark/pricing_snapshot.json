@@ -1,0 +1,20 @@
+{
+  "currency": "USD",
+  "as_of": "2026-09-20",
+  "processing": "standard",
+  "prices_per_million_tokens": {
+    "gpt-5.6-luna": {
+      "match": "exact",
+      "input": 0.2,
+      "cached_input": 0.02,
+      "output": 1.2,
+      "source": "OpenAI API standard short-context pricing snapshot inherited from the repository Jev benchmark.",
+      "source_url": "https://developers.openai.com/api/docs/pricing"
+    }
+  },
+  "notes": [
+    "This is a reproducibility snapshot, not a live pricing lookup.",
+    "Unknown models remain unpriced instead of receiving guessed cost.",
+    "Local hardware, electricity, amortisation and opportunity cost are excluded."
+  ]
+}

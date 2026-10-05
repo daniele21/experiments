@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,9 @@ from model_capability_bench.reporting.model import (
     CapabilityReport,
     ReportCell,
     ReportModelInfo,
+    ReportPairwiseComparison,
 )
+from model_capability_bench.runner.comparison import paired_binary_comparison
 
 
 def _models(manifest: Mapping[str, Any]) -> tuple[ReportModelInfo, ...]:
@@ -76,13 +79,12 @@ def _primary_metric(
     )
 
 
-def _cases_for_index(
+def _all_cases_for_index(
     evidence: ReportEvidence,
     report_index: Mapping[str, Any] | None,
-    config: ReportingConfig,
-) -> tuple[tuple[Any, ...], int]:
+) -> tuple[Any, ...]:
     if report_index is None:
-        return (), 0
+        return ()
 
     indexed_cases = require_list(
         report_index.get("cases") or [],
@@ -101,7 +103,18 @@ def _cases_for_index(
                 f"Invalid attempt for report case {case_id!r}"
             )
         cases.append(evidence.case(case_id, attempt))
+    return tuple(cases)
 
+
+def _cases_for_index(
+    evidence: ReportEvidence,
+    report_index: Mapping[str, Any] | None,
+    config: ReportingConfig,
+) -> tuple[tuple[Any, ...], int]:
+    if report_index is None:
+        return (), 0
+
+    cases = _all_cases_for_index(evidence, report_index)
     visible = tuple(cases[: config.max_case_rows_per_cell])
     return visible, max(0, len(cases) - len(visible))
 
@@ -169,6 +182,111 @@ def _cell(
     )
 
 
+def _comparison_metric_name(
+    capability: Mapping[str, Any],
+    metrics_config: list[Any],
+) -> str | None:
+    comparison = capability.get("comparison")
+    if isinstance(comparison, Mapping):
+        explicit = comparison.get("metric")
+        if isinstance(explicit, str) and explicit.strip():
+            return explicit
+    for raw_metric in metrics_config:
+        if not isinstance(raw_metric, Mapping) or raw_metric.get("primary") is not True:
+            continue
+        if raw_metric.get("source") != "task_metric":
+            return None
+        value = raw_metric.get("field") or raw_metric.get("name")
+        return str(value) if value else None
+    return None
+
+
+def _comparison_practical_delta(
+    capability: Mapping[str, Any],
+) -> float | None:
+    raw = capability.get("comparison")
+    if not isinstance(raw, Mapping):
+        return None
+    value = raw.get("practical_delta")
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        return float(value)
+    return None
+
+
+def _case_as_comparison_evidence(case: Any) -> dict[str, Any]:
+    return {
+        "state": {"metadata": {"sample_id": case.sample_id}},
+        "evaluation": {
+            "record": {
+                "metrics": [
+                    {"name": name, "value": value}
+                    for name, value in case.metrics.items()
+                ]
+            }
+        },
+    }
+
+
+def _pairwise_comparisons(
+    *,
+    capability: Mapping[str, Any],
+    capability_id: str,
+    models: tuple[ReportModelInfo, ...],
+    report_indices: Mapping[tuple[str, ...], Mapping[str, Any]],
+    evidence: ReportEvidence,
+    metrics_config: list[Any],
+) -> tuple[ReportPairwiseComparison, ...]:
+    metric_name = _comparison_metric_name(capability, metrics_config)
+    if metric_name is None:
+        return ()
+
+    practical_delta = _comparison_practical_delta(capability)
+    cases_by_model = {
+        model.model_key: _all_cases_for_index(
+            evidence,
+            report_indices.get((model.model_key, capability_id)),
+        )
+        for model in models
+    }
+
+    comparisons_out: list[ReportPairwiseComparison] = []
+    for model_a, model_b in combinations(models, 2):
+        result = paired_binary_comparison(
+            [
+                _case_as_comparison_evidence(case)
+                for case in cases_by_model[model_a.model_key]
+            ],
+            [
+                _case_as_comparison_evidence(case)
+                for case in cases_by_model[model_b.model_key]
+            ],
+            metric_name=metric_name,
+            practical_delta=practical_delta,
+        )
+        if int(result["paired_count"]) <= 0:
+            continue
+        comparisons_out.append(
+            ReportPairwiseComparison(
+                capability_id=capability_id,
+                model_a=model_a.model_key,
+                model_b=model_b.model_key,
+                metric=metric_name,
+                paired_count=int(result["paired_count"]),
+                delta_b_minus_a=result["delta_b_minus_a"],
+                ci95_low=result["ci95_low"],
+                ci95_high=result["ci95_high"],
+                both_correct=int(result["both_correct"]),
+                model_a_only=int(result["model_a_only"]),
+                model_b_only=int(result["model_b_only"]),
+                both_wrong=int(result["both_wrong"]),
+                mcnemar_exact_p=result["mcnemar_exact_p"],
+                practical_delta=practical_delta,
+                exceeds_practical_delta=result["exceeds_practical_delta"],
+            )
+        )
+    return tuple(comparisons_out)
+
+
 def _capabilities(
     manifest: Mapping[str, Any],
     *,
@@ -203,12 +321,13 @@ def _capabilities(
                 context=f"manifest capability {index} dataset_ids",
             )
         )
+        metrics_config = require_list(
+            capability.get("metrics"),
+            context=f"manifest capability {index} metrics",
+        )
         primary_metric = _primary_metric(
             capability_id,
-            require_list(
-                capability.get("metrics"),
-                context=f"manifest capability {index} metrics",
-            ),
+            metrics_config,
         )
         cells = tuple(
             _cell(
@@ -231,6 +350,14 @@ def _capabilities(
                 dataset_ids=dataset_ids,
                 primary_metric=primary_metric,
                 cells=cells,
+                comparisons=_pairwise_comparisons(
+                    capability=capability,
+                    capability_id=capability_id,
+                    models=models,
+                    report_indices=report_indices,
+                    evidence=evidence,
+                    metrics_config=metrics_config,
+                ),
             )
         )
     return tuple(result)
