@@ -27,9 +27,9 @@ from model_capability_bench.runner import (
     RunnerConfig,
     estimate_benchmark,
 )
-from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runner.config import load_runner_defaults
 from model_capability_bench.runner.manifest import write_run_artifacts
+from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runtimes import RegistryRuntimeResolver
 from model_capability_bench.sharing import create_share_snapshot
 from model_capability_bench.suite import load_capability_suite
