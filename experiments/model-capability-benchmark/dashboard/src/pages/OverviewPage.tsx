@@ -90,6 +90,8 @@ function fallbackDecision(payload: OverviewPayload): DecisionPayload {
       latest_completed_at_utc: cells[0]?.completed_at_utc ?? null,
       current_run_ids: cells.map((cell) => cell.run_id),
       observed_quality_latency_pareto: false,
+      observed_quality_parameters_pareto: false,
+      observed_quality_artifact_size_pareto: false,
       known_provider_cost_quality_pareto: false,
     };
   });
