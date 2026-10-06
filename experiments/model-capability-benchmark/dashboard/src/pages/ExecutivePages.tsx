@@ -1,6 +1,7 @@
 import {
   BadgeDollarSign,
   Database,
+  HardDrive,
   Layers3,
   ShieldCheck,
   Sparkles,
@@ -22,6 +23,7 @@ import { AppLink } from '../components/Shell';
 export type ExecutiveView =
   | 'quality'
   | 'speed'
+  | 'size'
   | 'cost'
   | 'capabilities'
   | 'dataset-fit'
@@ -34,6 +36,7 @@ const EXECUTIVE_VIEWS: Array<{
 }> = [
   { id: 'quality', label: 'Quality', href: '/executive/quality' },
   { id: 'speed', label: 'Speed', href: '/executive/speed' },
+  { id: 'size', label: 'Size', href: '/executive/size' },
   { id: 'cost', label: 'Cost', href: '/executive/cost' },
   { id: 'capabilities', label: 'Capabilities', href: '/executive/capabilities' },
   { id: 'dataset-fit', label: 'Model × Dataset', href: '/executive/dataset-fit' },
@@ -49,6 +52,13 @@ function latencyValue(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return '—';
   if (value < 1000) return `${Math.round(value)} ms`;
   return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)} s`;
+}
+
+function modelSizeValue(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—';
+  const gib = value / (1024 ** 3);
+  if (gib >= 1) return `${gib.toFixed(gib < 10 ? 2 : 1)} GB`;
+  return `${Math.round(value / (1024 ** 2))} MB`;
 }
 
 function costValue(value: number | null | undefined): string {
@@ -240,7 +250,7 @@ function TradeoffPlot({
   pareto: (model: DecisionModelSummary) => boolean;
 }) {
   const [hoveredSignature, setHoveredSignature] = useState<string | null>(null);
-  const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
+  const [selectedSignatures, setSelectedSignatures] = useState<string[]>([]);
 
   const points = models
     .map((model) => ({ model, xv: x(model), yv: model.overall_quality_score }))
@@ -278,8 +288,8 @@ function TradeoffPlot({
     .filter((point) => point.onPareto)
     .sort((a, b) => b.yv - a.yv)[0] ?? [...plotted].sort((a, b) => b.yv - a.yv)[0];
   const persistentSignatures = [
-    ...(selectedSignature ? [selectedSignature] : []),
-    ...(executiveTarget && executiveTarget.model.model_signature !== selectedSignature
+    ...selectedSignatures,
+    ...(executiveTarget && !selectedSignatures.includes(executiveTarget.model.model_signature)
       ? [executiveTarget.model.model_signature]
       : []),
   ];
@@ -337,7 +347,7 @@ function TradeoffPlot({
 
   return (
     <div className="executive-plot-shell interactive">
-      <div className="executive-plot-hint"><i /> Blue = Pareto · hover to inspect · click to pin</div>
+      <div className="executive-plot-hint"><i /> Blue = Pareto · click to focus · ⌘/Ctrl-click to keep multiple</div>
       <svg className="executive-plot" viewBox="0 0 900 340" role="img" aria-label={`Quality versus ${xLabel}`}>
         <g className="executive-plot-grid">
           {[0, 1, 2, 3, 4].map((step) => {
@@ -380,7 +390,7 @@ function TradeoffPlot({
         })}
 
         {plotted.map(({ model, cx, cy, onPareto }) => {
-          const selected = model.model_signature === selectedSignature;
+          const selected = selectedSignatures.includes(model.model_signature);
           const hoveredPoint = model.model_signature === hoveredSignature;
           return (
             <g
@@ -398,11 +408,18 @@ function TradeoffPlot({
               onMouseLeave={() => setHoveredSignature(null)}
               onFocus={() => setHoveredSignature(model.model_signature)}
               onBlur={() => setHoveredSignature(null)}
-              onClick={() =>
-                setSelectedSignature((current) =>
-                  current === model.model_signature ? null : model.model_signature,
-                )
-              }
+              onClick={(event) => {
+                const signature = model.model_signature;
+                const multiSelect = event.metaKey || event.ctrlKey;
+                setSelectedSignatures((current) => {
+                  if (multiSelect) {
+                    return current.includes(signature)
+                      ? current.filter((item) => item !== signature)
+                      : [...current, signature];
+                  }
+                  return current.length === 1 && current[0] === signature ? [] : [signature];
+                });
+              }}
             >
               {selected ? <circle cx={cx} cy={cy} r="11" className="executive-point-selection-ring" /> : null}
               <circle cx={cx} cy={cy} r={onPareto ? 8 : 6} />
@@ -435,7 +452,7 @@ function TradeoffPlot({
             <span><small>Quality</small><strong>{scoreValue(hovered.yv)}</strong></span>
             <span><small>{xLabel}</small><strong>{formatX(hovered.xv)}</strong></span>
           </div>
-          <small>{hovered.onPareto ? 'Pareto-efficient' : 'Measured configuration'} · click to pin</small>
+          <small>{hovered.onPareto ? 'Pareto-efficient' : 'Measured configuration'} · click to focus · ⌘/Ctrl-click to keep</small>
         </div>
       ) : null}
     </div>
@@ -1046,6 +1063,38 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
     [...speedPareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0] ??
     [...speedModels].sort((a, b) => Number(a.latency_p50_ms) - Number(b.latency_p50_ms))[0];
 
+  const sizeCandidates = models.filter(
+    (model) =>
+      model.artifact_size_bytes != null &&
+      Number.isFinite(model.artifact_size_bytes) &&
+      model.overall_quality_score != null,
+  );
+  const sizeComplete = sizeCandidates.filter((model) => model.quality_coverage_complete);
+  const sizeModels = sizeComplete.length ? sizeComplete : sizeCandidates;
+  const sizeParetoSignatures = new Set(
+    sizeModels
+      .filter((model) => {
+        const size = Number(model.artifact_size_bytes);
+        const quality = modelQuality(model);
+        return !sizeModels.some((other) => {
+          if (other.model_signature === model.model_signature) return false;
+          const otherSize = Number(other.artifact_size_bytes);
+          const otherQuality = modelQuality(other);
+          return (
+            otherSize <= size &&
+            otherQuality >= quality &&
+            (otherSize < size || otherQuality > quality)
+          );
+        });
+      })
+      .map((model) => model.model_signature),
+  );
+  const sizePareto = sizeModels.filter((model) => sizeParetoSignatures.has(model.model_signature));
+  const sizeChoice = [...sizePareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0];
+  const smallestPareto = [...sizePareto].sort(
+    (a, b) => Number(a.artifact_size_bytes) - Number(b.artifact_size_bytes),
+  )[0];
+
   const costModels = models.filter(
     (model) =>
       model.deployment !== 'local' &&
@@ -1152,6 +1201,43 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
             xLabel="P50 latency"
             formatX={latencyValue}
             pareto={(model) => model.observed_quality_latency_pareto}
+          />
+        </section>
+      </ExecutiveFrame>
+    );
+  }
+
+  if (view === 'size') {
+    return (
+      <ExecutiveFrame
+        active="size"
+        eyebrow="Executive · Model size"
+        title="How much model do we need for the quality we get?"
+        statement={
+          sizeChoice
+            ? `${sizePareto.length} model${sizePareto.length === 1 ? '' : 's'} define the current quality–size Pareto frontier; ${sizeChoice.model_key} reaches its highest measured quality.`
+            : 'There is not enough measured model-size evidence to establish a Pareto frontier.'
+        }
+        evidence={
+          sizeChoice && smallestPareto
+            ? `Highest-quality Pareto point: ${scoreValue(sizeChoice.overall_quality_score)} at ${modelSizeValue(sizeChoice.artifact_size_bytes)} · smallest Pareto point: ${smallestPareto.model_key} at ${modelSizeValue(smallestPareto.artifact_size_bytes)}.`
+            : 'A real artifact size and comparable overall quality are required for each plotted model.'
+        }
+      >
+        <section className="executive-visual-card">
+          <div className="executive-visual-heading">
+            <div>
+              <span>Quality × model artifact size</span>
+              <h3>Upper-left is efficient: more quality, fewer GB</h3>
+            </div>
+            <HardDrive size={20} />
+          </div>
+          <TradeoffPlot
+            models={sizeModels}
+            x={(model) => model.artifact_size_bytes ?? null}
+            xLabel="Model size"
+            formatX={modelSizeValue}
+            pareto={(model) => sizeParetoSignatures.has(model.model_signature)}
           />
         </section>
       </ExecutiveFrame>
