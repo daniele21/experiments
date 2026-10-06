@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import decisioRuntimeLogo from '../assets/runtime/decisio.webp';
+import korgisRuntimeLogo from '../assets/runtime/korgis.webp';
 import { overview } from '../data';
 import type {
   DecisionCapabilitySummary,
@@ -95,7 +97,7 @@ function RuntimeBadge({
   const label = brand === 'korgis' ? 'Korgis runtime' : 'Decisio runtime';
   return (
     <span className={compact ? 'runtime-brand-badge compact' : 'runtime-brand-badge'} title={label} aria-label={label}>
-      <img src={brand === 'korgis' ? '/runtime/korgis.webp' : '/runtime/decisio.webp'} alt="" />
+      <img src={brand === 'korgis' ? korgisRuntimeLogo : decisioRuntimeLogo} alt="" />
       {!compact ? <span>{brand === 'korgis' ? 'Korgis' : 'Decisio'}</span> : null}
     </span>
   );
