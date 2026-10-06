@@ -84,3 +84,5 @@ model_labels:
   "nemotron-nano-4b-q4": "Korgis · Nemotron Nano 4B Q4_K_M"
   "nemotron-nano-4b": "Korgis · Nemotron Nano 4B Q4_K_M"
   "nemotron-nano-4b-q8": "Korgis · Nemotron Nano 4B Q8_0"
+  "spark-x2.5-4b-q4km": "Korgis · Spark X2.5 4B Q4_K_M"
+  "bonsai-27b-q10": "Korgis · Bonsai 27B Q1_0"

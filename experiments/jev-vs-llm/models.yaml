@@ -107,3 +107,16 @@ models:
       metadata:
         resolved_by: external-korgis-registry
     tags: [local-benchmark, spark, 4b]
+
+  bonsai-27b-q10:
+    model_id: prism-ml/bonsai-27b
+    runtime_model_id: bonsai-27b-q10
+    runtime: korgis-local
+    family: bonsai
+    parameters_b: 27
+    artifact:
+      format: gguf
+      quantization: Q1_0
+      metadata:
+        resolved_by: external-korgis-registry
+    tags: [local-benchmark, bonsai, 27b]

@@ -1,5 +1,17 @@
-import { ChevronRight, Info, Maximize2, Sparkles, Trophy, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Maximize2,
+  RotateCcw,
+  Sparkles,
+  Trophy,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppLink } from './Shell';
 import type {
@@ -804,174 +816,549 @@ export function DatasetHeatmap({
   onSelect?: (modelSignature: string) => void;
   onHover?: (modelSignature: string | null) => void;
 }) {
-  const modelKeys = models.map((model) => model.model_key);
-  const rows = Array.from(
-    new Map(
-      datasets.map((row) => [
-        row.capability_id + '::' + row.dataset_id,
-        {
-          capability_id: row.capability_id,
-          dataset_id: row.dataset_id,
-          sample_count: row.sample_count,
-        },
-      ]),
-    ).values(),
-  ).sort((a, b) =>
-    (a.capability_id + a.dataset_id).localeCompare(
-      b.capability_id + b.dataset_id,
-    ),
+  const [activeView, setActiveView] = useState<'score' | 'delta' | 'rank'>(view);
+  const [expanded, setExpanded] = useState(false);
+  const [modelSort, setModelSort] = useState<'quality' | 'name' | 'deployment' | 'latency' | 'original'>('quality');
+  const [sortColumn, setSortColumn] = useState<string>('dataset');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const modalScrollRef = useRef<HTMLDivElement>(null);
+
+  // Synchronize internal activeView when prop view changes
+  useEffect(() => {
+    setActiveView(view);
+  }, [view]);
+
+  // Dynamic ordering of model columns
+  const orderedModels = useMemo(() => {
+    const list = [...models];
+    if (modelSort === 'quality') {
+      return list.sort(
+        (a, b) => (b.overall_quality_score ?? -1) - (a.overall_quality_score ?? -1),
+      );
+    }
+    if (modelSort === 'name') {
+      return list.sort((a, b) => a.model_key.localeCompare(b.model_key));
+    }
+    if (modelSort === 'deployment') {
+      return list.sort((a, b) => {
+        if (a.deployment !== b.deployment) {
+          return a.deployment === 'local' ? -1 : 1;
+        }
+        return (b.overall_quality_score ?? -1) - (a.overall_quality_score ?? -1);
+      });
+    }
+    if (modelSort === 'latency') {
+      return list.sort((a, b) => {
+        if (a.latency_p50_ms == null && b.latency_p50_ms == null) return 0;
+        if (a.latency_p50_ms == null) return 1;
+        if (b.latency_p50_ms == null) return -1;
+        return Number(a.latency_p50_ms) - Number(b.latency_p50_ms);
+      });
+    }
+    return list;
+  }, [models, modelSort]);
+
+  const modelKeys = useMemo(() => orderedModels.map((model) => model.model_key), [orderedModels]);
+
+  const baseRows = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          datasets.map((row) => [
+            row.capability_id + '::' + row.dataset_id,
+            {
+              capability_id: row.capability_id,
+              dataset_id: row.dataset_id,
+              sample_count: row.sample_count,
+            },
+          ]),
+        ).values(),
+      ),
+    [datasets],
   );
 
-  const byCell = new Map(
-    datasets.map((row) => [
-      row.model_key + '::' + row.capability_id + '::' + row.dataset_id,
-      row,
-    ]),
+  const byCell = useMemo(
+    () =>
+      new Map(
+        datasets.map((row) => [
+          row.model_key + '::' + row.capability_id + '::' + row.dataset_id,
+          row,
+        ]),
+      ),
+    [datasets],
   );
 
-  return (
-    <section className="analysis-card heatmap-card">
-      <div className="section-heading compact">
-        <div>
-          <h2>Performance by dataset</h2>
-          <p>Drill from capability into the datasets that explain the aggregate score.</p>
-        </div>
-        <span className="semantic-chip">{view === 'score' ? 'Score' : view}</span>
-      </div>
-      <div className="performance-legend">
-        <span><i className="performance-poor" /> Poor &lt;40</span>
-        <span><i className="performance-weak" /> Weak 40–59</span>
-        <span><i className="performance-good" /> Good 60–79</span>
-        <span><i className="performance-excellent" /> Excellent 80–100</span>
-        <span><i className="performance-unavailable" /> No comparable result</span>
-      </div>
-      <div className="heatmap-scroll">
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(column);
+      // For model scores and sample counts, default to descending (highest first);
+      // for dataset names, default to ascending (alphabetical).
+      setSortDirection(column === 'dataset' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    return [...baseRows].sort((a, b) => {
+      if (sortColumn === 'dataset') {
+        const keyA = a.capability_id + ' ' + a.dataset_id;
+        const keyB = b.capability_id + ' ' + b.dataset_id;
+        return sortDirection === 'asc' ? keyA.localeCompare(keyB) : keyB.localeCompare(keyA);
+      }
+      if (sortColumn === 'samples') {
+        return sortDirection === 'asc'
+          ? a.sample_count - b.sample_count
+          : b.sample_count - a.sample_count;
+      }
+      // Sort by specific model score
+      const cellA = byCell.get(sortColumn + '::' + a.capability_id + '::' + a.dataset_id);
+      const cellB = byCell.get(sortColumn + '::' + b.capability_id + '::' + b.dataset_id);
+      const valA = cellA?.normalized_quality_score ?? null;
+      const valB = cellB?.normalized_quality_score ?? null;
+      if (valA == null && valB == null) return 0;
+      if (valA == null) return 1; // values with no comparable result always placed at the bottom
+      if (valB == null) return -1;
+      return sortDirection === 'asc' ? valA - valB : valB - valA;
+    });
+  }, [baseRows, sortColumn, sortDirection, byCell]);
+
+  // Translate vertical mouse wheel to horizontal scroll for convenient desktop mouse navigation
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
+        const canScrollLeft = el.scrollLeft > 0 && e.deltaY < 0;
+        const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1 && e.deltaY > 0;
+        if (canScrollLeft || canScrollRight) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const el = modalScrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
+        const canScrollLeft = el.scrollLeft > 0 && e.deltaY < 0;
+        const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1 && e.deltaY > 0;
+        if (canScrollLeft || canScrollRight) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [expanded]);
+
+  const scrollLeft = () => {
+    scrollRef.current?.scrollBy({ left: -240, behavior: 'smooth' });
+  };
+  const scrollRight = () => {
+    scrollRef.current?.scrollBy({ left: 240, behavior: 'smooth' });
+  };
+
+  const renderTable = (refTarget: React.RefObject<HTMLDivElement | null>) => (
+    <div className="heatmap-scroll" ref={refTarget}>
+      <div
+        className="heatmap-grid"
+        style={{ '--model-count': modelKeys.length } as CSSProperties}
+      >
         <div
-          className="heatmap-grid"
-          style={{ '--model-count': modelKeys.length } as CSSProperties}
+          className={
+            'heatmap-head sticky-col-1 sortable ' +
+            (sortColumn === 'dataset' ? 'active-sort ' : '')
+          }
+          role="button"
+          tabIndex={0}
+          onClick={() => handleSort('dataset')}
+          title="Click to sort rows alphabetically by dataset name"
         >
-          <div className="heatmap-head">Capability / dataset</div>
-          <div className="heatmap-head samples">n</div>
-          {models.map((model) => (
+          <span>Capability / dataset</span>
+          <span className="sort-icon-wrap">
+            {sortColumn === 'dataset' ? (
+              sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+            ) : (
+              <ArrowUpDown size={11} className="sort-hint" />
+            )}
+          </span>
+        </div>
+        <div
+          className={
+            'heatmap-head samples sticky-col-2 sortable ' +
+            (sortColumn === 'samples' ? 'active-sort ' : '')
+          }
+          role="button"
+          tabIndex={0}
+          onClick={() => handleSort('samples')}
+          title="Click to sort rows by sample count (n)"
+        >
+          <span>n</span>
+          <span className="sort-icon-wrap">
+            {sortColumn === 'samples' ? (
+              sortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+            ) : (
+              <ArrowUpDown size={10} className="sort-hint" />
+            )}
+          </span>
+        </div>
+        {orderedModels.map((model) => {
+          const isSorted = sortColumn === model.model_key;
+          return (
             <div
               className={
-                'heatmap-head model ' +
+                'heatmap-head model sortable ' +
                 (selectedModel === model.model_signature ? 'selected ' : '') +
-                (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
+                (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed ' : '') +
+                (isSorted ? 'active-sort ' : '')
               }
               key={model.model_signature}
               role="button"
               tabIndex={0}
               onMouseEnter={() => onHover?.(model.model_signature)}
               onMouseLeave={() => onHover?.(null)}
-              onClick={() => onSelect?.(model.model_signature)}
+              onClick={() => {
+                handleSort(model.model_key);
+                onSelect?.(model.model_signature);
+              }}
+              title={'Click to sort rows by ' + model.model_key + ' score (' + (isSorted && sortDirection === 'desc' ? 'descending' : 'ascending') + ')'}
             >
-              <span><ModelMarker signature={model.model_signature} /> {model.model_key}</span>
+              <div className="heatmap-model-name">
+                <span title={model.model_key}>
+                  <ModelMarker signature={model.model_signature} /> {model.model_key}
+                </span>
+                <span className="sort-icon-wrap">
+                  {isSorted ? (
+                    sortDirection === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
+                  ) : (
+                    <ArrowUpDown size={11} className="sort-hint" />
+                  )}
+                </span>
+              </div>
               <DeploymentBadge deployment={model.deployment} />
             </div>
-          ))}
-          {rows.map((row) => {
-            const available = modelKeys
-              .map((modelKey) =>
-                byCell.get(modelKey + '::' + row.capability_id + '::' + row.dataset_id),
-              )
-              .filter((value): value is DecisionDatasetSummary => Boolean(value));
-            const scores = available
-              .map((item) => item.normalized_quality_score)
-              .filter((value): value is number => value != null);
-            const best = scores.length ? Math.max(...scores) : null;
-            const ranks = [...available]
-              .sort(
-                (a, b) =>
-                  (b.normalized_quality_score ?? -1) -
-                  (a.normalized_quality_score ?? -1),
-              )
-              .map((item, index) => [item.model_key, index + 1] as const);
-            const rankMap = new Map(ranks);
-            return (
-              <div className="heatmap-row contents" key={row.capability_id + row.dataset_id}>
-                <AppLink
-                  href={'/datasets/' + encodeURIComponent(row.dataset_id)}
-                  className="heatmap-label"
-                >
-                  <span>{row.capability_id.replaceAll('-', ' ')}</span>
-                  <strong>{row.dataset_id}</strong>
-                  <ChevronRight size={14} />
-                </AppLink>
-                <div className="heatmap-samples">{row.sample_count}</div>
-                {modelKeys.map((modelKey) => {
-                  const model = models.find((item) => item.model_key === modelKey);
-                  const cell = byCell.get(
-                    modelKey + '::' + row.capability_id + '::' + row.dataset_id,
-                  );
-                  const value = cell?.normalized_quality_score ?? null;
-                  const delta =
-                    value != null && best != null ? value - best : null;
-                  const display =
-                    view === 'rank'
-                      ? cell
-                        ? '#' + rankMap.get(modelKey)
-                        : '—'
-                      : view === 'delta'
-                        ? delta == null
-                          ? '—'
-                          : delta === 0
-                            ? 'best'
-                            : delta.toFixed(1)
-                        : score(value);
-                  const isWinner = value != null && best != null && value === best;
-                  const signature = model?.model_signature ?? modelKey;
-                  const dimmed = Boolean(
-                    hoveredModel && hoveredModel !== signature,
-                  );
-                  return (
-                    <div
-                      key={modelKey}
-                      className={
-                        'heatmap-cell performance-' + performanceBand(value) + ' ' +
-                        (isWinner ? 'winner ' : '') +
-                        (selectedModel === signature ? 'selected ' : '') +
-                        (dimmed ? 'dimmed' : '')
-                      }
-                      onMouseEnter={() => onHover?.(signature)}
-                      onMouseLeave={() => onHover?.(null)}
-                      onClick={() => onSelect?.(signature)}
-                      title={
-                        cell
-                          ? [
-                              modelKey,
-                              'score ' + score(value),
-                              'P50 ' + milliseconds(cell.latency_p50_ms),
-                              cell.provider_cost_known
-                                ? usd(cell.provider_cost_per_1k_cases_usd) +
-                                  ' / 1k cases · ' +
-                                  providerCostCoverage(
-                                    cell.provider_cost_status,
-                                    cell.provider_cost_priced_cases,
-                                    cell.provider_cost_total_cases,
-                                    cell.provider_cost_coverage_rate,
-                                  )
-                                : providerCostCoverage(
-                                    cell.provider_cost_status,
-                                    cell.provider_cost_priced_cases,
-                                    cell.provider_cost_total_cases,
-                                    cell.provider_cost_coverage_rate,
-                                  ),
-                            ].join(' · ')
-                          : 'No CURRENT comparable result'
-                      }
-                    >
-                      {isWinner && view === 'score' ? <span className="cell-winner">★</span> : null}
-                      {display}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+          );
+        })}
+        {sortedRows.map((row) => {
+          const available = modelKeys
+            .map((modelKey) =>
+              byCell.get(modelKey + '::' + row.capability_id + '::' + row.dataset_id),
+            )
+            .filter((value): value is DecisionDatasetSummary => Boolean(value));
+          const scores = available
+            .map((item) => item.normalized_quality_score)
+            .filter((value): value is number => value != null);
+          const best = scores.length ? Math.max(...scores) : null;
+          const ranks = [...available]
+            .sort(
+              (a, b) =>
+                (b.normalized_quality_score ?? -1) -
+                (a.normalized_quality_score ?? -1),
+            )
+            .map((item, index) => [item.model_key, index + 1] as const);
+          const rankMap = new Map(ranks);
+          return (
+            <div className="heatmap-row contents" key={row.capability_id + row.dataset_id}>
+              <AppLink
+                href={'/datasets/' + encodeURIComponent(row.dataset_id)}
+                className="heatmap-label sticky-col-1"
+              >
+                <span>{row.capability_id.replaceAll('-', ' ')}</span>
+                <strong>{row.dataset_id}</strong>
+                <ChevronRight size={14} />
+              </AppLink>
+              <div className="heatmap-samples sticky-col-2">{row.sample_count}</div>
+              {modelKeys.map((modelKey) => {
+                const model = orderedModels.find((item) => item.model_key === modelKey);
+                const cell = byCell.get(
+                  modelKey + '::' + row.capability_id + '::' + row.dataset_id,
+                );
+                const value = cell?.normalized_quality_score ?? null;
+                const delta =
+                  value != null && best != null ? value - best : null;
+                const display =
+                  activeView === 'rank'
+                    ? cell
+                      ? '#' + rankMap.get(modelKey)
+                      : '—'
+                    : activeView === 'delta'
+                      ? delta == null
+                        ? '—'
+                        : delta === 0
+                          ? 'best'
+                          : delta.toFixed(1)
+                      : score(value);
+                const isWinner = value != null && best != null && value === best;
+                const signature = model?.model_signature ?? modelKey;
+                const dimmed = Boolean(
+                  hoveredModel && hoveredModel !== signature,
+                );
+                return (
+                  <div
+                    key={modelKey}
+                    className={
+                      'heatmap-cell performance-' + performanceBand(value) + ' ' +
+                      (isWinner ? 'winner ' : '') +
+                      (selectedModel === signature ? 'selected ' : '') +
+                      (dimmed ? 'dimmed' : '')
+                    }
+                    onMouseEnter={() => onHover?.(signature)}
+                    onMouseLeave={() => onHover?.(null)}
+                    onClick={() => onSelect?.(signature)}
+                    title={
+                      cell
+                        ? [
+                            modelKey,
+                            'score ' + score(value),
+                            'P50 ' + milliseconds(cell.latency_p50_ms),
+                            cell.provider_cost_known
+                              ? usd(cell.provider_cost_per_1k_cases_usd) +
+                                ' / 1k cases · ' +
+                                providerCostCoverage(
+                                  cell.provider_cost_status,
+                                  cell.provider_cost_priced_cases,
+                                  cell.provider_cost_total_cases,
+                                  cell.provider_cost_coverage_rate,
+                                )
+                              : providerCostCoverage(
+                                  cell.provider_cost_status,
+                                  cell.provider_cost_priced_cases,
+                                  cell.provider_cost_total_cases,
+                                  cell.provider_cost_coverage_rate,
+                                ),
+                          ].join(' · ')
+                        : 'No CURRENT comparable result'
+                    }
+                  >
+                    {isWinner && activeView === 'score' ? <span className="cell-winner">★</span> : null}
+                    {display}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
-    </section>
+    </div>
+  );
+
+  return (
+    <>
+      <section className="analysis-card heatmap-card">
+        <div className="section-heading compact heatmap-header-row">
+          <div>
+            <h2>Performance by dataset</h2>
+            <p>Drill from capability into the datasets that explain the aggregate score.</p>
+          </div>
+          <div className="heatmap-actions">
+            <div className="segmented">
+              {(['score', 'delta', 'rank'] as const).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={activeView === item ? 'active' : ''}
+                  onClick={() => setActiveView(item)}
+                >
+                  {item === 'score' ? 'Score' : item === 'delta' ? 'Delta' : 'Rank'}
+                </button>
+              ))}
+            </div>
+
+            <select
+              className="heatmap-sort-select"
+              value={modelSort}
+              onChange={(event) =>
+                setModelSort(
+                  event.target.value as 'quality' | 'name' | 'deployment' | 'latency' | 'original',
+                )
+              }
+              title="Sort model columns (horizontal order)"
+            >
+              <option value="quality">Models: Overall Quality ↓</option>
+              <option value="name">Models: Name (A → Z)</option>
+              <option value="deployment">Models: Local first</option>
+              <option value="latency">Models: Fastest P50</option>
+              <option value="original">Models: Default order</option>
+            </select>
+
+            <div className="heatmap-scroll-controls" title="Scroll horizontally">
+              <button
+                type="button"
+                className="heatmap-scroll-btn"
+                onClick={scrollLeft}
+                title="Scroll left"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <button
+                type="button"
+                className="heatmap-scroll-btn"
+                onClick={scrollRight}
+                title="Scroll right"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+            <button
+              type="button"
+              className="expand-chart-button"
+              onClick={() => setExpanded(true)}
+              title="Expand dataset matrix"
+            >
+              <Maximize2 size={15} />
+            </button>
+          </div>
+        </div>
+
+        <div className="heatmap-status-bar">
+          <div className="performance-legend">
+            <span><i className="performance-poor" /> Poor &lt;40</span>
+            <span><i className="performance-weak" /> Weak 40–59</span>
+            <span><i className="performance-good" /> Good 60–79</span>
+            <span><i className="performance-excellent" /> Excellent 80–100</span>
+            <span><i className="performance-unavailable" /> No comparable result</span>
+          </div>
+          {sortColumn !== 'dataset' || sortDirection !== 'asc' ? (
+            <div className="heatmap-sort-pill">
+              <span>
+                Sorted by:{' '}
+                <strong>
+                  {sortColumn === 'dataset'
+                    ? 'Dataset name'
+                    : sortColumn === 'samples'
+                      ? 'Sample count (n)'
+                      : sortColumn}
+                </strong>{' '}
+                ({sortDirection === 'desc' ? 'descending' : 'ascending'})
+              </span>
+              <button
+                type="button"
+                className="heatmap-sort-reset"
+                onClick={() => {
+                  setSortColumn('dataset');
+                  setSortDirection('asc');
+                }}
+                title="Reset row sorting to default (alphabetical)"
+              >
+                <RotateCcw size={10} /> Reset
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {renderTable(scrollRef)}
+      </section>
+
+      {expanded ? (
+        <div
+          className="chart-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setExpanded(false)}
+        >
+          <section
+            className="chart-modal heatmap-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Dataset performance matrix"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="chart-modal-header">
+              <div>
+                <span className="eyebrow">Analytical matrix</span>
+                <h2>Performance by dataset</h2>
+                <p>Full cross-model comparison across all capabilities and datasets.</p>
+              </div>
+              <div className="heatmap-modal-header-actions">
+                <div className="segmented">
+                  {(['score', 'delta', 'rank'] as const).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={activeView === item ? 'active' : ''}
+                      onClick={() => setActiveView(item)}
+                    >
+                      {item === 'score' ? 'Score' : item === 'delta' ? 'Delta' : 'Rank'}
+                    </button>
+                  ))}
+                </div>
+                <select
+                  className="heatmap-sort-select"
+                  value={modelSort}
+                  onChange={(event) =>
+                    setModelSort(
+                      event.target.value as 'quality' | 'name' | 'deployment' | 'latency' | 'original',
+                    )
+                  }
+                  title="Sort model columns (horizontal order)"
+                >
+                  <option value="quality">Models: Overall Quality ↓</option>
+                  <option value="name">Models: Name (A → Z)</option>
+                  <option value="deployment">Models: Local first</option>
+                  <option value="latency">Models: Fastest P50</option>
+                  <option value="original">Models: Default order</option>
+                </select>
+                <button
+                  type="button"
+                  className="modal-close"
+                  onClick={() => setExpanded(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </header>
+            <div className="heatmap-modal-body">
+              <div className="heatmap-status-bar">
+                <div className="performance-legend">
+                  <span><i className="performance-poor" /> Poor &lt;40</span>
+                  <span><i className="performance-weak" /> Weak 40–59</span>
+                  <span><i className="performance-good" /> Good 60–79</span>
+                  <span><i className="performance-excellent" /> Excellent 80–100</span>
+                  <span><i className="performance-unavailable" /> No comparable result</span>
+                </div>
+                {sortColumn !== 'dataset' || sortDirection !== 'asc' ? (
+                  <div className="heatmap-sort-pill">
+                    <span>
+                      Sorted by:{' '}
+                      <strong>
+                        {sortColumn === 'dataset'
+                          ? 'Dataset name'
+                          : sortColumn === 'samples'
+                            ? 'Sample count (n)'
+                            : sortColumn}
+                      </strong>{' '}
+                      ({sortDirection === 'desc' ? 'descending' : 'ascending'})
+                    </span>
+                    <button
+                      type="button"
+                      className="heatmap-sort-reset"
+                      onClick={() => {
+                        setSortColumn('dataset');
+                        setSortDirection('asc');
+                      }}
+                      title="Reset row sorting to default (alphabetical)"
+                    >
+                      <RotateCcw size={10} /> Reset
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+              {renderTable(modalScrollRef)}
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 

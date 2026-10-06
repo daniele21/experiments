@@ -271,3 +271,37 @@ models:
       - qwen
       - decision-model
 
+  spark-x2.5-4b-q4km:
+    model_id: xhtoken/spark-x2.5-4b
+    runtime_model_id: spark-x2.5-4b-q4km
+    runtime: korgis-local
+    family: spark
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - spark
+      - 4b
+
+  bonsai-27b-q10:
+    model_id: prism-ml/bonsai-27b
+    runtime_model_id: bonsai-27b-q10
+    runtime: korgis-local
+    family: bonsai
+    parameters_b: 27
+    artifact:
+      format: gguf
+      quantization: Q1_0
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - bonsai
+      - 27b
+
