@@ -401,6 +401,34 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
     assert run_payload["resources"][0]["sample_count"] == 4
 
 
+
+def test_decision_overview_projects_artifact_size_and_size_pareto(tmp_path: Path) -> None:
+    results = tmp_path / "results"
+    _write_run(
+        results,
+        run_id="run-sized-model",
+        completed_at="2026-10-05T09:00:00+00:00",
+        score=0.82,
+        model_key="qwen3.5-9b-q4km",
+        model_signature="sha256:model:qwen9-size-fixture",
+        deployment="local",
+    )
+    summary = project_results(results_root=results, rebuild=True)
+    output = results / "analytics" / "dashboard"
+
+    exported = export_dashboard_data(
+        database_path=Path(summary.database_path),
+        output_dir=output,
+    )
+
+    overview = json.loads(Path(exported["overview"]).read_text())
+    model = overview["decision"]["model_summaries"][0]
+
+    assert model["artifact_size_bytes"] > 0
+    assert model["observed_quality_artifact_size_pareto"] is True
+
+
+
 def test_share_snapshot_freezes_comparable_current_results(tmp_path: Path) -> None:
     results = tmp_path / "results"
     _write_run(
