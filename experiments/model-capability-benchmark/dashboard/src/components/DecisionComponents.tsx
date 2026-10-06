@@ -1,15 +1,18 @@
 import {
+  Activity,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Flame,
   Info,
   Maximize2,
   RotateCcw,
   Sparkles,
   Trophy,
   X,
+  Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -429,253 +432,7 @@ export function QualityLeaderboard({
 }
 
 
-type DatasetLandscapeView = 'score' | 'delta' | 'rank';
-type DatasetLandscapeSort = 'discriminative' | 'hardest' | 'alphabetical';
 
-interface DatasetLandscapeRow {
-  capability_id: string;
-  dataset_id: string;
-  sample_count: number;
-  best_score: number | null;
-  worst_score: number | null;
-  average_score: number | null;
-  spread: number | null;
-  winner_model_key: string | null;
-  best_local_model_key: string | null;
-  values: DecisionDatasetSummary[];
-}
-
-function buildDatasetLandscapeRows(
-  datasets: DecisionDatasetSummary[],
-  models: DecisionModelSummary[],
-): DatasetLandscapeRow[] {
-  const grouped = new Map<string, DecisionDatasetSummary[]>();
-  datasets.forEach((row) => {
-    const key = row.capability_id + '::' + row.dataset_id;
-    grouped.set(key, [...(grouped.get(key) ?? []), row]);
-  });
-  const localKeys = new Set(
-    models.filter((model) => model.deployment === 'local').map((model) => model.model_key),
-  );
-  return [...grouped.entries()].map(([key, values]) => {
-    const scored = values.filter((row) => row.normalized_quality_score != null);
-    const sorted = [...scored].sort(
-      (a, b) => Number(b.normalized_quality_score) - Number(a.normalized_quality_score),
-    );
-    const local = sorted.find((row) => localKeys.has(row.model_key));
-    const scores = scored.map((row) => Number(row.normalized_quality_score));
-    const best = scores.length ? Math.max(...scores) : null;
-    const worst = scores.length ? Math.min(...scores) : null;
-    const [capability_id, dataset_id] = key.split('::');
-    return {
-      capability_id,
-      dataset_id,
-      sample_count: values[0]?.sample_count ?? 0,
-      best_score: best,
-      worst_score: worst,
-      average_score: scores.length
-        ? scores.reduce((total, value) => total + value, 0) / scores.length
-        : null,
-      spread: best != null && worst != null ? best - worst : null,
-      winner_model_key: sorted[0]?.model_key ?? null,
-      best_local_model_key: local?.model_key ?? null,
-      values,
-    };
-  });
-}
-
-export function DatasetPerformanceLandscape({
-  datasets,
-  models,
-  selectedModel,
-  hoveredModel,
-  onSelect,
-  onHover,
-}: {
-  datasets: DecisionDatasetSummary[];
-  models: DecisionModelSummary[];
-  selectedModel?: string | null;
-  hoveredModel?: string | null;
-  onSelect?: (modelSignature: string) => void;
-  onHover?: (modelSignature: string | null) => void;
-}) {
-  const [view, setView] = useState<DatasetLandscapeView>('score');
-  const [sortMode, setSortMode] = useState<DatasetLandscapeSort>('discriminative');
-  const rows = useMemo(
-    () => buildDatasetLandscapeRows(datasets, models),
-    [datasets, models],
-  );
-  const sortedRows = useMemo(() => {
-    const result = [...rows];
-    if (sortMode === 'hardest') {
-      return result.sort(
-        (a, b) => Number(a.average_score ?? 999) - Number(b.average_score ?? 999),
-      );
-    }
-    if (sortMode === 'alphabetical') {
-      return result.sort((a, b) => a.dataset_id.localeCompare(b.dataset_id));
-    }
-    return result.sort((a, b) => Number(b.spread ?? -1) - Number(a.spread ?? -1));
-  }, [rows, sortMode]);
-
-  const winCounts = new Map<string, number>();
-  rows.forEach((row) => {
-    if (row.winner_model_key) {
-      winCounts.set(row.winner_model_key, (winCounts.get(row.winner_model_key) ?? 0) + 1);
-    }
-  });
-  const mostWins = [...winCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-  const hardest = [...rows]
-    .filter((row) => row.average_score != null)
-    .sort((a, b) => Number(a.average_score) - Number(b.average_score))[0];
-  const discriminative = [...rows]
-    .filter((row) => row.spread != null)
-    .sort((a, b) => Number(b.spread) - Number(a.spread))[0];
-  const localWins = new Map<string, number>();
-  rows.forEach((row) => {
-    if (row.best_local_model_key) {
-      localWins.set(
-        row.best_local_model_key,
-        (localWins.get(row.best_local_model_key) ?? 0) + 1,
-      );
-    }
-  });
-  const bestLocal = [...localWins.entries()].sort((a, b) => b[1] - a[1])[0];
-
-  return (
-    <section className="analysis-card dataset-landscape-card">
-      <div className="section-heading">
-        <div>
-          <h2>Dataset performance landscape</h2>
-          <p>See who wins where, how large each gap is and which datasets discriminate most.</p>
-        </div>
-        <div className="dataset-landscape-controls">
-          <div className="segmented">
-            {(['score', 'delta', 'rank'] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={view === item ? 'active' : ''}
-                onClick={() => setView(item)}
-              >
-                {item === 'score' ? 'Score' : item === 'delta' ? 'Delta vs best' : 'Rank'}
-              </button>
-            ))}
-          </div>
-          <select
-            value={sortMode}
-            onChange={(event) => setSortMode(event.target.value as DatasetLandscapeSort)}
-          >
-            <option value="discriminative">Most discriminative</option>
-            <option value="hardest">Hardest</option>
-            <option value="alphabetical">Alphabetical</option>
-          </select>
-        </div>
-      </div>
-
-      <ModelLegend
-        models={models}
-        hoveredModel={hoveredModel}
-        selectedModel={selectedModel}
-        onHover={onHover}
-        onSelect={onSelect}
-        compact={models.length > 8}
-      />
-
-      <div className="dataset-insight-chips">
-        <div><Trophy size={14}/><span>Most wins</span><strong>{mostWins ? mostWins[0] + ' · ' + mostWins[1] : '—'}</strong></div>
-        <div><span>Best local</span><strong>{bestLocal ? bestLocal[0] : '—'}</strong></div>
-        <div><span>Hardest</span><strong>{hardest?.dataset_id ?? '—'}</strong></div>
-        <div><span>Most discriminative</span><strong>{discriminative?.dataset_id ?? '—'}</strong></div>
-      </div>
-
-      <div className="dataset-landscape-list">
-        {sortedRows.map((row) => {
-          const ranked = [...row.values]
-            .filter((item) => item.normalized_quality_score != null)
-            .sort(
-              (a, b) =>
-                Number(b.normalized_quality_score) - Number(a.normalized_quality_score),
-            );
-          const rankMap = new Map(ranked.map((item, index) => [item.model_key, index + 1]));
-          return (
-            <AppLink
-              key={row.capability_id + row.dataset_id}
-              href={'/datasets/' + encodeURIComponent(row.dataset_id)}
-              className="dataset-landscape-row"
-            >
-              <div className="dataset-landscape-meta">
-                <span>{row.capability_id.replaceAll('-', ' ')}</span>
-                <strong>{row.dataset_id}</strong>
-                <small>
-                  winner {row.winner_model_key ?? '—'} · spread {row.spread?.toFixed(1) ?? '—'}
-                </small>
-              </div>
-              <div
-                className="dataset-landscape-track"
-                style={{
-                  height: Math.max(44, Math.min(220, models.length * 10 + 20)),
-                }}
-              >
-                {models.map((model, modelIndex) => {
-                  const value = row.values.find((item) => item.model_key === model.model_key);
-                  const scoreValue = value?.normalized_quality_score ?? null;
-                  const delta =
-                    scoreValue != null && row.best_score != null
-                      ? scoreValue - row.best_score
-                      : null;
-                  const display =
-                    view === 'rank'
-                      ? rankMap.has(model.model_key) ? '#' + rankMap.get(model.model_key) : '—'
-                      : view === 'delta'
-                        ? delta == null ? '—' : delta === 0 ? 'best' : delta.toFixed(1)
-                        : score(scoreValue);
-                  const hovered = hoveredModel === model.model_signature;
-                  const selected = selectedModel === model.model_signature;
-                  const dimmed = Boolean(hoveredModel && !hovered);
-                  const showValue =
-                    hovered ||
-                    selected ||
-                    row.winner_model_key === model.model_key ||
-                    models.length <= 4;
-                  return scoreValue == null ? null : (
-                    <div
-                      key={model.model_signature}
-                      className={
-                        'dataset-landscape-point ' +
-                        (selected ? 'selected ' : '') +
-                        (hovered ? 'hovered ' : '') +
-                        (dimmed ? 'dimmed' : '')
-                      }
-                      style={{
-                        left: Math.max(0, Math.min(100, scoreValue)) + '%',
-                        top: ((modelIndex + 1) / (models.length + 1)) * 100 + '%',
-                      }}
-                      title={model.model_key + ' · ' + display}
-                      role="button"
-                      tabIndex={0}
-                      onMouseEnter={() => onHover?.(model.model_signature)}
-                      onMouseLeave={() => onHover?.(null)}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onSelect?.(model.model_signature);
-                      }}
-                    >
-                      <ModelMarker signature={model.model_signature} size={10} />
-                      {showValue ? <span>{display}</span> : null}
-                    </div>
-                  );
-                })}
-              </div>
-              <ChevronRight size={14}/>
-            </AppLink>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 export function DatasetDeltaSlopegraph({
   datasets,
@@ -861,21 +618,93 @@ export function DatasetHeatmap({
 
   const modelKeys = useMemo(() => orderedModels.map((model) => model.model_key), [orderedModels]);
 
-  const baseRows = useMemo(
+  const modelsMap = useMemo(() => {
+    const map = new Map<string, DecisionModelSummary>();
+    models.forEach((model) => map.set(model.model_key, model));
+    return map;
+  }, [models]);
+
+  const localKeys = useMemo(
     () =>
-      Array.from(
-        new Map(
-          datasets.map((row) => [
-            row.capability_id + '::' + row.dataset_id,
-            {
-              capability_id: row.capability_id,
-              dataset_id: row.dataset_id,
-              sample_count: row.sample_count,
-            },
-          ]),
-        ).values(),
+      new Set(
+        models.filter((model) => model.deployment === 'local').map((model) => model.model_key),
       ),
-    [datasets],
+    [models],
+  );
+
+  const baseRows = useMemo(() => {
+    const grouped = new Map<string, DecisionDatasetSummary[]>();
+    datasets.forEach((row) => {
+      const key = row.capability_id + '::' + row.dataset_id;
+      grouped.set(key, [...(grouped.get(key) ?? []), row]);
+    });
+
+    return [...grouped.entries()].map(([key, cells]) => {
+      const [capability_id, dataset_id] = key.split('::');
+      const scored = cells.filter((c) => c.normalized_quality_score != null);
+      const sorted = [...scored].sort(
+        (a, b) => Number(b.normalized_quality_score) - Number(a.normalized_quality_score),
+      );
+      const scores = scored.map((c) => Number(c.normalized_quality_score));
+      const best = scores.length ? Math.max(...scores) : null;
+      const worst = scores.length ? Math.min(...scores) : null;
+      const spread = best != null && worst != null ? best - worst : null;
+      const avg = scores.length ? scores.reduce((sum, v) => sum + v, 0) / scores.length : null;
+      const winner = sorted[0]?.model_key ?? null;
+      const winnerScore = sorted[0]?.normalized_quality_score ?? null;
+      const local = sorted.find((c) => localKeys.has(c.model_key));
+
+      return {
+        capability_id,
+        dataset_id,
+        sample_count: cells[0]?.sample_count ?? 0,
+        winner_model_key: winner,
+        winner_score: winnerScore,
+        worst_score: worst,
+        spread,
+        average_score: avg,
+        best_local_model_key: local?.model_key ?? null,
+      };
+    });
+  }, [datasets, localKeys]);
+
+  const mostWins = useMemo(() => {
+    const wins = new Map<string, number>();
+    baseRows.forEach((row) => {
+      if (row.winner_model_key) {
+        wins.set(row.winner_model_key, (wins.get(row.winner_model_key) ?? 0) + 1);
+      }
+    });
+    return [...wins.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+  }, [baseRows]);
+
+  const bestLocal = useMemo(() => {
+    const localWins = new Map<string, number>();
+    baseRows.forEach((row) => {
+      if (row.best_local_model_key) {
+        localWins.set(
+          row.best_local_model_key,
+          (localWins.get(row.best_local_model_key) ?? 0) + 1,
+        );
+      }
+    });
+    return [...localWins.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+  }, [baseRows]);
+
+  const hardest = useMemo(
+    () =>
+      [...baseRows]
+        .filter((row) => row.average_score != null)
+        .sort((a, b) => Number(a.average_score) - Number(b.average_score))[0] ?? null,
+    [baseRows],
+  );
+
+  const discriminative = useMemo(
+    () =>
+      [...baseRows]
+        .filter((row) => row.spread != null)
+        .sort((a, b) => Number(b.spread) - Number(a.spread))[0] ?? null,
+    [baseRows],
   );
 
   const byCell = useMemo(
@@ -894,8 +723,6 @@ export function DatasetHeatmap({
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortColumn(column);
-      // For model scores and sample counts, default to descending (highest first);
-      // for dataset names, default to ascending (alphabetical).
       setSortDirection(column === 'dataset' ? 'asc' : 'desc');
     }
   };
@@ -912,13 +739,23 @@ export function DatasetHeatmap({
           ? a.sample_count - b.sample_count
           : b.sample_count - a.sample_count;
       }
+      if (sortColumn === 'winner') {
+        const keyA = a.winner_model_key ?? '';
+        const keyB = b.winner_model_key ?? '';
+        return sortDirection === 'asc' ? keyA.localeCompare(keyB) : keyB.localeCompare(keyA);
+      }
+      if (sortColumn === 'spread') {
+        const valA = a.spread ?? -1;
+        const valB = b.spread ?? -1;
+        return sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
       // Sort by specific model score
       const cellA = byCell.get(sortColumn + '::' + a.capability_id + '::' + a.dataset_id);
       const cellB = byCell.get(sortColumn + '::' + b.capability_id + '::' + b.dataset_id);
       const valA = cellA?.normalized_quality_score ?? null;
       const valB = cellB?.normalized_quality_score ?? null;
       if (valA == null && valB == null) return 0;
-      if (valA == null) return 1; // values with no comparable result always placed at the bottom
+      if (valA == null) return 1;
       if (valB == null) return -1;
       return sortDirection === 'asc' ? valA - valB : valB - valA;
     });
@@ -1011,6 +848,44 @@ export function DatasetHeatmap({
             )}
           </span>
         </div>
+        <div
+          className={
+            'heatmap-head winner sortable ' +
+            (sortColumn === 'winner' ? 'active-sort ' : '')
+          }
+          role="button"
+          tabIndex={0}
+          onClick={() => handleSort('winner')}
+          title="Click to sort rows by winner model"
+        >
+          <span>Winner 🏆</span>
+          <span className="sort-icon-wrap">
+            {sortColumn === 'winner' ? (
+              sortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+            ) : (
+              <ArrowUpDown size={10} className="sort-hint" />
+            )}
+          </span>
+        </div>
+        <div
+          className={
+            'heatmap-head spread sortable ' +
+            (sortColumn === 'spread' ? 'active-sort ' : '')
+          }
+          role="button"
+          tabIndex={0}
+          onClick={() => handleSort('spread')}
+          title="Click to sort rows by spread (discrimination gap)"
+        >
+          <span>Spread Δ</span>
+          <span className="sort-icon-wrap">
+            {sortColumn === 'spread' ? (
+              sortDirection === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+            ) : (
+              <ArrowUpDown size={10} className="sort-hint" />
+            )}
+          </span>
+        </div>
         {orderedModels.map((model) => {
           const isSorted = sortColumn === model.model_key;
           return (
@@ -1034,7 +909,7 @@ export function DatasetHeatmap({
             >
               <div className="heatmap-model-name">
                 <span title={model.model_key}>
-                  <ModelMarker signature={model.model_signature} /> {model.model_key}
+                  <ModelMarker signature={model.model_signature} /> {modelShortLabel(model.model_key)}
                 </span>
                 <span className="sort-icon-wrap">
                   {isSorted ? (
@@ -1077,6 +952,47 @@ export function DatasetHeatmap({
                 <ChevronRight size={14} />
               </AppLink>
               <div className="heatmap-samples sticky-col-2">{row.sample_count}</div>
+              <div
+                className="heatmap-winner"
+                title={
+                  row.winner_model_key
+                    ? `Top score: ${row.winner_score?.toFixed(1)}% by ${row.winner_model_key}`
+                    : '—'
+                }
+              >
+                {row.winner_model_key ? (
+                  <>
+                    <ModelMarker
+                      signature={
+                        modelsMap.get(row.winner_model_key)?.model_signature ??
+                        row.winner_model_key
+                      }
+                      size={10}
+                    />
+                    <span className="winner-name">
+                      {modelShortLabel(row.winner_model_key)}
+                    </span>
+                    <span className="winner-score">
+                      ({row.winner_score?.toFixed(1)}%)
+                    </span>
+                  </>
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </div>
+              <div
+                className={
+                  'heatmap-spread ' +
+                  (row.spread != null && row.spread > 40 ? 'high-spread' : '')
+                }
+                title={
+                  row.spread != null
+                    ? `Gap between best and worst model: Δ ${row.spread.toFixed(1)} pt`
+                    : '—'
+                }
+              >
+                {row.spread != null ? `Δ ${row.spread.toFixed(1)}` : '—'}
+              </div>
               {modelKeys.map((modelKey) => {
                 const model = orderedModels.find((item) => item.model_key === modelKey);
                 const cell = byCell.get(
@@ -1157,7 +1073,7 @@ export function DatasetHeatmap({
         <div className="section-heading compact heatmap-header-row">
           <div>
             <h2>Performance by dataset</h2>
-            <p>Drill from capability into the datasets that explain the aggregate score.</p>
+            <p>Per-dataset winners, score spreads (Δ), and granular quality comparisons.</p>
           </div>
           <div className="heatmap-actions">
             <div className="segmented">
@@ -1221,6 +1137,56 @@ export function DatasetHeatmap({
           </div>
         </div>
 
+        <div className="dataset-insight-chips">
+          <div className="insight-chip-item">
+            <div className="insight-chip-icon trophy"><Trophy size={16} /></div>
+            <div className="insight-chip-content">
+              <span>Most dataset wins</span>
+              <strong>
+                {mostWins
+                  ? `${modelShortLabel(mostWins[0])} · ${mostWins[1]} ${mostWins[1] === 1 ? 'win' : 'wins'}`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+
+          <div className="insight-chip-item">
+            <div className="insight-chip-icon local"><Zap size={16} /></div>
+            <div className="insight-chip-content">
+              <span>Best local model</span>
+              <strong>
+                {bestLocal
+                  ? `${modelShortLabel(bestLocal[0])} · ${bestLocal[1]} ${bestLocal[1] === 1 ? 'win' : 'wins'}`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+
+          <div className="insight-chip-item">
+            <div className="insight-chip-icon hardest"><Flame size={16} /></div>
+            <div className="insight-chip-content">
+              <span>Hardest dataset</span>
+              <strong>
+                {hardest
+                  ? `${hardest.dataset_id} (avg ${hardest.average_score?.toFixed(1) ?? '—'}%)`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+
+          <div className="insight-chip-item">
+            <div className="insight-chip-icon discriminative"><Activity size={16} /></div>
+            <div className="insight-chip-content">
+              <span>Widest spread</span>
+              <strong>
+                {discriminative
+                  ? `${discriminative.dataset_id} (Δ ${discriminative.spread?.toFixed(1) ?? '—'} pt)`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+        </div>
+
         <div className="heatmap-status-bar">
           <div className="performance-legend">
             <span><i className="performance-poor" /> Poor &lt;40</span>
@@ -1238,7 +1204,11 @@ export function DatasetHeatmap({
                     ? 'Dataset name'
                     : sortColumn === 'samples'
                       ? 'Sample count (n)'
-                      : sortColumn}
+                      : sortColumn === 'winner'
+                        ? 'Winner model'
+                        : sortColumn === 'spread'
+                          ? 'Score spread (Δ)'
+                          : sortColumn}
                 </strong>{' '}
                 ({sortDirection === 'desc' ? 'descending' : 'ascending'})
               </span>
@@ -1335,7 +1305,11 @@ export function DatasetHeatmap({
                           ? 'Dataset name'
                           : sortColumn === 'samples'
                             ? 'Sample count (n)'
-                            : sortColumn}
+                            : sortColumn === 'winner'
+                              ? 'Winner model'
+                              : sortColumn === 'spread'
+                                ? 'Score spread (Δ)'
+                                : sortColumn}
                       </strong>{' '}
                       ({sortDirection === 'desc' ? 'descending' : 'ascending'})
                     </span>

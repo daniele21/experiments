@@ -42,6 +42,12 @@ import {
   MethodologyAccordion,
   TradeoffScatter,
 } from '../components/DecisionComponents';
+import {
+  ModelArchitectureCard,
+  ModelParamBadge,
+  ModelParametersComparison,
+  ModelQuantBadge,
+} from '../components/ModelParameters';
 import { AppLink, PageHeader } from '../components/Shell';
 
 const decisionModels = overview.decision?.model_summaries ?? [];
@@ -85,8 +91,15 @@ export function ModelsPage() {
         />
         <div className="premium-table model-table">
           <div className="premium-table-row head">
-            <span>Model</span><span>Quality</span><span>Coverage</span>
-            <span>P50</span><span>P95</span><span>Cost / 1k</span><span>Environment</span>
+            <span>Model</span>
+            <span>Params</span>
+            <span>Quant</span>
+            <span>Quality</span>
+            <span>Coverage</span>
+            <span>P50</span>
+            <span>P95</span>
+            <span>Cost / 1k</span>
+            <span>Environment</span>
           </div>
           {models.length ? models.map((model) => (
             <AppLink
@@ -97,6 +110,12 @@ export function ModelsPage() {
               <span className="table-model">
                 <strong>{model.model_key}</strong>
                 <DeploymentBadge deployment={model.deployment} />
+              </span>
+              <span>
+                <ModelParamBadge parameters_b={model.parameters_b} deployment={model.deployment} />
+              </span>
+              <span>
+                <ModelQuantBadge quantization={model.quantization} deployment={model.deployment} />
               </span>
               <strong>{score(model.overall_quality_score)}</strong>
               <span>
@@ -155,6 +174,8 @@ export function ModelPage({ signature }: { signature: string }) {
         description={model?.model_id ?? 'CURRENT benchmark evidence and execution context.'}
         actions={
           <>
+            <ModelParamBadge parameters_b={summary?.parameters_b ?? model?.parameters_b} deployment={summary?.deployment ?? model?.deployment} />
+            <ModelQuantBadge quantization={summary?.quantization ?? model?.quantization} deployment={summary?.deployment ?? model?.deployment} />
             <DeploymentBadge deployment={model?.deployment ?? summary?.deployment ?? 'unknown'} />
             <span className="header-chip current">CURRENT</span>
           </>
@@ -196,6 +217,16 @@ export function ModelPage({ signature }: { signature: string }) {
               : 'pricing unavailable'}
           </small>
         </div>
+      </section>
+
+      <section className="analysis-card model-config-section">
+        <SectionTitle
+          title="Model Parameters & Configuration"
+          description="Architecture specification, parameter scale, quantization format, and sampling parameters used during benchmark evaluation."
+        />
+        {(summary || model) ? (
+          <ModelArchitectureCard model={(summary ?? model)!} />
+        ) : null}
       </section>
 
       <section className="two-panel-grid model-primary-grid">
@@ -704,6 +735,14 @@ export function ComparePage() {
             modelA={modelA}
             modelB={modelB}
           />
+
+          <section className="analysis-card">
+            <SectionTitle
+              title="Parameter & Configuration Comparison"
+              description="Side-by-side comparison of architecture scale, quantization, and generation parameters."
+            />
+            <ModelParametersComparison modelA={modelA} modelB={modelB} />
+          </section>
 
           <section className="two-panel-grid">
             <div className="analysis-card">

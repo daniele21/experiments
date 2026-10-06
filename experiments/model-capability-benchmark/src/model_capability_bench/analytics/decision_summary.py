@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
+import yaml
 
 QUALITY_POLICY = {
     "quality_policy_id": "core-quality-v1",
@@ -11,6 +13,18 @@ QUALITY_POLICY = {
     "coverage_requirement": "complete",
     "normalization": "higher-is-better unit metrics mapped to 0-100",
 }
+
+
+def _load_models_yaml_config() -> dict[str, Any]:
+    for path in (Path("models.yaml"), Path(__file__).resolve().parents[3] / "models.yaml"):
+        if path.is_file():
+            try:
+                data = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if isinstance(data, dict):
+                    return data.get("models") or {}
+            except Exception:
+                pass
+    return {}
 
 
 def _rows(
@@ -422,6 +436,44 @@ def _load_environments(
     }
 
 
+def _load_run_parameters(
+    connection: Any,
+    cells: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    run_ids = sorted({str(row["run_id"]) for row in cells})
+    if not run_ids:
+        return {}
+    placeholders = ", ".join("?" for _ in run_ids)
+    rows = _rows(
+        connection,
+        f"""
+        SELECT run_id, profile, seed, source_dir
+        FROM runs
+        WHERE run_id IN ({placeholders})
+        """,
+        run_ids,
+    )
+    result: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        run_id = str(row["run_id"])
+        source_dir = row.get("source_dir")
+        gen_params: dict[str, Any] = {}
+        if source_dir:
+            env_file = Path(source_dir) / "environment.json"
+            if env_file.is_file():
+                try:
+                    env_data = json.loads(env_file.read_text(encoding="utf-8"))
+                    gen_params = (env_data.get("parameters") or {}).get("generation") or {}
+                except Exception:
+                    pass
+        result[run_id] = {
+            "profile": row.get("profile"),
+            "seed": row.get("seed"),
+            "generation": gen_params,
+        }
+    return result
+
+
 def _aggregate_case_metrics(
     cases: list[dict[str, Any]],
     *,
@@ -508,6 +560,8 @@ def build_decision_overview(
     cases, metric_map = _load_case_evidence(connection, cells)
     environments = _load_environments(connection, cells)
     run_pricing = _load_pricing(connection, cells)
+    run_parameters = _load_run_parameters(connection, cells)
+    models_config = _load_models_yaml_config()
 
     cell_by_key = {
         (
@@ -536,9 +590,15 @@ def build_decision_overview(
     for cell in cells:
         model_key = str(cell["model_key"])
         model_cells[model_key].append(cell)
-        model_meta.setdefault(
-            model_key,
-            {
+        if model_key not in model_meta:
+            cfg = (
+                models_config.get(model_key)
+                or models_config.get(str(cell.get("effective_model_id") or ""))
+                or models_config.get(str(cell.get("model_id") or ""))
+                or {}
+            )
+            artifact = cfg.get("artifact") or {}
+            model_meta[model_key] = {
                 "model_key": model_key,
                 "model_signature": str(cell["model_signature"]),
                 "model_id": cell.get("model_id"),
@@ -546,8 +606,12 @@ def build_decision_overview(
                 "runtime_key": cell.get("runtime_key"),
                 "provider_key": cell.get("provider_key"),
                 "deployment": cell.get("deployment"),
-            },
-        )
+                "family": cfg.get("family"),
+                "parameters_b": cfg.get("parameters_b"),
+                "quantization": cell.get("quantization") or artifact.get("quantization"),
+                "artifact_format": cell.get("artifact_format") or artifact.get("format"),
+                "tags": cfg.get("tags") or [],
+            }
 
     capability_count = len(selected_signatures)
     dataset_ids = sorted({str(row["dataset_id"]) for row in cases})
@@ -593,6 +657,15 @@ def build_decision_overview(
                 str(latest_cell["execution_signature"]),
             )
         )
+        latest_run_id = str(latest_cell["run_id"])
+        run_info = run_parameters.get(latest_run_id) or {}
+        if not run_info.get("generation"):
+            for cell_row in model_current_cells:
+                alt_info = run_parameters.get(str(cell_row["run_id"]))
+                if alt_info and alt_info.get("generation"):
+                    run_info = alt_info
+                    break
+
         resource_rows = [
             row["resource_summary"]
             for row in model_current_cells
@@ -631,6 +704,8 @@ def build_decision_overview(
                 "provider_cost_pricing": pricing,
                 "execution_count": len(execution_pairs),
                 "execution_environment": latest_environment,
+                "execution_profile": run_info.get("profile"),
+                "generation_parameters": run_info.get("generation") or {},
                 "resource_summary": {
                     "process_cpu_percent_avg": _mean(cpu_values),
                     "process_rss_bytes_peak": max(rss_values) if rss_values else None,
@@ -700,6 +775,8 @@ def build_decision_overview(
             )
         ]
         primary_metric = str(sample_cell["primary_metric"])
+        comparison_metric = str(sample_cell.get("comparison_metric") or "")
+        resolved_metric = primary_metric
         values: list[float] = []
         for case in dataset_cases:
             value = metric_map.get(
@@ -712,6 +789,45 @@ def build_decision_overview(
             )
             if value is not None:
                 values.append(value)
+
+        if not values and dataset_cases:
+            candidate_metrics = tuple(
+                filter(
+                    None,
+                    (
+                        comparison_metric,
+                        "oos_correct",
+                        "correct",
+                        "accuracy",
+                        "exact_match",
+                    ),
+                )
+            )
+            first_case = dataset_cases[0]
+            for candidate in candidate_metrics:
+                probe_key = (
+                    str(first_case["run_id"]),
+                    str(first_case["case_id"]),
+                    int(first_case["attempt"]),
+                    candidate,
+                )
+                if probe_key in metric_map:
+                    resolved_metric = candidate
+                    values = [
+                        metric_map[k]
+                        for c in dataset_cases
+                        if (
+                            k := (
+                                str(c["run_id"]),
+                                str(c["case_id"]),
+                                int(c["attempt"]),
+                                candidate,
+                            )
+                        )
+                        in metric_map
+                    ]
+                    break
+
         observed = _aggregate_case_metrics(
             dataset_cases,
             deployment=str(sample_cell.get("deployment") or ""),
@@ -730,7 +846,7 @@ def build_decision_overview(
                 "model_signature": sample_cell["model_signature"],
                 "capability_id": capability_id,
                 "dataset_id": dataset_id,
-                "primary_metric": primary_metric,
+                "primary_metric": resolved_metric,
                 "primary_value": _mean(values),
                 "normalized_quality_score": (
                     _mean(values) * 100.0 if values else None

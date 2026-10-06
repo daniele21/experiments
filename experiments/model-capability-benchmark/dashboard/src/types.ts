@@ -1,3 +1,11 @@
+export interface GenerationParameters {
+  temperature?: number | null;
+  max_output_tokens?: number | null;
+  seed?: number | null;
+  stop?: string[] | null;
+  extra?: Record<string, unknown> | null;
+}
+
 export interface DashboardModel {
   model_key: string;
   model_id: string;
@@ -6,6 +14,13 @@ export interface DashboardModel {
   runtime_key: string;
   provider_key: string;
   deployment: string;
+  family?: string | null;
+  parameters_b?: number | null;
+  quantization?: string | null;
+  artifact_format?: string | null;
+  tags?: string[] | null;
+  execution_profile?: string | null;
+  generation_parameters?: GenerationParameters | null;
 }
 
 export interface ExecutionEnvironment {

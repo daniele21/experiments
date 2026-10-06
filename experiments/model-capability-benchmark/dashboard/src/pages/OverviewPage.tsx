@@ -17,13 +17,18 @@ import type {
 import { bytes, cpu, milliseconds, providerCostCoverage, providerCostValue, score } from '../utils';
 import {
   DatasetHeatmap,
-  DatasetPerformanceLandscape,
   DeploymentBadge,
   MethodologyAccordion,
   MetricCard,
   QualityLeaderboard,
   TradeoffScatter,
 } from '../components/DecisionComponents';
+import {
+  ModelParamBadge,
+  ModelQuantBadge,
+  ModelSamplingMiniGrid,
+  ModelTagList,
+} from '../components/ModelParameters';
 import { AppLink, PageHeader } from '../components/Shell';
 import { ModelFilterBar, type DeploymentFilter } from '../components/ModelExplorerControls';
 import { currentQuery, updateQuery } from '../queryState';
@@ -309,17 +314,6 @@ export function OverviewPage() {
         />
       </section>
 
-      <DatasetPerformanceLandscape
-        datasets={decision.dataset_summaries.filter((dataset) =>
-          visibleModels.some((model) => model.model_key === dataset.model_key),
-        )}
-        models={visibleModels}
-        selectedModel={selected?.model_signature}
-        hoveredModel={hoveredSignature}
-        onSelect={selectModel}
-        onHover={setHoveredSignature}
-      />
-
       <section className="overview-lower-grid">
         <DatasetHeatmap
           datasets={decision.dataset_summaries.filter((dataset) =>
@@ -338,7 +332,11 @@ export function OverviewPage() {
               <div className="selected-model-heading">
                 <div className="selected-model-icon"><Cpu size={22} /></div>
                 <div>
-                  <span>Selected model</span>
+                  <div className="selected-model-badges-row">
+                    <span>Selected model</span>
+                    <ModelParamBadge parameters_b={selected.parameters_b} deployment={selected.deployment} />
+                    <ModelQuantBadge quantization={selected.quantization} deployment={selected.deployment} />
+                  </div>
                   <h2>{selected.model_key}</h2>
                   <p>
                     {selected.deployment === 'local'
@@ -348,6 +346,39 @@ export function OverviewPage() {
                 </div>
                 <DeploymentBadge deployment={selected.deployment} />
               </div>
+
+              <div className="model-param-summary">
+                <div className="param-item">
+                  <span className="param-label">Family</span>
+                  <strong className="param-val">{selected.family || '—'}</strong>
+                </div>
+                <div className="param-item">
+                  <span className="param-label">Params</span>
+                  <strong className="param-val">
+                    {selected.parameters_b != null
+                      ? `${selected.parameters_b}B`
+                      : selected.deployment === 'api'
+                        ? 'Closed'
+                        : '—'}
+                  </strong>
+                </div>
+                <div className="param-item">
+                  <span className="param-label">Quant</span>
+                  <strong className="param-val">
+                    {selected.quantization || (selected.deployment === 'api' ? 'FP16' : '—')}
+                  </strong>
+                </div>
+                <div className="param-item">
+                  <span className="param-label">Format</span>
+                  <strong className="param-val">
+                    {selected.artifact_format ? selected.artifact_format.toUpperCase() : (selected.deployment === 'api' ? 'API' : '—')}
+                  </strong>
+                </div>
+              </div>
+
+              <ModelSamplingMiniGrid model={selected} />
+
+              <ModelTagList tags={selected.tags} />
 
               <dl className="detail-list">
                 <div>

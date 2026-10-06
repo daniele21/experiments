@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from model_capability_bench.analytics.decision_summary import build_decision_overview
+from model_capability_bench.analytics.decision_summary import (
+    build_decision_overview,
+    _load_models_yaml_config,
+)
 from model_capability_bench.runner.comparison import paired_binary_comparison
 
 
@@ -66,7 +69,9 @@ def export_dashboard_data(
                 m.effective_model_id,
                 m.runtime_key,
                 m.provider_key,
-                m.deployment
+                m.deployment,
+                m.quantization,
+                m.artifact_format
             FROM v_current_quality_results q
             JOIN models m
               ON m.run_id = q.run_id
@@ -109,18 +114,34 @@ def export_dashboard_data(
                 )
             )
 
+        models_config = _load_models_yaml_config()
         capabilities = sorted({row["capability_id"] for row in current})
         models = {}
         for row in current:
-            models[row["model_signature"]] = {
-                "model_key": row["model_key"],
-                "model_id": row["model_id"],
-                "effective_model_id": row["effective_model_id"],
-                "model_signature": row["model_signature"],
-                "runtime_key": row["runtime_key"],
-                "provider_key": row["provider_key"],
-                "deployment": row["deployment"],
-            }
+            sig = row["model_signature"]
+            if sig not in models:
+                m_key = str(row["model_key"])
+                cfg = (
+                    models_config.get(m_key)
+                    or models_config.get(str(row.get("effective_model_id") or ""))
+                    or models_config.get(str(row.get("model_id") or ""))
+                    or {}
+                )
+                artifact = cfg.get("artifact") or {}
+                models[sig] = {
+                    "model_key": m_key,
+                    "model_id": row["model_id"],
+                    "effective_model_id": row["effective_model_id"],
+                    "model_signature": sig,
+                    "runtime_key": row["runtime_key"],
+                    "provider_key": row["provider_key"],
+                    "deployment": row["deployment"],
+                    "family": cfg.get("family"),
+                    "parameters_b": cfg.get("parameters_b"),
+                    "quantization": row.get("quantization") or artifact.get("quantization"),
+                    "artifact_format": row.get("artifact_format") or artifact.get("format"),
+                    "tags": cfg.get("tags") or [],
+                }
 
         decision = build_decision_overview(connection, current)
         overview = {
