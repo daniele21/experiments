@@ -3697,17 +3697,18 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
    ========================================================================== */
 
 .executive-page {
+  width: min(100%, 1240px);
+  margin: 0 auto;
   display: grid;
-  gap: 18px;
-  max-width: 1380px;
+  gap: 12px;
 }
 
 .executive-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 22px;
-  padding: 2px 0 0;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
 }
 
 .executive-title-lockup {
@@ -3717,8 +3718,8 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-mark {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border-radius: 12px;
@@ -3745,7 +3746,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .executive-title-lockup h1 {
   margin: 0;
   color: #10192a;
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.08;
   letter-spacing: -.035em;
 }
@@ -3787,10 +3788,10 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .executive-story {
   position: relative;
   overflow: hidden;
-  min-height: 164px;
+  min-height: 0;
   display: grid;
   align-items: center;
-  padding: 28px 34px;
+  padding: 18px 22px;
   border: 1px solid #dfe5f0;
   border-radius: 14px;
   background:
@@ -3803,10 +3804,10 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .executive-story::after {
   content: "";
   position: absolute;
-  width: 250px;
-  height: 250px;
-  right: -90px;
-  top: -96px;
+  width: 170px;
+  height: 170px;
+  right: -64px;
+  top: -72px;
   border: 1px solid rgba(79, 99, 244, .11);
   border-radius: 50%;
   box-shadow:
@@ -3829,25 +3830,25 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-story-copy h2 {
-  max-width: 980px;
-  margin: 8px 0 9px;
+  max-width: 900px;
+  margin: 5px 0 6px;
   color: #111a2b;
-  font-size: clamp(25px, 2.6vw, 38px);
+  font-size: clamp(20px, 2vw, 29px);
   line-height: 1.08;
   letter-spacing: -.045em;
 }
 
 .executive-story-copy p {
-  max-width: 850px;
+  max-width: 780px;
   margin: 0;
   color: #68758c;
-  font-size: 12px;
+  font-size: 10.5px;
   line-height: 1.55;
 }
 
 .executive-visual-card {
-  min-height: 500px;
-  padding: 22px 24px 24px;
+  min-height: 0;
+  padding: 16px 18px 18px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: rgba(255,255,255,.98);
@@ -3855,7 +3856,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-visual-heading {
-  min-height: 54px;
+  min-height: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -3889,11 +3890,11 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .executive-ranking {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
 .executive-rank-row {
-  min-height: 55px;
+  min-height: 44px;
   display: grid;
   grid-template-columns: 26px minmax(150px, 230px) minmax(150px, 1fr) 56px;
   align-items: center;
@@ -3949,7 +3950,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-rank-track {
-  height: 12px;
+  height: 9px;
   overflow: hidden;
   border-radius: 999px;
   background: #eef2f7;
@@ -3975,7 +3976,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-plot-shell {
-  min-height: 390px;
+  min-height: 320px;
   display: grid;
   place-items: stretch;
   border: 1px solid #e8edf5;
@@ -3987,7 +3988,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .executive-plot {
   width: 100%;
-  min-height: 390px;
+  min-height: 320px;
 }
 
 .executive-plot-grid line {
@@ -4037,11 +4038,11 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .executive-capability-list {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 
 .executive-capability-row {
-  min-height: 66px;
+  min-height: 50px;
   display: grid;
   grid-template-columns: minmax(180px, 280px) minmax(200px, 1fr) 100px;
   align-items: center;
@@ -4076,7 +4077,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-capability-track {
-  height: 12px;
+  height: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: #eef2f7;
@@ -4107,11 +4108,11 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .executive-reliability {
   display: grid;
-  gap: 9px;
+  gap: 3px;
 }
 
 .executive-reliability-row {
-  min-height: 62px;
+  min-height: 46px;
   display: grid;
   grid-template-columns: minmax(200px, 300px) minmax(200px, 1fr) 70px;
   align-items: center;
@@ -4145,7 +4146,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-reliability-track {
-  height: 11px;
+  height: 8px;
   overflow: hidden;
   border-radius: 999px;
   background: #eef2f7;
@@ -4170,7 +4171,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .executive-empty {
-  min-height: 360px;
+  min-height: 220px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -4351,7 +4352,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .dataset-fit-main {
-  min-height: 560px;
+  min-height: 0;
 }
 
 .dataset-fit-aside {
@@ -4361,7 +4362,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .dataset-fit-side-card {
   min-width: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: 15px;
   background: rgba(255,255,255,.98);
@@ -4405,7 +4406,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .dataset-heatmap-column,
 .dataset-heatmap-rowlabel,
 .dataset-heatmap-cell {
-  min-height: 50px;
+  min-height: 44px;
   border-right: 1px solid rgba(225,230,239,.9);
   border-bottom: 1px solid rgba(225,230,239,.9);
 }
@@ -4456,14 +4457,15 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .dataset-heatmap-rowlabel strong {
-  color: #202c40;
-  font-size: 9px;
+  color: #172033;
+  font-size: 10.5px;
+  line-height: 1.2;
 }
 
 .dataset-heatmap-rowlabel span {
   overflow: hidden;
-  color: #929cac;
-  font-size: 7.4px;
+  color: #8a95a7;
+  font-size: 7.7px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4504,7 +4506,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .dataset-winner-row {
-  min-height: 54px;
+  min-height: 46px;
   display: grid;
   grid-template-columns: minmax(85px, .8fr) minmax(110px, 1.1fr) 42px;
   align-items: center;
@@ -4555,10 +4557,10 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .dataset-fit-takeaway {
   display: grid;
-  grid-template-columns: 25px minmax(0, 1fr);
+  grid-template-columns: 23px minmax(0, 1fr);
   align-items: start;
-  gap: 9px;
-  padding: 10px 3px;
+  gap: 8px;
+  padding: 8px 3px;
   border-bottom: 1px solid #edf0f5;
 }
 
