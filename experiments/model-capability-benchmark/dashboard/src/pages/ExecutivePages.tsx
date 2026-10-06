@@ -1,15 +1,18 @@
 import {
   BadgeDollarSign,
+  Database,
   Layers3,
   ShieldCheck,
   Sparkles,
   Trophy,
   Zap,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { overview } from '../data';
 import type {
   DecisionCapabilitySummary,
+  DecisionDatasetSummary,
   DecisionModelSummary,
 } from '../types';
 import { AppLink } from '../components/Shell';
@@ -19,6 +22,7 @@ export type ExecutiveView =
   | 'speed'
   | 'cost'
   | 'capabilities'
+  | 'dataset-fit'
   | 'reliability';
 
 const EXECUTIVE_VIEWS: Array<{
@@ -30,6 +34,7 @@ const EXECUTIVE_VIEWS: Array<{
   { id: 'speed', label: 'Speed', href: '/executive/speed' },
   { id: 'cost', label: 'Cost', href: '/executive/cost' },
   { id: 'capabilities', label: 'Capabilities', href: '/executive/capabilities' },
+  { id: 'dataset-fit', label: 'Dataset fit', href: '/executive/dataset-fit' },
   { id: 'reliability', label: 'Reliability', href: '/executive/reliability' },
 ];
 
@@ -280,6 +285,456 @@ function CapabilityLeadership({
   );
 }
 
+
+type DatasetFitMode = 'models' | 'families';
+
+interface DatasetMatrixCell {
+  dataset: string;
+  key: string;
+  label: string;
+  score: number;
+  observedCases: number;
+}
+
+interface DatasetMatrixColumn {
+  key: string;
+  label: string;
+  family?: string | null;
+}
+
+function datasetLabel(value: string): string {
+  return value
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function aggregateDatasetCells(
+  rows: DecisionDatasetSummary[],
+  models: DecisionModelSummary[],
+  mode: DatasetFitMode,
+): {
+  cells: DatasetMatrixCell[];
+  columns: DatasetMatrixColumn[];
+  datasets: string[];
+} {
+  const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
+  const modelByKey = new Map(models.map((model) => [model.model_key, model]));
+  const grouped = new Map<string, { weighted: number; weight: number; dataset: string; key: string; label: string }>();
+
+  for (const row of rows) {
+    if (row.normalized_quality_score == null || !Number.isFinite(row.normalized_quality_score)) continue;
+    const model = modelBySignature.get(row.model_signature) ?? modelByKey.get(row.model_key);
+    const family = model?.family ?? 'Unclassified';
+    const key = mode === 'models' ? row.model_signature : family;
+    const label = mode === 'models' ? row.model_key : family;
+    const weight = Math.max(1, row.observed_case_count || row.sample_count || 1);
+    const groupKey = `${row.dataset_id}::${key}`;
+    const current = grouped.get(groupKey) ?? {
+      weighted: 0,
+      weight: 0,
+      dataset: row.dataset_id,
+      key,
+      label,
+    };
+    current.weighted += Number(row.normalized_quality_score) * weight;
+    current.weight += weight;
+    grouped.set(groupKey, current);
+  }
+
+  const cells = [...grouped.values()].map((item) => ({
+    dataset: item.dataset,
+    key: item.key,
+    label: item.label,
+    score: item.weighted / item.weight,
+    observedCases: item.weight,
+  }));
+  const datasets = [...new Set(cells.map((cell) => cell.dataset)].sort();
+  const columns = [...new Map(
+    cells.map((cell) => [
+      cell.key,
+      {
+        key: cell.key,
+        label: cell.label,
+        family:
+          mode === 'models'
+            ? (modelBySignature.get(cell.key)?.family ?? null)
+            : cell.label,
+      },
+    ]),
+  ).values()].sort((a, b) => a.label.localeCompare(b.label));
+
+  return { cells, columns, datasets };
+}
+
+function DatasetHeatmap({
+  cells,
+  columns,
+  datasets,
+}: {
+  cells: DatasetMatrixCell[];
+  columns: DatasetMatrixColumn[];
+  datasets: string[];
+}) {
+  if (!cells.length || !columns.length || !datasets.length) {
+    return <ExecutiveEmpty message="Project dataset-level CURRENT evidence to populate model × dataset fit." />;
+  }
+
+  const byKey = new Map(cells.map((cell) => [`${cell.dataset}::${cell.key}`, cell]));
+  const winnerByDataset = new Map<string, string>();
+  for (const dataset of datasets) {
+    const candidates = cells
+      .filter((cell) => cell.dataset === dataset)
+      .sort((a, b) => b.score - a.score);
+    if (candidates[0]) winnerByDataset.set(dataset, candidates[0].key);
+  }
+
+  return (
+    <div className="dataset-heatmap-wrap">
+      <div
+        className="dataset-heatmap"
+        style={{ gridTemplateColumns: `minmax(170px, 1.45fr) repeat(${columns.length}, minmax(112px, 1fr))` }}
+      >
+        <div className="dataset-heatmap-corner">Dataset</div>
+        {columns.map((column) => (
+          <div className="dataset-heatmap-column" key={column.key}>
+            <strong>{column.label}</strong>
+            {column.family && column.family !== column.label ? <span>{column.family}</span> : null}
+          </div>
+        ))}
+        {datasets.flatMap((dataset) => {
+          const datasetCells = columns.map((column) => {
+            const cell = byKey.get(`${dataset}::${column.key}`);
+            const score = cell?.score ?? null;
+            const winner = winnerByDataset.get(dataset) === column.key;
+            const normalized = score == null ? 0 : Math.max(0, Math.min(100, score)) / 100;
+            return (
+              <div
+                key={`${dataset}::${column.key}`}
+                className={[
+                  'dataset-heatmap-cell',
+                  winner ? 'winner' : '',
+                  score == null ? 'missing' : '',
+                ].filter(Boolean).join(' ')}
+                style={
+                  score == null
+                    ? undefined
+                    : {
+                        background: `linear-gradient(145deg, rgba(70, 108, 239, ${0.07 + normalized * 0.76}), rgba(70, 171, 204, ${0.04 + normalized * 0.30}))`,
+                        color: normalized > 0.62 ? '#fff' : '#213149',
+                      }
+                }
+                title={score == null ? 'No evidence' : `${column.label} · ${dataset}: ${score.toFixed(1)}`}
+              >
+                {score == null ? '—' : score.toFixed(1)}
+              </div>
+            );
+          });
+          return [
+            <div className="dataset-heatmap-rowlabel" key={`${dataset}::label`}>
+              <strong>{datasetLabel(dataset)}</strong>
+              <span>{dataset}</span>
+            </div>,
+            ...datasetCells,
+          ];
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FamilyDatasetBars({
+  cells,
+  columns,
+  datasets,
+}: {
+  cells: DatasetMatrixCell[];
+  columns: DatasetMatrixColumn[];
+  datasets: string[];
+}) {
+  if (!cells.length || !columns.length || !datasets.length) {
+    return <ExecutiveEmpty message="At least one model family with dataset-level evidence is required." />;
+  }
+
+  const byKey = new Map(cells.map((cell) => [`${cell.dataset}::${cell.key}`, cell]));
+  const palette = ['#4f67ee', '#31a775', '#835fe6', '#e29a43', '#4b9eb7', '#7b879a'];
+  const width = Math.max(900, datasets.length * Math.max(118, columns.length * 35));
+  const left = 62;
+  const right = 30;
+  const top = 34;
+  const bottom = 74;
+  const chartW = width - left - right;
+  const chartH = 280;
+  const groupW = chartW / Math.max(1, datasets.length);
+  const innerW = Math.min(groupW * 0.75, columns.length * 26);
+  const barW = Math.max(7, Math.min(22, innerW / Math.max(1, columns.length) - 3));
+
+  return (
+    <div className="family-bars-wrap">
+      <div className="family-bars-legend">
+        {columns.map((column, index) => (
+          <span key={column.key}><i style={{ background: palette[index % palette.length] }} />{column.label}</span>
+        ))}
+      </div>
+      <svg
+        className="family-dataset-bars"
+        viewBox={`0 0 ${width} ${top + chartH + bottom}`}
+        style={{ minWidth: width }}
+        role="img"
+        aria-label="Model family performance by dataset"
+      >
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const y = top + chartH - (tick / 100) * chartH;
+          return (
+            <g key={tick}>
+              <line x1={left} y1={y} x2={width - right} y2={y} className="family-bars-grid" />
+              <text x={left - 10} y={y + 3} textAnchor="end" className="family-bars-tick">{tick}</text>
+            </g>
+          );
+        })}
+        {datasets.map((dataset, datasetIndex) => {
+          const groupX = left + datasetIndex * groupW;
+          const startX = groupX + (groupW - columns.length * (barW + 3)) / 2;
+          return (
+            <g key={dataset}>
+              {columns.map((column, columnIndex) => {
+                const score = byKey.get(`${dataset}::${column.key}`)?.score ?? 0;
+                const barHeight = (Math.max(0, Math.min(100, score)) / 100) * chartH;
+                return (
+                  <rect
+                    key={column.key}
+                    x={startX + columnIndex * (barW + 3)}
+                    y={top + chartH - barHeight}
+                    width={barW}
+                    height={barHeight}
+                    rx="3"
+                    fill={palette[columnIndex % palette.length]}
+                  >
+                    <title>{`${column.label} · ${dataset}: ${score.toFixed(1)}`}</title>
+                  </rect>
+                );
+              })}
+              <text
+                x={groupX + groupW / 2}
+                y={top + chartH + 24}
+                textAnchor="middle"
+                className="family-bars-label"
+              >
+                {datasetLabel(dataset)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function DatasetWinners({
+  cells,
+  datasets,
+}: {
+  cells: DatasetMatrixCell[];
+  datasets: string[];
+}) {
+  const winners = datasets
+    .map((dataset) => {
+      const ranked = cells
+        .filter((cell) => cell.dataset === dataset)
+        .sort((a, b) => b.score - a.score);
+      return { dataset, winner: ranked[0], runnerUp: ranked[1] };
+    })
+    .filter((item) => item.winner);
+
+  return (
+    <div className="dataset-winners">
+      {winners.map(({ dataset, winner, runnerUp }) => (
+        <div className="dataset-winner-row" key={dataset}>
+          <div>
+            <strong>{datasetLabel(dataset)}</strong>
+            <span>{dataset}</span>
+          </div>
+          <div>
+            <strong>{winner.label}</strong>
+            <span>
+              {runnerUp ? `+${(winner.score - runnerUp.score).toFixed(1)} vs #2` : 'only measured option'}
+            </span>
+          </div>
+          <strong>{winner.score.toFixed(1)}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DatasetFitExecutivePage({
+  models,
+  datasets: datasetRows,
+}: {
+  models: DecisionModelSummary[];
+  datasets: DecisionDatasetSummary[];
+}) {
+  const [mode, setMode] = useState<DatasetFitMode>('models');
+  const capabilities = useMemo(
+    () => [...new Set(datasetRows.map((row) => row.capability_id))].sort(),
+    [datasetRows],
+  );
+  const families = useMemo(
+    () => [...new Set(models.map((model) => model.family).filter((value): value is string => Boolean(value)))].sort(),
+    [models],
+  );
+  const [capability, setCapability] = useState('all');
+  const [family, setFamily] = useState('all');
+
+  const filteredRows = useMemo(() => {
+    const allowedModels =
+      family === 'all'
+        ? null
+        : new Set(
+            models
+              .filter((model) => model.family === family)
+              .map((model) => model.model_signature),
+          );
+    return datasetRows.filter(
+      (row) =>
+        (capability === 'all' || row.capability_id === capability) &&
+        (allowedModels == null || allowedModels.has(row.model_signature)),
+    );
+  }, [datasetRows, capability, family, models]);
+
+  const matrix = useMemo(
+    () => aggregateDatasetCells(filteredRows, models, mode),
+    [filteredRows, models, mode],
+  );
+
+  const winCounts = new Map<string, number>();
+  for (const dataset of matrix.datasets) {
+    const winner = matrix.cells
+      .filter((cell) => cell.dataset === dataset)
+      .sort((a, b) => b.score - a.score)[0];
+    if (winner) winCounts.set(winner.label, (winCounts.get(winner.label) ?? 0) + 1);
+  }
+  const topWinner = [...winCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  const spreads = matrix.datasets
+    .map((dataset) => {
+      const scores = matrix.cells
+        .filter((cell) => cell.dataset === dataset)
+        .map((cell) => cell.score)
+        .sort((a, b) => b - a);
+      return scores.length >= 2
+        ? { dataset, gap: scores[0] - scores[1], range: scores[0] - scores[scores.length - 1] }
+        : null;
+    })
+    .filter((value): value is { dataset: string; gap: number; range: number } => value != null);
+  const strongestSeparation = [...spreads].sort((a, b) => b.gap - a.gap)[0];
+  const tightest = [...spreads].sort((a, b) => a.range - b.range)[0];
+
+  const statement = topWinner
+    ? mode === 'models'
+      ? `${topWinner[0]} wins the most measured datasets in the current cohort.`
+      : `${topWinner[0]} is the strongest family across the broadest set of measured datasets.`
+    : 'Dataset-level evidence is not sufficient to establish a model–dataset fit.';
+
+  const evidence = topWinner
+    ? `${topWinner[1]} win${topWinner[1] === 1 ? '' : 's'} across ${matrix.datasets.length} comparable datasets${capability === 'all' ? '' : ` within ${capability}`}.`
+    : 'Project CURRENT dataset summaries to identify where individual models and model families are strongest.';
+
+  return (
+    <ExecutiveFrame
+      active="dataset-fit"
+      eyebrow="Executive · Model × Dataset fit"
+      title="Which model fits which dataset best?"
+      statement={statement}
+      evidence={evidence}
+    >
+      <section className="dataset-fit-controls">
+        <div className="dataset-fit-toggle" role="group" aria-label="Dataset fit aggregation">
+          <button type="button" className={mode === 'models' ? 'active' : ''} onClick={() => setMode('models')}>
+            All models
+          </button>
+          <button type="button" className={mode === 'families' ? 'active' : ''} onClick={() => setMode('families')}>
+            By family
+          </button>
+        </div>
+        <label>
+          <span>Capability</span>
+          <select value={capability} onChange={(event) => setCapability(event.target.value)}>
+            <option value="all">All capabilities</option>
+            {capabilities.map((value) => <option key={value} value={value}>{datasetLabel(value)}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Model family</span>
+          <select value={family} onChange={(event) => setFamily(event.target.value)} disabled={mode === 'families'}>
+            <option value="all">All families</option>
+            {families.map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <div className="dataset-fit-grid">
+        <section className="executive-visual-card dataset-fit-main">
+          <div className="executive-visual-heading">
+            <div>
+              <span>{mode === 'models' ? 'Model × Dataset performance' : 'Family performance by dataset'}</span>
+              <h3>
+                {mode === 'models'
+                  ? 'Highlighted cells show the best measured model for each dataset'
+                  : 'Average CURRENT quality by model family'}
+              </h3>
+            </div>
+            <Database size={20} />
+          </div>
+          {mode === 'models' ? (
+            <DatasetHeatmap cells={matrix.cells} columns={matrix.columns} datasets={matrix.datasets} />
+          ) : (
+            <FamilyDatasetBars cells={matrix.cells} columns={matrix.columns} datasets={matrix.datasets} />
+          )}
+        </section>
+
+        <aside className="dataset-fit-aside">
+          <section className="dataset-fit-side-card">
+            <div className="dataset-fit-side-heading">
+              <span>Dataset winners</span>
+              <strong>{mode === 'models' ? 'Best model' : 'Best family'}</strong>
+            </div>
+            <DatasetWinners cells={matrix.cells} datasets={matrix.datasets} />
+          </section>
+
+          <section className="dataset-fit-side-card dataset-fit-takeaways">
+            <div className="dataset-fit-side-heading">
+              <span>Key takeaways</span>
+              <strong>Current evidence</strong>
+            </div>
+            <div className="dataset-fit-takeaway">
+              <i>1</i>
+              <div>
+                <strong>{topWinner ? `${topWinner[0]} wins most often` : 'No dominant winner yet'}</strong>
+                <span>{topWinner ? `${topWinner[1]} of ${matrix.datasets.length} measured datasets.` : 'More comparable datasets are needed.'}</span>
+              </div>
+            </div>
+            <div className="dataset-fit-takeaway">
+              <i>2</i>
+              <div>
+                <strong>{strongestSeparation ? `${datasetLabel(strongestSeparation.dataset)} separates competitors most` : 'No clear separation signal'}</strong>
+                <span>{strongestSeparation ? `${strongestSeparation.gap.toFixed(1)} point lead over #2.` : 'At least two competitors per dataset are required.'}</span>
+              </div>
+            </div>
+            <div className="dataset-fit-takeaway">
+              <i>3</i>
+              <div>
+                <strong>{tightest ? `${datasetLabel(tightest.dataset)} is the tightest contest` : 'No clustering signal yet'}</strong>
+                <span>{tightest ? `${tightest.range.toFixed(1)} point spread from best to worst measured option.` : 'More overlapping evidence is required.'}</span>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </ExecutiveFrame>
+  );
+}
+
 function ReliabilityBars({ models }: { models: DecisionModelSummary[] }) {
   const rows = [...models]
     .filter((model) => model.failure_rate != null)
@@ -318,6 +773,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
   const decision = overview.decision;
   const models = decision?.model_summaries ?? [];
   const capabilities = decision?.capability_summaries ?? [];
+  const datasets = decision?.dataset_summaries ?? [];
 
   const qualityModels = [...models]
     .filter((model) => model.overall_quality_score != null)
@@ -469,6 +925,10 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
         </section>
       </ExecutiveFrame>
     );
+  }
+
+  if (view === 'dataset-fit') {
+    return <DatasetFitExecutivePage models={models} datasets={datasets} />;
   }
 
   if (view === 'capabilities') {
