@@ -27,13 +27,13 @@ export function App() {
   const modelMatch = pathname.match(/^\/models\/([^/]+)$/);
   const datasetMatch = pathname.match(/^\/datasets\/([^/]+)$/);
   const runMatch = pathname.match(/^\/runs\/([^/]+)$/);
-  const executiveMatch = pathname.match(/^\/executive\/(quality|speed|size|cost|capabilities|dataset-fit|reliability)$/);
+  const executiveMatch = pathname.match(/^\/executive\/(scorecard|quality|speed|size|cost|capabilities|dataset-fit|reliability)$/);
 
   let page: ReactNode;
   if (pathname === '/' || pathname === '/overview') {
     page = <OverviewPage />;
   } else if (pathname === '/executive') {
-    page = <ExecutivePage view="quality" />;
+    page = <ExecutivePage view="scorecard" />;
   } else if (executiveMatch) {
     page = <ExecutivePage view={executiveMatch[1] as ExecutiveView} />;
   } else if (pathname === '/models') {
