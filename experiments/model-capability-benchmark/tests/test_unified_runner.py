@@ -88,6 +88,15 @@ class _FakeRuntime:
             fail_sample_ids=self.fail_sample_ids,
         )
 
+    def execution_metadata(self, model: ResolvedModel) -> dict[str, object]:
+        return {
+            "runtime_source": "fixture",
+            "runtime_key": model.effective_model_id,
+            "runtime_identity": {
+                "fingerprint": f"fixture-{model.model.model_key}",
+            },
+        }
+
     def release(self, model: ResolvedModel) -> None:
         self.release_calls.append(model.model.model_key)
 
@@ -217,6 +226,9 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
     assert first.metadata["signatures"]["models"]
     assert first.metadata["signatures"]["benchmarks"]
     assert first.metadata["signatures"]["executions"]
+    execution_metadata = first.metadata["signatures"]["execution_metadata"]
+    assert execution_metadata["qwen3.5-2b-q4km"]["runtime_source"] == "fixture"
+    assert execution_metadata["qwen3.5-2b-q4km"]["runtime_key"] == "qwen3.5-2b-q4km"
 
     resumed_runtime = _FakeRuntime()
     resumed = _runner(tmp_path, runtime=resumed_runtime).run(config)

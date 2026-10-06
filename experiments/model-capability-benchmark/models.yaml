@@ -168,6 +168,54 @@ models:
       - open-weight
       - qwen
 
+  spark-x2.5-4b-q4km:
+    model_id: XHToken/Spark-X2.5-4B
+    runtime_model_id: spark-x2.5-4b-q4km
+    runtime: korgis-local
+    family: spark-x2.5
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      size_bytes: 2600224352
+      metadata:
+        sha256: adfcfa19a4ed6a5985da8bf565fe15f8e1a7e131d79bae2d19d48d1c40109428
+        resolved_by: korgis-model-registry
+        source_revision: d313463f1ff7dc29db20193fddc4ad8386d16261
+        required_runtime: llama.cpp>=b10828
+    tags:
+      - local
+      - open-weight
+      - spark
+      - reasoning
+      - coding
+      - agentic
+      - q4
+      - 4b
+
+  ternary-bonsai2-27b-ptq1:
+    model_id: prism-ml/Ternary-Bonsai-2-27B-gguf
+    runtime_model_id: ternary-bonsai2-27b-ptq1
+    runtime: korgis-local
+    family: ternary-bonsai-2
+    parameters_b: 27
+    artifact:
+      format: gguf
+      quantization: PTQ1_0
+      size_bytes: 5946648928
+      metadata:
+        sha256: 53107f530aa52eb00912263ab1ee29bd199261c87cd7b4ad4ca1318c1fe33ee3
+        resolved_by: korgis-model-registry
+        required_runtime: prismml-llama.cpp
+    tags:
+      - local
+      - open-weight
+      - ternary
+      - bonsai
+      - prismml
+      - q1
+      - 27b
+
   gpt-5.6-luna:
     model_id: gpt-5.6-luna
     runtime: openai-api

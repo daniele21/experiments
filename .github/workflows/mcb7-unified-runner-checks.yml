@@ -64,6 +64,7 @@ jobs:
           KORGIS_BASE_URL: http://127.0.0.1:1235/v1
           OPENAI_API_KEY: ci-placeholder
           MINICPM_API_KEY: ci-placeholder
+          TYPESAFE_API_KEY: ci-placeholder
         run: |
           uv run model-bench models
           uv run model-bench tasks

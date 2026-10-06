@@ -6,6 +6,11 @@ export interface DashboardModel {
   runtime_key: string;
   provider_key: string;
   deployment: string;
+  family?: string | null;
+  parameters_b?: number | null;
+  quantization?: string | null;
+  artifact_format?: string | null;
+  artifact_size_bytes?: number | null;
 }
 
 export interface ExecutionEnvironment {
@@ -188,6 +193,67 @@ export interface DecisionPayload {
   dataset_summaries: DecisionDatasetSummary[];
 }
 
+export interface FrontierPoint {
+  model_key: string;
+  model_signature: string;
+  family: string | null;
+  parameters_b: number | null;
+  quantization: string | null;
+  artifact_size_bytes: number | null;
+  peak_rss_bytes: number | null;
+  latency_p50_ms: number | null;
+  quality: number | null;
+  deployment: string;
+  compression_group: string | null;
+  pareto_parameters: boolean;
+  pareto_artifact_size: boolean;
+  pareto_peak_rss: boolean;
+  pareto_latency: boolean;
+}
+
+export interface FrontierPayload {
+  schema_version: string;
+  points: FrontierPoint[];
+  families: string[];
+  compression_groups: string[];
+}
+
+export interface SensitivityPoint {
+  run_id: string;
+  configuration_id: string;
+  sweep_id: string;
+  label: string;
+  changed_dimension: string | null;
+  is_baseline: boolean;
+  inference_config: Record<string, unknown>;
+  runtime_config: Record<string, unknown>;
+  parameter_value: unknown;
+  model_key: string;
+  model_signature: string;
+  capability_id: string;
+  primary_metric: string;
+  primary_value: number | null;
+  sample_count: number;
+  failure_count: number;
+  completed_at_utc: string;
+  latency_p50_ms: number | null;
+  latency_mean_ms: number | null;
+  output_tokens_avg: number | null;
+  process_rss_bytes_peak: number | null;
+  quality_delta_vs_baseline: number | null;
+  latency_delta_pct_vs_baseline: number | null;
+  rss_delta_pct_vs_baseline: number | null;
+}
+
+export interface SensitivityPayload {
+  schema_version: string;
+  points: SensitivityPoint[];
+  models: string[];
+  sweeps: string[];
+  capabilities: string[];
+  dimensions: string[];
+}
+
 export interface OverviewPayload {
   schema_version: string;
   fixture?: boolean;
@@ -196,6 +262,8 @@ export interface OverviewPayload {
   cells: CapabilityCell[];
   runs: Array<Record<string, unknown>>;
   decision?: DecisionPayload;
+  frontier?: FrontierPayload;
+  sensitivity?: SensitivityPayload;
 }
 
 export interface FamilyBreakdown {

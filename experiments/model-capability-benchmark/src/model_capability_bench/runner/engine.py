@@ -40,6 +40,43 @@ from model_capability_bench.runner.evidence import EvidenceStore
 from model_capability_bench.runner.pricing import enrich_inference_cost
 from model_capability_bench.suite import CapabilitySuiteBundle
 
+_DIRECT_GENERATION_KEYS = {"temperature", "max_output_tokens", "seed", "stop"}
+_EXTRA_GENERATION_KEYS = {"top_p", "top_k", "min_p", "repeat_penalty"}
+
+
+def _configured_generation(base: Any, config: RunnerConfig) -> Any:
+    overrides = dict(config.inference_config)
+    unknown = sorted(
+        set(overrides) - _DIRECT_GENERATION_KEYS - _EXTRA_GENERATION_KEYS
+    )
+    if unknown:
+        raise ValueError(
+            "Unsupported inference configuration keys: " + ", ".join(unknown)
+        )
+
+    extra = dict(base.extra)
+    for key in _EXTRA_GENERATION_KEYS:
+        if key in overrides:
+            extra[key] = overrides.pop(key)
+
+    stop = overrides.pop("stop", base.stop)
+    if stop is None:
+        stop = ()
+    elif isinstance(stop, str):
+        stop = (stop,)
+    else:
+        stop = tuple(stop)
+    return dataclasses.replace(
+        base,
+        temperature=overrides.pop("temperature", base.temperature),
+        max_output_tokens=overrides.pop(
+            "max_output_tokens", base.max_output_tokens
+        ),
+        seed=overrides.pop("seed", config.seed),
+        stop=stop,
+        extra=extra,
+    )
+
 
 class CapabilityRunner:
     def __init__(
@@ -68,9 +105,9 @@ class CapabilityRunner:
 
     def run(self, config: RunnerConfig) -> RunnerSummary:
         profile = self._profile(config.profile)
-        generation = dataclasses.replace(
+        generation = _configured_generation(
             self.suite.suite.generation,
-            seed=config.seed,
+            config,
         )
         selected_models = self.suite.models.select(
             model_keys=config.model_keys,
@@ -112,6 +149,9 @@ class CapabilityRunner:
                 "suite_version": self.suite.suite.version,
                 "profile": config.profile,
                 "seed": config.seed,
+                "configuration_id": config.configuration_id,
+                "inference_config": dict(config.inference_config),
+                "runtime_config": dict(config.runtime_config),
                 "model_keys": list(config.model_keys),
                 "capability_ids": list(capability_ids),
             },
@@ -128,6 +168,7 @@ class CapabilityRunner:
         signature_catalog: dict[str, Any] = {
             "models": {},
             "executions": {},
+            "execution_metadata": {},
             "benchmarks": {},
             "execution_environment": execution_environment,
         }
@@ -138,19 +179,12 @@ class CapabilityRunner:
                 continue
 
             model_sig = model_signature(model)
-            execution_sig = execution_signature(
-                model,
-                execution_metadata=config.metadata,
-                execution_environment=execution_environment,
-            )
             signature_catalog["models"][model.model.model_key] = model_sig
-            signature_catalog["executions"][model.model.model_key] = execution_sig
             model_metadata = {
                 "run_id": identity.run_id,
                 "run_group": identity.run_group,
                 "model_key": model.model.model_key,
                 "model_signature": model_sig,
-                "execution_signature": execution_sig,
                 "runtime_key": model.runtime.runtime_key,
                 "provider_key": model.provider.provider_key,
             }
@@ -162,12 +196,50 @@ class CapabilityRunner:
             prepare_started = perf_counter()
             try:
                 runtime = self.runtime_resolver(model)
+                if config.runtime_config:
+                    runtime_configurer = getattr(runtime, "configure", None)
+                    if not callable(runtime_configurer):
+                        raise ValueError(
+                            f"Runtime {model.runtime.runtime_key!r} does not support "
+                            "runtime configuration overrides"
+                        )
+                    runtime_configurer(config.runtime_config)
                 provider = runtime.prepare(model)
                 if not isinstance(provider, InferenceProvider):
                     raise TypeError(
                         f"Runtime {model.runtime.runtime_key!r} did not return "
                         "an InferenceProvider"
                     )
+
+                runtime_execution_metadata: dict[str, Any] = {}
+                runtime_metadata_getter = getattr(runtime, "execution_metadata", None)
+                if callable(runtime_metadata_getter):
+                    resolved_runtime_metadata = runtime_metadata_getter(model)
+                    if resolved_runtime_metadata:
+                        runtime_execution_metadata = dict(resolved_runtime_metadata)
+
+                merged_execution_metadata = {
+                    **dict(config.metadata),
+                    "configuration_id": config.configuration_id,
+                    "inference_config": dict(config.inference_config),
+                    "runtime_config": dict(config.runtime_config),
+                    **runtime_execution_metadata,
+                }
+                execution_sig = execution_signature(
+                    model,
+                    execution_metadata=merged_execution_metadata,
+                    execution_environment=execution_environment,
+                )
+                signature_catalog["executions"][model.model.model_key] = execution_sig
+                signature_catalog["execution_metadata"][
+                    model.model.model_key
+                ] = merged_execution_metadata
+                model_metadata["execution_signature"] = execution_sig
+                if runtime_execution_metadata:
+                    model_metadata["runtime_execution_metadata"] = (
+                        runtime_execution_metadata
+                    )
+
                 self.evidence_store.record_stage_event(
                     "model.prepare.completed",
                     metadata=model_metadata,
@@ -299,6 +371,8 @@ class CapabilityRunner:
                                 metadata={
                                     "context_fingerprints": context_fingerprints,
                                     "context_checksums": context_checksums,
+                                    "configuration_id": config.configuration_id,
+                                    "runtime_config": dict(config.runtime_config),
                                 },
                             )
                             case_id = case_identity.case_id
@@ -346,6 +420,9 @@ class CapabilityRunner:
                                 "sample_id": sample.sample_id,
                                 "profile": config.profile,
                                 "benchmark_tier": config.profile,
+                                "configuration_id": config.configuration_id,
+                                "inference_config": dict(config.inference_config),
+                                "runtime_config": dict(config.runtime_config),
                                 "case_family": sample.metadata.get("family"),
                                 "difficulty": sample.metadata.get("difficulty"),
                                 "challenge_type": sample.metadata.get(

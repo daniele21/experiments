@@ -1,0 +1,47 @@
+# Controlled experiment matrices for configuration sensitivity.
+# one_at_a_time isolates each parameter around one reproducible baseline.
+sweeps:
+  generation-sensitivity:
+    strategy: one_at_a_time
+    baseline:
+      inference:
+        temperature: 0.0
+        max_output_tokens: 256
+        top_p: 0.95
+      runtime:
+        ctx_size: 4096
+    dimensions:
+      runtime.ctx_size: [2048, 4096, 8192, 16384, 32768]
+      inference.max_output_tokens: [128, 256, 512, 1024]
+      inference.temperature: [0.0, 0.2, 0.7, 1.0]
+      inference.top_p: [0.8, 0.9, 0.95, 1.0]
+
+  runtime-efficiency:
+    strategy: one_at_a_time
+    baseline:
+      inference:
+        temperature: 0.0
+        max_output_tokens: 256
+        top_p: 0.95
+      runtime:
+        ctx_size: 4096
+        n_batch: 512
+        n_ubatch: 512
+    dimensions:
+      runtime.ctx_size: [2048, 4096, 8192, 16384, 32768]
+      runtime.n_batch: [128, 256, 512, 1024]
+      runtime.n_ubatch: [128, 256, 512]
+
+  focused-interactions:
+    strategy: factorial
+    baseline:
+      inference:
+        temperature: 0.0
+        max_output_tokens: 256
+        top_p: 0.95
+      runtime:
+        ctx_size: 4096
+    dimensions:
+      runtime.ctx_size: [4096, 16384]
+      inference.max_output_tokens: [256, 1024]
+      inference.temperature: [0.0, 0.7]
