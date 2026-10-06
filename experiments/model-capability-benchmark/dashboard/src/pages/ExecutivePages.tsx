@@ -1,12 +1,12 @@
 import {
   BadgeDollarSign,
-  ChevronRight,
   Layers3,
   ShieldCheck,
   Sparkles,
   Trophy,
   Zap,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { overview } from '../data';
 import type {
   DecisionCapabilitySummary,
@@ -74,7 +74,7 @@ function ExecutiveFrame({
   title: string;
   statement: string;
   evidence?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="executive-page">
