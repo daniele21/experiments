@@ -73,7 +73,7 @@ jobs:
           CHROME="$(command -v google-chrome || command -v chromium || true)"
           test -n "$CHROME"
           HTML="$(pwd)/dashboard/dist/index.html"
-          for route in overview capabilities/structured-output compare; do
+          for route in overview capabilities/structured-output compare executive/quality executive/speed executive/cost executive/capabilities executive/reliability; do
             name="$(echo "$route" | tr '/' '-')"
             "$CHROME" \
               --headless \
@@ -107,6 +107,11 @@ jobs:
               "mcb13-overview-1600.png": (1600, 1000),
               "mcb13-capabilities-structured-output-1600.png": (1600, 1000),
               "mcb13-compare-1600.png": (1600, 1000),
+              "mcb13-executive-quality-1600.png": (1600, 1000),
+              "mcb13-executive-speed-1600.png": (1600, 1000),
+              "mcb13-executive-cost-1600.png": (1600, 1000),
+              "mcb13-executive-capabilities-1600.png": (1600, 1000),
+              "mcb13-executive-reliability-1600.png": (1600, 1000),
               "mcb13-overview-1280.png": (1280, 1100),
               "mcb13-overview-1024.png": (1024, 1200),
           }
