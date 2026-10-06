@@ -409,8 +409,8 @@ def test_decision_overview_projects_artifact_size_and_size_pareto(tmp_path: Path
         run_id="run-sized-model",
         completed_at="2026-10-05T09:00:00+00:00",
         score=0.82,
-        model_key="qwen3.5-9b-q4km",
-        model_signature="sha256:model:qwen9-size-fixture",
+        model_key="spark-x2.5-4b-q4km",
+        model_signature="sha256:model:spark-size-fixture",
         deployment="local",
     )
     summary = project_results(results_root=results, rebuild=True)
@@ -424,7 +424,9 @@ def test_decision_overview_projects_artifact_size_and_size_pareto(tmp_path: Path
     overview = json.loads(Path(exported["overview"]).read_text())
     model = overview["decision"]["model_summaries"][0]
 
+    assert model["parameters_b"] == 4
     assert model["artifact_size_bytes"] > 0
+    assert model["observed_quality_parameters_pareto"] is True
     assert model["observed_quality_artifact_size_pareto"] is True
 
 
