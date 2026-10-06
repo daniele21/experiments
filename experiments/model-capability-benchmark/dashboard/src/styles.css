@@ -5058,3 +5058,18 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
     min-width: 150px;
   }
 }
+
+
+.executive-plot-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.executive-plot-hint > i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: #4f66ef;
+}
