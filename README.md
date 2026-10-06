@@ -11,6 +11,7 @@ A collection of heterogeneous, reproducible experiments. Each experiment lives i
 | [`vlm-capability-benchmark`](experiments/vlm-capability-benchmark/) | Planned | Compare local/open and API vision-language models on document, chart, visual reasoning, grounding, and UI-understanding tasks. |
 | [`image-generation-benchmark`](experiments/image-generation-benchmark/) | Planned | Compare image-generation/editing models with reproducible prompt suites, objective checks where meaningful, blind human evaluation, and visual side-by-side reports. |
 | [`redactguard-local-anonymization`](experiments/redactguard-local-anonymization/) | Initial implementation | Compare local Korgis models on RedactGuard PII recall, leakage, over-redaction, robustness, and latency. |
+| [`diarization-benchmark`](experiments/diarization-benchmark/) | Implemented / real-model validation pending | Compare local open speaker-diarization models on DER/JER, speaker-count accuracy, latency and resource efficiency on Apple Silicon. |
 
 ## Multimodal roadmap
 
