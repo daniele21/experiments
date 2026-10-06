@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any
 
 from model_capability_bench.analytics.decision_summary import (
-    build_decision_overview,
     _load_models_yaml_config,
+    build_decision_overview,
 )
 from model_capability_bench.analytics.pareto import build_frontier_payload
 from model_capability_bench.analytics.sensitivity import build_sensitivity_payload
