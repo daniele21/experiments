@@ -288,13 +288,15 @@ function ReliabilityBars({ models }: { models: DecisionModelSummary[] }) {
     return <ExecutiveEmpty message="Failure-rate evidence is not available in the projected CURRENT cohort." />;
   }
   const max = Math.max(...rows.map((model) => Number(model.failure_rate)), 0.01);
+  const bestRate = Math.min(...rows.map((model) => Number(model.failure_rate)));
   return (
     <div className="executive-reliability">
-      {rows.map((model, index) => {
+      {rows.map((model) => {
         const raw = Number(model.failure_rate);
         const width = Math.max(1.5, (raw / max) * 100);
+        const tiedBest = Math.abs(raw - bestRate) < 1e-12;
         return (
-          <div className={index === 0 ? 'executive-reliability-row best' : 'executive-reliability-row'} key={model.model_signature}>
+          <div className={tiedBest ? 'executive-reliability-row best' : 'executive-reliability-row'} key={model.model_signature}>
             <div>
               <strong>{model.model_key}</strong>
               <span>
@@ -347,6 +349,13 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
     .filter((model) => model.failure_rate != null)
     .sort((a, b) => Number(a.failure_rate) - Number(b.failure_rate));
   const reliabilityLeader = reliableModels[0];
+  const reliabilityBestRate = reliabilityLeader?.failure_rate ?? null;
+  const reliabilityTies =
+    reliabilityBestRate == null
+      ? []
+      : reliableModels.filter(
+          (model) => Math.abs(Number(model.failure_rate) - Number(reliabilityBestRate)) < 1e-12,
+        );
 
   if (view === 'quality') {
     const runnerUp = qualityModels[1];
@@ -428,14 +437,18 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
         eyebrow="Executive · Cost"
         title="How much are we paying for quality?"
         statement={
-          costChoice
-            ? `${costChoice.model_key} offers the strongest measured quality–cost position among priced API models.`
-            : 'There is not enough priced API evidence to establish a cost winner.'
+          costModels.length === 1 && costChoice
+            ? `${costChoice.model_key} is the only API model with comparable priced evidence today.`
+            : costChoice
+              ? `${costChoice.model_key} offers the strongest measured quality–cost position among priced API models.`
+              : 'There is not enough priced API evidence to establish a cost trade-off.'
         }
         evidence={
-          costChoice
-            ? `${scoreValue(costChoice.overall_quality_score)} quality at ${costValue(costChoice.provider_cost_per_1k_cases_usd)} per 1k benchmark cases.`
-            : 'Known provider pricing is required; local runtime cost is never treated as zero.'
+          costModels.length === 1 && costChoice
+            ? `${scoreValue(costChoice.overall_quality_score)} quality at ${costValue(costChoice.provider_cost_per_1k_cases_usd)} per 1k cases · at least one more priced model is needed for a frontier claim.`
+            : costChoice
+              ? `${scoreValue(costChoice.overall_quality_score)} quality at ${costValue(costChoice.provider_cost_per_1k_cases_usd)} per 1k benchmark cases.`
+              : 'Known provider pricing is required; local runtime cost is never treated as zero.'
         }
       >
         <section className="executive-visual-card">
@@ -507,14 +520,18 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
       eyebrow="Executive · Reliability"
       title="Which model can we trust operationally?"
       statement={
-        reliabilityLeader
-          ? `${reliabilityLeader.model_key} has the lowest observed failure rate in the CURRENT cohort.`
-          : 'Reliability cannot be ranked with the current evidence.'
+        reliabilityTies.length > 1 && reliabilityLeader
+          ? `${reliabilityTies.length} models are tied at the lowest observed failure rate.`
+          : reliabilityLeader
+            ? `${reliabilityLeader.model_key} has the lowest observed failure rate in the CURRENT cohort.`
+            : 'Reliability cannot be ranked with the current evidence.'
       }
       evidence={
-        reliabilityLeader
-          ? `${failureValue(reliabilityLeader.failure_rate)} observed failures · ${reliabilityLeader.quality_coverage_complete ? 'complete' : 'partial'} quality coverage.`
-          : 'Failure-rate evidence is required before making an operational reliability claim.'
+        reliabilityTies.length > 1 && reliabilityLeader
+          ? `All tied models are at ${failureValue(reliabilityLeader.failure_rate)} observed failures; more failure evidence is needed to differentiate operational reliability.`
+          : reliabilityLeader
+            ? `${failureValue(reliabilityLeader.failure_rate)} observed failures · ${reliabilityLeader.quality_coverage_complete ? 'complete' : 'partial'} quality coverage.`
+            : 'Failure-rate evidence is required before making an operational reliability claim.'
       }
     >
       <section className="executive-visual-card">
