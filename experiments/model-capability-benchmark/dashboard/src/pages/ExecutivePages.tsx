@@ -653,7 +653,14 @@ function DatasetFitExecutivePage({
           <button type="button" className={mode === 'models' ? 'active' : ''} onClick={() => setMode('models')}>
             All models
           </button>
-          <button type="button" className={mode === 'families' ? 'active' : ''} onClick={() => setMode('families')}>
+          <button
+            type="button"
+            className={mode === 'families' ? 'active' : ''}
+            onClick={() => {
+              setMode('families');
+              setFamily('all');
+            }}
+          >
             By family
           </button>
         </div>
