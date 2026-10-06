@@ -274,11 +274,14 @@ function TradeoffPlot({
   }));
   const hovered = plotted.find((point) => point.model.model_signature === hoveredSignature) ?? null;
 
+  const executiveTarget = [...plotted]
+    .filter((point) => point.onPareto)
+    .sort((a, b) => b.yv - a.yv)[0] ?? [...plotted].sort((a, b) => b.yv - a.yv)[0];
   const persistentSignatures = [
     ...(selectedSignature ? [selectedSignature] : []),
-    ...plotted
-      .filter((point) => point.onPareto && point.model.model_signature !== selectedSignature)
-      .map((point) => point.model.model_signature),
+    ...(executiveTarget && executiveTarget.model.model_signature !== selectedSignature
+      ? [executiveTarget.model.model_signature]
+      : []),
   ];
 
   const occupied: Array<{ x: number; y: number; width: number; height: number }> = [];
@@ -299,8 +302,8 @@ function TradeoffPlot({
   for (const signature of persistentSignatures) {
     const point = plotted.find((candidate) => candidate.model.model_signature === signature);
     if (!point) continue;
-    const width = Math.min(190, Math.max(105, point.model.model_key.length * 6.2 + 22));
-    const height = 35;
+    const width = Math.min(220, Math.max(112, point.model.model_key.length * 7.2 + 28));
+    const height = 38;
     const candidates = [
       { x: point.cx + 13, y: point.cy - 28 },
       { x: point.cx + 13, y: point.cy + 8 },
@@ -334,7 +337,7 @@ function TradeoffPlot({
 
   return (
     <div className="executive-plot-shell interactive">
-      <div className="executive-plot-hint">Hover to inspect · click to pin</div>
+      <div className="executive-plot-hint"><i /> Blue = Pareto · hover to inspect · click to pin</div>
       <svg className="executive-plot" viewBox="0 0 900 340" role="img" aria-label={`Quality versus ${xLabel}`}>
         <g className="executive-plot-grid">
           {[0, 1, 2, 3, 4].map((step) => {
