@@ -54,6 +54,11 @@ function latencyValue(value: number | null | undefined): string {
   return `${(value / 1000).toFixed(value < 10000 ? 1 : 0)} s`;
 }
 
+function parameterValue(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return `${value < 10 ? value.toFixed(value % 1 === 0 ? 0 : 1) : Math.round(value)}B`;
+}
+
 function modelSizeValue(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return '—';
   const gib = value / (1024 ** 3);
@@ -1042,6 +1047,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
   const capabilities = decision?.capability_summaries ?? [];
   const datasets = decision?.dataset_summaries ?? [];
   const [qualityDataset, setQualityDataset] = useState('overall');
+  const [sizeMetric, setSizeMetric] = useState<'parameters' | 'artifact'>('parameters');
 
   const qualityDatasetIds = useMemo(
     () => [...new Set(datasets.map((row) => row.dataset_id))].sort(),
@@ -1063,19 +1069,29 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
     [...speedPareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0] ??
     [...speedModels].sort((a, b) => Number(a.latency_p50_ms) - Number(b.latency_p50_ms))[0];
 
-  const sizeModels = models.filter(
-    (model) =>
-      model.artifact_size_bytes != null &&
-      Number.isFinite(model.artifact_size_bytes) &&
-      model.overall_quality_score != null,
-  );
-  const sizePareto = sizeModels.filter(
-    (model) => model.observed_quality_artifact_size_pareto,
+  const sizeModels = models.filter((model) => {
+    if (model.overall_quality_score == null) return false;
+    return sizeMetric === 'parameters'
+      ? model.parameters_b != null && Number.isFinite(model.parameters_b)
+      : model.artifact_size_bytes != null && Number.isFinite(model.artifact_size_bytes);
+  });
+  const sizePareto = sizeModels.filter((model) =>
+    sizeMetric === 'parameters'
+      ? model.observed_quality_parameters_pareto
+      : model.observed_quality_artifact_size_pareto,
   );
   const sizeChoice = [...sizePareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0];
-  const smallestPareto = [...sizePareto].sort(
-    (a, b) => Number(a.artifact_size_bytes) - Number(b.artifact_size_bytes),
-  )[0];
+  const smallestPareto = [...sizePareto].sort((a, b) => {
+    const av = sizeMetric === 'parameters' ? Number(a.parameters_b) : Number(a.artifact_size_bytes);
+    const bv = sizeMetric === 'parameters' ? Number(b.parameters_b) : Number(b.artifact_size_bytes);
+    return av - bv;
+  })[0];
+  const sizeValue = (model: DecisionModelSummary): number | null =>
+    sizeMetric === 'parameters'
+      ? (model.parameters_b ?? null)
+      : (model.artifact_size_bytes ?? null);
+  const sizeFormat = sizeMetric === 'parameters' ? parameterValue : modelSizeValue;
+  const sizeAxisLabel = sizeMetric === 'parameters' ? 'Parameters' : 'Artifact size';
 
   const costModels = models.filter(
     (model) =>
@@ -1197,29 +1213,47 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
         title="How much model do we need for the quality we get?"
         statement={
           sizeChoice
-            ? `${sizePareto.length} model${sizePareto.length === 1 ? '' : 's'} define the current quality–size Pareto frontier; ${sizeChoice.model_key} reaches its highest measured quality.`
+            ? `${sizePareto.length} model${sizePareto.length === 1 ? '' : 's'} define the current quality–${sizeMetric === 'parameters' ? 'parameter' : 'artifact-size'} Pareto frontier; ${sizeChoice.model_key} reaches its highest measured quality.`
             : 'There is not enough measured model-size evidence to establish a Pareto frontier.'
         }
         evidence={
           sizeChoice && smallestPareto
-            ? `Highest-quality Pareto point: ${scoreValue(sizeChoice.overall_quality_score)} at ${modelSizeValue(sizeChoice.artifact_size_bytes)} · smallest Pareto point: ${smallestPareto.model_key} at ${modelSizeValue(smallestPareto.artifact_size_bytes)}.`
-            : 'A real artifact size and comparable overall quality are required for each plotted model.'
+            ? `Highest-quality Pareto point: ${scoreValue(sizeChoice.overall_quality_score)} at ${sizeFormat(sizeValue(sizeChoice))} · smallest Pareto point: ${smallestPareto.model_key} at ${sizeFormat(sizeValue(smallestPareto))}.`
+            : sizeMetric === 'parameters'
+              ? 'A parameter count and measured overall quality are required for each plotted model.'
+              : 'A real artifact size and measured overall quality are required for each plotted model.'
         }
       >
         <section className="executive-visual-card">
-          <div className="executive-visual-heading">
+          <div className="executive-visual-heading executive-size-heading">
             <div>
-              <span>Quality × model artifact size</span>
-              <h3>Upper-left is efficient: more quality, fewer GB</h3>
+              <span>Quality × model size</span>
+              <h3>Upper-left is efficient: more quality, less model</h3>
             </div>
-            <HardDrive size={20} />
+            <div className="executive-size-actions">
+              <label>
+                <span>Size metric</span>
+                <select
+                  value={sizeMetric}
+                  onChange={(event) => setSizeMetric(event.target.value as 'parameters' | 'artifact')}
+                >
+                  <option value="parameters">Parameters</option>
+                  <option value="artifact">Artifact size</option>
+                </select>
+              </label>
+              <HardDrive size={20} />
+            </div>
           </div>
           <TradeoffPlot
             models={sizeModels}
-            x={(model) => model.artifact_size_bytes ?? null}
-            xLabel="Model size"
-            formatX={modelSizeValue}
-            pareto={(model) => model.observed_quality_artifact_size_pareto}
+            x={sizeValue}
+            xLabel={sizeAxisLabel}
+            formatX={sizeFormat}
+            pareto={(model) =>
+              sizeMetric === 'parameters'
+                ? model.observed_quality_parameters_pareto
+                : model.observed_quality_artifact_size_pareto
+            }
           />
         </section>
       </ExecutiveFrame>
