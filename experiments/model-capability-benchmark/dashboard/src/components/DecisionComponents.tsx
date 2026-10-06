@@ -355,50 +355,61 @@ export function QualityLeaderboard({
     ...ranked.map((item) => item.overall_quality_score ?? 0),
     100,
   );
+  const splitIndex = Math.ceil(ranked.length / 2);
+  const columns = [ranked.slice(0, splitIndex), ranked.slice(splitIndex)];
+
+  const renderRow = (model: DecisionModelSummary, index: number) => (
+    <button
+      type="button"
+      key={model.model_signature}
+      className={
+        'leader-row ' +
+        (selectedModel === model.model_signature ? 'selected ' : '') +
+        (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
+      }
+      onClick={() => onSelect?.(model.model_signature)}
+      onMouseEnter={() => onHover?.(model.model_signature)}
+      onMouseLeave={() => onHover?.(null)}
+    >
+      <span className="rank">{index + 1}</span>
+      <span className="leader-name">
+        <strong><ModelMarker signature={model.model_signature} /> {model.model_key}</strong>
+        <span>
+          <DeploymentBadge deployment={model.deployment} />
+          {!model.quality_coverage_complete ? <em>Partial coverage</em> : null}
+        </span>
+      </span>
+      <span className="leader-bar">
+        <i
+          style={{
+            width: ((model.overall_quality_score ?? 0) / max) * 100 + '%',
+            background: modelVisual(model.model_signature).color,
+          }}
+        />
+      </span>
+      <strong className="leader-score">{score(model.overall_quality_score)}</strong>
+    </button>
+  );
+
   return (
     <section className="analysis-card leaderboard-card">
-      <div className="section-heading compact">
+      <div className="section-heading compact leaderboard-heading">
         <div>
           <h2>Overall quality</h2>
           <p>Equal-weight score across the selected comparable capability cohort.</p>
         </div>
-        <span className="semantic-chip">policy v1</span>
+        <div className="leaderboard-heading-meta">
+          <span className="semantic-chip">{ranked.length} models</span>
+          <span className="semantic-chip">policy v1</span>
+        </div>
       </div>
-      <div className="leaderboard">
-        {ranked.map((model, index) => (
-          <button
-            type="button"
-            key={model.model_signature}
-            className={
-              'leader-row ' +
-              (selectedModel === model.model_signature ? 'selected ' : '') +
-              (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
-            }
-            onClick={() => onSelect?.(model.model_signature)}
-            onMouseEnter={() => onHover?.(model.model_signature)}
-            onMouseLeave={() => onHover?.(null)}
-          >
-            <span className="rank">{index + 1}</span>
-            <span className="leader-name">
-              <strong><ModelMarker signature={model.model_signature} /> {model.model_key}</strong>
-              <span>
-                <DeploymentBadge deployment={model.deployment} />
-                {!model.quality_coverage_complete ? (
-                  <em>Partial coverage</em>
-                ) : null}
-              </span>
-            </span>
-            <span className="leader-bar">
-              <i
-                style={{
-                  width:
-                    ((model.overall_quality_score ?? 0) / max) * 100 + '%',
-                  background: modelVisual(model.model_signature).color,
-                }}
-              />
-            </span>
-            <strong className="leader-score">{score(model.overall_quality_score)}</strong>
-          </button>
+      <div className="leaderboard-columns">
+        {columns.map((column, columnIndex) => (
+          <div className="leaderboard-column" key={columnIndex}>
+            {column.map((model, localIndex) =>
+              renderRow(model, columnIndex === 0 ? localIndex : splitIndex + localIndex),
+            )}
+          </div>
         ))}
       </div>
     </section>

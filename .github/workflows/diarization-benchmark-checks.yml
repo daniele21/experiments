@@ -1,0 +1,34 @@
+name: Diarization benchmark checks
+
+on:
+  pull_request:
+    paths:
+      - "experiments/diarization-benchmark/**"
+      - ".github/workflows/diarization-benchmark-checks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "experiments/diarization-benchmark/**"
+      - ".github/workflows/diarization-benchmark-checks.yml"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/diarization-benchmark
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev
+      - run: uv run ruff check src tests
+      - run: uv run pytest -q
+
+  swift-api:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned FluidAudio helper
+        run: swift build -c release --package-path experiments/diarization-benchmark/runtime/fluidaudio-helper

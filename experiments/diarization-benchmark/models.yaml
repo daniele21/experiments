@@ -1,0 +1,62 @@
+runtime:
+  name: fluidaudio-coreml
+  package: FluidInference/FluidAudio
+  version: 0.17.5
+  platform: macOS
+  inference: local
+
+models:
+  community-1-vbx:
+    engine: community1
+    family: pyannote-community-1-vbx
+    mode: offline
+    max_speakers: null
+    license_note: "Pipeline assets have their own upstream licenses; verify before redistribution."
+    options:
+      profile: closedroom-accurate
+    tags: [baseline, local, coreml, clustering]
+
+  sortformer-v2.1-balanced:
+    engine: sortformer
+    family: nvidia-sortformer-v2.1
+    mode: complete-buffer
+    max_speakers: 4
+    license_note: "NVIDIA Open Model License; verify current upstream terms before redistribution."
+    options:
+      config: balanced
+    tags: [local, coreml, end-to-end, streaming-capable]
+
+  ls-eend-dihard3-500ms:
+    engine: lseend
+    family: ls-eend
+    mode: complete-buffer
+    max_speakers: 10
+    license_note: "Research model family; verify the exact upstream weight license before product use."
+    options:
+      variant: dihard3
+      step-size: 500
+    tags: [local, coreml, end-to-end, overlap, many-speaker]
+
+  nemotron3-fast32:
+    engine: nemotron3
+    family: nvidia-nemotron-3-diarization
+    mode: complete-buffer
+    max_speakers: 8
+    license_note: "Open-weight NVIDIA model; verify current upstream terms before redistribution."
+    options:
+      variant: fast32
+      threshold: 0.5
+      compute-units: all
+    tags: [local, coreml, end-to-end, recommended-candidate]
+
+  nemotron3-offline:
+    engine: nemotron3
+    family: nvidia-nemotron-3-diarization
+    mode: offline
+    max_speakers: 8
+    license_note: "Open-weight NVIDIA model; verify current upstream terms before redistribution."
+    options:
+      variant: offline
+      threshold: 0.5
+      compute-units: gpu
+    tags: [local, coreml, end-to-end, quality-ceiling]
