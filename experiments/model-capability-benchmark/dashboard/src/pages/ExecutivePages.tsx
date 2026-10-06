@@ -393,7 +393,7 @@ function DatasetHeatmap({
     <div className="dataset-heatmap-wrap">
       <div
         className="dataset-heatmap"
-        style={{ gridTemplateColumns: `minmax(170px, 1.45fr) repeat(${columns.length}, minmax(112px, 1fr))` }}
+        style={{ gridTemplateColumns: `minmax(150px, 1.35fr) repeat(${columns.length}, minmax(70px, 1fr))` }}
       >
         <div className="dataset-heatmap-corner">Dataset</div>
         {columns.map((column) => (
