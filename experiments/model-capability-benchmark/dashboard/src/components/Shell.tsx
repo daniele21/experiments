@@ -7,6 +7,8 @@ import {
   Layers3,
   Settings,
   Share2,
+  SlidersHorizontal,
+  TrendingUp,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { navigate, usePathname } from '../router';
@@ -59,6 +61,8 @@ export function Shell({ children }: { children: ReactNode }) {
     ['/overview', BarChart3, 'Overview'],
     ['/models', Boxes, 'Models'],
     ['/capabilities/structured-output', Layers3, 'Capabilities'],
+    ['/frontier', TrendingUp, 'Frontier'],
+    ['/sensitivity', SlidersHorizontal, 'Sensitivity'],
     ['/compare', GitCompareArrows, 'Compare'],
     ['/runs', Activity, 'Runs'],
     ['/share', Share2, 'Share'],

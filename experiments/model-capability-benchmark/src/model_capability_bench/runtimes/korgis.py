@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from benchmark_core import (
@@ -13,6 +14,24 @@ from benchmark_core import (
 from model_capability_bench.telemetry.resources import ResourceSamplingProvider
 
 ProviderBuilder = Callable[[ResolvedModel, Mapping[str, str]], InferenceProvider]
+
+_KORGIS_RUNTIME_OVERRIDE_KEYS = {
+    "backend",
+    "ctx_size",
+    "max_kv_size",
+    "n_gpu_layers",
+    "n_threads",
+    "n_batch",
+    "n_ubatch",
+    "offload_kqv",
+    "flash_attn",
+    "use_mmap",
+    "timeout",
+    "startup_timeout",
+    "max_concurrent_requests",
+    "enable_thinking",
+    "show_thinking",
+}
 
 
 class KorgisControlClient:
@@ -49,11 +68,18 @@ class KorgisControlClient:
             raise TypeError("Korgis resources response must be an object")
         return payload
 
-    def activate(self, model_key: str) -> dict[str, Any]:
+    def activate(
+        self,
+        model_key: str,
+        runtime_config: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload_body: dict[str, Any] = {"model": model_key}
+        if runtime_config:
+            payload_body.update(dict(runtime_config))
         payload = self.transport.request(
             "POST",
             f"{self.root}/api/v1/models/activate",
-            payload={"model": model_key},
+            payload=payload_body,
         ).body
         if not isinstance(payload, dict):
             raise TypeError("Korgis activate response must be an object")
@@ -81,6 +107,9 @@ class KorgisManagedRuntime:
         self.provider_builder = provider_builder
         self.control_factory = control_factory
         self._control_by_runtime: dict[str, KorgisControlClient] = {}
+        self._activation_by_model: dict[str, dict[str, Any]] = {}
+        self._runtime_config: dict[str, Any] = {}
+        self._effective_runtime_config_by_model: dict[str, dict[str, Any]] = {}
 
     def _control(self, model: ResolvedModel) -> KorgisControlClient:
         runtime_key = model.runtime.runtime_key
@@ -112,6 +141,15 @@ class KorgisManagedRuntime:
         self._control_by_runtime[runtime_key] = control
         return control
 
+    def configure(self, runtime_config: Mapping[str, object]) -> None:
+        config = dict(runtime_config)
+        unknown = sorted(set(config) - _KORGIS_RUNTIME_OVERRIDE_KEYS)
+        if unknown:
+            raise ValueError(
+                "Unsupported Korgis runtime override keys: " + ", ".join(unknown)
+            )
+        self._runtime_config = config
+
     def prepare(self, model: ResolvedModel) -> InferenceProvider:
         control = self._control(model)
         health = control.health()
@@ -119,12 +157,37 @@ class KorgisManagedRuntime:
             raise RuntimeError(
                 f"Korgis runtime {model.runtime.runtime_key!r} is not healthy"
             )
-        activation = control.activate(model.effective_model_id)
+        activation = control.activate(
+            model.effective_model_id,
+            self._runtime_config,
+        )
         if activation.get("ok") is False:
             raise RuntimeError(
                 f"Korgis failed to activate {model.effective_model_id!r}: "
                 f"{activation}"
             )
+        effective_health = control.health()
+        if not effective_health.get("ok"):
+            raise RuntimeError(
+                f"Korgis runtime {model.runtime.runtime_key!r} became unhealthy "
+                "after activation"
+            )
+        effective_runtime_config = {
+            key: effective_health.get(key)
+            for key in _KORGIS_RUNTIME_OVERRIDE_KEYS
+            if key in effective_health
+        }
+        for key, requested in self._runtime_config.items():
+            actual = effective_runtime_config.get(key)
+            if actual is not None and actual != requested:
+                raise RuntimeError(
+                    f"Korgis runtime override {key!r} was not applied: "
+                    f"requested={requested!r}, actual={actual!r}"
+                )
+        self._activation_by_model[model.model.model_key] = dict(activation)
+        self._effective_runtime_config_by_model[model.model.model_key] = (
+            effective_runtime_config
+        )
         provider = self.provider_builder(model, self.environ)
         telemetry_enabled = self.environ.get(
             "MCB_RESOURCE_TELEMETRY",
@@ -149,6 +212,44 @@ class KorgisManagedRuntime:
             interval_seconds=interval_ms / 1000.0,
         )
 
+    def execution_metadata(self, model: ResolvedModel) -> dict[str, Any]:
+        activation = self._activation_by_model.get(model.model.model_key) or {}
+        metadata: dict[str, Any] = {"runtime_source": "korgis"}
+
+        runtime_identity = activation.get("runtime_identity")
+        if isinstance(runtime_identity, Mapping):
+            metadata["runtime_identity"] = dict(runtime_identity)
+
+        cfg = activation.get("cfg")
+        if isinstance(cfg, Mapping):
+            for key in ("backend", "quantization"):
+                value = cfg.get(key)
+                if value is not None:
+                    metadata[key] = value
+
+        activation_key = activation.get("key")
+        if activation_key:
+            metadata["runtime_key"] = str(activation_key)
+        effective = self._effective_runtime_config_by_model.get(
+            model.model.model_key
+        )
+        if effective:
+            metadata["runtime_config"] = dict(effective)
+        model_path = activation.get("cfg", {}).get("model_path")
+        if not model_path:
+            control = self._control_by_runtime.get(model.runtime.runtime_key)
+            if control is not None:
+                try:
+                    model_path = control.health().get("model_path")
+                except Exception:  # noqa: BLE001 - optional evidence only
+                    model_path = None
+        if model_path:
+            try:
+                metadata["artifact_size_bytes"] = Path(str(model_path)).stat().st_size
+            except OSError:
+                pass
+        return metadata
+
     def release(self, model: ResolvedModel) -> None:
         control = self._control(model)
         unloaded = control.unload(model.effective_model_id)
@@ -156,3 +257,6 @@ class KorgisManagedRuntime:
             raise RuntimeError(
                 f"Korgis failed to unload {model.effective_model_id!r}: {unloaded}"
             )
+        self._activation_by_model.pop(model.model.model_key, None)
+        self._effective_runtime_config_by_model.pop(model.model.model_key, None)
+        self._runtime_config = {}

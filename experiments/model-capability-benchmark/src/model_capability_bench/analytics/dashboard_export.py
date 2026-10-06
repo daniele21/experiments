@@ -8,6 +8,8 @@ from model_capability_bench.analytics.decision_summary import (
     build_decision_overview,
     _load_models_yaml_config,
 )
+from model_capability_bench.analytics.pareto import build_frontier_payload
+from model_capability_bench.analytics.sensitivity import build_sensitivity_payload
 from model_capability_bench.runner.comparison import paired_binary_comparison
 
 
@@ -71,7 +73,10 @@ def export_dashboard_data(
                 m.provider_key,
                 m.deployment,
                 m.quantization,
-                m.artifact_format
+                m.artifact_format,
+                m.family,
+                m.parameters_b,
+                m.artifact_size_bytes
             FROM v_current_quality_results q
             JOIN models m
               ON m.run_id = q.run_id
@@ -136,14 +141,27 @@ def export_dashboard_data(
                     "runtime_key": row["runtime_key"],
                     "provider_key": row["provider_key"],
                     "deployment": row["deployment"],
-                    "family": cfg.get("family"),
-                    "parameters_b": cfg.get("parameters_b"),
+                    "family": row.get("family") or cfg.get("family"),
+                    "parameters_b": row.get("parameters_b") if row.get("parameters_b") is not None else cfg.get("parameters_b"),
                     "quantization": row.get("quantization") or artifact.get("quantization"),
                     "artifact_format": row.get("artifact_format") or artifact.get("format"),
+                    "artifact_size_bytes": row.get("artifact_size_bytes"),
                     "tags": cfg.get("tags") or [],
                 }
 
         decision = build_decision_overview(connection, current)
+        for summary in decision["model_summaries"]:
+            metadata = models.get(summary["model_signature"], {})
+            for key in (
+                "family",
+                "parameters_b",
+                "quantization",
+                "artifact_format",
+                "artifact_size_bytes",
+            ):
+                summary[key] = metadata.get(key)
+        frontier = build_frontier_payload(decision["model_summaries"])
+        sensitivity = build_sensitivity_payload(connection)
         overview = {
             "schema_version": "2",
             "models": list(models.values()),
@@ -151,6 +169,8 @@ def export_dashboard_data(
             "cells": current,
             "runs": runs[:12],
             "decision": decision,
+            "frontier": frontier,
+            "sensitivity": sensitivity,
         }
         overview_path = output_dir / "overview.json"
         overview_path.write_text(
@@ -470,6 +490,15 @@ def export_dashboard_data(
                 for event in lifecycle_events
                 if str(event["event_type"]).startswith(lifecycle_prefixes)
             ]
+            run_configuration_rows = _rows(
+                connection,
+                """
+                SELECT *
+                FROM run_configurations
+                WHERE run_id = ?
+                """,
+                [run_id],
+            )
             run_resources = _rows(
                 connection,
                 """
@@ -519,6 +548,11 @@ def export_dashboard_data(
                         "schema_version": "1",
                         "run": run,
                         "models": run_models,
+                        "configuration": (
+                            run_configuration_rows[0]
+                            if run_configuration_rows
+                            else None
+                        ),
                         "cells": run_cells,
                         "timeline": lifecycle_events,
                         "resources": run_resources,

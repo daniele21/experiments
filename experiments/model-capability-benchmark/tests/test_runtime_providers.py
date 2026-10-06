@@ -229,7 +229,7 @@ def test_typesafe_jev_provider_builds_and_evaluates(monkeypatch) -> None:
     assert result.usage.output_tokens == 15
 
 
-def test_decisio_provider_builds_and_evaluates(monkeypatch) -> None:
+def test_decisio_provider_builds_and_evaluates(monkeypatch, tmp_path) -> None:
     import json
     from io import StringIO
 
@@ -267,10 +267,18 @@ def test_decisio_provider_builds_and_evaluates(monkeypatch) -> None:
             pass
 
     monkeypatch.setattr("subprocess.Popen", lambda *args, **kwargs: _MockProc())
+    decisio_python = tmp_path / "python"
+    decisio_python.write_text("", encoding="utf-8")
+    model_path = tmp_path / "fake.gguf"
+    model_path.write_bytes(b"fixture")
 
     provider = build_inference_provider(
         model,
-        {"DECISIO_MODEL_PATH": "/path/to/fake.gguf"},
+        {
+            "DECISIO_ROOT": str(tmp_path),
+            "DECISIO_PYTHON": str(decisio_python),
+            "DECISIO_MODEL_PATH": str(model_path),
+        },
     )
     assert isinstance(provider, DecisioJsonProvider)
 
@@ -310,16 +318,42 @@ class _FakeControl:
     def __init__(self, *, base_url: str, timeout_seconds: float):
         self.base_url = base_url
         self.timeout_seconds = timeout_seconds
-        self.calls: list[tuple[str, str | None]] = []
+        self.calls: list[tuple[str, object | None]] = []
+        self.current_config: dict[str, object] = {"ctx_size": 4096}
         self.__class__.instances.append(self)
 
     def health(self):
         self.calls.append(("health", None))
-        return {"ok": True}
+        return {"ok": True, **self.current_config}
 
-    def activate(self, model_key: str):
-        self.calls.append(("activate", model_key))
-        return {"ok": True}
+    def activate(self, model_key: str, runtime_config=None):
+        runtime_config = dict(runtime_config or {})
+        self.current_config.update(runtime_config)
+        self.calls.append(("activate", (model_key, runtime_config)))
+        return {
+            "ok": True,
+            "key": model_key,
+            "runtime_identity": {
+                "fingerprint": "a" * 64,
+                "captured_at": 1.0,
+                "identity": {
+                    "schema_version": 1,
+                    "artifact_key": "b" * 64,
+                    "backend": {
+                        "name": "llama_server",
+                        "version": "build-10709@prism123",
+                        "implementation": "LlamaServerEngine",
+                    },
+                    "config_digest": "c" * 64,
+                    "hardware_key": "d" * 64,
+                },
+            },
+            "cfg": {
+                "backend": "llama_server",
+                "quantization": "PTQ1_0",
+                "model_path": "/tmp/nonexistent-fixture.gguf",
+            },
+        }
 
     def resources(self):
         self.calls.append(("resources", None))
@@ -373,15 +407,34 @@ def test_korgis_runtime_manages_model_residency_without_server_process_logic() -
         control_factory=_FakeControl,
     )
 
+    runtime.configure({"ctx_size": 8192, "n_batch": 256})
     provider = runtime.prepare(model)
+    execution_metadata = runtime.execution_metadata(model)
     runtime.release(model)
 
     assert isinstance(provider.delegate, _FakeProvider)
+    assert execution_metadata["runtime_source"] == "korgis"
+    assert execution_metadata["runtime_identity"]["fingerprint"] == "a" * 64
+    assert (
+        execution_metadata["runtime_identity"]["identity"]["backend"]["version"]
+        == "build-10709@prism123"
+    )
+    assert execution_metadata["backend"] == "llama_server"
+    assert execution_metadata["quantization"] == "PTQ1_0"
+    assert execution_metadata["runtime_config"]["ctx_size"] == 8192
+    assert execution_metadata["runtime_config"]["n_batch"] == 256
     assert built == ["qwen3.5-2b-q4km"]
     control = _FakeControl.instances[-1]
     assert control.timeout_seconds == 9.0
     assert control.calls == [
         ("health", None),
-        ("activate", "qwen3.5-2b-q4km"),
+        (
+            "activate",
+            (
+                "qwen3.5-2b-q4km",
+                {"ctx_size": 8192, "n_batch": 256},
+            ),
+        ),
+        ("health", None),
         ("unload", "qwen3.5-2b-q4km"),
     ]

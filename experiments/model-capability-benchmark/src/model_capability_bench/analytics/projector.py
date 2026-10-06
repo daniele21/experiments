@@ -234,7 +234,22 @@ def _create_schema(connection: Any) -> None:
             deployment VARCHAR,
             quantization VARCHAR,
             artifact_format VARCHAR,
+            family VARCHAR,
+            parameters_b DOUBLE,
+            artifact_size_bytes BIGINT,
             PRIMARY KEY (run_id, model_key)
+        );
+
+        CREATE TABLE IF NOT EXISTS run_configurations (
+            run_id VARCHAR PRIMARY KEY,
+            configuration_id VARCHAR,
+            experiment_kind VARCHAR,
+            sweep_id VARCHAR,
+            label VARCHAR,
+            changed_dimension VARCHAR,
+            is_baseline BOOLEAN,
+            inference_json VARCHAR,
+            runtime_json VARCHAR
         );
 
         CREATE TABLE IF NOT EXISTS execution_environments (
@@ -367,27 +382,31 @@ def _create_schema(connection: Any) -> None:
         CREATE OR REPLACE VIEW v_current_quality_results AS
         SELECT * EXCLUDE (rn)
         FROM (
-            SELECT *,
+            SELECT b.*,
                 ROW_NUMBER() OVER (
-                    PARTITION BY model_signature, benchmark_signature, capability_id
-                    ORDER BY completed_at_utc DESC, run_id DESC
+                    PARTITION BY b.model_signature, b.benchmark_signature, b.capability_id
+                    ORDER BY b.completed_at_utc DESC, b.run_id DESC
                 ) AS rn
-            FROM benchmark_cells
-            WHERE status = 'COMPLETED'
+            FROM benchmark_cells b
+            LEFT JOIN run_configurations rc ON rc.run_id = b.run_id
+            WHERE b.status = 'COMPLETED'
+              AND COALESCE(NULLIF(rc.experiment_kind, ''), 'standard') = 'standard'
         )
         WHERE rn = 1;
 
         CREATE OR REPLACE VIEW v_current_performance_results AS
         SELECT * EXCLUDE (rn)
         FROM (
-            SELECT *,
+            SELECT b.*,
                 ROW_NUMBER() OVER (
-                    PARTITION BY model_signature, benchmark_signature,
-                                 execution_signature, capability_id
-                    ORDER BY completed_at_utc DESC, run_id DESC
+                    PARTITION BY b.model_signature, b.benchmark_signature,
+                                 b.execution_signature, b.capability_id
+                    ORDER BY b.completed_at_utc DESC, b.run_id DESC
                 ) AS rn
-            FROM benchmark_cells
-            WHERE status = 'COMPLETED'
+            FROM benchmark_cells b
+            LEFT JOIN run_configurations rc ON rc.run_id = b.run_id
+            WHERE b.status = 'COMPLETED'
+              AND COALESCE(NULLIF(rc.experiment_kind, ''), 'standard') = 'standard'
         )
         WHERE rn = 1;
 
@@ -435,6 +454,15 @@ def _create_schema(connection: Any) -> None:
             p.execution_signature;
         """
     )
+    connection.execute(
+        "ALTER TABLE models ADD COLUMN IF NOT EXISTS family VARCHAR"
+    )
+    connection.execute(
+        "ALTER TABLE models ADD COLUMN IF NOT EXISTS parameters_b DOUBLE"
+    )
+    connection.execute(
+        "ALTER TABLE models ADD COLUMN IF NOT EXISTS artifact_size_bytes BIGINT"
+    )
 
 
 def _clear_run(connection: Any, run_id: str) -> None:
@@ -446,6 +474,7 @@ def _clear_run(connection: Any, run_id: str) -> None:
         "aggregates",
         "benchmark_cells",
         "run_pricing",
+        "run_configurations",
         "execution_environments",
         "models",
         "runs",
@@ -458,6 +487,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     run = _mapping(manifest.get("run"))
     suite = _mapping(manifest.get("suite"))
+    configuration = _mapping(manifest.get("configuration"))
     run_id = _text(run.get("run_id"))
     if not run_id:
         return False, "INVALID"
@@ -518,6 +548,24 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         ],
     )
 
+    connection.execute(
+        """
+        INSERT OR REPLACE INTO run_configurations
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            run_id,
+            _text(configuration.get("configuration_id")) or "default",
+            _text(configuration.get("experiment_kind")) or "standard",
+            _text(configuration.get("sweep_id")) or None,
+            _text(configuration.get("label")) or None,
+            _text(configuration.get("changed_dimension")) or None,
+            bool(configuration.get("is_baseline", False)),
+            json.dumps(configuration.get("inference") or {}, sort_keys=True),
+            json.dumps(configuration.get("runtime") or {}, sort_keys=True),
+        ],
+    )
+
     if pricing_payload:
         connection.execute(
             """
@@ -547,7 +595,14 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         model_sig_by_key[key] = model_sig
         execution_sig_by_key[key] = execution_sig
         connection.execute(
-            "INSERT INTO models VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            """
+            INSERT INTO models (
+                run_id, model_key, model_id, effective_model_id,
+                model_signature, execution_signature, runtime_key,
+                provider_key, deployment, quantization, artifact_format,
+                family, parameters_b, artifact_size_bytes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             [
                 run_id,
                 key,
@@ -560,6 +615,17 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(model.get("deployment")),
                 _text(model.get("quantization")) or None,
                 _text(model.get("artifact_format")) or None,
+                _text(model.get("family")) or None,
+                (
+                    float(model.get("parameters_b"))
+                    if isinstance(model.get("parameters_b"), (int, float))
+                    else None
+                ),
+                (
+                    int(model.get("artifact_size_bytes"))
+                    if isinstance(model.get("artifact_size_bytes"), (int, float))
+                    else None
+                ),
             ],
         )
         connection.execute(

@@ -90,6 +90,8 @@ Current model keys:
 ~~~text
 qwen3.5-2b-q4km
 nemotron-nano-4b
+spark-x2.5-4b-q4km
+ternary-bonsai2-27b-ptq1
 gpt-5.6-luna
 minicpm-v-4.6-1b
 ~~~
@@ -143,8 +145,73 @@ For Nemotron, download once:
 uv run --frozen local-llm download nemotron-nano-4b
 ~~~
 
+For Spark-X2.5-4B Q4_K_M, use llama.cpp build 10828 or newer. Korgis
+enforces this model-specific runtime floor before loading the model, so an older
+binary is rejected instead of producing misleading benchmark failures:
+
+~~~bash
+uv run --frozen local-llm download spark-x2.5-4b-q4km
+
+uv run --frozen local-llm serve \
+  --model spark-x2.5-4b-q4km \
+  --enable-admin-api \
+  --no-download
+~~~
+
+If Korgis reports that the discovered llama-server is older than build 10828,
+update the normal llama.cpp installation or set `LOCAL_LLM_SERVER_BIN` to a
+newer executable. Spark's native context is much larger than the benchmark
+needs; the built-in Korgis benchmark profile intentionally uses 8192 tokens so
+KV-cache overhead stays closer to the other local comparison models instead of
+benchmarking an unnecessary long-context allocation.
+
+Spark-X2.5 enables thinking in its upstream chat template by default. The Korgis
+benchmark profile explicitly starts with thinking disabled, matching the
+controlled local-model comparison policy. If a separate reasoning-on campaign is
+run later, keep it as a distinct benchmark lineage rather than mixing it into the
+default results.
+
+For Ternary Bonsai 2 27B PTQ1_0, use the PrismML llama.cpp fork. Stock
+llama.cpp does not support the PTQ1_0 ternary kernels. Korgis deliberately
+requires a model-specific binary so other local models can keep using the normal
+llama.cpp runtime:
+
+~~~bash
+export PRISM_LLAMA_SERVER_BIN="/absolute/path/to/prism-llama.cpp/build/bin/llama-server"
+
+uv run --frozen local-llm download ternary-bonsai2-27b-ptq1
+
+uv run --frozen local-llm serve \
+  --model ternary-bonsai2-27b-ptq1 \
+  --enable-admin-api \
+  --no-download
+~~~
+
+Then, in the MCB terminal:
+
+~~~bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235/v1
+export MODEL=ternary-bonsai2-27b-ptq1
+
+uv run model-bench validate-config --models "$MODEL"
+uv run model-bench estimate \
+  --models "$MODEL" \
+  --profile core \
+  --capabilities structured-output \
+  --pilot-cases 3
+~~~
+
+Start with the normal smoke profile before changing generation settings. Bonsai 2
+can spend a large part of a short output budget on reasoning; if the smoke run
+returns empty answers, record that as evidence first rather than silently giving
+this model a different benchmark configuration. Any later model-specific
+reasoning/output override must create a distinct benchmark lineage.
+
 MCB activates/releases the selected Korgis model. The Korgis server process remains
-outside the benchmark.
+outside the benchmark. Korgis activation now returns a privacy-safe runtime identity;
+MCB folds that fingerprint and backend build into the execution signature, so runs
+made with different PrismML llama.cpp builds do not count as equivalent efficiency
+experiments.
 
 For fair local efficiency comparisons, keep the same Mac, Korgis version, MCB commit and
 system conditions across models.
@@ -596,7 +663,82 @@ same hardware
 That reduces performance noise without inflating the quality benchmark to thousands of
 redundant examples.
 
-## 21. Troubleshooting
+## 21. Parameter sensitivity experiments
+
+Sensitivity is a separate experiment lineage from the canonical CORE result. Start by
+inspecting the generated matrix without invoking the model:
+
+~~~bash
+export MODEL="qwen3.5-9b-q4km"
+
+uv run model-bench sweep \
+  --model "$MODEL" \
+  --sweep generation-sensitivity \
+  --capabilities structured-output \
+  --profile smoke \
+  --run-group "${CAMPAIGN}-${MODEL}-sensitivity" \
+  --plan-only
+~~~
+
+The default generation-sensitivity sweep uses one-at-a-time variation around a fixed
+baseline for context size, max output tokens, temperature and top_p. This keeps the
+experiment small enough to run locally and makes each delta interpretable.
+
+Execute the sweep after reviewing the plan:
+
+~~~bash
+uv run model-bench sweep \
+  --model "$MODEL" \
+  --sweep generation-sensitivity \
+  --capabilities structured-output \
+  --profile smoke \
+  --run-group "${CAMPAIGN}-${MODEL}-sensitivity"
+~~~
+
+For runtime-focused work use runtime-efficiency. Use focused-interactions only after the
+one-at-a-time experiment has identified an interesting region.
+
+Runtime dimensions such as ctx_size are applied through Korgis model activation and then
+verified against /health. MCB rejects runtime overrides on runtimes that cannot apply them.
+
+Sensitivity runs live under results/runs like all immutable evidence, but the projector
+marks them experiment_kind=sensitivity and excludes them from the canonical CURRENT
+leaderboard.
+
+Refresh analytics after the sweep:
+
+~~~bash
+uv run model-bench project --rebuild --export-dashboard
+uv run model-bench dashboard-build
+~~~
+
+Open the dashboard and use /sensitivity to choose model, sweep, capability and parameter.
+The evidence table reports quality, p50 latency and peak RSS plus deltas versus the sweep
+baseline.
+
+## 22. Family and compression Pareto Frontier
+
+The /frontier route is built from canonical standard CURRENT results. It does not mix
+arbitrary sensitivity points into the model leaderboard.
+
+Use the X-axis selector to compare quality against:
+
+- parameter count, for family scaling;
+- measured GGUF artifact size, for compression;
+- peak RSS, for deployment memory;
+- p50 latency, for responsiveness.
+
+Use "Model family scaling" to connect variants across parameter counts. Use "Compression
+variants" to connect quantizations of the same family and base parameter count.
+
+For local Korgis runs, MCB records the actual loaded artifact size when model_path is
+available, so Q4/Q8/PTQ comparisons can use the bytes of the artifact that really ran.
+
+A faded point is dominated for the selected axis; a solid point is Pareto-efficient.
+Keep hardware and benchmark lineage fixed before turning a Pareto observation into a
+performance claim.
+
+## 23. Troubleshooting
 
 Korgis preflight fails:
 
@@ -623,7 +765,7 @@ shell.
 PARTIAL run: inspect events.jsonl and report.html, fix the root cause, then rerun the same
 run ID with --retry-failures.
 
-## 22. Operational rule
+## 24. Operational rule
 
 ~~~text
 SMOKE   = can this model/task run correctly?
