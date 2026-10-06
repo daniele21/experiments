@@ -206,6 +206,26 @@ models:
       - q4
       - 27b
 
+  qwen3.8-27b-iq1s:
+    model_id: Qwen/Qwen3.8-27B
+    runtime_model_id: qwen3.8-27b-iq1s
+    runtime: korgis-local
+    family: qwen3.8
+    parameters_b: 27
+    artifact:
+      format: gguf
+      quantization: UD-IQ1_S
+      metadata:
+        resolved_by: korgis-model-registry
+        source_repo: unsloth/Qwen3.8-27B-GGUF
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - reasoning
+      - iq1s
+      - 27b
+
   spark-x2.5-4b-q4km:
     model_id: XHToken/Spark-X2.5-4B
     runtime_model_id: spark-x2.5-4b-q4km
