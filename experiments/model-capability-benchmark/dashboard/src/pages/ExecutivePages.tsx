@@ -300,9 +300,12 @@ function TradeoffPlot({
 
 function CapabilityLeadership({
   capabilities,
+  models,
 }: {
   capabilities: DecisionCapabilitySummary[];
+  models: DecisionModelSummary[];
 }) {
+  const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
   const byCapability = new Map<string, DecisionCapabilitySummary[]>();
   for (const row of capabilities) {
     const values = byCapability.get(row.capability_id) ?? [];
@@ -337,6 +340,16 @@ function CapabilityLeadership({
             <div>
               <span>{capability.replaceAll('-', ' ')}</span>
               <strong>{winner?.model_key}</strong>
+              {winner ? (
+                <span className="executive-model-meta">
+                  <RuntimeBadge model={modelBySignature.get(winner.model_signature) ?? {
+                    deployment: 'api',
+                    runtime_key: '',
+                    provider_key: '',
+                    tags: [],
+                  }} compact />
+                </span>
+              ) : null}
             </div>
             <div className="executive-capability-track">
               <i style={{ width: `${Math.max(2, Math.min(100, value))}%` }} />
@@ -361,6 +374,7 @@ interface DatasetMatrixCell {
   label: string;
   score: number;
   observedCases: number;
+  model?: DecisionModelSummary | null;
 }
 
 interface DatasetMatrixColumn {
@@ -426,6 +440,7 @@ function aggregateDatasetCells(
     label: item.label,
     score: item.weighted / item.weight,
     observedCases: item.weight,
+    model: mode === 'models' ? (modelBySignature.get(item.key) ?? null) : null,
   }));
   const datasets = [...new Set(cells.map((cell) => cell.dataset))].sort();
   const columns = [...new Map(
@@ -638,8 +653,9 @@ function DatasetWinners({
           </div>
           <div>
             <strong>{winner.label}</strong>
-            <span>
-              {runnerUp ? `+${(winner.score - runnerUp.score).toFixed(1)} vs #2` : 'only measured option'}
+            <span className="dataset-winner-meta">
+              <span>{runnerUp ? `+${(winner.score - runnerUp.score).toFixed(1)} vs #2` : 'only measured option'}</span>
+              {winner.model ? <RuntimeBadge model={winner.model} compact /> : null}
             </span>
           </div>
           <strong>{winner.score.toFixed(1)}</strong>
@@ -1080,7 +1096,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
             </div>
             <Layers3 size={20} />
           </div>
-          <CapabilityLeadership capabilities={capabilities} />
+          <CapabilityLeadership capabilities={capabilities} models={models} />
         </section>
       </ExecutiveFrame>
     );
