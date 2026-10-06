@@ -1063,33 +1063,15 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
     [...speedPareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0] ??
     [...speedModels].sort((a, b) => Number(a.latency_p50_ms) - Number(b.latency_p50_ms))[0];
 
-  const sizeCandidates = models.filter(
+  const sizeModels = models.filter(
     (model) =>
       model.artifact_size_bytes != null &&
       Number.isFinite(model.artifact_size_bytes) &&
       model.overall_quality_score != null,
   );
-  const sizeComplete = sizeCandidates.filter((model) => model.quality_coverage_complete);
-  const sizeModels = sizeComplete.length ? sizeComplete : sizeCandidates;
-  const sizeParetoSignatures = new Set(
-    sizeModels
-      .filter((model) => {
-        const size = Number(model.artifact_size_bytes);
-        const quality = modelQuality(model);
-        return !sizeModels.some((other) => {
-          if (other.model_signature === model.model_signature) return false;
-          const otherSize = Number(other.artifact_size_bytes);
-          const otherQuality = modelQuality(other);
-          return (
-            otherSize <= size &&
-            otherQuality >= quality &&
-            (otherSize < size || otherQuality > quality)
-          );
-        });
-      })
-      .map((model) => model.model_signature),
+  const sizePareto = sizeModels.filter(
+    (model) => model.observed_quality_artifact_size_pareto,
   );
-  const sizePareto = sizeModels.filter((model) => sizeParetoSignatures.has(model.model_signature));
   const sizeChoice = [...sizePareto].sort((a, b) => modelQuality(b) - modelQuality(a))[0];
   const smallestPareto = [...sizePareto].sort(
     (a, b) => Number(a.artifact_size_bytes) - Number(b.artifact_size_bytes),
@@ -1237,7 +1219,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
             x={(model) => model.artifact_size_bytes ?? null}
             xLabel="Model size"
             formatX={modelSizeValue}
-            pareto={(model) => sizeParetoSignatures.has(model.model_signature)}
+            pareto={(model) => model.observed_quality_artifact_size_pareto}
           />
         </section>
       </ExecutiveFrame>
