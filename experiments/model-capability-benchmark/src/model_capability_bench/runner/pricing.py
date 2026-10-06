@@ -30,15 +30,30 @@ def _price_entry(
     if not isinstance(raw, dict):
         return None
 
-    candidates = (
-        model.model.model_key,
-        model.model.model_id,
-        model.effective_model_id,
-    )
+    candidates = [
+        c for c in (
+            model.model.model_key,
+            model.model.model_id,
+            model.effective_model_id,
+        )
+        if c
+    ]
     for candidate in candidates:
         entry = raw.get(candidate)
         if isinstance(entry, dict) and str(entry.get("match") or "exact") == "exact":
             return entry
+
+    for price_key, entry in raw.items():
+        if not isinstance(entry, dict):
+            continue
+        match_type = str(entry.get("match") or "")
+        if match_type == "prefix":
+            for candidate in candidates:
+                if str(candidate).startswith(str(price_key)):
+                    return entry
+        elif match_type == "provider":
+            if str(price_key) == str(model.provider.provider_key):
+                return entry
     return None
 
 

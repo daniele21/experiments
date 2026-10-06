@@ -303,11 +303,14 @@ def _price_entry_for_model(
             return snapshot, entry, str(candidate)
 
     for price_key, entry in prices.items():
-        if (
-            isinstance(entry, dict)
-            and str(entry.get("match") or "") == "provider"
-            and str(price_key) == str(provider_key)
-        ):
+        if not isinstance(entry, dict):
+            continue
+        match_type = str(entry.get("match") or "")
+        if match_type == "prefix":
+            for candidate in (model_key, model_id, effective_model_id):
+                if candidate and str(candidate).startswith(str(price_key)):
+                    return snapshot, entry, str(price_key)
+        elif match_type == "provider" and str(price_key) == str(provider_key):
             return snapshot, entry, str(price_key)
     return None
 
