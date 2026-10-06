@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import decisioRuntimeLogo from '../assets/runtime/decisio.webp';
+import korgisRuntimeLogo from '../assets/runtime/korgis.webp';
 import { overview } from '../data';
 import type {
   DecisionCapabilitySummary,
@@ -64,6 +66,76 @@ function failureValue(value: number | null | undefined): string {
 
 function modelQuality(model: DecisionModelSummary): number {
   return model.overall_quality_score ?? -1;
+}
+
+type RuntimeBrand = 'korgis' | 'decisio';
+
+function runtimeBrand(model: Pick<DecisionModelSummary, 'deployment' | 'runtime_key' | 'provider_key' | 'tags'>): RuntimeBrand | null {
+  if (model.deployment !== 'local') return null;
+  if (
+    model.runtime_key === 'decisio-local' ||
+    model.provider_key === 'decisio' ||
+    model.tags?.includes('decisio')
+  ) {
+    return 'decisio';
+  }
+  if (model.runtime_key === 'korgis-local' || model.provider_key === 'korgis') {
+    return 'korgis';
+  }
+  return null;
+}
+
+function RuntimeBadge({
+  model,
+  compact = false,
+}: {
+  model: Pick<DecisionModelSummary, 'deployment' | 'runtime_key' | 'provider_key' | 'tags'>;
+  compact?: boolean;
+}) {
+  const brand = runtimeBrand(model);
+  if (!brand) return null;
+  const label = brand === 'korgis' ? 'Korgis runtime' : 'Decisio runtime';
+  return (
+    <span className={compact ? 'runtime-brand-badge compact' : 'runtime-brand-badge'} title={label} aria-label={label}>
+      <img src={brand === 'korgis' ? korgisRuntimeLogo : decisioRuntimeLogo} alt="" />
+      {!compact ? <span>{brand === 'korgis' ? 'Korgis' : 'Decisio'}</span> : null}
+    </span>
+  );
+}
+
+interface QualityRankItem {
+  model: DecisionModelSummary;
+  score: number;
+}
+
+function overallQualityRanking(models: DecisionModelSummary[]): QualityRankItem[] {
+  const scored = models.filter((model) => model.overall_quality_score != null);
+  const complete = scored.filter((model) => model.quality_coverage_complete);
+  return [...(complete.length ? complete : scored)]
+    .sort((a, b) => modelQuality(b) - modelQuality(a))
+    .map((model) => ({ model, score: modelQuality(model) }));
+}
+
+function datasetQualityRanking(
+  rows: DecisionDatasetSummary[],
+  models: DecisionModelSummary[],
+  datasetId: string,
+): QualityRankItem[] {
+  const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
+  const grouped = new Map<string, { model: DecisionModelSummary; weighted: number; weight: number }>();
+  for (const row of rows) {
+    if (row.dataset_id !== datasetId || row.normalized_quality_score == null) continue;
+    const model = modelBySignature.get(row.model_signature);
+    if (!model) continue;
+    const weight = Math.max(1, row.observed_case_count || row.sample_count || 1);
+    const current = grouped.get(row.model_signature) ?? { model, weighted: 0, weight: 0 };
+    current.weighted += Number(row.normalized_quality_score) * weight;
+    current.weight += weight;
+    grouped.set(row.model_signature, current);
+  }
+  return [...grouped.values()]
+    .map((item) => ({ model: item.model, score: item.weighted / item.weight }))
+    .sort((a, b) => b.score - a.score);
 }
 
 function ExecutiveFrame({
@@ -127,33 +199,29 @@ function ExecutiveEmpty({ message }: { message: string }) {
   );
 }
 
-function QualityBars({ models }: { models: DecisionModelSummary[] }) {
-  const scored = models.filter((model) => model.overall_quality_score != null);
-  const complete = scored.filter((model) => model.quality_coverage_complete);
-  const ranked = [...(complete.length ? complete : scored)]
-    .sort((a, b) => modelQuality(b) - modelQuality(a));
-  if (!ranked.length) {
-    return <ExecutiveEmpty message="Project completed benchmark results to compare overall quality." />;
+function QualityBars({ items }: { items: QualityRankItem[] }) {
+  if (!items.length) {
+    return <ExecutiveEmpty message="Project completed benchmark results to compare quality." />;
   }
-  const max = Math.max(...ranked.map((model) => modelQuality(model)), 1);
+  const max = Math.max(...items.map((item) => item.score), 1);
   return (
     <div className="executive-ranking">
-      {ranked.map((model, index) => {
-        const value = modelQuality(model);
-        return (
-          <div className={index === 0 ? 'executive-rank-row winner' : 'executive-rank-row'} key={model.model_signature}>
-            <span className="executive-rank-number">{index + 1}</span>
-            <div className="executive-rank-model">
-              <strong>{model.model_key}</strong>
+      {items.map(({ model, score: value }, index) => (
+        <div className={index === 0 ? 'executive-rank-row winner' : 'executive-rank-row'} key={model.model_signature}>
+          <span className="executive-rank-number">{index + 1}</span>
+          <div className="executive-rank-model">
+            <strong>{model.model_key}</strong>
+            <span className="executive-rank-meta">
               <span>{model.deployment === 'local' ? 'Local' : 'API'}{model.family ? ` · ${model.family}` : ''}</span>
-            </div>
-            <div className="executive-rank-track">
-              <i style={{ width: `${Math.max(2, (value / max) * 100)}%` }} />
-            </div>
-            <strong className="executive-rank-value">{scoreValue(value)}</strong>
+              <RuntimeBadge model={model} compact />
+            </span>
           </div>
-        );
-      })}
+          <div className="executive-rank-track">
+            <i style={{ width: `${Math.max(2, (value / max) * 100)}%` }} />
+          </div>
+          <strong className="executive-rank-value">{scoreValue(value)}</strong>
+        </div>
+      ))}
     </div>
   );
 }
@@ -234,9 +302,12 @@ function TradeoffPlot({
 
 function CapabilityLeadership({
   capabilities,
+  models,
 }: {
   capabilities: DecisionCapabilitySummary[];
+  models: DecisionModelSummary[];
 }) {
+  const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
   const byCapability = new Map<string, DecisionCapabilitySummary[]>();
   for (const row of capabilities) {
     const values = byCapability.get(row.capability_id) ?? [];
@@ -271,6 +342,16 @@ function CapabilityLeadership({
             <div>
               <span>{capability.replaceAll('-', ' ')}</span>
               <strong>{winner?.model_key}</strong>
+              {winner ? (
+                <span className="executive-model-meta">
+                  <RuntimeBadge model={modelBySignature.get(winner.model_signature) ?? {
+                    deployment: 'api',
+                    runtime_key: '',
+                    provider_key: '',
+                    tags: [],
+                  }} compact />
+                </span>
+              ) : null}
             </div>
             <div className="executive-capability-track">
               <i style={{ width: `${Math.max(2, Math.min(100, value))}%` }} />
@@ -295,12 +376,14 @@ interface DatasetMatrixCell {
   label: string;
   score: number;
   observedCases: number;
+  model?: DecisionModelSummary | null;
 }
 
 interface DatasetMatrixColumn {
   key: string;
   label: string;
   family?: string | null;
+  model?: DecisionModelSummary | null;
 }
 
 function datasetLabel(value: string): string {
@@ -359,6 +442,7 @@ function aggregateDatasetCells(
     label: item.label,
     score: item.weighted / item.weight,
     observedCases: item.weight,
+    model: mode === 'models' ? (modelBySignature.get(item.key) ?? null) : null,
   }));
   const datasets = [...new Set(cells.map((cell) => cell.dataset))].sort();
   const columns = [...new Map(
@@ -371,6 +455,7 @@ function aggregateDatasetCells(
           mode === 'models'
             ? (modelBySignature.get(cell.key)?.family ?? null)
             : cell.label,
+        model: mode === 'models' ? (modelBySignature.get(cell.key) ?? null) : null,
       },
     ]),
   ).values()].sort((a, b) => a.label.localeCompare(b.label));
@@ -410,7 +495,10 @@ function DatasetHeatmap({
         {columns.map((column) => (
           <div className="dataset-heatmap-column" key={column.key}>
             <strong>{column.label}</strong>
-            {column.family && column.family !== column.label ? <span>{column.family}</span> : null}
+            <span className="dataset-column-meta">
+              {column.family && column.family !== column.label ? <span>{column.family}</span> : null}
+              {column.model ? <RuntimeBadge model={column.model} compact /> : null}
+            </span>
           </div>
         ))}
         {datasets.flatMap((dataset) => {
@@ -567,8 +655,9 @@ function DatasetWinners({
           </div>
           <div>
             <strong>{winner.label}</strong>
-            <span>
-              {runnerUp ? `+${(winner.score - runnerUp.score).toFixed(1)} vs #2` : 'only measured option'}
+            <span className="dataset-winner-meta">
+              <span>{runnerUp ? `+${(winner.score - runnerUp.score).toFixed(1)} vs #2` : 'only measured option'}</span>
+              {winner.model ? <RuntimeBadge model={winner.model} compact /> : null}
             </span>
           </div>
           <strong>{winner.score.toFixed(1)}</strong>
@@ -772,8 +861,9 @@ function ReliabilityBars({ models }: { models: DecisionModelSummary[] }) {
           <div className={tiedBest ? 'executive-reliability-row best' : 'executive-reliability-row'} key={model.model_signature}>
             <div>
               <strong>{model.model_key}</strong>
-              <span>
-                {model.quality_coverage_complete ? 'Complete quality coverage' : 'Partial quality coverage'}
+              <span className="executive-model-meta">
+                <span>{model.quality_coverage_complete ? 'Complete quality coverage' : 'Partial quality coverage'}</span>
+                <RuntimeBadge model={model} compact />
               </span>
             </div>
             <div className="executive-reliability-track">
@@ -792,12 +882,21 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
   const models = decision?.model_summaries ?? [];
   const capabilities = decision?.capability_summaries ?? [];
   const datasets = decision?.dataset_summaries ?? [];
+  const [qualityDataset, setQualityDataset] = useState('overall');
 
-  const qualityModels = [...models]
-    .filter((model) => model.overall_quality_score != null)
-    .sort((a, b) => modelQuality(b) - modelQuality(a));
-  const qualityLeader =
-    qualityModels.find((model) => model.quality_coverage_complete) ?? qualityModels[0];
+  const qualityDatasetIds = useMemo(
+    () => [...new Set(datasets.map((row) => row.dataset_id))].sort(),
+    [datasets],
+  );
+  const qualityRanking = useMemo(
+    () =>
+      qualityDataset === 'overall'
+        ? overallQualityRanking(models)
+        : datasetQualityRanking(datasets, models, qualityDataset),
+    [qualityDataset, datasets, models],
+  );
+  const qualityLeader = qualityRanking[0]?.model;
+  const qualityLeaderScore = qualityRanking[0]?.score ?? null;
 
   const speedModels = models.filter((model) => model.latency_p50_ms != null && model.overall_quality_score != null);
   const speedPareto = speedModels.filter((model) => model.observed_quality_latency_pareto);
@@ -832,36 +931,49 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
         );
 
   if (view === 'quality') {
-    const runnerUp = qualityModels[1];
+    const runnerUp = qualityRanking[1];
     const margin =
-      qualityLeader && runnerUp
-        ? modelQuality(qualityLeader) - modelQuality(runnerUp)
+      qualityLeaderScore != null && runnerUp
+        ? qualityLeaderScore - runnerUp.score
         : null;
+    const selectedDatasetLabel =
+      qualityDataset === 'overall' ? 'overall benchmark quality' : datasetLabel(qualityDataset);
     return (
       <ExecutiveFrame
         active="quality"
         eyebrow="Executive · Quality"
-        title="Who is strongest overall?"
+        title={qualityDataset === 'overall' ? 'Who is strongest overall?' : `Who is strongest on ${datasetLabel(qualityDataset)}?`}
         statement={
           qualityLeader
-            ? `${qualityLeader.model_key} leads the CURRENT cohort on overall benchmark quality.`
+            ? `${qualityLeader.model_key} leads the CURRENT cohort on ${selectedDatasetLabel}.`
             : 'No quality leader can be established yet.'
         }
         evidence={
-          qualityLeader
-            ? `Score ${scoreValue(qualityLeader.overall_quality_score)}${margin == null ? '' : ` · ${margin.toFixed(1)} points ahead of #2`}.`
+          qualityLeaderScore != null
+            ? `Score ${scoreValue(qualityLeaderScore)}${margin == null ? '' : ` · ${margin.toFixed(1)} points ahead of #2`}.`
             : 'Project completed comparable results to establish a quality leader.'
         }
       >
-        <section className="executive-visual-card">
-          <div className="executive-visual-heading">
+        <section className="executive-visual-card executive-quality-card">
+          <div className="executive-visual-heading executive-quality-heading">
             <div>
-              <span>Overall quality ranking</span>
-              <h3>Comparable coverage · higher is better</h3>
+              <span>{qualityDataset === 'overall' ? 'Overall quality ranking' : 'Dataset quality ranking'}</span>
+              <h3>{qualityDataset === 'overall' ? 'Comparable coverage · higher is better' : `${datasetLabel(qualityDataset)} · higher is better`}</h3>
             </div>
-            <Trophy size={20} />
+            <div className="executive-quality-actions">
+              <label>
+                <span>Dataset</span>
+                <select value={qualityDataset} onChange={(event) => setQualityDataset(event.target.value)}>
+                  <option value="overall">Overall</option>
+                  {qualityDatasetIds.map((datasetId) => (
+                    <option key={datasetId} value={datasetId}>{datasetLabel(datasetId)}</option>
+                  ))}
+                </select>
+              </label>
+              <Trophy size={20} />
+            </div>
           </div>
-          <QualityBars models={models} />
+          <QualityBars items={qualityRanking} />
         </section>
       </ExecutiveFrame>
     );
@@ -986,7 +1098,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
             </div>
             <Layers3 size={20} />
           </div>
-          <CapabilityLeadership capabilities={capabilities} />
+          <CapabilityLeadership capabilities={capabilities} models={models} />
         </section>
       </ExecutiveFrame>
     );
