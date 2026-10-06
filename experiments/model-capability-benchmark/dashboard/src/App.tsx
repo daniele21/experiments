@@ -27,7 +27,7 @@ export function App() {
   const modelMatch = pathname.match(/^\/models\/([^/]+)$/);
   const datasetMatch = pathname.match(/^\/datasets\/([^/]+)$/);
   const runMatch = pathname.match(/^\/runs\/([^/]+)$/);
-  const executiveMatch = pathname.match(/^\/executive\/(quality|speed|cost|capabilities|reliability)$/);
+  const executiveMatch = pathname.match(/^\/executive\/(quality|speed|cost|capabilities|dataset-fit|reliability)$/);
 
   let page: ReactNode;
   if (pathname === '/' || pathname === '/overview') {
