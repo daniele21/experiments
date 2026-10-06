@@ -1,0 +1,16 @@
+cases:
+  - id: meeting-clean-4spk
+    audio: /absolute/path/to/meeting-clean-4spk.wav
+    reference_rttm: /absolute/path/to/meeting-clean-4spk.rttm
+    tags:
+      environment: clean
+      speaker_band: 2-4
+      overlap: low
+
+  - id: meeting-overlap-6spk
+    audio: /absolute/path/to/meeting-overlap-6spk.wav
+    reference_rttm: /absolute/path/to/meeting-overlap-6spk.rttm
+    tags:
+      environment: noisy
+      speaker_band: 5-8
+      overlap: high
