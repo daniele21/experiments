@@ -728,14 +728,21 @@ def build_decision_overview(
         )
 
     _annotate_pareto(model_summaries, y_key="overall_quality_score")
+    parameter_frontier = _pareto_membership(
+        model_summaries,
+        x_key="parameters_b",
+        y_key="overall_quality_score",
+    )
     artifact_size_frontier = _pareto_membership(
         model_summaries,
         x_key="artifact_size_bytes",
         y_key="overall_quality_score",
     )
     for row in model_summaries:
+        signature = str(row["model_signature"])
+        row["observed_quality_parameters_pareto"] = signature in parameter_frontier
         row["observed_quality_artifact_size_pareto"] = (
-            str(row["model_signature"]) in artifact_size_frontier
+            signature in artifact_size_frontier
         )
 
     capability_summaries: list[dict[str, Any]] = []
