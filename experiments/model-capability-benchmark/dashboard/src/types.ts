@@ -124,6 +124,7 @@ export interface DecisionModelSummary extends DashboardModel {
   latest_completed_at_utc: string | null;
   current_run_ids: string[];
   observed_quality_latency_pareto: boolean;
+  observed_quality_artifact_size_pareto: boolean;
   known_provider_cost_quality_pareto: boolean;
 }
 
