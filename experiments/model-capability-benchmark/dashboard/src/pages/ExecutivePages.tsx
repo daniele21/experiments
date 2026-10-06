@@ -349,7 +349,7 @@ function aggregateDatasetCells(
     score: item.weighted / item.weight,
     observedCases: item.weight,
   }));
-  const datasets = [...new Set(cells.map((cell) => cell.dataset)].sort();
+  const datasets = [...new Set(cells.map((cell) => cell.dataset))].sort();
   const columns = [...new Map(
     cells.map((cell) => [
       cell.key,
