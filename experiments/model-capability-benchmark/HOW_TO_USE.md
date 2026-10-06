@@ -89,6 +89,7 @@ Current model keys:
 
 ~~~text
 qwen3.5-2b-q4km
+qwen3.8-27b-q40
 nemotron-nano-4b
 spark-x2.5-4b-q4km
 ternary-bonsai2-27b-ptq1
@@ -144,6 +145,25 @@ For Nemotron, download once:
 ~~~bash
 uv run --frozen local-llm download nemotron-nano-4b
 ~~~
+
+For Qwen3.8-27B Q4_0, Korgis first checks the LM Studio cache at
+`~/.lmstudio/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-Q4_0.gguf`.
+The separate `MTP/mtp-Qwen3.8-27B-Q4_0.gguf` artifact is not the canonical
+benchmark model and is intentionally not used by this baseline.
+
+~~~bash
+uv run --frozen local-llm models
+
+uv run --frozen local-llm serve \
+  --model qwen3.8-27b-q40 \
+  --enable-admin-api \
+  --no-download
+~~~
+
+The canonical Qwen3.8 baseline runs with thinking disabled and an 8192-token
+runtime context, matching the controlled local-model policy. Treat MTP/speculative
+decoding as a separate runtime-efficiency experiment so it does not change the
+canonical capability lineage.
 
 For Spark-X2.5-4B Q4_K_M, use llama.cpp build 10828 or newer. Korgis
 enforces this model-specific runtime floor before loading the model, so an older
