@@ -1,0 +1,147 @@
+{
+  "campaign": "2026-10-core-v1-qwen3.8-27b-iq1s",
+  "model_key": "qwen3.8-27b-iq1s",
+  "total_capabilities": 5,
+  "total_samples": 468,
+  "total_failures": 0,
+  "capabilities": {
+    "intent-classification": {
+      "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-intent-classification-core",
+      "capability_id": "intent-classification",
+      "task_id": "intent-classification",
+      "dataset_ids": [
+        "banking77"
+      ],
+      "sample_count": 154,
+      "failure_count": 0,
+      "primary_metric": "accuracy",
+      "metrics": {
+        "accuracy": 0.5844155844155844,
+        "estimated_cost_usd": 0.0,
+        "invalid_output_rate": 0.006493506493506494,
+        "latency_p50_ms": 8568.107791492366,
+        "latency_p95_ms": 9098.29579560901,
+        "macro_f1": 0.543815331010453,
+        "output_tokens_mean": 9.470588235294118
+      },
+      "model": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      }
+    },
+    "mathematical-reasoning": {
+      "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-mathematical-reasoning-core",
+      "capability_id": "mathematical-reasoning",
+      "task_id": "mathematical-reasoning",
+      "dataset_ids": [
+        "math-reasoning-controlled-v2"
+      ],
+      "sample_count": 40,
+      "failure_count": 0,
+      "primary_metric": "final_answer_accuracy",
+      "metrics": {
+        "estimated_cost_usd": 0.0,
+        "final_answer_accuracy": 0.25,
+        "invalid_output_rate": 0.05,
+        "latency_p95_ms": 22229.72979789554,
+        "output_tokens_mean": 18.92105263157895,
+        "parse_valid": 0.825
+      },
+      "model": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      }
+    },
+    "oos-calibration": {
+      "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-oos-calibration-core",
+      "capability_id": "oos-calibration",
+      "task_id": "calibrated-intent-classification",
+      "dataset_ids": [
+        "banking77",
+        "clinc150-oos"
+      ],
+      "sample_count": 154,
+      "failure_count": 0,
+      "primary_metric": "oos_detection_rate",
+      "metrics": {
+        "brier_correctness": 0.49422391304347824,
+        "ece_top_label": 0.5029710144927537,
+        "in_scope_accuracy": 0.5714285714285714,
+        "invalid_output_rate": 0.1038961038961039,
+        "latency_p95_ms": 36285.84456239332,
+        "oos_detection_rate": 0.8181818181818182
+      },
+      "model": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      }
+    },
+    "qa-abstention": {
+      "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-qa-abstention-core",
+      "capability_id": "qa-abstention",
+      "task_id": "qa-abstention",
+      "dataset_ids": [
+        "qa-abstention-controlled-v2"
+      ],
+      "sample_count": 60,
+      "failure_count": 0,
+      "primary_metric": "qa_correct",
+      "metrics": {
+        "answerability_accuracy": 0.8166666666666667,
+        "exact_match": 0.9666666666666667,
+        "invalid_output_rate": 0.0,
+        "latency_p95_ms": 4320.6283913576035,
+        "parse_valid": 0.9833333333333333,
+        "qa_correct": 0.8
+      },
+      "model": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      }
+    },
+    "structured-output": {
+      "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-structured-output-core",
+      "capability_id": "structured-output",
+      "task_id": "structured-output",
+      "dataset_ids": [
+        "structured-output-controlled-v2"
+      ],
+      "sample_count": 60,
+      "failure_count": 0,
+      "primary_metric": "exact_match",
+      "metrics": {
+        "estimated_cost_usd": 0.0,
+        "exact_match": 0.6833333333333333,
+        "field_accuracy": 0.8319444444444444,
+        "hallucinated_fields": 0.4,
+        "invalid_output_rate": 0.0,
+        "latency_p95_ms": 12916.947212500963,
+        "schema_valid_rate": 0.8333333333333334
+      },
+      "model": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      }
+    }
+  }
+}

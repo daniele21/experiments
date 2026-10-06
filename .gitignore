@@ -14,6 +14,8 @@ experiments/*/results/manifests/
 experiments/*/results/logs/
 experiments/*/results/*.html
 experiments/*/results/*/
+!experiments/*/results/published/
+!experiments/*/results/published/**
 experiments/*/dashboard/node_modules/
 experiments/*/dashboard/dist/
 korgis/*
