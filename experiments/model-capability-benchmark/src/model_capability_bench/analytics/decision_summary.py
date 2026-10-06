@@ -619,6 +619,7 @@ def build_decision_overview(
                 "parameters_b": cfg.get("parameters_b"),
                 "quantization": cell.get("quantization") or artifact.get("quantization"),
                 "artifact_format": cell.get("artifact_format") or artifact.get("format"),
+                "artifact_size_bytes": artifact.get("size_bytes"),
                 "tags": cfg.get("tags") or [],
             }
 
@@ -727,6 +728,15 @@ def build_decision_overview(
         )
 
     _annotate_pareto(model_summaries, y_key="overall_quality_score")
+    artifact_size_frontier = _pareto_membership(
+        model_summaries,
+        x_key="artifact_size_bytes",
+        y_key="overall_quality_score",
+    )
+    for row in model_summaries:
+        row["observed_quality_artifact_size_pareto"] = (
+            str(row["model_signature"]) in artifact_size_frontier
+        )
 
     capability_summaries: list[dict[str, Any]] = []
     for cell in cells:
