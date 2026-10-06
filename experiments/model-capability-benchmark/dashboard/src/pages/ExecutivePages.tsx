@@ -239,6 +239,9 @@ function TradeoffPlot({
   formatX: (value: number | null | undefined) => string;
   pareto: (model: DecisionModelSummary) => boolean;
 }) {
+  const [hoveredSignature, setHoveredSignature] = useState<string | null>(null);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
+
   const points = models
     .map((model) => ({ model, xv: x(model), yv: model.overall_quality_score }))
     .filter(
@@ -263,8 +266,75 @@ function TradeoffPlot({
   const yScale = (value: number) =>
     maxY === minY ? 160 : 276 - ((value - minY) / (maxY - minY)) * 220;
 
+  const plotted = points.map((point) => ({
+    ...point,
+    cx: xScale(point.xv),
+    cy: yScale(point.yv),
+    onPareto: pareto(point.model),
+  }));
+  const hovered = plotted.find((point) => point.model.model_signature === hoveredSignature) ?? null;
+
+  const persistentSignatures = [
+    ...(selectedSignature ? [selectedSignature] : []),
+    ...plotted
+      .filter((point) => point.onPareto && point.model.model_signature !== selectedSignature)
+      .map((point) => point.model.model_signature),
+  ];
+
+  const occupied: Array<{ x: number; y: number; width: number; height: number }> = [];
+  const labelPlacements = new Map<
+    string,
+    { x: number; y: number; width: number; height: number; anchorX: number; anchorY: number }
+  >();
+
+  const overlaps = (
+    a: { x: number; y: number; width: number; height: number },
+    b: { x: number; y: number; width: number; height: number },
+  ) =>
+    a.x < b.x + b.width + 5 &&
+    a.x + a.width + 5 > b.x &&
+    a.y < b.y + b.height + 5 &&
+    a.y + a.height + 5 > b.y;
+
+  for (const signature of persistentSignatures) {
+    const point = plotted.find((candidate) => candidate.model.model_signature === signature);
+    if (!point) continue;
+    const width = Math.min(190, Math.max(105, point.model.model_key.length * 6.2 + 22));
+    const height = 35;
+    const candidates = [
+      { x: point.cx + 13, y: point.cy - 28 },
+      { x: point.cx + 13, y: point.cy + 8 },
+      { x: point.cx - width - 13, y: point.cy - 28 },
+      { x: point.cx - width - 13, y: point.cy + 8 },
+      { x: point.cx + 13, y: point.cy - 52 },
+      { x: point.cx - width - 13, y: point.cy - 52 },
+    ];
+    const chosen =
+      candidates
+        .map((candidate) => ({
+          x: Math.max(80, Math.min(838 - width, candidate.x)),
+          y: Math.max(38, Math.min(280 - height, candidate.y)),
+          width,
+          height,
+        }))
+        .find((candidate) => !occupied.some((placed) => overlaps(candidate, placed))) ??
+      {
+        x: Math.max(80, Math.min(838 - width, point.cx + 13)),
+        y: Math.max(38, Math.min(280 - height, point.cy - 28)),
+        width,
+        height,
+      };
+    occupied.push(chosen);
+    labelPlacements.set(signature, {
+      ...chosen,
+      anchorX: chosen.x > point.cx ? chosen.x : chosen.x + width,
+      anchorY: chosen.y + height / 2,
+    });
+  }
+
   return (
-    <div className="executive-plot-shell">
+    <div className="executive-plot-shell interactive">
+      <div className="executive-plot-hint">Hover to inspect · click to pin</div>
       <svg className="executive-plot" viewBox="0 0 900 340" role="img" aria-label={`Quality versus ${xLabel}`}>
         <g className="executive-plot-grid">
           {[0, 1, 2, 3, 4].map((step) => {
@@ -274,20 +344,65 @@ function TradeoffPlot({
         </g>
         <line x1="76" y1="286" x2="840" y2="286" className="executive-axis" />
         <line x1="76" y1="44" x2="76" y2="286" className="executive-axis" />
-        {points.map(({ model, xv, yv }) => {
-          const cx = xScale(xv);
-          const cy = yScale(yv);
-          const onPareto = pareto(model);
-          const toLeft = cx > 690;
+
+        {persistentSignatures.map((signature) => {
+          const point = plotted.find((candidate) => candidate.model.model_signature === signature);
+          const placement = labelPlacements.get(signature);
+          if (!point || !placement) return null;
           return (
-            <g className={onPareto ? 'executive-point pareto' : 'executive-point'} key={model.model_signature}>
+            <g className="executive-point-label-group" key={`label-${signature}`}>
+              <line
+                x1={point.cx}
+                y1={point.cy}
+                x2={placement.anchorX}
+                y2={placement.anchorY}
+                className="executive-point-leader"
+              />
+              <rect
+                x={placement.x}
+                y={placement.y}
+                width={placement.width}
+                height={placement.height}
+                rx="7"
+                className="executive-point-label-bg"
+              />
+              <text x={placement.x + 9} y={placement.y + 14} className="executive-point-label-title">
+                {point.model.model_key}
+              </text>
+              <text x={placement.x + 9} y={placement.y + 27} className="executive-point-label-meta">
+                {formatX(point.xv)} · quality {scoreValue(point.yv)}
+              </text>
+            </g>
+          );
+        })}
+
+        {plotted.map(({ model, cx, cy, onPareto }) => {
+          const selected = model.model_signature === selectedSignature;
+          const hoveredPoint = model.model_signature === hoveredSignature;
+          return (
+            <g
+              className={[
+                'executive-point',
+                onPareto ? 'pareto' : '',
+                selected ? 'selected' : '',
+                hoveredPoint ? 'hovered' : '',
+              ].filter(Boolean).join(' ')}
+              key={model.model_signature}
+              tabIndex={0}
+              role="button"
+              aria-label={`${model.model_key}: quality ${scoreValue(model.overall_quality_score)}, ${xLabel} ${formatX(x(model))}`}
+              onMouseEnter={() => setHoveredSignature(model.model_signature)}
+              onMouseLeave={() => setHoveredSignature(null)}
+              onFocus={() => setHoveredSignature(model.model_signature)}
+              onBlur={() => setHoveredSignature(null)}
+              onClick={() =>
+                setSelectedSignature((current) =>
+                  current === model.model_signature ? null : model.model_signature,
+                )
+              }
+            >
+              {selected ? <circle cx={cx} cy={cy} r="11" className="executive-point-selection-ring" /> : null}
               <circle cx={cx} cy={cy} r={onPareto ? 8 : 6} />
-              <text x={toLeft ? cx - 11 : cx + 11} y={cy - 5} textAnchor={toLeft ? 'end' : 'start'}>
-                {model.model_key}
-              </text>
-              <text className="meta" x={toLeft ? cx - 11 : cx + 11} y={cy + 9} textAnchor={toLeft ? 'end' : 'start'}>
-                {formatX(xv)}
-              </text>
             </g>
           );
         })}
@@ -296,6 +411,30 @@ function TradeoffPlot({
           Quality · higher is better
         </text>
       </svg>
+
+      {hovered ? (
+        <div
+          className={[
+            'executive-point-tooltip',
+            hovered.cx > 690 ? 'align-right' : '',
+            hovered.cy < 90 ? 'below' : '',
+          ].filter(Boolean).join(' ')}
+          style={{
+            left: `${(hovered.cx / 900) * 100}%`,
+            top: `${(hovered.cy / 340) * 100}%`,
+          }}
+        >
+          <div className="executive-point-tooltip-title">
+            <strong>{hovered.model.model_key}</strong>
+            <RuntimeBadge model={hovered.model} compact />
+          </div>
+          <div className="executive-point-tooltip-metrics">
+            <span><small>Quality</small><strong>{scoreValue(hovered.yv)}</strong></span>
+            <span><small>{xLabel}</small><strong>{formatX(hovered.xv)}</strong></span>
+          </div>
+          <small>{hovered.onPareto ? 'Pareto-efficient' : 'Measured configuration'} · click to pin</small>
+        </div>
+      ) : null}
     </div>
   );
 }
