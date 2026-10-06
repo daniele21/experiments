@@ -5073,3 +5073,65 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   border-radius: 50%;
   background: #4f66ef;
 }
+
+
+/* Executive model-size frontier controls. */
+.executive-size-heading {
+  align-items: center;
+}
+
+.executive-size-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.executive-size-actions label {
+  display: grid;
+  gap: 4px;
+}
+
+.executive-size-actions label > span {
+  color: #7b8799;
+  font-size: 7.5px;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.executive-size-actions select {
+  min-width: 150px;
+  min-height: 34px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #273249;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.executive-size-actions select:focus {
+  border-color: #6d82ee;
+  box-shadow: 0 0 0 3px rgba(79,99,244,.08);
+}
+
+@media (max-width: 720px) {
+  .executive-size-heading {
+    align-items: flex-start;
+  }
+
+  .executive-size-actions {
+    width: 100%;
+  }
+
+  .executive-size-actions label {
+    flex: 1;
+  }
+
+  .executive-size-actions select {
+    width: 100%;
+    min-width: 0;
+  }
+}
