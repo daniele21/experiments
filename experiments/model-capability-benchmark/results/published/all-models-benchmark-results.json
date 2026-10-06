@@ -1,0 +1,1255 @@
+{
+  "schema_version": "1.0",
+  "total_models": 14,
+  "models": {
+    "bonsai-27b-q10": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "bonsai-27b-q10",
+        "model_id": "prism-ml/bonsai-27b",
+        "model_key": "bonsai-27b-q10",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-bonsai-27b-q10-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.5974025974025974,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 8900.03939550661,
+            "latency_p95_ms": 9739.512333347375,
+            "macro_f1": 0.5547822547822547,
+            "output_tokens_mean": 9.928571428571429
+          },
+          "generated_at_utc": "2026-10-06T10:03:19.173601+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-bonsai-27b-q10-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.575,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2470.525904195528,
+            "output_tokens_mean": 9.9,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-06T09:40:29.548451+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-bonsai-27b-q10-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.25506493506493505,
+            "ece_top_label": 0.23311688311688314,
+            "in_scope_accuracy": 0.5454545454545454,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 9162.466885308095,
+            "oos_detection_rate": 0.948051948051948
+          },
+          "generated_at_utc": "2026-10-06T10:26:04.586782+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-bonsai-27b-q10-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.8833333333333333,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 3838.2669604550756,
+            "parse_valid": 1.0,
+            "qa_correct": 0.8666666666666667
+          },
+          "generated_at_utc": "2026-10-06T09:38:49.273708+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-bonsai-27b-q10-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7833333333333333,
+            "field_accuracy": 0.9791666666666666,
+            "hallucinated_fields": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 7536.193280648876,
+            "schema_valid_rate": 0.9
+          },
+          "generated_at_utc": "2026-10-06T09:35:22.856473+00:00"
+        }
+      }
+    },
+    "decisio-qwen3.5-2b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-2b-q4km",
+        "model_id": "unsloth/qwen3.5-2b",
+        "model_key": "decisio-qwen3.5-2b-q4km",
+        "provider_key": "decisio",
+        "runtime_key": "decisio-local"
+      },
+      "total_samples": 231,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "1e48c427-4e75-4ace-a465-2aec7e2751cd",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.6038961038961039,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.006493506493506494,
+            "latency_p50_ms": 1149.7726044981391,
+            "latency_p95_ms": 1208.5230768483598,
+            "macro_f1": 0.5738404452690167,
+            "output_tokens_mean": 7.862745098039215
+          },
+          "generated_at_utc": "2026-10-05T15:26:12.520274+00:00"
+        }
+      }
+    },
+    "decisio-qwen3.5-4b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-4b-q4km",
+        "model_id": "unsloth/qwen3.5-4b",
+        "model_key": "decisio-qwen3.5-4b-q4km",
+        "provider_key": "decisio",
+        "runtime_key": "decisio-local"
+      },
+      "total_samples": 231,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "b906e312-aa49-4397-b60e-a1c3ad6a8f87",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.7012987012987013,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.006493506493506494,
+            "latency_p50_ms": 2828.9587710023625,
+            "latency_p95_ms": 2931.071354152664,
+            "macro_f1": 0.6687693259121831,
+            "output_tokens_mean": 7.790849673202614
+          },
+          "generated_at_utc": "2026-10-05T15:33:34.063660+00:00"
+        }
+      }
+    },
+    "decisio-qwen3.5-9b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-9b-q4km",
+        "model_id": "qwen/qwen3.5-9b",
+        "model_key": "decisio-qwen3.5-9b-q4km",
+        "provider_key": "decisio",
+        "runtime_key": "decisio-local"
+      },
+      "total_samples": 77,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "e9c4ec37-433f-4b06-b397-9d9b3a4f7480",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 77,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.6623376623376623,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 4986.015040994971,
+            "latency_p95_ms": 5194.435066799633,
+            "macro_f1": 0.6017316017316018,
+            "output_tokens_mean": 7.8311688311688314
+          },
+          "generated_at_utc": "2026-10-05T16:17:35.496406+00:00"
+        }
+      }
+    },
+    "gpt-5.6-luna": {
+      "model_info": {
+        "deployment": "api",
+        "effective_model_id": "gpt-5.6-luna",
+        "model_id": "gpt-5.6-luna",
+        "model_key": "gpt-5.6-luna",
+        "provider_key": "openai",
+        "runtime_key": "openai-api"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-gpt-5.6-luna-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.8246753246753247,
+            "estimated_cost_usd": 0.035399400000000004,
+            "invalid_output_rate": 0.025974025974025976,
+            "latency_p50_ms": 1359.8202709981706,
+            "latency_p95_ms": 4205.3196875946005,
+            "macro_f1": 0.8168831168831169,
+            "output_tokens_mean": 32.64
+          },
+          "generated_at_utc": "2026-10-06T12:22:05.348573+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-gpt-5.6-luna-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.002647,
+            "final_answer_accuracy": 0.45,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2669.140464547672,
+            "output_tokens_mean": 35.375,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-06T12:17:36.747510+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-gpt-5.6-luna-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.05236333333333333,
+            "ece_top_label": 0.0475333333333333,
+            "in_scope_accuracy": 0.8051948051948052,
+            "invalid_output_rate": 0.025974025974025976,
+            "latency_p95_ms": 2838.6875687552674,
+            "oos_detection_rate": 1.0
+          },
+          "generated_at_utc": "2026-10-06T12:26:05.004623+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-gpt-5.6-luna-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.9833333333333333,
+            "exact_match": 0.7666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 1930.584752104187,
+            "parse_valid": 1.0,
+            "qa_correct": 0.8666666666666667
+          },
+          "generated_at_utc": "2026-10-06T12:16:26.453748+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-gpt-5.6-luna-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0060932,
+            "exact_match": 0.9166666666666666,
+            "field_accuracy": 0.9916666666666667,
+            "hallucinated_fields": 0.06666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2594.3603166953817,
+            "schema_valid_rate": 1.0
+          },
+          "generated_at_utc": "2026-10-06T12:15:04.823902+00:00"
+        }
+      }
+    },
+    "jev-1.13.0": {
+      "model_info": {
+        "deployment": "api",
+        "effective_model_id": "jev-1.13.0",
+        "model_id": "jev-1.13.0",
+        "model_key": "jev-1.13.0",
+        "provider_key": "typesafe",
+        "runtime_key": "typesafe-api"
+      },
+      "total_samples": 308,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-jev-1.13.0-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.7467532467532467,
+            "estimated_cost_usd": 0.011036004,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 242.71758300164947,
+            "latency_p95_ms": 301.1586692970013,
+            "macro_f1": 0.705256648113791,
+            "output_tokens_mean": 828.2337662337662
+          },
+          "generated_at_utc": "2026-10-06T12:50:59.751045+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-jev-1.13.0-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.08221038961038961,
+            "ece_top_label": 0.0822077922077922,
+            "in_scope_accuracy": 0.7272727272727273,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 321.4545602029829,
+            "oos_detection_rate": 0.974025974025974
+          },
+          "generated_at_utc": "2026-10-06T12:51:50.894670+00:00"
+        }
+      }
+    },
+    "nemotron-nano-4b": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "nemotron-nano-4b",
+        "model_id": "nvidia/nemotron-3-nano-4b",
+        "model_key": "nemotron-nano-4b",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.5584415584415584,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 2010.3751250062487,
+            "latency_p95_ms": 2163.9121060507023,
+            "macro_f1": 0.5148583484026522,
+            "output_tokens_mean": 10.837662337662337
+          },
+          "generated_at_utc": "2026-10-05T12:03:20.670772+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.575,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 664.7058172944526,
+            "output_tokens_mean": 8.15,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-05T11:57:43.706880+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.21637272727272724,
+            "ece_top_label": 0.20987012987012985,
+            "in_scope_accuracy": 0.5714285714285714,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2632.3175227080355,
+            "oos_detection_rate": 0.961038961038961
+          },
+          "generated_at_utc": "2026-10-05T12:10:00.419494+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.9833333333333333,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 1040.7841770924276,
+            "parse_valid": 1.0,
+            "qa_correct": 0.9666666666666667
+          },
+          "generated_at_utc": "2026-10-05T11:57:09.511000+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7333333333333333,
+            "field_accuracy": 0.9569444444444444,
+            "hallucinated_fields": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2798.8641288560757,
+            "schema_valid_rate": 0.9666666666666667
+          },
+          "generated_at_utc": "2026-10-05T11:56:03.847027+00:00"
+        }
+      }
+    },
+    "nemotron-nano-4b-q8": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "nemotron-nano-4b-q8",
+        "model_id": "nvidia/nemotron-3-nano-4b-q8",
+        "model_key": "nemotron-nano-4b-q8",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-q8-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.551948051948052,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 3393.2761040050536,
+            "latency_p95_ms": 4267.191872800322,
+            "macro_f1": 0.5204018204018204,
+            "output_tokens_mean": 10.896103896103897
+          },
+          "generated_at_utc": "2026-10-05T13:24:18.072470+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-q8-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.6,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 789.8509145503339,
+            "output_tokens_mean": 8.15,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-05T13:15:22.422167+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-q8-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.20890974025974027,
+            "ece_top_label": 0.19980519480519487,
+            "in_scope_accuracy": 0.5974025974025974,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 4934.0581772929,
+            "oos_detection_rate": 0.961038961038961
+          },
+          "generated_at_utc": "2026-10-05T13:32:50.525955+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-q8-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.9833333333333333,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 1983.9075827017948,
+            "parse_valid": 1.0,
+            "qa_correct": 0.9666666666666667
+          },
+          "generated_at_utc": "2026-10-05T13:14:43.473805+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-nemotron-nano-4b-q8-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7166666666666667,
+            "field_accuracy": 0.9486111111111111,
+            "hallucinated_fields": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 5424.1780169439135,
+            "schema_valid_rate": 0.9666666666666667
+          },
+          "generated_at_utc": "2026-10-05T13:13:01.362562+00:00"
+        }
+      }
+    },
+    "qwen3.5-0.8b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-0.8b-q4km",
+        "model_id": "unsloth/qwen3.5-0.8b",
+        "model_key": "qwen3.5-0.8b-q4km",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-qwen3.5-0.8b-q4km-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.2792207792207792,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 339.46391649806174,
+            "latency_p95_ms": 371.62911084524234,
+            "macro_f1": 0.26106834142626373,
+            "output_tokens_mean": 9.688311688311689
+          },
+          "generated_at_utc": "2026-10-05T13:37:29.991668+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-qwen3.5-0.8b-q4km-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 202.90230384853203,
+            "output_tokens_mean": 10.25,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-05T13:36:13.813960+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-qwen3.5-0.8b-q4km-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.7841220779220779,
+            "ece_top_label": 0.8176623376623376,
+            "in_scope_accuracy": 0.2727272727272727,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 463.41581654851325,
+            "oos_detection_rate": 0.5
+          },
+          "generated_at_utc": "2026-10-05T13:39:04.262603+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-qwen3.5-0.8b-q4km-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.5833333333333334,
+            "exact_match": 0.8,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 269.198137501371,
+            "parse_valid": 1.0,
+            "qa_correct": 0.48333333333333334
+          },
+          "generated_at_utc": "2026-10-05T13:35:56.665785+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-qwen3.5-0.8b-q4km-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.6833333333333333,
+            "field_accuracy": 0.9416666666666667,
+            "hallucinated_fields": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 798.6456500082567,
+            "schema_valid_rate": 0.95
+          },
+          "generated_at_utc": "2026-10-05T13:35:30.152560+00:00"
+        }
+      }
+    },
+    "qwen3.5-2b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-2b-q4km",
+        "model_id": "unsloth/qwen3.5-2b",
+        "model_key": "qwen3.5-2b-q4km",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-qwen3.5-2b-q4km-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.577922077922078,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 688.2556045020465,
+            "latency_p95_ms": 780.7678268472954,
+            "macro_f1": 0.5256435925185925,
+            "output_tokens_mean": 9.74025974025974
+          },
+          "generated_at_utc": "2026-10-05T11:25:37.921032+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-qwen3.5-2b-q4km-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.325,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 332.65334790921764,
+            "output_tokens_mean": 9.275,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-05T11:23:17.620327+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-qwen3.5-2b-q4km-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.6290324675324676,
+            "ece_top_label": 0.6496103896103895,
+            "in_scope_accuracy": 0.5714285714285714,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 881.2015722527576,
+            "oos_detection_rate": 0.5
+          },
+          "generated_at_utc": "2026-10-05T11:28:16.145981+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-qwen3.5-2b-q4km-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.8,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 549.0888670014099,
+            "parse_valid": 1.0,
+            "qa_correct": 0.7833333333333333
+          },
+          "generated_at_utc": "2026-10-05T11:22:51.461771+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-qwen3.5-2b-q4km-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7333333333333333,
+            "field_accuracy": 0.9486111111111111,
+            "hallucinated_fields": 0.16666666666666666,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 1450.6030038486642,
+            "schema_valid_rate": 0.9333333333333333
+          },
+          "generated_at_utc": "2026-10-05T10:55:49.993338+00:00"
+        }
+      }
+    },
+    "qwen3.5-4b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-4b-q4km",
+        "model_id": "unsloth/qwen3.5-4b",
+        "model_key": "qwen3.5-4b-q4km",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 154,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "3a46714c-d579-4688-a8b0-558183b4e02a",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.6688311688311688,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 1580.0608540012036,
+            "latency_p95_ms": 1735.5302432952158,
+            "macro_f1": 0.6293650793650793,
+            "output_tokens_mean": 9.792207792207792
+          },
+          "generated_at_utc": "2026-10-05T16:36:39.188714+00:00"
+        }
+      }
+    },
+    "qwen3.5-9b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.5-9b-q4km",
+        "model_id": "qwen/qwen3.5-9b",
+        "model_key": "qwen3.5-9b-q4km",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-qwen3.5-9b-q4km-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.6948051948051948,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 2785.3132915042806,
+            "latency_p95_ms": 3057.8174914451665,
+            "macro_f1": 0.665079365079365,
+            "output_tokens_mean": 9.785714285714286
+          },
+          "generated_at_utc": "2026-10-05T12:46:44.290683+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-qwen3.5-9b-q4km-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.675,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 999.0503857392467,
+            "output_tokens_mean": 8.325,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-05T12:39:03.246855+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-qwen3.5-9b-q4km-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.16949285714285714,
+            "ece_top_label": 0.1631818181818182,
+            "in_scope_accuracy": 0.6493506493506493,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 8752.915718645818,
+            "oos_detection_rate": 0.974025974025974
+          },
+          "generated_at_utc": "2026-10-05T13:01:17.704636+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-qwen3.5-9b-q4km-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.9333333333333333,
+            "exact_match": 1.0,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 1647.5607910033425,
+            "parse_valid": 1.0,
+            "qa_correct": 0.9333333333333333
+          },
+          "generated_at_utc": "2026-10-05T12:38:16.573598+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-qwen3.5-9b-q4km-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7666666666666667,
+            "field_accuracy": 0.9527777777777777,
+            "hallucinated_fields": 0.15,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 4643.15792289417,
+            "schema_valid_rate": 0.9666666666666667
+          },
+          "generated_at_utc": "2026-10-05T12:36:44.974560+00:00"
+        }
+      }
+    },
+    "qwen3.8-27b-iq1s": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "qwen3.8-27b-iq1s",
+        "model_id": "Qwen/Qwen3.8-27B",
+        "model_key": "qwen3.8-27b-iq1s",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.5844155844155844,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.006493506493506494,
+            "latency_p50_ms": 8568.107791492366,
+            "latency_p95_ms": 9098.29579560901,
+            "macro_f1": 0.543815331010453,
+            "output_tokens_mean": 9.470588235294118
+          },
+          "generated_at_utc": "2026-10-06T14:37:14.978431+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.25,
+            "invalid_output_rate": 0.05,
+            "latency_p95_ms": 22229.72979789554,
+            "output_tokens_mean": 18.92105263157895,
+            "parse_valid": 0.825
+          },
+          "generated_at_utc": "2026-10-06T14:37:12.124597+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.49422391304347824,
+            "ece_top_label": 0.5029710144927537,
+            "in_scope_accuracy": 0.5714285714285714,
+            "invalid_output_rate": 0.1038961038961039,
+            "latency_p95_ms": 36285.84456239332,
+            "oos_detection_rate": 0.8181818181818182
+          },
+          "generated_at_utc": "2026-10-06T14:53:01.368476+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.8166666666666667,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 4320.6283913576035,
+            "parse_valid": 0.9833333333333333,
+            "qa_correct": 0.8
+          },
+          "generated_at_utc": "2026-10-06T14:37:09.289074+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-qwen3.8-27b-iq1s-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.6833333333333333,
+            "field_accuracy": 0.8319444444444444,
+            "hallucinated_fields": 0.4,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 12916.947212500963,
+            "schema_valid_rate": 0.8333333333333334
+          },
+          "generated_at_utc": "2026-10-06T14:37:06.471228+00:00"
+        }
+      }
+    },
+    "spark-x2.5-4b-q4km": {
+      "model_info": {
+        "deployment": "local",
+        "effective_model_id": "spark-x2.5-4b-q4km",
+        "model_id": "xhtoken/spark-x2.5-4b",
+        "model_key": "spark-x2.5-4b-q4km",
+        "provider_key": "korgis",
+        "runtime_key": "korgis-local"
+      },
+      "total_samples": 468,
+      "total_failures": 0,
+      "capabilities": {
+        "intent-classification": {
+          "run_id": "2026-10-core-v1-spark-x2.5-4b-q4km-intent-classification-core",
+          "capability_id": "intent-classification",
+          "task_id": "intent-classification",
+          "dataset_ids": [
+            "banking77"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "accuracy",
+          "metrics": {
+            "accuracy": 0.6493506493506493,
+            "estimated_cost_usd": 0.0,
+            "invalid_output_rate": 0.0,
+            "latency_p50_ms": 2207.8276665051817,
+            "latency_p95_ms": 2593.4791601015604,
+            "macro_f1": 0.6086691086691086,
+            "output_tokens_mean": 13.88961038961039
+          },
+          "generated_at_utc": "2026-10-06T09:08:01.567613+00:00"
+        },
+        "mathematical-reasoning": {
+          "run_id": "2026-10-core-v1-spark-x2.5-4b-q4km-mathematical-reasoning-core",
+          "capability_id": "mathematical-reasoning",
+          "task_id": "mathematical-reasoning",
+          "dataset_ids": [
+            "math-reasoning-controlled-v2"
+          ],
+          "sample_count": 40,
+          "failure_count": 0,
+          "primary_metric": "final_answer_accuracy",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "final_answer_accuracy": 0.45,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 752.714208359248,
+            "output_tokens_mean": 8.65,
+            "parse_valid": 1.0
+          },
+          "generated_at_utc": "2026-10-06T09:01:45.601627+00:00"
+        },
+        "oos-calibration": {
+          "run_id": "2026-10-core-v1-spark-x2.5-4b-q4km-oos-calibration-core",
+          "capability_id": "oos-calibration",
+          "task_id": "calibrated-intent-classification",
+          "dataset_ids": [
+            "banking77",
+            "clinc150-oos"
+          ],
+          "sample_count": 154,
+          "failure_count": 0,
+          "primary_metric": "oos_detection_rate",
+          "metrics": {
+            "brier_correctness": 0.2005974025974026,
+            "ece_top_label": 0.18272727272727263,
+            "in_scope_accuracy": 0.5974025974025974,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 2798.3671812500684,
+            "oos_detection_rate": 0.961038961038961
+          },
+          "generated_at_utc": "2026-10-06T09:14:39.549644+00:00"
+        },
+        "qa-abstention": {
+          "run_id": "2026-10-core-v1-spark-x2.5-4b-q4km-qa-abstention-core",
+          "capability_id": "qa-abstention",
+          "task_id": "qa-abstention",
+          "dataset_ids": [
+            "qa-abstention-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "qa_correct",
+          "metrics": {
+            "answerability_accuracy": 0.9666666666666667,
+            "exact_match": 0.9666666666666667,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 985.1788809428398,
+            "parse_valid": 1.0,
+            "qa_correct": 0.95
+          },
+          "generated_at_utc": "2026-10-06T09:01:09.804973+00:00"
+        },
+        "structured-output": {
+          "run_id": "2026-10-core-v1-spark-x2.5-4b-q4km-structured-output-core",
+          "capability_id": "structured-output",
+          "task_id": "structured-output",
+          "dataset_ids": [
+            "structured-output-controlled-v2"
+          ],
+          "sample_count": 60,
+          "failure_count": 0,
+          "primary_metric": "exact_match",
+          "metrics": {
+            "estimated_cost_usd": 0.0,
+            "exact_match": 0.7666666666666667,
+            "field_accuracy": 0.975,
+            "hallucinated_fields": 0.2,
+            "invalid_output_rate": 0.0,
+            "latency_p95_ms": 3149.145677108754,
+            "schema_valid_rate": 0.9833333333333333
+          },
+          "generated_at_utc": "2026-10-06T09:00:08.733007+00:00"
+        }
+      }
+    }
+  }
+}
