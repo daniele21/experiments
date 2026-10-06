@@ -5860,3 +5860,25 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
     grid-template-columns: .9fr 1.2fr .9fr;
   }
 }
+
+
+.scorecard-podium-model {
+  min-height: 25px;
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.scorecard-podium-place.rank-1 .scorecard-podium-model {
+  min-height: 30px;
+}
+
+.scorecard-overall-topline > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
