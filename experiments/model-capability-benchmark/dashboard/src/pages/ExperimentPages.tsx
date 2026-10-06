@@ -1,4 +1,13 @@
 import { useMemo, useState } from 'react';
+import {
+  Boxes,
+  Download,
+  Info,
+  Search,
+  Sparkles,
+  Star,
+  TrendingUp,
+} from 'lucide-react';
 import { overview } from '../data';
 import type {
   FrontierPoint,
@@ -13,18 +22,36 @@ type FrontierMetric =
   | 'peak_rss_bytes'
   | 'latency_p50_ms';
 type FrontierMode = 'family' | 'compression';
+type FrontierSort = 'parameters' | 'quality' | 'metric' | 'model';
 
 const FRONTIER_METRICS: Record<
   FrontierMetric,
-  { label: string; format: (value: number | null) => string }
+  {
+    label: string;
+    compactLabel: string;
+    format: (value: number | null) => string;
+  }
 > = {
   parameters_b: {
     label: 'Parameters',
+    compactLabel: 'Params',
     format: (value) => value == null ? '—' : `${value}B`,
   },
-  artifact_size_bytes: { label: 'Artifact size', format: bytes },
-  peak_rss_bytes: { label: 'Peak RAM', format: bytes },
-  latency_p50_ms: { label: 'P50 latency', format: milliseconds },
+  artifact_size_bytes: {
+    label: 'Artifact size',
+    compactLabel: 'Artifact',
+    format: bytes,
+  },
+  peak_rss_bytes: {
+    label: 'Peak RAM',
+    compactLabel: 'Peak RAM',
+    format: bytes,
+  },
+  latency_p50_ms: {
+    label: 'P50 latency',
+    compactLabel: 'Latency',
+    format: milliseconds,
+  },
 };
 
 function paretoFor(point: FrontierPoint, metric: FrontierMetric): boolean {
@@ -49,62 +76,143 @@ function scale(
   return targetMin + ((value - min) / (max - min)) * (targetMax - targetMin);
 }
 
+function qualityText(value: number | null): string {
+  if (value == null) return '—';
+  return value <= 1 ? value.toFixed(2) : score(value);
+}
+
+function frontierMetricValue(point: FrontierPoint, metric: FrontierMetric): number | null {
+  const value = point[metric];
+  return finite(value) ? value : null;
+}
+
 function FrontierChart({
   points: data,
   metric,
   mode,
+  highlightedSignature,
+  selectedSignature,
+  onHover,
+  onSelect,
 }: {
   points: FrontierPoint[];
   metric: FrontierMetric;
   mode: FrontierMode;
+  highlightedSignature: string | null;
+  selectedSignature: string | null;
+  onHover: (signature: string | null) => void;
+  onSelect: (signature: string) => void;
 }) {
   const pointsWithData = data.filter(
     (point) => finite(point[metric]) && finite(point.quality),
   );
-  if (pointsWithData.length === 0) {
-    return (
-      <div className="experiment-empty">
-        Run and project local benchmarks to populate this frontier.
-      </div>
-    );
-  }
-
-  const xs = pointsWithData.map((point) => Number(point[metric]));
-  const ys = pointsWithData.map((point) => Number(point.quality));
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const groups = new Map<string, FrontierPoint[]>();
-  for (const point of pointsWithData) {
-    const key =
-      mode === 'family' ? point.family : point.compression_group;
-    if (!key) continue;
-    groups.set(key, [...(groups.get(key) ?? []), point]);
-  }
-
-  const x = (point: FrontierPoint) =>
-    scale(Number(point[metric]), minX, maxX, 72, 842);
-  const y = (point: FrontierPoint) =>
-    scale(Number(point.quality), minY, maxY, 300, 42);
-
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
     point: FrontierPoint;
   } | null>(null);
 
+  if (pointsWithData.length === 0) {
+    return (
+      <div className="frontier-empty-state">
+        <div className="frontier-empty-icon"><TrendingUp size={18} /></div>
+        <strong>No comparable frontier evidence yet</strong>
+        <span>Run and project local standard benchmarks to populate this view.</span>
+      </div>
+    );
+  }
+
+  const rawXs = pointsWithData.map((point) => Number(point[metric]));
+  const transformX = (value: number) =>
+    metric === 'parameters_b' && value > 0 ? Math.log10(value) : value;
+  const transformedXs = rawXs.map(transformX);
+  const minX = Math.min(...transformedXs);
+  const maxX = Math.max(...transformedXs);
+  const xPad = maxX === minX ? 1 : (maxX - minX) * 0.08;
+  const domainMinX = minX - xPad;
+  const domainMaxX = maxX + xPad;
+
+  const qualities = pointsWithData.map((point) => Number(point.quality));
+  const observedMinY = Math.min(...qualities);
+  const observedMaxY = Math.max(...qualities);
+  const normalizedQuality = observedMinY >= 0 && observedMaxY <= 1;
+  const yPad = normalizedQuality
+    ? 0
+    : Math.max(0.02, (observedMaxY - observedMinY) * 0.12);
+  const minY = normalizedQuality ? 0 : observedMinY - yPad;
+  const maxY = normalizedQuality ? 1 : observedMaxY + yPad;
+
+  const x = (point: FrontierPoint) =>
+    scale(transformX(Number(point[metric])), domainMinX, domainMaxX, 78, 844);
+  const y = (point: FrontierPoint) =>
+    scale(Number(point.quality), minY, maxY, 286, 36);
+
+  const groups = new Map<string, FrontierPoint[]>();
+  for (const point of pointsWithData.filter((item) => paretoFor(item, metric))) {
+    const key = mode === 'family' ? point.family : point.compression_group;
+    if (!key) continue;
+    groups.set(key, [...(groups.get(key) ?? []), point]);
+  }
+
+  const yTicks = normalizedQuality
+    ? [0, 0.25, 0.5, 0.75, 1]
+    : Array.from({ length: 5 }, (_, index) => minY + ((maxY - minY) * index) / 4);
+
+  const uniqueMetricValues = [...new Set(rawXs)].sort((a, b) => a - b);
+  const xTicks =
+    uniqueMetricValues.length <= 5
+      ? uniqueMetricValues
+      : Array.from({ length: 5 }, (_, index) => {
+          const transformed = domainMinX + ((domainMaxX - domainMinX) * index) / 4;
+          return metric === 'parameters_b' ? Math.pow(10, transformed) : transformed;
+        });
+
+  const sortedForLabels = [...pointsWithData].sort((a, b) => {
+    const xDelta = Number(a[metric]) - Number(b[metric]);
+    if (xDelta !== 0) return xDelta;
+    return Number(b.quality) - Number(a.quality);
+  });
+
   return (
-    <div className="experiment-chart-shell" style={{ position: 'relative' }}>
+    <div className="frontier-chart-shell">
       <svg
-        className="experiment-scatter"
-        viewBox="0 0 900 350"
+        className="frontier-scatter"
+        viewBox="0 0 900 340"
         role="img"
         aria-label="Quality versus deployment resource Pareto frontier"
-        onMouseLeave={() => setTooltip(null)}
+        onMouseLeave={() => {
+          setTooltip(null);
+          onHover(null);
+        }}
       >
-        <line x1="72" y1="310" x2="850" y2="310" className="chart-axis" />
-        <line x1="72" y1="34" x2="72" y2="310" className="chart-axis" />
+        <g className="frontier-grid">
+          {yTicks.map((tick) => {
+            const yy = scale(tick, minY, maxY, 286, 36);
+            return (
+              <g key={`y-${tick}`}>
+                <line x1="78" y1={yy} x2="844" y2={yy} />
+                <text x="66" y={yy + 3} textAnchor="end">
+                  {normalizedQuality ? tick.toFixed(2).replace(/0+$/, '').replace(/\.$/, '') : score(tick)}
+                </text>
+              </g>
+            );
+          })}
+          {xTicks.map((tick) => {
+            const xx = scale(transformX(tick), domainMinX, domainMaxX, 78, 844);
+            return (
+              <g key={`x-${tick}`}>
+                <line x1={xx} y1="36" x2={xx} y2="286" />
+                <text x={xx} y="306" textAnchor="middle">
+                  {FRONTIER_METRICS[metric].format(tick)}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+
+        <line x1="78" y1="286" x2="844" y2="286" className="frontier-axis" />
+        <line x1="78" y1="36" x2="78" y2="286" className="frontier-axis" />
+
         {[...groups.entries()].map(([group, groupPoints], index) => {
           const ordered = [...groupPoints].sort(
             (a, b) => Number(a[metric]) - Number(b[metric]),
@@ -116,22 +224,37 @@ function FrontierChart({
             <polyline
               key={group}
               points={coordinates}
-              className={`frontier-family-line family-line-${index % 6}`}
+              className={`frontier-spine frontier-spine-${index % 6}`}
             />
           );
         })}
-        {pointsWithData.map((point) => {
+
+        {sortedForLabels.map((point, index) => {
           const pareto = paretoFor(point, metric);
-          const radius = point.parameters_b
-            ? Math.max(5, Math.min(11, 4 + Math.sqrt(point.parameters_b)))
-            : 6;
-          const isHovered = tooltip?.point.model_signature === point.model_signature;
+          const isHighlighted = highlightedSignature === point.model_signature;
+          const isSelected = selectedSignature === point.model_signature;
+          const hasFocus = Boolean(highlightedSignature || selectedSignature);
+          const cx = x(point);
+          const cy = y(point);
+          const toLeft = cx > 700;
+          const sameXPosition = sortedForLabels
+            .slice(0, index)
+            .filter((other) => Number(other[metric]) === Number(point[metric])).length;
+          const labelY =
+            cy + (pareto ? -10 : 17) + sameXPosition * (pareto ? -12 : 12);
+
           return (
             <g
               key={point.model_signature}
-              style={{ cursor: 'pointer' }}
+              className={[
+                'frontier-node',
+                pareto ? 'pareto' : 'dominated',
+                isHighlighted ? 'highlighted' : '',
+                isSelected ? 'selected' : '',
+                hasFocus && !isHighlighted && !isSelected ? 'deemphasized' : '',
+              ].filter(Boolean).join(' ')}
               onMouseEnter={(event) => {
-                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                const rect = event.currentTarget.closest('.frontier-chart-shell')?.getBoundingClientRect();
                 if (rect) {
                   setTooltip({
                     x: event.clientX - rect.left,
@@ -139,44 +262,67 @@ function FrontierChart({
                     point,
                   });
                 }
+                onHover(point.model_signature);
               }}
               onMouseMove={(event) => {
-                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                const rect = event.currentTarget.closest('.frontier-chart-shell')?.getBoundingClientRect();
                 if (rect) {
-                  setTooltip((prev) => prev ? {
-                    ...prev,
+                  setTooltip((current) => current ? {
+                    ...current,
                     x: event.clientX - rect.left,
                     y: event.clientY - rect.top,
                   } : null);
                 }
               }}
-              onMouseLeave={() => setTooltip(null)}
+              onMouseLeave={() => {
+                setTooltip(null);
+                onHover(null);
+              }}
+              onClick={() => onSelect(point.model_signature)}
             >
               <circle
-                cx={x(point)}
-                cy={y(point)}
-                r={isHovered ? radius + 2 : radius}
-                className={pareto ? 'frontier-point pareto' : 'frontier-point dominated'}
+                className="frontier-node-halo"
+                cx={cx}
+                cy={cy}
+                r={isHighlighted || isSelected ? 12 : 0}
+              />
+              <circle
+                className="frontier-node-dot"
+                cx={cx}
+                cy={cy}
+                r={pareto ? 7 : 5.5}
               />
               <text
-                x={x(point) + radius + 4}
-                y={y(point) - 5}
-                className="frontier-label"
+                x={toLeft ? cx - 10 : cx + 10}
+                y={labelY}
+                textAnchor={toLeft ? 'end' : 'start'}
+                className="frontier-node-label"
               >
                 {point.model_key}
+              </text>
+              <text
+                x={toLeft ? cx - 10 : cx + 10}
+                y={labelY + 12}
+                textAnchor={toLeft ? 'end' : 'start'}
+                className="frontier-node-meta"
+              >
+                {point.parameters_b == null ? '' : `${point.parameters_b}B`}
+                {point.parameters_b != null && point.quantization ? ' · ' : ''}
+                {point.quantization ?? ''}
               </text>
             </g>
           );
         })}
-        <text x="450" y="342" textAnchor="middle" className="chart-caption">
+
+        <text x="462" y="332" textAnchor="middle" className="frontier-axis-title">
           {FRONTIER_METRICS[metric].label} · lower is better
         </text>
         <text
-          x="18"
-          y="172"
+          x="19"
+          y="165"
           textAnchor="middle"
-          transform="rotate(-90 18 172)"
-          className="chart-caption"
+          transform="rotate(-90 19 165)"
+          className="frontier-axis-title"
         >
           Quality · higher is better
         </text>
@@ -184,11 +330,8 @@ function FrontierChart({
 
       {tooltip ? (
         <div
-          className="chart-dot-tooltip"
-          style={{
-            left: tooltip.x,
-            top: tooltip.y,
-          }}
+          className="chart-dot-tooltip frontier-tooltip"
+          style={{ left: tooltip.x, top: tooltip.y }}
         >
           <div className="dot-tooltip-header">
             <span
@@ -198,25 +341,23 @@ function FrontierChart({
           </div>
           <div className="dot-tooltip-body">
             <div className="dot-tooltip-row">
-              <span className="dot-tooltip-label">Quality Score</span>
-              <span className="dot-tooltip-val highlight">{score(tooltip.point.quality)}</span>
+              <span className="dot-tooltip-label">Quality</span>
+              <span className="dot-tooltip-val highlight">{qualityText(tooltip.point.quality)}</span>
             </div>
             <div className="dot-tooltip-row">
               <span className="dot-tooltip-label">{FRONTIER_METRICS[metric].label}</span>
               <span className="dot-tooltip-val">
-                {FRONTIER_METRICS[metric].format(tooltip.point[metric])}
+                {FRONTIER_METRICS[metric].format(frontierMetricValue(tooltip.point, metric))}
               </span>
             </div>
-            {tooltip.point.family ? (
-              <div className="dot-tooltip-row">
-                <span className="dot-tooltip-label">Family</span>
-                <span className="dot-tooltip-val">{tooltip.point.family}</span>
-              </div>
-            ) : null}
             <div className="dot-tooltip-row">
-              <span className="dot-tooltip-label">Status</span>
+              <span className="dot-tooltip-label">Quantization</span>
+              <span className="dot-tooltip-val">{tooltip.point.quantization ?? '—'}</span>
+            </div>
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">State</span>
               <span className={`dot-tooltip-val ${paretoFor(tooltip.point, metric) ? 'is-pareto' : ''}`}>
-                {paretoFor(tooltip.point, metric) ? 'Pareto Frontier' : 'Dominated'}
+                {paretoFor(tooltip.point, metric) ? 'Pareto-efficient' : 'Dominated'}
               </span>
             </div>
           </div>
@@ -226,11 +367,41 @@ function FrontierChart({
   );
 }
 
+function downloadFrontierCsv(points: FrontierPoint[], metric: FrontierMetric) {
+  const escape = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+  const rows = [
+    ['model', 'family', 'parameters_b', 'quantization', 'quality', metric, 'state'],
+    ...points.map((point) => [
+      point.model_key,
+      point.family,
+      point.parameters_b,
+      point.quantization,
+      point.quality,
+      point[metric],
+      paretoFor(point, metric) ? 'pareto' : 'dominated',
+    ]),
+  ];
+  const csv = rows.map((row) => row.map(escape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `mcb-frontier-${metric}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function FrontierPage() {
   const payload = overview.frontier;
   const [metric, setMetric] = useState<FrontierMetric>('parameters_b');
   const [mode, setMode] = useState<FrontierMode>('family');
   const [family, setFamily] = useState('all');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<FrontierSort>('parameters');
+  const [hoveredSignature, setHoveredSignature] = useState<string | null>(null);
+  const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
 
   const localPoints = useMemo(
     () =>
@@ -241,28 +412,89 @@ export function FrontierPage() {
       ),
     [payload, family],
   );
-  const paretoCount = localPoints.filter((point) => paretoFor(point, metric)).length;
+
+  const comparablePoints = localPoints.filter(
+    (point) => finite(point.quality) && finite(point[metric]),
+  );
+  const paretoPoints = comparablePoints.filter((point) => paretoFor(point, metric));
+  const paretoCount = paretoPoints.length;
+  const highlightedSignature = hoveredSignature ?? selectedSignature;
+
+  const bestOverall = [...comparablePoints]
+    .sort((a, b) => Number(b.quality) - Number(a.quality))[0];
+
+  const efficientSmall = [...paretoPoints]
+    .sort((a, b) => Number(a[metric]) - Number(b[metric]))[0];
+
+  const orderedPareto = [...paretoPoints].sort(
+    (a, b) => Number(a[metric]) - Number(b[metric]),
+  );
+  let largestGain:
+    | { from: FrontierPoint; to: FrontierPoint; delta: number }
+    | undefined;
+  for (let index = 1; index < orderedPareto.length; index += 1) {
+    const from = orderedPareto[index - 1];
+    const to = orderedPareto[index];
+    const delta = Number(to.quality) - Number(from.quality);
+    if (delta > 0 && (!largestGain || delta > largestGain.delta)) {
+      largestGain = { from, to, delta };
+    }
+  }
+
+  const tablePoints = [...comparablePoints]
+    .filter((point) => {
+      const normalized = query.trim().toLowerCase();
+      if (!normalized) return true;
+      return [
+        point.model_key,
+        point.family,
+        point.quantization,
+        paretoFor(point, metric) ? 'pareto' : 'dominated',
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalized));
+    })
+    .sort((a, b) => {
+      if (sort === 'quality') return Number(b.quality) - Number(a.quality);
+      if (sort === 'metric') return Number(a[metric]) - Number(b[metric]);
+      if (sort === 'model') return a.model_key.localeCompare(b.model_key);
+      return Number(a.parameters_b ?? Infinity) - Number(b.parameters_b ?? Infinity);
+    });
+
+  const selectedFamilyLabel =
+    family === 'all' ? 'all local families' : family;
 
   return (
-    <>
+    <div className="frontier-page">
       <PageHeader
         eyebrow="Local deployment frontier"
         title="Pareto Frontier"
-        description="See where model families, parameter counts and quantizations buy real quality — and where extra size, RAM or latency stops paying back."
+        description="Explore where model scale and compression buy real quality — and where extra parameters, memory or latency stop paying back."
         actions={
-          <>
-            <span className="header-chip current">{paretoCount} Pareto-efficient</span>
-            <span className="header-chip">{localPoints.length} local configs</span>
-          </>
+          <div className="frontier-header-kpis">
+            <div className="frontier-header-kpi">
+              <span className="frontier-header-kpi-icon"><Boxes size={16} /></span>
+              <div><strong>{localPoints.length}</strong><small>Local configs</small></div>
+              <Info size={13} />
+            </div>
+            <div className="frontier-header-kpi">
+              <span className="frontier-header-kpi-icon"><Star size={16} /></span>
+              <div><strong>{paretoCount}</strong><small>Pareto-efficient</small></div>
+              <Info size={13} />
+            </div>
+          </div>
         }
       />
 
-      <section className="experiment-controls">
+      <section className="frontier-filter-bar">
         <label>
-          X axis
+          <span>X axis</span>
           <select
             value={metric}
-            onChange={(event) => setMetric(event.target.value as FrontierMetric)}
+            onChange={(event) => {
+              setMetric(event.target.value as FrontierMetric);
+              setSelectedSignature(null);
+            }}
           >
             {Object.entries(FRONTIER_METRICS).map(([key, config]) => (
               <option key={key} value={key}>{config.label}</option>
@@ -270,7 +502,7 @@ export function FrontierPage() {
           </select>
         </label>
         <label>
-          Connect
+          <span>Connect</span>
           <select
             value={mode}
             onChange={(event) => setMode(event.target.value as FrontierMode)}
@@ -280,8 +512,14 @@ export function FrontierPage() {
           </select>
         </label>
         <label>
-          Family
-          <select value={family} onChange={(event) => setFamily(event.target.value)}>
+          <span>Family</span>
+          <select
+            value={family}
+            onChange={(event) => {
+              setFamily(event.target.value);
+              setSelectedSignature(null);
+            }}
+          >
             <option value="all">All families</option>
             {(payload?.families ?? []).map((value) => (
               <option key={value} value={value}>{value}</option>
@@ -290,69 +528,196 @@ export function FrontierPage() {
         </label>
       </section>
 
-      <section className="experiment-panel">
-        <div className="experiment-panel-heading">
-          <div>
-            <h2>
-              Quality × {FRONTIER_METRICS[metric].label}
-            </h2>
-            <p>
-              Solid points sit on the selected Pareto frontier. Faded points are
-              dominated by another measured configuration.
-            </p>
+      <div className="frontier-primary-grid">
+        <section className="frontier-chart-card">
+          <div className="frontier-card-heading">
+            <div>
+              <h2>Quality × {FRONTIER_METRICS[metric].label}</h2>
+              <p>
+                Solid points are Pareto-efficient. Dominated configurations stay visible
+                as muted evidence for the selected cohort.
+              </p>
+            </div>
+            <div className="frontier-legend">
+              <span><i className="frontier-legend-dot pareto" /> Pareto-efficient</span>
+              <span><i className="frontier-legend-dot dominated" /> Dominated</span>
+            </div>
           </div>
-          <div className="experiment-legend">
-            <span><i className="legend-dot pareto" /> Pareto</span>
-            <span><i className="legend-dot dominated" /> Dominated</span>
-          </div>
-        </div>
-        <FrontierChart points={localPoints} metric={metric} mode={mode} />
-      </section>
+          <FrontierChart
+            points={localPoints}
+            metric={metric}
+            mode={mode}
+            highlightedSignature={highlightedSignature}
+            selectedSignature={selectedSignature}
+            onHover={setHoveredSignature}
+            onSelect={(signature) =>
+              setSelectedSignature((current) => current === signature ? null : signature)
+            }
+          />
+        </section>
 
-      <section className="experiment-panel">
-        <div className="experiment-panel-heading">
+        <aside className="frontier-insights-card">
+          <div className="frontier-insights-title">
+            <span><Sparkles size={16} /></span>
+            <div>
+              <strong>Key takeaways</strong>
+              <small>Derived from the current filters</small>
+            </div>
+          </div>
+
+          <div className="frontier-insight">
+            <span className="frontier-insight-icon"><Star size={16} /></span>
+            <div>
+              <small>Best overall model</small>
+              <strong>{bestOverall?.model_key ?? 'No measured model'}</strong>
+              <p>
+                {bestOverall
+                  ? `Highest measured quality (${qualityText(bestOverall.quality)}) in ${selectedFamilyLabel}.`
+                  : 'Project standard benchmark evidence to unlock this insight.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="frontier-insight">
+            <span className="frontier-insight-icon"><TrendingUp size={16} /></span>
+            <div>
+              <small>Largest quality gain</small>
+              <strong>{largestGain ? `+${largestGain.delta.toFixed(2)}` : '—'}</strong>
+              <p>
+                {largestGain
+                  ? `${largestGain.from.model_key} → ${largestGain.to.model_key}`
+                  : 'At least two Pareto points are needed for a scaling delta.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="frontier-insight">
+            <span className="frontier-insight-icon"><Boxes size={16} /></span>
+            <div>
+              <small>
+                {metric === 'parameters_b' ? 'Most efficient small model' : `Lowest ${FRONTIER_METRICS[metric].compactLabel.toLowerCase()}`}
+              </small>
+              <strong>{efficientSmall?.model_key ?? '—'}</strong>
+              <p>
+                {efficientSmall
+                  ? `Pareto-efficient at ${FRONTIER_METRICS[metric].format(frontierMetricValue(efficientSmall, metric))}.`
+                  : 'No Pareto point is available for this metric.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="frontier-insight summary">
+            <span className="frontier-insight-icon"><Info size={16} /></span>
+            <div>
+              <small>Frontier summary</small>
+              <strong>
+                {comparablePoints.length
+                  ? `${paretoCount} of ${comparablePoints.length} measured configs`
+                  : 'No comparable evidence'}
+              </strong>
+              <p>
+                {comparablePoints.length
+                  ? `${Math.round((paretoCount / comparablePoints.length) * 100)}% of this cohort is Pareto-efficient on ${FRONTIER_METRICS[metric].label.toLowerCase()}.`
+                  : 'Run and project local benchmarks to populate the frontier.'}
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <section className="frontier-results-card">
+        <div className="frontier-results-heading">
           <div>
-            <h2>Frontier evidence</h2>
-            <p>Family and compression metadata stay visible next to measured quality and resource cost.</p>
+            <h2>Model results</h2>
+            <p>All measured local models in the selected cohort, with frontier state and deployment evidence.</p>
+          </div>
+          <div className="frontier-results-actions">
+            <label className="frontier-search">
+              <Search size={15} />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search models..."
+                aria-label="Search frontier models"
+              />
+            </label>
+            <button
+              type="button"
+              className="frontier-download"
+              onClick={() => downloadFrontierCsv(tablePoints, metric)}
+              disabled={tablePoints.length === 0}
+            >
+              <Download size={15} />
+              Download CSV
+            </button>
           </div>
         </div>
-        <div className="experiment-table-wrap">
-          <table className="experiment-table">
+
+        <div className="frontier-table-wrap">
+          <table className="frontier-table">
             <thead>
               <tr>
-                <th>Model</th>
+                <th>
+                  <button type="button" onClick={() => setSort('model')}>Model</button>
+                </th>
                 <th>Family</th>
-                <th>Params</th>
+                <th>
+                  <button type="button" onClick={() => setSort('parameters')}>Params</button>
+                </th>
                 <th>Quant.</th>
-                <th>Quality</th>
-                <th>{FRONTIER_METRICS[metric].label}</th>
+                <th>
+                  <button type="button" onClick={() => setSort('quality')}>Quality ↑</button>
+                </th>
+                {metric !== 'parameters_b' ? (
+                  <th>
+                    <button type="button" onClick={() => setSort('metric')}>
+                      {FRONTIER_METRICS[metric].compactLabel}
+                    </button>
+                  </th>
+                ) : null}
                 <th>State</th>
               </tr>
             </thead>
             <tbody>
-              {[...localPoints]
-                .filter((point) => finite(point.quality))
-                .sort((a, b) => Number(b.quality) - Number(a.quality))
-                .map((point) => (
-                  <tr key={point.model_signature}>
+              {tablePoints.map((point) => {
+                const active = highlightedSignature === point.model_signature;
+                return (
+                  <tr
+                    key={point.model_signature}
+                    className={active ? 'active' : ''}
+                    onMouseEnter={() => setHoveredSignature(point.model_signature)}
+                    onMouseLeave={() => setHoveredSignature(null)}
+                    onClick={() =>
+                      setSelectedSignature((current) =>
+                        current === point.model_signature ? null : point.model_signature,
+                      )
+                    }
+                  >
                     <td><strong>{point.model_key}</strong></td>
                     <td>{point.family ?? '—'}</td>
                     <td>{point.parameters_b == null ? '—' : `${point.parameters_b}B`}</td>
-                    <td>{point.quantization ?? '—'}</td>
-                    <td>{score(point.quality)}</td>
-                    <td>{FRONTIER_METRICS[metric].format(point[metric])}</td>
+                    <td><span className="frontier-quant-pill">{point.quantization ?? '—'}</span></td>
+                    <td><strong>{qualityText(point.quality)}</strong></td>
+                    {metric !== 'parameters_b' ? (
+                      <td>{FRONTIER_METRICS[metric].format(frontierMetricValue(point, metric))}</td>
+                    ) : null}
                     <td>
-                      <span className={paretoFor(point, metric) ? 'state-pill pareto' : 'state-pill dominated'}>
+                      <span className={`frontier-state ${paretoFor(point, metric) ? 'pareto' : 'dominated'}`}>
+                        <i />
                         {paretoFor(point, metric) ? 'Pareto' : 'Dominated'}
                       </span>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
             </tbody>
           </table>
+          {tablePoints.length === 0 ? (
+            <div className="frontier-table-empty">No model matches the current filters.</div>
+          ) : null}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

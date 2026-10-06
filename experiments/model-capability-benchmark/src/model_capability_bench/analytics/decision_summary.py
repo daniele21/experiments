@@ -4,6 +4,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
 import yaml
 
 QUALITY_POLICY = {
@@ -22,8 +23,8 @@ def _load_models_yaml_config() -> dict[str, Any]:
                 data = yaml.safe_load(path.read_text(encoding="utf-8"))
                 if isinstance(data, dict):
                     return data.get("models") or {}
-            except Exception:
-                pass
+            except (OSError, yaml.YAMLError):
+                continue
     return {}
 
 
@@ -463,9 +464,14 @@ def _load_run_parameters(
             if env_file.is_file():
                 try:
                     env_data = json.loads(env_file.read_text(encoding="utf-8"))
-                    gen_params = (env_data.get("parameters") or {}).get("generation") or {}
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError):
+                    env_data = {}
+                if isinstance(env_data, dict):
+                    parameters = env_data.get("parameters")
+                    if isinstance(parameters, dict):
+                        generation = parameters.get("generation")
+                        if isinstance(generation, dict):
+                            gen_params = generation
         result[run_id] = {
             "profile": row.get("profile"),
             "seed": row.get("seed"),
