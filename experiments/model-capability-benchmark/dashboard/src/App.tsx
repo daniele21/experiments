@@ -4,6 +4,7 @@ import { usePathname } from './router';
 import { Shell } from './components/Shell';
 import { OverviewPage } from './pages/OverviewPage';
 import { FrontierPage, SensitivityPage } from './pages/ExperimentPages';
+import { ExecutivePage, type ExecutiveView } from './pages/ExecutivePages';
 import {
   CapabilityPage,
   ComparePage,
@@ -26,10 +27,15 @@ export function App() {
   const modelMatch = pathname.match(/^\/models\/([^/]+)$/);
   const datasetMatch = pathname.match(/^\/datasets\/([^/]+)$/);
   const runMatch = pathname.match(/^\/runs\/([^/]+)$/);
+  const executiveMatch = pathname.match(/^\/executive\/(quality|speed|cost|capabilities|reliability)$/);
 
   let page: ReactNode;
   if (pathname === '/' || pathname === '/overview') {
     page = <OverviewPage />;
+  } else if (pathname === '/executive') {
+    page = <ExecutivePage view="quality" />;
+  } else if (executiveMatch) {
+    page = <ExecutivePage view={executiveMatch[1] as ExecutiveView} />;
   } else if (pathname === '/models') {
     page = <ModelsPage />;
   } else if (modelMatch) {
