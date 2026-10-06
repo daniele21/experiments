@@ -668,11 +668,13 @@ export function FrontierPage() {
                 <th>
                   <button type="button" onClick={() => setSort('quality')}>Quality ↑</button>
                 </th>
-                <th>
-                  <button type="button" onClick={() => setSort('metric')}>
-                    {FRONTIER_METRICS[metric].compactLabel}
-                  </button>
-                </th>
+                {metric !== 'parameters_b' ? (
+                  <th>
+                    <button type="button" onClick={() => setSort('metric')}>
+                      {FRONTIER_METRICS[metric].compactLabel}
+                    </button>
+                  </th>
+                ) : null}
                 <th>State</th>
               </tr>
             </thead>
@@ -696,7 +698,9 @@ export function FrontierPage() {
                     <td>{point.parameters_b == null ? '—' : `${point.parameters_b}B`}</td>
                     <td><span className="frontier-quant-pill">{point.quantization ?? '—'}</span></td>
                     <td><strong>{qualityText(point.quality)}</strong></td>
-                    <td>{FRONTIER_METRICS[metric].format(frontierMetricValue(point, metric))}</td>
+                    {metric !== 'parameters_b' ? (
+                      <td>{FRONTIER_METRICS[metric].format(frontierMetricValue(point, metric))}</td>
+                    ) : null}
                     <td>
                       <span className={`frontier-state ${paretoFor(point, metric) ? 'pareto' : 'dominated'}`}>
                         <i />
