@@ -34,7 +34,7 @@ const EXECUTIVE_VIEWS: Array<{
   { id: 'speed', label: 'Speed', href: '/executive/speed' },
   { id: 'cost', label: 'Cost', href: '/executive/cost' },
   { id: 'capabilities', label: 'Capabilities', href: '/executive/capabilities' },
-  { id: 'dataset-fit', label: 'Dataset fit', href: '/executive/dataset-fit' },
+  { id: 'dataset-fit', label: 'Model × Dataset', href: '/executive/dataset-fit' },
   { id: 'reliability', label: 'Reliability', href: '/executive/reliability' },
 ];
 
@@ -128,8 +128,9 @@ function ExecutiveEmpty({ message }: { message: string }) {
 }
 
 function QualityBars({ models }: { models: DecisionModelSummary[] }) {
-  const ranked = [...models]
-    .filter((model) => model.overall_quality_score != null)
+  const scored = models.filter((model) => model.overall_quality_score != null);
+  const complete = scored.filter((model) => model.quality_coverage_complete);
+  const ranked = [...(complete.length ? complete : scored)]
     .sort((a, b) => modelQuality(b) - modelQuality(a));
   if (!ranked.length) {
     return <ExecutiveEmpty message="Project completed benchmark results to compare overall quality." />;
@@ -303,10 +304,20 @@ interface DatasetMatrixColumn {
 }
 
 function datasetLabel(value: string): string {
-  return value
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  const compact = value
+    .replace(/-controlled-v\d+$/i, '')
+    .replace(/-controlled$/i, '');
+  const tokens = compact.replaceAll('_', '-').split('-').filter(Boolean);
+  return tokens
+    .map((token) => {
+      const lower = token.toLowerCase();
+      if (lower === 'oos') return 'OOS';
+      if (lower === 'qa') return 'QA';
+      if (lower === 'clinc150') return 'CLINC150';
+      if (lower === 'banking77') return 'Banking77';
+      return token.charAt(0).toUpperCase() + token.slice(1);
+    })
+    .join(' ');
 }
 
 function aggregateDatasetCells(
@@ -433,7 +444,7 @@ function DatasetHeatmap({
           return [
             <div className="dataset-heatmap-rowlabel" key={`${dataset}::label`}>
               <strong>{datasetLabel(dataset)}</strong>
-              <span>{dataset}</span>
+              <span title={dataset}>{dataset}</span>
             </div>,
             ...datasetCells,
           ];
@@ -846,7 +857,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
           <div className="executive-visual-heading">
             <div>
               <span>Overall quality ranking</span>
-              <h3>Higher is better</h3>
+              <h3>Comparable coverage · higher is better</h3>
             </div>
             <Trophy size={20} />
           </div>
