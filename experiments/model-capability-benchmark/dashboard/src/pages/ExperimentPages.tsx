@@ -88,13 +88,20 @@ function FrontierChart({
   const y = (point: FrontierPoint) =>
     scale(Number(point.quality), minY, maxY, 300, 42);
 
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    point: FrontierPoint;
+  } | null>(null);
+
   return (
-    <div className="experiment-chart-shell">
+    <div className="experiment-chart-shell" style={{ position: 'relative' }}>
       <svg
         className="experiment-scatter"
         viewBox="0 0 900 350"
         role="img"
         aria-label="Quality versus deployment resource Pareto frontier"
+        onMouseLeave={() => setTooltip(null)}
       >
         <line x1="72" y1="310" x2="850" y2="310" className="chart-axis" />
         <line x1="72" y1="34" x2="72" y2="310" className="chart-axis" />
@@ -118,18 +125,39 @@ function FrontierChart({
           const radius = point.parameters_b
             ? Math.max(5, Math.min(11, 4 + Math.sqrt(point.parameters_b)))
             : 6;
+          const isHovered = tooltip?.point.model_signature === point.model_signature;
           return (
-            <g key={point.model_signature}>
+            <g
+              key={point.model_signature}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={(event) => {
+                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                if (rect) {
+                  setTooltip({
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                    point,
+                  });
+                }
+              }}
+              onMouseMove={(event) => {
+                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                if (rect) {
+                  setTooltip((prev) => prev ? {
+                    ...prev,
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                  } : null);
+                }
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            >
               <circle
                 cx={x(point)}
                 cy={y(point)}
-                r={radius}
+                r={isHovered ? radius + 2 : radius}
                 className={pareto ? 'frontier-point pareto' : 'frontier-point dominated'}
-              >
-                <title>
-                  {`${point.model_key} · quality ${score(point.quality)} · ${FRONTIER_METRICS[metric].format(point[metric])}`}
-                </title>
-              </circle>
+              />
               <text
                 x={x(point) + radius + 4}
                 y={y(point) - 5}
@@ -153,6 +181,47 @@ function FrontierChart({
           Quality · higher is better
         </text>
       </svg>
+
+      {tooltip ? (
+        <div
+          className="chart-dot-tooltip"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+          }}
+        >
+          <div className="dot-tooltip-header">
+            <span
+              className={`dot-tooltip-badge ${paretoFor(tooltip.point, metric) ? 'pareto' : 'dominated'}`}
+            />
+            <strong className="dot-tooltip-title">{tooltip.point.model_key}</strong>
+          </div>
+          <div className="dot-tooltip-body">
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">Quality Score</span>
+              <span className="dot-tooltip-val highlight">{score(tooltip.point.quality)}</span>
+            </div>
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">{FRONTIER_METRICS[metric].label}</span>
+              <span className="dot-tooltip-val">
+                {FRONTIER_METRICS[metric].format(tooltip.point[metric])}
+              </span>
+            </div>
+            {tooltip.point.family ? (
+              <div className="dot-tooltip-row">
+                <span className="dot-tooltip-label">Family</span>
+                <span className="dot-tooltip-val">{tooltip.point.family}</span>
+              </div>
+            ) : null}
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">Status</span>
+              <span className={`dot-tooltip-val ${paretoFor(tooltip.point, metric) ? 'is-pareto' : ''}`}>
+                {paretoFor(tooltip.point, metric) ? 'Pareto Frontier' : 'Dominated'}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -335,31 +404,103 @@ function SensitivityChart({
   const cy = (value: number) => scale(value, minY, maxY, 295, 42);
   const path = numeric.map((item) => `${cx(item.x)},${cy(item.y)}`).join(' ');
 
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    point: SensitivityPoint;
+    valX: number;
+    valY: number;
+  } | null>(null);
+
   return (
-    <div className="experiment-chart-shell">
-      <svg className="experiment-scatter" viewBox="0 0 900 350">
+    <div className="experiment-chart-shell" style={{ position: 'relative' }}>
+      <svg
+        className="experiment-scatter"
+        viewBox="0 0 900 350"
+        onMouseLeave={() => setTooltip(null)}
+      >
         <line x1="72" y1="305" x2="850" y2="305" className="chart-axis" />
         <line x1="72" y1="34" x2="72" y2="305" className="chart-axis" />
         <polyline points={path} className="sensitivity-line" />
-        {numeric.map(({ point, x, y }) => (
-          <g key={point.configuration_id}>
-            <circle
-              cx={cx(x)}
-              cy={cy(y)}
-              r={point.is_baseline ? 8 : 6}
-              className={point.is_baseline ? 'sensitivity-point baseline' : 'sensitivity-point'}
+        {numeric.map(({ point, x, y }) => {
+          const isHovered = tooltip?.point.configuration_id === point.configuration_id;
+          return (
+            <g
+              key={point.configuration_id}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={(event) => {
+                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                if (rect) {
+                  setTooltip({
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                    point,
+                    valX: x,
+                    valY: y,
+                  });
+                }
+              }}
+              onMouseMove={(event) => {
+                const rect = event.currentTarget.closest('.experiment-chart-shell')?.getBoundingClientRect();
+                if (rect) {
+                  setTooltip((prev) => prev ? {
+                    ...prev,
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                  } : null);
+                }
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
-              <title>{`${point.label} · ${(y * 100).toFixed(1)}%`}</title>
-            </circle>
-            <text x={cx(x)} y={327} textAnchor="middle" className="chart-caption">
-              {String(x)}
-            </text>
-          </g>
-        ))}
+              <circle
+                cx={cx(x)}
+                cy={cy(y)}
+                r={point.is_baseline ? (isHovered ? 10 : 8) : (isHovered ? 8 : 6)}
+                className={point.is_baseline ? 'sensitivity-point baseline' : 'sensitivity-point'}
+              />
+              <text x={cx(x)} y={327} textAnchor="middle" className="chart-caption">
+                {String(x)}
+              </text>
+            </g>
+          );
+        })}
         <text x="450" y="346" textAnchor="middle" className="chart-caption">
           {dimension}
         </text>
       </svg>
+
+      {tooltip ? (
+        <div
+          className="chart-dot-tooltip"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+          }}
+        >
+          <div className="dot-tooltip-header">
+            <span
+              className={`dot-tooltip-badge ${tooltip.point.is_baseline ? 'baseline' : 'sensitivity'}`}
+            />
+            <strong className="dot-tooltip-title">{tooltip.point.label}</strong>
+          </div>
+          <div className="dot-tooltip-body">
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">Performance</span>
+              <span className="dot-tooltip-val highlight">{(tooltip.valY * 100).toFixed(1)}%</span>
+            </div>
+            <div className="dot-tooltip-row">
+              <span className="dot-tooltip-label">{dimension}</span>
+              <span className="dot-tooltip-val">{String(tooltip.valX)}</span>
+            </div>
+            {tooltip.point.is_baseline ? (
+              <div className="dot-tooltip-row">
+                <span className="dot-tooltip-label">Config Type</span>
+                <span className="dot-tooltip-val is-baseline">Baseline configuration</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

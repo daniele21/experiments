@@ -142,6 +142,14 @@ export function TradeoffScatter({
   const local = models.filter((m) => m.provider_cost_status === 'local_not_applicable').length;
   const unavailable = models.filter((m) => m.provider_cost_status === 'unavailable').length;
 
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    model: DecisionModelSummary;
+    quality: number;
+    xValue: number;
+  } | null>(null);
+
   const chart = (
     <div className={expanded ? 'scatter-wrap expanded' : 'scatter-wrap'}>
       {xMetric === 'cost' ? (
@@ -154,106 +162,161 @@ export function TradeoffScatter({
         </div>
       ) : null}
       {eligible.length ? (
-        <svg
-          className="scatter-svg"
-          viewBox="0 0 600 330"
-          role="img"
-          aria-label={title}
-        >
-          <g className="scatter-grid">
-            {[0, 25, 50, 75, 100].map((tick) => {
-              const y = 272 - (tick / 100) * 220;
+        <div className="scatter-canvas-shell" style={{ position: 'relative' }}>
+          <svg
+            className="scatter-svg"
+            viewBox="0 0 600 330"
+            role="img"
+            aria-label={title}
+            onMouseLeave={() => setTooltip(null)}
+          >
+            <g className="scatter-grid">
+              {[0, 25, 50, 75, 100].map((tick) => {
+                const y = 272 - (tick / 100) * 220;
+                return (
+                  <g key={'y' + tick}>
+                    <line x1="72" x2="540" y1={y} y2={y} />
+                    <text className="axis-label" x="42" y={y + 3}>{tick}</text>
+                  </g>
+                );
+              })}
+              {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+                <line key={'v' + t} y1="52" y2="272" x1={72 + t * 468} x2={72 + t * 468} />
+              ))}
+            </g>
+            {frontierPoints.length > 1 ? (
+              <polyline
+                className="pareto-line"
+                points={frontierPoints.map((point) => point.x + ',' + point.y).join(' ')}
+              />
+            ) : null}
+            {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
+              const visual = modelVisual(model.model_signature);
+              const isSelected = selectedModels && selectedModels.length > 0
+                ? selectedModels.includes(model.model_signature)
+                : selectedModel === model.model_signature;
+              const hovered = hoveredModel === model.model_signature || tooltip?.model.model_signature === model.model_signature;
+              const dimmed = Boolean(hoveredModel && !hovered);
+              const showLabel = expanded || isSelected || hovered || frontier || plotted.length <= 6;
+              const labelRight = x < 410;
+              const labelY = y + (index % 2 === 0 ? -10 : 15);
               return (
-                <g key={'y' + tick}>
-                  <line x1="72" x2="540" y1={y} y2={y} />
-                  <text className="axis-label" x="42" y={y + 3}>{tick}</text>
+                <g
+                  key={model.model_signature}
+                  className={
+                    'scatter-point ' +
+                    (isSelected ? 'selected ' : '') +
+                    (hovered ? 'hovered ' : '') +
+                    (dimmed ? 'dimmed ' : '') +
+                    (frontier ? 'frontier ' : '') +
+                    (xMetric === 'cost' && model.provider_cost_status === 'partial'
+                      ? 'cost-partial'
+                      : '')
+                  }
+                  onClick={(event) => {
+                    const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
+                    if (onToggleSelect) {
+                      onToggleSelect(model.model_signature, isMultiToggle);
+                    } else if (onSelect) {
+                      onSelect(model.model_signature);
+                    }
+                  }}
+                  onMouseEnter={(event) => {
+                    onHover?.(model.model_signature);
+                    const rect = event.currentTarget.closest('.scatter-canvas-shell')?.getBoundingClientRect();
+                    if (rect) {
+                      setTooltip({
+                        x: event.clientX - rect.left,
+                        y: event.clientY - rect.top,
+                        model,
+                        quality,
+                        xValue,
+                      });
+                    }
+                  }}
+                  onMouseMove={(event) => {
+                    const rect = event.currentTarget.closest('.scatter-canvas-shell')?.getBoundingClientRect();
+                    if (rect) {
+                      setTooltip((prev) => prev ? {
+                        ...prev,
+                        x: event.clientX - rect.left,
+                        y: event.clientY - rect.top,
+                      } : null);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    onHover?.(null);
+                    setTooltip(null);
+                  }}
+                >
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isSelected || hovered ? 8 : 6}
+                    style={{ fill: visual.color }}
+                  />
+                  {showLabel ? (
+                    <text
+                      x={labelRight ? x + 10 : x - 10}
+                      y={labelY}
+                      textAnchor={labelRight ? 'start' : 'end'}
+                    >
+                      {modelShortLabel(model.model_key)}
+                    </text>
+                  ) : null}
                 </g>
               );
             })}
-            {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-              <line key={'v' + t} y1="52" y2="272" x1={72 + t * 468} x2={72 + t * 468} />
-            ))}
-          </g>
-          {frontierPoints.length > 1 ? (
-            <polyline
-              className="pareto-line"
-              points={frontierPoints.map((point) => point.x + ',' + point.y).join(' ')}
-            />
-          ) : null}
-          {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
-            const visual = modelVisual(model.model_signature);
-            const isSelected = selectedModels && selectedModels.length > 0
-              ? selectedModels.includes(model.model_signature)
-              : selectedModel === model.model_signature;
-            const hovered = hoveredModel === model.model_signature;
-            const dimmed = Boolean(hoveredModel && !hovered);
-            const showLabel = expanded || isSelected || hovered || frontier || plotted.length <= 6;
-            const labelRight = x < 410;
-            const labelY = y + (index % 2 === 0 ? -10 : 15);
-            return (
-              <g
-                key={model.model_signature}
-                className={
-                  'scatter-point ' +
-                  (isSelected ? 'selected ' : '') +
-                  (hovered ? 'hovered ' : '') +
-                  (dimmed ? 'dimmed ' : '') +
-                  (frontier ? 'frontier ' : '') +
-                  (xMetric === 'cost' && model.provider_cost_status === 'partial'
-                    ? 'cost-partial'
-                    : '')
-                }
-                onClick={(event) => {
-                  const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
-                  if (onToggleSelect) {
-                    onToggleSelect(model.model_signature, isMultiToggle);
-                  } else if (onSelect) {
-                    onSelect(model.model_signature);
-                  }
-                }}
-                onMouseEnter={() => onHover?.(model.model_signature)}
-                onMouseLeave={() => onHover?.(null)}
-              >
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isSelected || hovered ? 8 : 6}
-                  style={{ fill: visual.color }}
-                >
-                  <title>
-                    {model.model_key + ' · quality ' + quality.toFixed(1) +
-                      (xMetric === 'latency'
-                        ? ' · P50 ' + milliseconds(xValue)
-                        : ' · ' + usd(xValue) + ' / 1k · ' +
-                          providerCostCoverage(
-                            model.provider_cost_status,
-                            model.provider_cost_priced_cases,
-                            model.provider_cost_total_cases,
-                            model.provider_cost_coverage_rate,
-                          ))}
-                  </title>
-                </circle>
-                {showLabel ? (
-                  <text
-                    x={labelRight ? x + 10 : x - 10}
-                    y={labelY}
-                    textAnchor={labelRight ? 'start' : 'end'}
-                  >
-                    {modelShortLabel(model.model_key)}
-                  </text>
+            <text className="axis-title axis-y-title" x="10" y="160" transform="rotate(-90 10 160)">
+              Quality score
+            </text>
+            <text className="axis-title" x="236" y="318">
+              {xMetric === 'latency'
+                ? 'Observed latency · P50'
+                : 'Known provider cost / 1k cases'}
+            </text>
+          </svg>
+
+          {tooltip ? (
+            <div
+              className="chart-dot-tooltip"
+              style={{
+                left: tooltip.x,
+                top: tooltip.y,
+              }}
+            >
+              <div className="dot-tooltip-header">
+                <span
+                  className="dot-tooltip-badge"
+                  style={{ background: modelVisual(tooltip.model.model_signature).color }}
+                />
+                <strong className="dot-tooltip-title">{tooltip.model.model_key}</strong>
+              </div>
+              <div className="dot-tooltip-body">
+                <div className="dot-tooltip-row">
+                  <span className="dot-tooltip-label">Quality Score</span>
+                  <span className="dot-tooltip-val highlight">{tooltip.quality.toFixed(1)}</span>
+                </div>
+                <div className="dot-tooltip-row">
+                  <span className="dot-tooltip-label">
+                    {xMetric === 'latency' ? 'P50 Latency' : 'Cost / 1k cases'}
+                  </span>
+                  <span className="dot-tooltip-val">
+                    {xMetric === 'latency'
+                      ? milliseconds(tooltip.xValue)
+                      : usd(tooltip.xValue)}
+                  </span>
+                </div>
+                {tooltip.model.deployment ? (
+                  <div className="dot-tooltip-row">
+                    <span className="dot-tooltip-label">Deployment</span>
+                    <span className="dot-tooltip-val capitalize">{tooltip.model.deployment}</span>
+                  </div>
                 ) : null}
-              </g>
-            );
-          })}
-          <text className="axis-title axis-y-title" x="10" y="160" transform="rotate(-90 10 160)">
-            Quality score
-          </text>
-          <text className="axis-title" x="236" y="318">
-            {xMetric === 'latency'
-              ? 'Observed latency · P50'
-              : 'Known provider cost / 1k cases'}
-          </text>
-        </svg>
+              </div>
+            </div>
+          ) : null}
+        </div>
       ) : (
         <div className="empty-visual scatter-empty">
           <strong>No priced models in the current selection.</strong>
