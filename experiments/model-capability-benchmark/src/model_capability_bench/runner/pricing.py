@@ -51,9 +51,11 @@ def _price_entry(
             for candidate in candidates:
                 if str(candidate).startswith(str(price_key)):
                     return entry
-        elif match_type == "provider":
-            if str(price_key) == str(model.provider.provider_key):
-                return entry
+        elif (
+            match_type == "provider"
+            and str(price_key) == str(model.provider.provider_key)
+        ):
+            return entry
     return None
 
 
