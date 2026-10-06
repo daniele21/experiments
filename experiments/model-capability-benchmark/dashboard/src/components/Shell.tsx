@@ -60,7 +60,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const navigation = [
     ['/overview', BarChart3, 'Overview'],
-    ['/executive/quality', Presentation, 'Executive'],
+    ['/executive/scorecard', Presentation, 'Executive'],
     ['/models', Boxes, 'Models'],
     ['/capabilities/structured-output', Layers3, 'Capabilities'],
     ['/frontier', TrendingUp, 'Frontier'],
@@ -84,7 +84,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {navigation.map(([href, Icon, label]) => {
             const active =
               pathname === href ||
-              (href === '/executive/quality' && pathname.startsWith('/executive')) ||
+              (href === '/executive/scorecard' && pathname.startsWith('/executive')) ||
               (href === '/models' && pathname.startsWith('/models/')) ||
               (href.includes('capabilities') && pathname.startsWith('/capabilities')) ||
               (href === '/runs' && pathname.startsWith('/runs/'));

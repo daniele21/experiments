@@ -1,5 +1,6 @@
 import {
   BadgeDollarSign,
+  Crown,
   Database,
   HardDrive,
   Layers3,
@@ -21,6 +22,7 @@ import type {
 import { AppLink } from '../components/Shell';
 
 export type ExecutiveView =
+  | 'scorecard'
   | 'quality'
   | 'speed'
   | 'size'
@@ -34,6 +36,7 @@ const EXECUTIVE_VIEWS: Array<{
   label: string;
   href: string;
 }> = [
+  { id: 'scorecard', label: 'Scorecard', href: '/executive/scorecard' },
   { id: 'quality', label: 'Quality', href: '/executive/quality' },
   { id: 'speed', label: 'Speed', href: '/executive/speed' },
   { id: 'size', label: 'Size', href: '/executive/size' },
@@ -151,6 +154,200 @@ function datasetQualityRanking(
   return [...grouped.values()]
     .map((item) => ({ model: item.model, score: item.weighted / item.weight }))
     .sort((a, b) => b.score - a.score);
+}
+
+
+function scorecardCapabilityLabel(value: string | null | undefined): string {
+  if (!value) return 'Benchmark dataset';
+  return value
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function ScorecardRuntimeMeta({ model }: { model: DecisionModelSummary }) {
+  return (
+    <span className="scorecard-runtime-meta">
+      <span>{model.deployment === 'local' ? 'Local' : 'API'}</span>
+      <RuntimeBadge model={model} compact />
+    </span>
+  );
+}
+
+function OverallScorecard({ items }: { items: QualityRankItem[] }) {
+  const top = items.slice(0, 5);
+  if (!top.length) {
+    return <ExecutiveEmpty message="Project comparable quality evidence to build the executive scorecard." />;
+  }
+  const max = Math.max(...top.map((item) => item.score), 1);
+  return (
+    <section className="scorecard-section scorecard-overall-section">
+      <div className="scorecard-section-heading">
+        <div>
+          <span>Overall scorecard</span>
+          <h3>Top 5 models overall</h3>
+          <p>Aggregate benchmark quality across the comparable CURRENT cohort.</p>
+        </div>
+        <Trophy size={20} />
+      </div>
+
+      <div className="scorecard-overall-grid">
+        {top.map(({ model, score }, index) => {
+          const rank = index + 1;
+          return (
+            <article
+              className={`scorecard-overall-card rank-${rank}`}
+              key={model.model_signature}
+            >
+              <div className="scorecard-overall-topline">
+                <span className="scorecard-rank-badge">{rank}</span>
+                <strong>{model.model_key}</strong>
+              </div>
+              <div className="scorecard-overall-meta">
+                <ScorecardRuntimeMeta model={model} />
+                {model.family ? <span>{model.family}</span> : null}
+              </div>
+              <div className="scorecard-overall-score">{scoreValue(score)}</div>
+              <div className="scorecard-overall-track" aria-hidden="true">
+                <i style={{ width: `${Math.max(4, (score / max) * 100)}%` }} />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function DatasetPodiumCard({
+  datasetId,
+  capabilityId,
+  items,
+}: {
+  datasetId: string;
+  capabilityId: string | null;
+  items: QualityRankItem[];
+}) {
+  const top = items.slice(0, 3);
+  if (!top.length) return null;
+  const podium = [
+    top[1] ? { ...top[1], rank: 2 } : null,
+    top[0] ? { ...top[0], rank: 1 } : null,
+    top[2] ? { ...top[2], rank: 3 } : null,
+  ].filter(
+    (item): item is QualityRankItem & { rank: number } => item != null,
+  );
+
+  return (
+    <article className="scorecard-dataset-card">
+      <header className="scorecard-dataset-heading">
+        <div className="scorecard-dataset-icon">
+          {capabilityId?.includes('mathematical') ? '∑' :
+            capabilityId?.includes('structured') ? '{ }' :
+            capabilityId?.includes('abstention') ? '?' :
+            capabilityId?.includes('calibration') ? '◎' : '◌'}
+        </div>
+        <div>
+          <strong>{datasetLabel(datasetId)}</strong>
+          <span>{scorecardCapabilityLabel(capabilityId)}</span>
+        </div>
+      </header>
+
+      <div className="scorecard-podium">
+        {podium.map(({ model, score, rank }) => (
+          <div
+            className={`scorecard-podium-place rank-${rank}`}
+            key={model.model_signature}
+          >
+            {rank === 1 ? <Crown className="scorecard-crown" size={17} /> : null}
+            <span className="scorecard-rank-badge">{rank}</span>
+            <strong className="scorecard-podium-model">{model.model_key}</strong>
+            <ScorecardRuntimeMeta model={model} />
+            <strong className="scorecard-podium-score">{scoreValue(score)}</strong>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function ExecutiveScorecard({
+  models,
+  datasets,
+}: {
+  models: DecisionModelSummary[];
+  datasets: DecisionDatasetSummary[];
+}) {
+  const overall = overallQualityRanking(models);
+  const datasetIds = [...new Set(datasets.map((row) => row.dataset_id))]
+    .sort((a, b) => datasetLabel(a).localeCompare(datasetLabel(b)));
+  const capabilityByDataset = new Map<string, string>();
+  for (const row of datasets) {
+    if (!capabilityByDataset.has(row.dataset_id)) {
+      capabilityByDataset.set(row.dataset_id, row.capability_id);
+    }
+  }
+
+  const datasetRankings = datasetIds.map((datasetId) => ({
+    datasetId,
+    capabilityId: capabilityByDataset.get(datasetId) ?? null,
+    items: datasetQualityRanking(datasets, models, datasetId),
+  }));
+
+  const leader = overall[0];
+  const datasetWins = new Map<string, number>();
+  for (const ranking of datasetRankings) {
+    const winner = ranking.items[0];
+    if (winner) {
+      datasetWins.set(
+        winner.model.model_key,
+        (datasetWins.get(winner.model.model_key) ?? 0) + 1,
+      );
+    }
+  }
+  const mostDatasetWins = [...datasetWins.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+
+  return (
+    <ExecutiveFrame
+      active="scorecard"
+      eyebrow="Executive · Scorecard"
+      title="Who leads overall and who wins by dataset?"
+      statement={
+        leader
+          ? `${leader.model.model_key} leads overall at ${scoreValue(leader.score)}.`
+          : 'The executive scorecard is waiting for comparable benchmark evidence.'
+      }
+      evidence={
+        mostDatasetWins
+          ? `${mostDatasetWins[0]} leads ${mostDatasetWins[1]} of ${datasetRankings.length} measured datasets.`
+          : 'Top 5 overall and top 3 per dataset are derived from CURRENT projected evidence.'
+      }
+    >
+      <OverallScorecard items={overall} />
+
+      <section className="scorecard-section scorecard-datasets-section">
+        <div className="scorecard-section-heading">
+          <div>
+            <span>Dataset winners</span>
+            <h3>Top 3 by dataset</h3>
+            <p>The winner is centered and intentionally more prominent; #2 and #3 remain visible for context.</p>
+          </div>
+          <Crown size={20} />
+        </div>
+        <div className="scorecard-dataset-grid">
+          {datasetRankings.map((ranking) => (
+            <DatasetPodiumCard
+              key={ranking.datasetId}
+              datasetId={ranking.datasetId}
+              capabilityId={ranking.capabilityId}
+              items={ranking.items}
+            />
+          ))}
+        </div>
+      </section>
+    </ExecutiveFrame>
+  );
 }
 
 function ExecutiveFrame({
@@ -1118,6 +1315,10 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
       : reliableModels.filter(
           (model) => Math.abs(Number(model.failure_rate) - Number(reliabilityBestRate)) < 1e-12,
         );
+
+  if (view === 'scorecard') {
+    return <ExecutiveScorecard models={models} datasets={datasets} />;
+  }
 
   if (view === 'quality') {
     const runnerUp = qualityRanking[1];
