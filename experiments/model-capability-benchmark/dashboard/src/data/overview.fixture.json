@@ -1032,7 +1032,9 @@
         "provider_cost_total_cases": 468,
         "provider_cost_coverage_rate": 0,
         "provider_cost_observed_total_usd": null,
-        "provider_cost_pricing": null
+        "provider_cost_pricing": null,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "nemotron-nano-4b",
@@ -1086,7 +1088,9 @@
         "provider_cost_total_cases": 468,
         "provider_cost_coverage_rate": 0,
         "provider_cost_observed_total_usd": null,
-        "provider_cost_pricing": null
+        "provider_cost_pricing": null,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "gpt-5.6-luna",
@@ -1147,7 +1151,9 @@
           "currency": "USD",
           "as_of": "2026-09-20",
           "processing": "standard"
-        }
+        },
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "minicpm-v-4.6-1b",
@@ -1201,7 +1207,9 @@
         "provider_cost_total_cases": 468,
         "provider_cost_coverage_rate": 0,
         "provider_cost_observed_total_usd": null,
-        "provider_cost_pricing": null
+        "provider_cost_pricing": null,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "qwen3.5-0.8b-q4km",
@@ -1255,7 +1263,9 @@
           "fixture-qwen3.5-0.8b-q4km-current"
         ],
         "observed_quality_latency_pareto": false,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "nemotron-nano-4b-q8",
@@ -1309,7 +1319,9 @@
           "fixture-nemotron-nano-4b-q8-current"
         ],
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "qwen3.5-9b-q4km",
@@ -1363,7 +1375,9 @@
           "fixture-qwen3.5-9b-q4km-current"
         ],
         "observed_quality_latency_pareto": false,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "jev-1.13.0",
@@ -1409,7 +1423,9 @@
           "fixture-jev-1.13.0-current"
         ],
         "observed_quality_latency_pareto": true,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "decisio-qwen3.5-2b-q4km",
@@ -1463,7 +1479,9 @@
           "fixture-decisio-qwen3.5-2b-q4km-current"
         ],
         "observed_quality_latency_pareto": false,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "decisio-qwen3.5-4b-q4km",
@@ -1517,7 +1535,9 @@
           "fixture-decisio-qwen3.5-4b-q4km-current"
         ],
         "observed_quality_latency_pareto": false,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       },
       {
         "model_key": "decisio-qwen3.5-9b-q4km",
@@ -1571,7 +1591,9 @@
           "fixture-decisio-qwen3.5-9b-q4km-current"
         ],
         "observed_quality_latency_pareto": false,
-        "known_provider_cost_quality_pareto": false
+        "known_provider_cost_quality_pareto": false,
+        "artifact_size_bytes": null,
+        "observed_quality_artifact_size_pareto": false
       }
     ],
     "capability_summaries": [
