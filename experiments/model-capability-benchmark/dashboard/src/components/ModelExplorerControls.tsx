@@ -30,39 +30,66 @@ export function ModelLegend({
   models,
   hoveredModel,
   selectedModel,
+  selectedModels,
   onHover,
   onSelect,
+  onToggleSelect,
   compact = false,
 }: {
   models: DecisionModelSummary[];
   hoveredModel?: string | null;
   selectedModel?: string | null;
+  selectedModels?: string[];
   onHover?: (signature: string | null) => void;
   onSelect?: (signature: string) => void;
+  onToggleSelect?: (signature: string, isMultiToggle: boolean) => void;
   compact?: boolean;
 }) {
+  const selectedSet = useMemo(() => {
+    if (selectedModels && selectedModels.length > 0) {
+      return new Set(selectedModels);
+    }
+    if (selectedModel) {
+      return new Set([selectedModel]);
+    }
+    return new Set<string>();
+  }, [selectedModel, selectedModels]);
+
+  const hasMultipleSelected = selectedSet.size > 1;
+
   return (
     <div className={compact ? 'model-legend compact' : 'model-legend'}>
       {models.map((model) => {
         const dimmed = hoveredModel && hoveredModel !== model.model_signature;
+        const isSelected = selectedSet.has(model.model_signature);
         return (
           <button
             type="button"
             key={model.model_signature}
             className={
               'model-legend-item ' +
-              (selectedModel === model.model_signature ? 'selected ' : '') +
+              (isSelected ? 'selected ' : '') +
               (dimmed ? 'dimmed' : '')
             }
             onMouseEnter={() => onHover?.(model.model_signature)}
             onMouseLeave={() => onHover?.(null)}
             onFocus={() => onHover?.(model.model_signature)}
             onBlur={() => onHover?.(null)}
-            onClick={() => onSelect?.(model.model_signature)}
-            title={model.model_key}
+            onClick={(event) => {
+              const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
+              if (onToggleSelect) {
+                onToggleSelect(model.model_signature, isMultiToggle);
+              } else if (onSelect) {
+                onSelect(model.model_signature);
+              }
+            }}
+            title={`${model.model_key} (Click to select, Shift/Cmd+Click for multi-selection)`}
           >
             <ModelMarker signature={model.model_signature} />
             <span>{modelShortLabel(model.model_key)}</span>
+            {hasMultipleSelected && isSelected ? (
+              <span className="legend-selected-dot" aria-hidden="true">✓</span>
+            ) : null}
           </button>
         );
       })}
@@ -78,8 +105,10 @@ export function ModelFilterBar({
   onDeploymentChange,
   hoveredModel,
   selectedModel,
+  selectedModels,
   onHover,
   onSelect,
+  onToggleSelect,
 }: {
   models: DecisionModelSummary[];
   visibleSignatures: string[];
@@ -88,8 +117,10 @@ export function ModelFilterBar({
   onDeploymentChange: (deployment: DeploymentFilter) => void;
   hoveredModel?: string | null;
   selectedModel?: string | null;
+  selectedModels?: string[];
   onHover?: (signature: string | null) => void;
   onSelect?: (signature: string) => void;
+  onToggleSelect?: (signature: string, isMultiToggle: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -258,8 +289,10 @@ export function ModelFilterBar({
         models={effectiveVisible}
         hoveredModel={hoveredModel}
         selectedModel={selectedModel}
+        selectedModels={selectedModels}
         onHover={onHover}
         onSelect={onSelect}
+        onToggleSelect={onToggleSelect}
         compact={effectiveVisible.length > 8}
       />
     </section>

@@ -85,8 +85,10 @@ export function TradeoffScatter({
   models,
   xMetric,
   selectedModel,
+  selectedModels,
   hoveredModel,
   onSelect,
+  onToggleSelect,
   onHover,
 }: {
   title: string;
@@ -94,8 +96,10 @@ export function TradeoffScatter({
   models: DecisionModelSummary[];
   xMetric: 'latency' | 'cost';
   selectedModel?: string | null;
+  selectedModels?: string[];
   hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onToggleSelect?: (modelSignature: string, isMultiToggle: boolean) => void;
   onHover?: (modelSignature: string | null) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -178,10 +182,12 @@ export function TradeoffScatter({
           ) : null}
           {plotted.map(({ model, xValue, x, quality, y, frontier }, index) => {
             const visual = modelVisual(model.model_signature);
-            const selected = selectedModel === model.model_signature;
+            const isSelected = selectedModels && selectedModels.length > 0
+              ? selectedModels.includes(model.model_signature)
+              : selectedModel === model.model_signature;
             const hovered = hoveredModel === model.model_signature;
             const dimmed = Boolean(hoveredModel && !hovered);
-            const showLabel = expanded || selected || hovered || frontier || plotted.length <= 6;
+            const showLabel = expanded || isSelected || hovered || frontier || plotted.length <= 6;
             const labelRight = x < 410;
             const labelY = y + (index % 2 === 0 ? -10 : 15);
             return (
@@ -189,7 +195,7 @@ export function TradeoffScatter({
                 key={model.model_signature}
                 className={
                   'scatter-point ' +
-                  (selected ? 'selected ' : '') +
+                  (isSelected ? 'selected ' : '') +
                   (hovered ? 'hovered ' : '') +
                   (dimmed ? 'dimmed ' : '') +
                   (frontier ? 'frontier ' : '') +
@@ -197,14 +203,21 @@ export function TradeoffScatter({
                     ? 'cost-partial'
                     : '')
                 }
-                onClick={() => onSelect?.(model.model_signature)}
+                onClick={(event) => {
+                  const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
+                  if (onToggleSelect) {
+                    onToggleSelect(model.model_signature, isMultiToggle);
+                  } else if (onSelect) {
+                    onSelect(model.model_signature);
+                  }
+                }}
                 onMouseEnter={() => onHover?.(model.model_signature)}
                 onMouseLeave={() => onHover?.(null)}
               >
                 <circle
                   cx={x}
                   cy={y}
-                  r={selected || hovered ? 8 : 6}
+                  r={isSelected || hovered ? 8 : 6}
                   style={{ fill: visual.color }}
                 >
                   <title>
@@ -285,8 +298,10 @@ export function TradeoffScatter({
           models={eligible}
           hoveredModel={hoveredModel}
           selectedModel={selectedModel}
+          selectedModels={selectedModels}
           onHover={onHover}
           onSelect={onSelect}
+          onToggleSelect={onToggleSelect}
           compact
         />
       </section>
@@ -317,8 +332,10 @@ export function TradeoffScatter({
                   models={eligible}
                   hoveredModel={hoveredModel}
                   selectedModel={selectedModel}
+                  selectedModels={selectedModels}
                   onHover={onHover}
                   onSelect={onSelect}
+                  onToggleSelect={onToggleSelect}
                 />
               </div>
               <aside className="chart-modal-insights">
@@ -350,14 +367,18 @@ export function TradeoffScatter({
 export function QualityLeaderboard({
   models,
   selectedModel,
+  selectedModels,
   hoveredModel,
   onSelect,
+  onToggleSelect,
   onHover,
 }: {
   models: DecisionModelSummary[];
   selectedModel?: string | null;
+  selectedModels?: string[];
   hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onToggleSelect?: (modelSignature: string, isMultiToggle: boolean) => void;
   onHover?: (modelSignature: string | null) => void;
 }) {
   const ranked = [...models].sort((a, b) => {
@@ -373,19 +394,30 @@ export function QualityLeaderboard({
   const splitIndex = Math.ceil(ranked.length / 2);
   const columns = [ranked.slice(0, splitIndex), ranked.slice(splitIndex)];
 
-  const renderRow = (model: DecisionModelSummary, index: number) => (
-    <button
-      type="button"
-      key={model.model_signature}
-      className={
-        'leader-row ' +
-        (selectedModel === model.model_signature ? 'selected ' : '') +
-        (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
-      }
-      onClick={() => onSelect?.(model.model_signature)}
-      onMouseEnter={() => onHover?.(model.model_signature)}
-      onMouseLeave={() => onHover?.(null)}
-    >
+  const renderRow = (model: DecisionModelSummary, index: number) => {
+    const isSelected = selectedModels && selectedModels.length > 0
+      ? selectedModels.includes(model.model_signature)
+      : selectedModel === model.model_signature;
+    return (
+      <button
+        type="button"
+        key={model.model_signature}
+        className={
+          'leader-row ' +
+          (isSelected ? 'selected ' : '') +
+          (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed' : '')
+        }
+        onClick={(event) => {
+          const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
+          if (onToggleSelect) {
+            onToggleSelect(model.model_signature, isMultiToggle);
+          } else if (onSelect) {
+            onSelect(model.model_signature);
+          }
+        }}
+        onMouseEnter={() => onHover?.(model.model_signature)}
+        onMouseLeave={() => onHover?.(null)}
+      >
       <span className="rank">{index + 1}</span>
       <span className="leader-name">
         <strong><ModelMarker signature={model.model_signature} /> {model.model_key}</strong>
@@ -405,6 +437,7 @@ export function QualityLeaderboard({
       <strong className="leader-score">{score(model.overall_quality_score)}</strong>
     </button>
   );
+};
 
   return (
     <section className="analysis-card leaderboard-card">
@@ -561,16 +594,20 @@ export function DatasetHeatmap({
   models,
   view = 'score',
   selectedModel,
+  selectedModels,
   hoveredModel,
   onSelect,
+  onToggleSelect,
   onHover,
 }: {
   datasets: DecisionDatasetSummary[];
   models: DecisionModelSummary[];
   view?: 'score' | 'delta' | 'rank';
   selectedModel?: string | null;
+  selectedModels?: string[];
   hoveredModel?: string | null;
   onSelect?: (modelSignature: string) => void;
+  onToggleSelect?: (modelSignature: string, isMultiToggle: boolean) => void;
   onHover?: (modelSignature: string | null) => void;
 }) {
   const [activeView, setActiveView] = useState<'score' | 'delta' | 'rank'>(view);
@@ -888,11 +925,14 @@ export function DatasetHeatmap({
         </div>
         {orderedModels.map((model) => {
           const isSorted = sortColumn === model.model_key;
+          const isSelected = selectedModels && selectedModels.length > 0
+            ? selectedModels.includes(model.model_signature)
+            : selectedModel === model.model_signature;
           return (
             <div
               className={
                 'heatmap-head model sortable ' +
-                (selectedModel === model.model_signature ? 'selected ' : '') +
+                (isSelected ? 'selected ' : '') +
                 (hoveredModel && hoveredModel !== model.model_signature ? 'dimmed ' : '') +
                 (isSorted ? 'active-sort ' : '')
               }
@@ -901,11 +941,16 @@ export function DatasetHeatmap({
               tabIndex={0}
               onMouseEnter={() => onHover?.(model.model_signature)}
               onMouseLeave={() => onHover?.(null)}
-              onClick={() => {
+              onClick={(event) => {
+                const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
                 handleSort(model.model_key);
-                onSelect?.(model.model_signature);
+                if (onToggleSelect) {
+                  onToggleSelect(model.model_signature, isMultiToggle);
+                } else if (onSelect) {
+                  onSelect(model.model_signature);
+                }
               }}
-              title={'Click to sort rows by ' + model.model_key + ' score (' + (isSorted && sortDirection === 'desc' ? 'descending' : 'ascending') + ')'}
+              title={'Click to sort rows by ' + model.model_key + ' score (' + (isSorted && sortDirection === 'desc' ? 'descending' : 'ascending') + ') · Shift/Cmd+Click to toggle selection'}
             >
               <div className="heatmap-model-name">
                 <span title={model.model_key}>
@@ -1015,6 +1060,9 @@ export function DatasetHeatmap({
                       : score(value);
                 const isWinner = value != null && best != null && value === best;
                 const signature = model?.model_signature ?? modelKey;
+                const isSelected = selectedModels && selectedModels.length > 0
+                  ? selectedModels.includes(signature)
+                  : selectedModel === signature;
                 const dimmed = Boolean(
                   hoveredModel && hoveredModel !== signature,
                 );
@@ -1024,12 +1072,19 @@ export function DatasetHeatmap({
                     className={
                       'heatmap-cell performance-' + performanceBand(value) + ' ' +
                       (isWinner ? 'winner ' : '') +
-                      (selectedModel === signature ? 'selected ' : '') +
+                      (isSelected ? 'selected ' : '') +
                       (dimmed ? 'dimmed' : '')
                     }
                     onMouseEnter={() => onHover?.(signature)}
                     onMouseLeave={() => onHover?.(null)}
-                    onClick={() => onSelect?.(signature)}
+                    onClick={(event) => {
+                      const isMultiToggle = event.shiftKey || event.metaKey || event.ctrlKey;
+                      if (onToggleSelect) {
+                        onToggleSelect(signature, isMultiToggle);
+                      } else if (onSelect) {
+                        onSelect(signature);
+                      }
+                    }}
                     title={
                       cell
                         ? [

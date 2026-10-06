@@ -30,7 +30,7 @@ import {
   ModelTagList,
 } from '../components/ModelParameters';
 import { AppLink, PageHeader } from '../components/Shell';
-import { ModelFilterBar, type DeploymentFilter } from '../components/ModelExplorerControls';
+import { ModelFilterBar, ModelMarker, type DeploymentFilter } from '../components/ModelExplorerControls';
 import { currentQuery, updateQuery } from '../queryState';
 
 function fallbackDecision(payload: OverviewPayload): DecisionPayload {
@@ -165,23 +165,58 @@ export function OverviewPage() {
         Number(a.provider_cost_per_1k_cases_usd) -
         Number(b.provider_cost_per_1k_cases_usd),
     )[0];
-  const [selectedSignature, setSelectedSignature] = useState<string | null>(() => {
-    return (
-      initialQuery.get('selected') ??
-      bestLocal?.model_signature ??
-      bestQuality?.model_signature ??
-      null
-    );
+  const [selectedSignatures, setSelectedSignatures] = useState<string[]>(() => {
+    const fromQuery = initialQuery.get('selected');
+    if (fromQuery) {
+      return fromQuery.split(',').filter(Boolean);
+    }
+    const fallback = bestLocal?.model_signature ?? bestQuality?.model_signature;
+    return fallback ? [fallback] : [];
   });
+
+  const selectedSignature = selectedSignatures[0] ?? null;
+
   const selected =
     visibleModels.find((model) => model.model_signature === selectedSignature) ??
     ranked[0] ??
     null;
 
+  const selectedCohort = useMemo(() => {
+    if (!selectedSignatures.length) return selected ? [selected] : [];
+    return visibleModels.filter((m) => selectedSignatures.includes(m.model_signature));
+  }, [selectedSignatures, visibleModels, selected]);
+
   const selectModel = (signature: string) => {
-    setSelectedSignature(signature);
+    setSelectedSignatures([signature]);
     updateQuery({ selected: signature });
   };
+
+  const toggleSelectedModel = (signature: string, isMultiToggle: boolean) => {
+    if (!isMultiToggle) {
+      selectModel(signature);
+      return;
+    }
+    const current = new Set(selectedSignatures);
+    if (current.has(signature)) {
+      current.delete(signature);
+    } else {
+      current.add(signature);
+    }
+    const next = visibleModels
+      .filter((m) => current.has(m.model_signature))
+      .map((m) => m.model_signature);
+    const finalSelection = next.length > 0 ? next : [signature];
+    setSelectedSignatures(finalSelection);
+    updateQuery({ selected: finalSelection.join(',') });
+  };
+
+  const clearSelection = () => {
+    if (selected) {
+      setSelectedSignatures([selected.model_signature]);
+      updateQuery({ selected: selected.model_signature });
+    }
+  };
+
   const changeDeployment = (value: DeploymentFilter) => {
     setDeployment(value);
     setVisibleSignatures([]);
@@ -226,8 +261,10 @@ export function OverviewPage() {
         onDeploymentChange={changeDeployment}
         hoveredModel={hoveredSignature}
         selectedModel={selected?.model_signature}
+        selectedModels={selectedSignatures}
         onHover={setHoveredSignature}
         onSelect={selectModel}
+        onToggleSelect={toggleSelectedModel}
       />
 
       <section className="kpi-grid">
@@ -285,8 +322,10 @@ export function OverviewPage() {
         <QualityLeaderboard
           models={visibleModels}
           selectedModel={selected?.model_signature}
+          selectedModels={selectedSignatures}
           hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onToggleSelect={toggleSelectedModel}
           onHover={setHoveredSignature}
         />
       </section>
@@ -298,8 +337,10 @@ export function OverviewPage() {
           models={visibleModels}
           xMetric="latency"
           selectedModel={selected?.model_signature}
+          selectedModels={selectedSignatures}
           hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onToggleSelect={toggleSelectedModel}
           onHover={setHoveredSignature}
         />
         <TradeoffScatter
@@ -308,8 +349,10 @@ export function OverviewPage() {
           models={visibleModels}
           xMetric="cost"
           selectedModel={selected?.model_signature}
+          selectedModels={selectedSignatures}
           hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onToggleSelect={toggleSelectedModel}
           onHover={setHoveredSignature}
         />
       </section>
@@ -321,8 +364,10 @@ export function OverviewPage() {
           )}
           models={visibleModels}
           selectedModel={selected?.model_signature}
+          selectedModels={selectedSignatures}
           hoveredModel={hoveredSignature}
           onSelect={selectModel}
+          onToggleSelect={toggleSelectedModel}
           onHover={setHoveredSignature}
         />
 
@@ -333,19 +378,63 @@ export function OverviewPage() {
                 <div className="selected-model-icon"><Cpu size={22} /></div>
                 <div>
                   <div className="selected-model-badges-row">
-                    <span>Selected model</span>
+                    <span>
+                      {selectedCohort.length > 1
+                        ? `${selectedCohort.length} models selected`
+                        : 'Selected model'}
+                    </span>
                     <ModelParamBadge parameters_b={selected.parameters_b} deployment={selected.deployment} />
                     <ModelQuantBadge quantization={selected.quantization} deployment={selected.deployment} />
                   </div>
                   <h2>{selected.model_key}</h2>
                   <p>
-                    {selected.deployment === 'local'
-                      ? 'Local execution context and measured efficiency.'
-                      : 'API execution context and provider-reported economics.'}
+                    {selectedCohort.length > 1
+                      ? `Focus on ${selected.model_key} with ${selectedCohort.length} models highlighted across charts.`
+                      : selected.deployment === 'local'
+                        ? 'Local execution context and measured efficiency.'
+                        : 'API execution context and provider-reported economics.'}
                   </p>
                 </div>
                 <DeploymentBadge deployment={selected.deployment} />
               </div>
+
+              {selectedCohort.length > 1 ? (
+                <div className="selected-cohort-chips">
+                  {selectedCohort.map((m) => (
+                    <button
+                      type="button"
+                      key={m.model_signature}
+                      className={
+                        'selected-cohort-chip ' +
+                        (m.model_signature === selected.model_signature ? 'active' : '')
+                      }
+                      onClick={() => selectModel(m.model_signature)}
+                      title={`Focus ${m.model_key}`}
+                    >
+                      <ModelMarker signature={m.model_signature} size={8} />
+                      <span>{m.model_key}</span>
+                      <span
+                        className="cohort-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelectedModel(m.model_signature, true);
+                        }}
+                        title={`Deselect ${m.model_key}`}
+                      >
+                        ×
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="clear-cohort-button"
+                    onClick={clearSelection}
+                    title="Reset to single selection"
+                  >
+                    Reset
+                  </button>
+                </div>
+              ) : null}
 
               <div className="model-param-summary">
                 <div className="param-item">
@@ -451,12 +540,26 @@ export function OverviewPage() {
                 >
                   Open model
                 </AppLink>
-                <AppLink
-                  className="primary-button"
-                  href={'/compare?modelA=' + encodeURIComponent(selected.model_key)}
-                >
-                  Compare
-                </AppLink>
+                {selectedCohort.length >= 2 ? (
+                  <AppLink
+                    className="primary-button"
+                    href={
+                      '/compare?modelA=' +
+                      encodeURIComponent(selectedCohort[0].model_key) +
+                      '&modelB=' +
+                      encodeURIComponent(selectedCohort[1].model_key)
+                    }
+                  >
+                    Compare 2 Selected
+                  </AppLink>
+                ) : (
+                  <AppLink
+                    className="primary-button"
+                    href={'/compare?modelA=' + encodeURIComponent(selected.model_key)}
+                  >
+                    Compare
+                  </AppLink>
+                )}
               </div>
             </>
           ) : (
