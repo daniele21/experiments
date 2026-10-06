@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from collections import defaultdict
-from typing import Iterable
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment

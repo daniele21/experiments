@@ -2,7 +2,6 @@ from pathlib import Path
 
 from diarization_bench.config import load_manifest, load_models, select_models
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

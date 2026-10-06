@@ -30,7 +30,7 @@ class CaseSpec:
 def _read_yaml(path: Path) -> dict[str, Any]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     if not isinstance(payload, dict):
-        raise ValueError(f"{path} must contain a YAML object")
+        raise TypeError(f"{path} must contain a YAML object")
     return payload
 
 
@@ -43,7 +43,7 @@ def load_models(path: Path) -> dict[str, ModelSpec]:
     models: dict[str, ModelSpec] = {}
     for key, raw in raw_models.items():
         if not isinstance(raw, dict):
-            raise ValueError(f"Model {key!r} must be a mapping")
+            raise TypeError(f"Model {key!r} must be a mapping")
         models[key] = ModelSpec(
             key=key,
             engine=str(raw["engine"]),
@@ -67,7 +67,7 @@ def load_manifest(path: Path) -> list[CaseSpec]:
     seen: set[str] = set()
     for raw in raw_cases:
         if not isinstance(raw, dict):
-            raise ValueError("Each case must be a mapping")
+            raise TypeError("Each case must be a mapping")
         case_id = str(raw["id"])
         if case_id in seen:
             raise ValueError(f"Duplicate case id: {case_id}")

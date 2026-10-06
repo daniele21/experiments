@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from datetime import datetime, timezone
-from pathlib import Path
 import json
 import platform
 import statistics
 import sys
+from collections import defaultdict
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from .config import CaseSpec, ModelSpec
@@ -24,7 +24,7 @@ def _append_jsonl(path: Path, payload: Any) -> None:
 
 
 def _run_id() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def plan(models: list[ModelSpec], cases: list[CaseSpec]) -> dict[str, Any]:
@@ -96,7 +96,7 @@ def run(
 
     manifest = {
         "run_id": run_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "python": sys.version,
         "platform": platform.platform(),
         "machine": platform.machine(),
