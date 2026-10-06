@@ -145,7 +145,11 @@ def export_dashboard_data(
                     "parameters_b": row.get("parameters_b") if row.get("parameters_b") is not None else cfg.get("parameters_b"),
                     "quantization": row.get("quantization") or artifact.get("quantization"),
                     "artifact_format": row.get("artifact_format") or artifact.get("format"),
-                    "artifact_size_bytes": row.get("artifact_size_bytes"),
+                    "artifact_size_bytes": (
+                        row.get("artifact_size_bytes")
+                        if row.get("artifact_size_bytes") is not None
+                        else artifact.get("size_bytes")
+                    ),
                     "tags": cfg.get("tags") or [],
                 }
 
