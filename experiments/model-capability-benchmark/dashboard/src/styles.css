@@ -4345,7 +4345,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .dataset-fit-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 14px;
   align-items: start;
 }
@@ -4396,7 +4396,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 }
 
 .dataset-heatmap {
-  min-width: 780px;
+  min-width: 900px;
   display: grid;
   align-items: stretch;
 }
@@ -4434,11 +4434,11 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .dataset-heatmap-column strong {
   overflow: hidden;
-  max-width: 125px;
+  max-width: 96px;
   color: #28344a;
-  font-size: 8.5px;
-  line-height: 1.25;
-  text-overflow: ellipsis;
+  font-size: 7.6px;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
 }
 
 .dataset-heatmap-column span {
@@ -4472,7 +4472,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   position: relative;
   display: grid;
   place-items: center;
-  font-size: 9.5px;
+  font-size: 8.8px;
   font-weight: 820;
   letter-spacing: -.01em;
 }
