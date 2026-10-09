@@ -101,7 +101,7 @@ export function HardwareMemoryComparison({ selected, field }: {
       </div>
       <span className={'mem-confidence mem-confidence-' + comparison.status}>
         {comparison.status === 'matched' ? <CheckCircle2 size={16}/> : <AlertTriangle size={16}/>}
-        {comparison.status === 'matched' ? 'Host hardware matched' : comparison.status === 'mismatch' ? 'Different hardware' : 'Comparison limited'}
+        {comparison.status === 'matched' ? 'Reported host specs match' : comparison.status === 'mismatch' ? 'Different hardware' : 'Comparison limited'}
       </span>
     </div>
     <div className={'mem-card-grid mem-card-grid-'+selected.length}>
