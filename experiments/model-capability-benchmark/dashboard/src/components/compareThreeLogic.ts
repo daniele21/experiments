@@ -52,7 +52,7 @@ export function sharedThreeDatasets(rows: DecisionDatasetSummary[], models: Thre
 export function threeDecisionInsight(models: ThreeModels, preference: ComparePreference, shared: number, union: number) {
   const lead = (metric: 'quality' | 'speed' | 'reliability') => {
     const values = models.map(model => metric === 'quality' ? model.overall_quality_score : metric === 'speed' ? model.latency_p50_ms : model.failure_rate);
-    return leaderIndices(values, metric !== 'quality');
+    return leaderIndices(values, metric !== 'quality', metric === 'quality' ? QUALITY_TIE_TOLERANCE : 0);
   };
   const [quality, speed, reliability] = [lead('quality'), lead('speed'), lead('reliability')];
   const samePolicy = models.every(model => model.quality_policy_id === models[0].quality_policy_id);
