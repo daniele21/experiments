@@ -1,15 +1,14 @@
+import { CompareDecision } from '../components/CompareDecision';
 import {
   Activity,
   AlertTriangle,
   BarChart3,
   CheckCircle2,
   Cpu,
-  GitCompareArrows,
   MemoryStick,
   Share2,
 } from 'lucide-react';
 import { useState } from 'react';
-import { navigate } from '../router';
 import type { ReactNode } from 'react';
 import {
   modelPayloads,
@@ -36,7 +35,6 @@ import {
   usd,
 } from '../utils';
 import {
-  DatasetDeltaSlopegraph,
   DatasetHeatmap,
   DeploymentBadge,
   MethodologyAccordion,
@@ -45,7 +43,6 @@ import {
 import {
   ModelArchitectureCard,
   ModelParamBadge,
-  ModelParametersComparison,
   ModelQuantBadge,
 } from '../components/ModelParameters';
 import { AppLink, PageHeader } from '../components/Shell';
@@ -593,219 +590,8 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
   );
 }
 
-function compareHref(modelA: string, modelB: string): string {
-  const params = new URLSearchParams({ modelA, modelB });
-  return '/compare?' + params.toString();
-}
-
-function queryParam(name: string): string | null {
-  const direct = new URLSearchParams(window.location.search).get(name);
-  if (direct) return direct;
-  if (window.location.hash.includes('?')) {
-    return new URLSearchParams(window.location.hash.split('?')[1]).get(name);
-  }
-  return null;
-}
-
 export function ComparePage() {
-  const models = [...decisionModels].sort(
-    (a, b) => (b.overall_quality_score ?? -1) - (a.overall_quality_score ?? -1),
-  );
-  const initialA = queryParam('modelA') ?? models[0]?.model_key ?? '';
-  const initialB =
-    queryParam('modelB') ??
-    models.find(
-      (model) =>
-        model.model_key !== initialA && model.deployment === 'local',
-    )?.model_key ??
-    models.find((model) => model.model_key !== initialA)?.model_key ??
-    '';
-  const [modelAKey, setModelAKey] = useState(initialA);
-  const [modelBKey, setModelBKey] = useState(initialB);
-  const modelA = models.find((model) => model.model_key === modelAKey) ?? models[0];
-  const modelB =
-    models.find((model) => model.model_key === modelBKey) ??
-    models.find((model) => model.model_key !== modelA?.model_key);
-  const datasetsA = decisionDatasets.filter((row) => row.model_key === modelA?.model_key);
-  const datasetsB = new Map(
-    decisionDatasets
-      .filter((row) => row.model_key === modelB?.model_key)
-      .map((row) => [row.capability_id + '::' + row.dataset_id, row]),
-  );
-
-  const qualityDelta =
-    modelA?.overall_quality_score != null && modelB?.overall_quality_score != null
-      ? modelA.overall_quality_score - modelB.overall_quality_score
-      : null;
-
-  return (
-    <>
-      <PageHeader
-        eyebrow="Decision workspace"
-        title="Compare models"
-        description="Compare finalists across quality, dataset performance, observed latency, cost and execution semantics."
-        actions={
-          <div className="compare-selectors">
-            <select
-              value={modelA?.model_key ?? ''}
-              onChange={(event) => {
-                const next = event.target.value;
-                setModelAKey(next);
-                navigate(compareHref(next, modelB?.model_key ?? ''));
-              }}
-            >
-              {models.map((model) => <option key={model.model_key}>{model.model_key}</option>)}
-            </select>
-            <span>vs</span>
-            <select
-              value={modelB?.model_key ?? ''}
-              onChange={(event) => {
-                const next = event.target.value;
-                setModelBKey(next);
-                navigate(compareHref(modelA?.model_key ?? '', next));
-              }}
-            >
-              {models.filter((model) => model.model_key !== modelA?.model_key).map((model) => (
-                <option key={model.model_key}>{model.model_key}</option>
-              ))}
-            </select>
-          </div>
-        }
-      />
-      {modelA && modelB ? (
-        <>
-          <section className="compare-hero-grid">
-            {[modelA, modelB].map((model, index) => (
-              <div className="compare-model-card" key={model.model_signature}>
-                <div><strong>{model.model_key}</strong><DeploymentBadge deployment={model.deployment}/></div>
-                <span>{index === 0 ? 'Model A' : 'Model B'}</span>
-                <div className="compare-mini-grid">
-                  <div><small>Quality</small><b>{score(model.overall_quality_score)}</b></div>
-                  <div><small>P50</small><b>{milliseconds(model.latency_p50_ms)}</b></div>
-                  <div>
-                    <small>Cost / 1k</small>
-                    <b>{providerCostValue(
-                      model.provider_cost_status,
-                      model.provider_cost_per_1k_cases_usd,
-                    )}</b>
-                    <em className={'cost-status ' + model.provider_cost_status}>
-                      {model.provider_cost_status === 'partial'
-                        ? Math.round((model.provider_cost_coverage_rate ?? 0) * 100) + '% priced'
-                        : model.provider_cost_status === 'complete'
-                          ? 'complete'
-                          : model.provider_cost_status === 'local_not_applicable'
-                            ? 'local'
-                            : 'unavailable'}
-                    </em>
-                  </div>
-                  <div><small>Failures</small><b>{percent(model.failure_rate)}</b></div>
-                </div>
-              </div>
-            ))}
-            <div className="compare-delta-card">
-              <GitCompareArrows size={20}/>
-              <strong>Delta A − B</strong>
-              <b>{qualityDelta == null ? '—' : (qualityDelta >= 0 ? '+' : '') + qualityDelta.toFixed(1)}</b>
-              <span>quality points</span>
-              <small>
-                Latency {modelA.latency_p50_ms != null && modelB.latency_p50_ms != null
-                  ? milliseconds(modelA.latency_p50_ms - modelB.latency_p50_ms)
-                  : '—'}
-              </small>
-            </div>
-          </section>
-
-          <section className="compare-workspace-grid">
-            <div className="analysis-card">
-              <SectionTitle title="Side-by-side metrics" description="Bars are normalized within each metric only." />
-              <ComparisonMetric label="Quality" a={modelA.overall_quality_score} b={modelB.overall_quality_score} format={score}/>
-              <ComparisonMetric label="P50 latency" a={modelA.latency_p50_ms} b={modelB.latency_p50_ms} format={milliseconds} lowerBetter/>
-              <ComparisonMetric label="P95 latency" a={modelA.latency_p95_ms} b={modelB.latency_p95_ms} format={milliseconds} lowerBetter/>
-              <ComparisonMetric label="Provider cost / 1k" a={modelA.provider_cost_per_1k_cases_usd} b={modelB.provider_cost_per_1k_cases_usd} format={usd} lowerBetter/>
-              <ComparisonMetric label="Failure rate" a={modelA.failure_rate} b={modelB.failure_rate} format={percent} lowerBetter/>
-            </div>
-            <div className="tradeoff-pair">
-              <TradeoffScatter title="Quality × latency" description="Selected models in the wider field." models={models} xMetric="latency" selectedModel={modelA.model_signature}/>
-              <TradeoffScatter title="Quality × cost" description="Known provider cost only." models={models} xMetric="cost" selectedModel={modelA.model_signature}/>
-            </div>
-          </section>
-
-          <DatasetDeltaSlopegraph
-            datasets={decisionDatasets}
-            modelA={modelA}
-            modelB={modelB}
-          />
-
-          <section className="analysis-card">
-            <SectionTitle
-              title="Parameter & Configuration Comparison"
-              description="Side-by-side comparison of architecture scale, quantization, and generation parameters."
-            />
-            <ModelParametersComparison modelA={modelA} modelB={modelB} />
-          </section>
-
-          <section className="two-panel-grid">
-            <div className="analysis-card">
-              <SectionTitle title="Dataset delta table" description="Exact values behind the slopegraph." />
-              <div className="dataset-delta-table">
-                {datasetsA.map((a) => {
-                  const b = datasetsB.get(a.capability_id + '::' + a.dataset_id);
-                  const delta =
-                    a.normalized_quality_score != null && b?.normalized_quality_score != null
-                      ? a.normalized_quality_score - b.normalized_quality_score
-                      : null;
-                  return (
-                    <div key={a.capability_id + a.dataset_id}>
-                      <span><strong>{a.dataset_id}</strong><small>{capabilityLabel(a.capability_id)}</small></span>
-                      <b>{score(a.normalized_quality_score)}</b>
-                      <b>{score(b?.normalized_quality_score)}</b>
-                      <em className={delta != null && delta < 0 ? 'negative' : 'positive'}>
-                        {delta == null ? '—' : (delta > 0 ? '+' : '') + delta.toFixed(1)}
-                      </em>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="analysis-card">
-              <SectionTitle
-                title="Efficiency semantics"
-                description="Quality comparability is separate from runtime efficiency semantics."
-                aside={<span className="warning-chip"><AlertTriangle size={14}/> observed trade-off</span>}
-              />
-              <div className="semantics-grid">
-                <div><CheckCircle2 size={19}/><strong>Quality comparable</strong><p>The decision cohort keeps a common benchmark lineage per capability.</p></div>
-                <div><AlertTriangle size={19}/><strong>Efficiency environment-specific</strong><p>Latency across different runtimes is descriptive unless execution semantics match.</p></div>
-              </div>
-            </div>
-          </section>
-        </>
-      ) : <div className="analysis-card empty-visual">At least two decision summaries are required.</div>}
-      <MethodologyAccordion policyLabel={overview.decision?.quality_policy.label} />
-    </>
-  );
-}
-
-function ComparisonMetric({
-  label,
-  a,
-  b,
-  format,
-}: {
-  label: string;
-  a: number | null | undefined;
-  b: number | null | undefined;
-  format: (value: number | null | undefined) => string;
-  lowerBetter?: boolean;
-}) {
-  const max = Math.max(Number(a ?? 0), Number(b ?? 0), 0.0001);
-  return (
-    <div className="comparison-metric">
-      <strong>{label}</strong>
-      <div><i style={{ width: (Number(a ?? 0) / max) * 100 + '%' }}/><span>{format(a)}</span></div>
-      <div><i className="b" style={{ width: (Number(b ?? 0) / max) * 100 + '%' }}/><span>{format(b)}</span></div>
-    </div>
-  );
+  return <CompareDecision />;
 }
 
 function OutcomeBadge({ outcome }: { outcome: Disagreement['outcome'] }) {
