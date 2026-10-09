@@ -8,6 +8,7 @@ import { MethodologyAccordion } from './DecisionComponents';
 import { ModelParametersComparison } from './ModelParameters';
 import { PageHeader } from './Shell';
 import { CompareThree } from './CompareThree';
+import { HardwareMemoryComparison } from './HardwareMemory';
 import './compareDecision.css';
 
 type Preference = 'balanced' | 'quality' | 'speed' | 'reliability';
@@ -325,6 +326,8 @@ export function CompareDecision() {
             <SummaryMetric title="Median response latency" icon="speed" a={a.latency_p50_ms} b={b.latency_p50_ms} direction="lower" formatter={milliseconds} kind="latency"/>
             <SummaryMetric title="Observed failure rate" icon="reliability" a={a.failure_rate} b={b.failure_rate} direction="lower" formatter={percent} kind="failure"/>
           </div>
+
+          <HardwareMemoryComparison selected={[a, b]} field={models}/>
 
           <DatasetEvidence pairs={pairs} union={union}/>
 
