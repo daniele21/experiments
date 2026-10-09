@@ -5,6 +5,7 @@ on:
     branches:
       - feat/mcb-compare-decision-intelligence
       - feat/mcb-compare-optional-third-model
+      - main
     paths:
       - ".github/workflows/mcb-compare-decision-validation.yml"
       - "experiments/model-capability-benchmark/dashboard/**"
