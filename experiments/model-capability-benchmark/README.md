@@ -201,6 +201,37 @@ MCB-13 defines the premium decision dashboard that keeps benchmark-science guard
 
 MCB-14 adds controlled parameter sensitivity and a local deployment frontier. Use `model-bench sweep --plan-only` before running an experiment, then project the immutable runs and inspect `/sensitivity` and `/frontier`. See `MCB_14_SENSITIVITY_FRONTIER.md`.
 
+### Compare: hardware and memory evidence
+
+The Compare route supports two or three selected models. Beneath the quality,
+observed latency and failure cards, **Hardware & Resource Efficiency** shows
+the test-host CPU/architecture, host RAM capacity, observed **peak process RSS**
+and mean process RSS (when sampled). The Quality × Peak RAM plot uses the
+measured peak footprint on the x-axis and overall capability quality on the
+y-axis. Missing RAM is not plotted or treated as zero.
+
+The resource summary records the run ID, execution signature and **host of
+the actual maximum RSS observation**. This host can differ from the latest
+run shown in general model metadata. Older exports without provenance are
+identified as unverified unless exactly one selected run matches that host.
+The component also displays sample count, sample errors, measurement scope,
+minimum available system RAM and accelerator memory when telemetry provides it.
+
+RSS represents sampled resident memory of the measured process, **not** total
+device memory use, exact model residency, or complete Apple Silicon unified/
+Metal memory allocation. The maximum can come from any selected capability
+run; quality and observed latency may aggregate results from multiple runs.
+The hardware indicator therefore confirms matching *reported host specs*,
+not controlled benchmarking conditions or the identity of a particular
+physical device.
+
+After updating, rebuild the projected dashboard to include the expanded
+memory provenance fields:
+
+~~~bash
+uv run model-bench project --rebuild --export-dashboard
+~~~
+
 Build the cross-run read model and dashboard payloads without invoking a model:
 
 ~~~bash
