@@ -55,12 +55,15 @@ export function getHardwareComparability(models: DecisionModelSummary[]): {
     return { status: 'unknown', detail: 'The host CPU, architecture or operating system was not recorded for every peak.' };
   }
   const first = hardware[0]!;
+  if (hardware.some(x => !finitePositive(x?.total_memory_bytes))) {
+    return { status: 'unknown', detail: 'Peak-run host memory capacity is missing for one or more models.' };
+  }
   if (!hardware.every(x => x?.cpu_model === first.cpu_model && x?.machine === first.machine && x?.system === first.system &&
     (x?.total_memory_bytes == null || first.total_memory_bytes == null || x.total_memory_bytes === first.total_memory_bytes))) {
     return { status: 'mismatch', detail: 'Different host hardware was used for the observed peak runs. Memory differences are descriptive, not directly controlled.' };
   }
   const scopes = withMemory.map(m => m.resource_summary?.scope).filter(Boolean);
-  if (scopes.includes('mixed') || new Set(scopes).size > 1) {
+  if (scopes.length !== withMemory.length || scopes.includes('mixed') || scopes.includes('unavailable') || new Set(scopes).size > 1) {
     return { status: 'unknown', detail: 'Resource measurements use different or mixed scopes. Avoid ranking memory efficiency.' };
   }
   const hasErrors = withMemory.some(m => (m.resource_summary?.sampling_error_count ?? 0) > 0);
@@ -71,7 +74,7 @@ export function getHardwareComparability(models: DecisionModelSummary[]): {
   return {
     status: 'matched',
     detail: runtimes.size > 1
-      ? 'Recorded peak-run hosts match. Runtime implementations differ, so memory results are still observational.'
-      : 'Recorded peak-run hosts and runtime keys match. Run load and configuration may still vary.',
+      ? 'Reported peak-run hardware specs match. Runtime implementations differ, so memory results are still observational.'
+      : 'Reported peak-run hardware specs and runtime keys match. Run load and configuration may still vary.',
   };
 }
