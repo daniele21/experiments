@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, ChevronDown, Cpu, HardDrive, Info, MemoryStick } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, Cpu, HardDrive, Info } from 'lucide-react';
 import type { DecisionModelSummary } from '../types';
 import { bytes, milliseconds, score } from '../utils';
 import { getHardwareComparability, peakAttribution, peakRss } from './hardwareEvidence';
