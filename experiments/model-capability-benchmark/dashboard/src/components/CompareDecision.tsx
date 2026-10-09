@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Clock3, Gauge, GitCompareArrows, Info, Layers3, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { overview } from '../data';
 import { navigate } from '../router';
 import type { DecisionDatasetSummary, DecisionModelSummary } from '../types';
@@ -236,6 +236,21 @@ export function CompareDecision() {
   const [aKey, setAKey] = useState(() => currentQuery('modelA') ?? models[0]?.model_key ?? '');
   const [bKey, setBKey] = useState(() => currentQuery('modelB') ?? models.find((model) => model.model_key !== aKey && model.deployment === 'local')?.model_key ?? models.find((model) => model.model_key !== aKey)?.model_key ?? '');
   const [preference, setPreference] = useState<Preference>('balanced');
+  useEffect(() => {
+    const syncSelectionFromUrl = () => {
+      const nextA = currentQuery('modelA');
+      const nextB = currentQuery('modelB');
+      if (nextA) setAKey(nextA);
+      if (nextB) setBKey(nextB);
+    };
+    window.addEventListener('popstate', syncSelectionFromUrl);
+    window.addEventListener('hashchange', syncSelectionFromUrl);
+    return () => {
+      window.removeEventListener('popstate', syncSelectionFromUrl);
+      window.removeEventListener('hashchange', syncSelectionFromUrl);
+    };
+  }, []);
+
   const a = models.find((model) => model.model_key === aKey) ?? models[0];
   const b = models.find((model) => model.model_key === bKey && model.model_key !== a?.model_key) ?? models.find((model) => model.model_key !== a?.model_key);
   const changeA = (key: string) => {
