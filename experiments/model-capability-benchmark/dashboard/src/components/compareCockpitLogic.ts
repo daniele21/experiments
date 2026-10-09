@@ -20,7 +20,10 @@ export function cockpitMetricValue(model: DecisionModelSummary, metric: CockpitM
     metric === 'speed' ? model.latency_p50_ms :
     metric === 'reliability' ? model.failure_rate :
     model.resource_summary?.process_rss_bytes_peak;
-  if (typeof value !== 'number' || !Number.isFinite(value) || (metric === 'memory' && value <= 0)) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  if ((metric === 'memory' || metric === 'speed') && value <= 0) return null;
+  if (metric === 'quality' && (value < 0 || value > 100)) return null;
+  if (metric === 'reliability' && (value < 0 || value > 1)) return null;
   return value;
 }
 
