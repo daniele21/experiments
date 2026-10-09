@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { overview } from '../data';
 import { navigate } from '../router';
 import type { DecisionDatasetSummary, DecisionModelSummary } from '../types';
-import { capabilityLabel, milliseconds, percent, providerCostValue, score } from '../utils';
+import { bytes, capabilityLabel, milliseconds, percent, providerCostValue, score } from '../utils';
 import { MethodologyAccordion } from './DecisionComponents';
 import { ModelParametersComparison } from './ModelParameters';
 import { PageHeader } from './Shell';
@@ -313,6 +313,18 @@ export function CompareDecision() {
               <div className="cmp-cost-inner">
                 {aCost != null && bCost != null ? <div className="cmp-priced-pair"><div><strong>A · {a.model_key}</strong><b>{providerCostValue(a.provider_cost_status, aCost)}</b></div><div><strong>B · {b.model_key}</strong><b>{providerCostValue(b.provider_cost_status, bCost)}</b></div><p>Known provider cost per 1,000 benchmark cases. It is not the cost of running local hardware.</p></div> : <p><Info size={17}/> A like-for-like provider price comparison is unavailable. A: {providerCostValue(a.provider_cost_status, aCost)} ({a.provider_cost_status.replaceAll('_',' ')}); B: {providerCostValue(b.provider_cost_status, bCost)} ({b.provider_cost_status.replaceAll('_',' ')}). No artificial zero cost is assumed for local models.</p>}
               </div>
+            </details>
+            <details className="cmp-disclosure"><summary><span>Tail latency and runtime environment <small>P95, hardware and measured memory</small></span><ChevronDown size={18}/></summary>
+              <div className="cmp-exact-wrap"><table className="cmp-exact-table"><thead><tr><th>Metric</th><th>Model A</th><th>Model B</th></tr></thead><tbody>
+                <tr><td>P50 latency</td><td>{milliseconds(a.latency_p50_ms)}</td><td>{milliseconds(b.latency_p50_ms)}</td></tr>
+                <tr><td>P95 latency</td><td>{milliseconds(a.latency_p95_ms)}</td><td>{milliseconds(b.latency_p95_ms)}</td></tr>
+                <tr><td>Failure rate</td><td>{percent(a.failure_rate)}</td><td>{percent(b.failure_rate)}</td></tr>
+                <tr><td>Observed cases</td><td>{a.observed_case_count}</td><td>{b.observed_case_count}</td></tr>
+                <tr><td>Runtime</td><td>{a.runtime_key || '—'}</td><td>{b.runtime_key || '—'}</td></tr>
+                <tr><td>CPU</td><td>{a.execution_environment?.cpu_model || 'Not recorded'}</td><td>{b.execution_environment?.cpu_model || 'Not recorded'}</td></tr>
+                <tr><td>System / architecture</td><td>{(a.execution_environment?.system || '—') + ' / ' + (a.execution_environment?.machine || '—')}</td><td>{(b.execution_environment?.system || '—') + ' / ' + (b.execution_environment?.machine || '—')}</td></tr>
+                <tr><td>Peak process RSS</td><td>{bytes(a.resource_summary.process_rss_bytes_peak)}</td><td>{bytes(b.resource_summary.process_rss_bytes_peak)}</td></tr>
+              </tbody></table></div>
             </details>
             <details className="cmp-disclosure"><summary><span>Architecture and generation configuration <small>Parameters, quantization, runtime, seed and temperature</small></span><ChevronDown size={18}/></summary><div className="cmp-parameters"><ModelParametersComparison modelA={a} modelB={b}/></div></details>
           </section>
