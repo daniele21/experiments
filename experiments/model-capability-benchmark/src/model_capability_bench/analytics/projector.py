@@ -432,8 +432,10 @@ def _create_schema(connection: Any) -> None:
             r.model_key,
             r.capability_id,
             p.execution_signature,
-            MAX(r.source) AS source,
-            MAX(r.scope) AS scope,
+            CASE WHEN COUNT(DISTINCT r.source) = 1
+                 THEN MAX(r.source) ELSE 'mixed' END AS source,
+            CASE WHEN COUNT(DISTINCT r.scope) = 1
+                 THEN MAX(r.scope) ELSE 'mixed' END AS scope,
             SUM(r.sample_count) AS sample_count,
             AVG(r.sample_interval_ms) AS sample_interval_ms,
             AVG(r.process_cpu_percent_avg) AS process_cpu_percent_avg,
