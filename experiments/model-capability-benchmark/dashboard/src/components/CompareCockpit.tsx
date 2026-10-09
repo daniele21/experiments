@@ -146,7 +146,7 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
       if(event.key==='Escape') setDetail(null);
       if(event.key==='Tab') {
         const dialog = closeButtonRef.current?.closest('[role="dialog"]');
-        const focusable = [...(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]') ?? [])];
+        const focusable = Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]') ?? []);
         const first = focusable[0], last = focusable[focusable.length - 1];
         if (!first || !last) return;
         if (event.shiftKey && document.activeElement === first) {event.preventDefault(); last.focus();}
