@@ -1,5 +1,5 @@
 import type { DecisionDatasetSummary, DecisionModelSummary } from '../types';
-import { leaderIndices, QUALITY_TIE_TOLERANCE } from './compareThreeLogic';
+import { leaderIndices, QUALITY_TIE_TOLERANCE } from './compareThreeLogic.ts';
 
 export type CockpitMetric = 'quality' | 'speed' | 'reliability' | 'memory';
 export type CockpitModels = [DecisionModelSummary, DecisionModelSummary] | [DecisionModelSummary, DecisionModelSummary, DecisionModelSummary];
