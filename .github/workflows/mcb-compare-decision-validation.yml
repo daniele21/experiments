@@ -36,6 +36,9 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
+      - name: Sync Python test dependencies
+        working-directory: experiments/model-capability-benchmark
+        run: uv sync --extra dev
       - name: Verify Python resource aggregation
         working-directory: experiments/model-capability-benchmark
         run: |
