@@ -1,0 +1,37 @@
+name: MCB Compare decision validation
+
+on:
+  push:
+    branches:
+      - feat/mcb-compare-decision-intelligence
+    paths:
+      - ".github/workflows/mcb-compare-decision-validation.yml"
+      - "experiments/model-capability-benchmark/dashboard/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcb-compare-decision-validation
+  cancel-in-progress: true
+
+jobs:
+  compare-build:
+    name: Typecheck, lint and bundle
+    runs-on: [self-hosted, macOS, ARM64, mac-pool]
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: experiments/model-capability-benchmark/dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: test -s dist/index.html
