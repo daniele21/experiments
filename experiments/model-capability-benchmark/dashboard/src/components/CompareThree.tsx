@@ -7,6 +7,7 @@ import {
   type ComparePreference, type ThreeDatasetRow, type ThreeModels,
 } from './compareThreeLogic';
 import './compareThree.css';
+import { HardwareMemoryComparison } from './HardwareMemory';
 
 const LABELS = ['A', 'B', 'C'] as const;
 const PREFERENCES: Array<[ComparePreference, string]> = [
@@ -231,6 +232,7 @@ export function CompareThree({ selected, field, datasetRows, preference, onPrefe
       <ThreeMetric title="Benchmark failure rate" icon={<ShieldCheck size={17}/>}
         values={selected.map(m=>m.failure_rate)} format={percent} lowerBetter footnote="Lower is better · observed test failures"/>
     </div>
+    <HardwareMemoryComparison selected={selected} field={field}/>
     <ThreeScoreRows rows={shared} unionCount={unionCount} wins={wins} ties={ties}/>
     <section className="cmp-section">
       <ThreeHeading step="03 / Trade-off landscape" title="Quality versus observed latency"
