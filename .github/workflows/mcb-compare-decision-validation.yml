@@ -12,6 +12,7 @@ on:
       - "experiments/model-capability-benchmark/dashboard/**"
       - "experiments/model-capability-benchmark/src/model_capability_bench/analytics/**"
       - "experiments/model-capability-benchmark/tests/test_decision_memory.py"
+      - "experiments/model-capability-benchmark/tests/test_projector.py"
   workflow_dispatch:
 
 permissions:
@@ -42,8 +43,8 @@ jobs:
       - name: Verify Python resource aggregation
         working-directory: experiments/model-capability-benchmark
         run: |
-          uv run ruff check src/model_capability_bench/analytics/decision_summary.py tests/test_decision_memory.py
-          uv run pytest -q tests/test_decision_memory.py
+          uv run ruff check src/model_capability_bench/analytics/decision_summary.py src/model_capability_bench/analytics/projector.py tests/test_decision_memory.py tests/test_projector.py
+          uv run pytest -q tests/test_decision_memory.py tests/test_projector.py tests/test_dashboard_build.py
       - name: Set up uv
         uses: astral-sh/setup-uv@v6
         with:
