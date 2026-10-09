@@ -386,6 +386,18 @@ def test_dashboard_export_reads_current_projection(tmp_path: Path) -> None:
         "Fixture CPU"
     )
 
+    memory = decision["model_summaries"][0]["resource_summary"]
+    assert memory["process_rss_bytes_peak"] == 1_200_000_000.0
+    assert memory["process_rss_bytes_avg"] == 1_000_000_000.0
+    assert memory["peak_run_id"] == "run-current"
+    assert memory["peak_execution_environment"]["cpu_model"] == "Fixture CPU"
+    assert memory["peak_execution_environment"]["total_memory_bytes"] == (
+        18_000_000_000
+    )
+    assert memory["scope"] == "owned_backend_process"
+    assert memory["sample_count"] == 4
+    assert memory["sampling_error_count"] == 0
+
     index = json.loads((output / "index.json").read_text())
     model_file = output / index["models"]["sha256:model:model-a"]
     run_file = output / index["runs"]["run-current"]
