@@ -119,7 +119,18 @@ export interface DecisionModelSummary extends DashboardModel {
   execution_environment: ExecutionEnvironment | null;
   resource_summary: {
     process_cpu_percent_avg: number | null;
+    process_rss_bytes_avg?: number | null;
     process_rss_bytes_peak: number | null;
+    system_available_memory_bytes_min?: number | null;
+    accelerator_memory_bytes_peak?: number | null;
+    sample_count?: number;
+    sampling_error_count?: number;
+    scope?: string | null;
+    source?: string | null;
+    peak_run_id?: string | null;
+    peak_execution_signature?: string | null;
+    peak_execution_environment?: ExecutionEnvironment | null;
+    resource_cell_count?: number;
   };
   latest_completed_at_utc: string | null;
   current_run_ids: string[];
