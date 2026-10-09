@@ -12,12 +12,12 @@ import './compareCockpit.css';
 
 const LETTERS = ['A', 'B', 'C'] as const;
 const COLORS = ['var(--dc-a)', 'var(--dc-b)', 'var(--dc-c)'];
-type Detail = 'quality' | 'speed' | 'reliability' | 'datasets' | 'latency-plot' | 'memory-plot' | 'hardware' | 'evidence';
+type Detail = 'quality' | 'speed' | 'reliability' | 'datasets' | 'latency-plot' | 'memory-plot' | 'hardware' | 'evidence' | 'share';
 const DETAILS: Record<Detail, string> = {
   quality: 'Aggregate quality', speed: 'Observed P50 latency', reliability: 'Benchmark failure rate',
   datasets: 'Exact dataset evidence', 'latency-plot': 'Quality × Latency',
   'memory-plot': 'Quality × Peak RAM', hardware: 'Hardware and resource telemetry',
-  evidence: 'Evidence & comparability',
+  evidence: 'Evidence & comparability', share: 'Share comparison',
 };
 
 function displayMetric(metric: CockpitMetric, value: number | null) {
@@ -150,7 +150,7 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
       setCopied(true);
     } catch {
       setCopied(false);
-      setDetail('evidence');
+      setDetail('share');
     }
   };
   return <div className="dc-cockpit">
@@ -273,6 +273,11 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
             <p>Peak run: {item.peakRunId||'Unverified'} · {item.provenance} · scope: {m.resource_summary?.scope||'unavailable'}</p>
             <p>Mean RSS: {bytes(m.resource_summary?.process_rss_bytes_avg)} · accelerator peak: {bytes(m.resource_summary?.accelerator_memory_bytes_peak)}</p>
           </div>})}</div><p className="dc-detail-note">{hardware.detail} RSS may not include total system/Metal allocations, and the maximum can be from a different run than aggregate quality.</p></>}
+        {detail==='share' && <div className="dc-share-fallback">
+          <p>Copy this link to share the same selected models and comparison mode.</p>
+          <input aria-label="Comparison URL" readOnly value={window.location.href}
+            onFocus={event=>event.target.select()} onClick={event=>event.currentTarget.select()}/>
+        </div>}
         {detail==='evidence'&&<div className="dc-evidence-explain">
           <p><Info size={15}/> <strong>Scored datasets:</strong> {report.shared} shared of {report.union} across selected models.</p>
           <p><Info size={15}/> <strong>Quality policy:</strong> {samePolicy?'Same policy reported':'Different quality policies'}; {qualityAligned?'coverage complete':'some coverage incomplete or unmatched'}.</p>
