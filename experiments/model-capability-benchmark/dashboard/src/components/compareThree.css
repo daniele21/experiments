@@ -9,6 +9,10 @@
 .compare-v2 .cmp3-bar-a{background:var(--cmp-a)}
 .compare-v2 .cmp3-bar-b{background:var(--cmp-b)}
 .compare-v2 .cmp3-bar-c{background:var(--cmp-c)}
+.compare-v2 .page-header.premium{display:grid;grid-template-columns:minmax(0,1fr);gap:15px}
+.compare-v2 .header-actions{width:100%;justify-content:flex-start}
+.compare-v2 .cmp-selectors{width:100%;flex-wrap:wrap;justify-content:flex-start}
+.compare-v2 .cmp-selectors label{flex:0 1 220px}
 .compare-v2 .cmp-model-count{display:inline-flex;gap:5px;border:1px solid var(--cmp-border);border-radius:10px;background:#f6f8fc;padding:4px;margin-right:8px;align-self:end}
 .compare-v2 .cmp-model-count button{border:0;padding:7px 12px;background:transparent;color:#65748d;font-size:12px;font-weight:850;border-radius:7px;white-space:nowrap;cursor:pointer}
 .compare-v2 .cmp-model-count button.active{background:#263f6b;color:white;box-shadow:0 2px 4px rgba(29,49,90,.15)}
