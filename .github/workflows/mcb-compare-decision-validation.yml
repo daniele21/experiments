@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/mcb-compare-decision-intelligence
+      - feat/mcb-compare-optional-third-model
     paths:
       - ".github/workflows/mcb-compare-decision-validation.yml"
       - "experiments/model-capability-benchmark/dashboard/**"
@@ -32,6 +33,7 @@ jobs:
           cache: npm
           cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
       - run: npm ci
+      - run: npm run test:compare
       - run: npm run lint
       - run: npm run build
       - run: test -s dist/index.html
