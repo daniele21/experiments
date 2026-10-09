@@ -6,6 +6,7 @@ on:
       - feat/mcb-compare-decision-intelligence
       - feat/mcb-compare-optional-third-model
       - feat/mcb-hardware-memory-compare
+      - feat/mcb-compare-responsive-cockpit
       - main
     paths:
       - ".github/workflows/mcb-compare-decision-validation.yml"
