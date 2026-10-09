@@ -116,6 +116,8 @@
 .compare-v2 .dc-host-detail>div{border:1px solid #e6ecf4;border-radius:10px;padding:13px}
 .compare-v2 .dc-host-detail strong{font-size:13px}
 .compare-v2 .dc-host-detail p{color:#61718a;margin:6px 0;font-size:11px;line-height:1.5}
+.compare-v2 .dc-share-fallback p{font-size:12px;color:#6a7c96;line-height:1.55}
+.compare-v2 .dc-share-fallback input{font:inherit;border:1px solid #cfd9eb;border-radius:9px;padding:12px;width:100%;background:#f7f9fc;font-size:12px;color:#243953}
 .compare-v2 .dc-evidence-explain{display:grid;gap:8px}
 .compare-v2 .dc-evidence-explain p{display:flex;align-items:start;gap:9px;background:#f7f9fc;border-radius:8px;padding:12px;margin:0;font-size:12px;line-height:1.55;color:#566884}
 .compare-v2 .dc-evidence-explain svg{margin-top:2px;flex-shrink:0}
