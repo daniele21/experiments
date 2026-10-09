@@ -8,6 +8,8 @@ import { MethodologyAccordion } from './DecisionComponents';
 import { ModelParametersComparison } from './ModelParameters';
 import { PageHeader } from './Shell';
 import { CompareThree } from './CompareThree';
+import { CompareCockpit } from './CompareCockpit';
+import type { CockpitModels } from './compareCockpitLogic';
 import { HardwareMemoryComparison } from './HardwareMemory';
 import './compareDecision.css';
 
@@ -241,6 +243,7 @@ export function CompareDecision() {
   const [bKey, setBKey] = useState(() => currentQuery('modelB') ?? models.find((model) => model.model_key !== aKey && model.deployment === 'local')?.model_key ?? models.find((model) => model.model_key !== aKey)?.model_key ?? '');
   const [cKey, setCKey] = useState(() => currentQuery('modelC') ?? '');
   const [preference, setPreference] = useState<Preference>('balanced');
+  const [deepDive, setDeepDive] = useState(false);
   useEffect(() => {
     const syncSelectionFromUrl = () => {
       const nextA = currentQuery('modelA');
@@ -284,9 +287,21 @@ export function CompareDecision() {
     setCKey(nextC);
     navigate(compareHref(a?.model_key ?? '', b?.model_key ?? '', nextC));
   };
+  const selected: CockpitModels | null = a && b ? c ? [a, b, c] : [a, b] : null;
+  const changePosition = (position: number, key: string) => {
+    if (position === 0) changeA(key);
+    else if (position === 1) changeB(key);
+    else changeC(key);
+  };
 
   return (
-    <div className="compare-v2">
+    <div className={'compare-v2' + (!deepDive ? ' cmp-cockpit-view' : '')}>
+      {!deepDive && selected ?
+        <CompareCockpit
+          selected={selected} field={models} datasetRows={datasetRows}
+          onModeChange={setMode} onModelChange={changePosition} onDeepDive={() => setDeepDive(true)}/>
+        : <>
+      <button type="button" className="dc-deep-dive-back" onClick={() => setDeepDive(false)}>← Decision Cockpit</button>
       <PageHeader eyebrow="Decision intelligence" title="Compare models"
         description="Choose based on trade-offs, task-level strengths and the evidence behind each result."
         actions={<div className={'cmp-selectors' + (c ? ' cmp3-selectors' : '')}>
@@ -368,6 +383,7 @@ export function CompareDecision() {
         </>;
       })() : <section className="cmp-section cmp-no-data">At least two tested models are needed for comparison.</section>}
       <MethodologyAccordion policyLabel={overview.decision?.quality_policy.label}/>
+      </>}
     </div>
   );
 }
