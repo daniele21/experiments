@@ -201,6 +201,36 @@ MCB-13 defines the premium decision dashboard that keeps benchmark-science guard
 
 MCB-14 adds controlled parameter sensitivity and a local deployment frontier. Use `model-bench sweep --plan-only` before running an experiment, then project the immutable runs and inspect `/sensitivity` and `/frontier`. See `MCB_14_SENSITIVITY_FRONTIER.md`.
 
+### Compare: responsive Decision Cockpit
+
+The **Compare** page opens a compact **Decision Cockpit** on both mobile and
+desktop. Its primary viewport contains the model selector (2 or 3 models),
+executive verdict, aggregate quality, observed median latency, failure rate,
+scores for each dataset, Quality × Latency and Quality × Peak RAM, peak RSS and
+host hardware, plus evidence/comparability status.
+
+The dashboard draws directly from projected decision model and dataset summaries,
+with the same A/B/C colors throughout. Dataset rows include the union of
+datasets across selected models, and missing scores appear as unavailable:
+a task winner is shown **only** where all selected models have valid scores.
+A metric leader requires valid values from every selected model; otherwise a
+tie/insufficient-evidence message replaces any claimed winner. Scatterplots
+omit missing measurements, never use zero as fake RAM or latency.
+
+Main insight panels fit into a responsive viewport-first grid (including
+360–430 px mobile widths). Dataset rows can scroll **within** their tile when
+more datasets exist than can fit without making text unreadable. Tapping a tile
+opens an accessible detail dialog with full task scores, run/hardware provenance
+or an expanded chart. Very short screens may fall back to page scrolling rather
+than compress content below readable sizes.
+
+The original comprehensive Compare remains available via **Full analysis**.
+Switching two/three models or the selected A/B/C model persists in the shareable
+URL. Browser clipboard restrictions reveal a manually selectable URL.
+
+Regression test: `cd dashboard && npm run test:compare`.
+Build validation: `cd dashboard && npm run lint && npm run build`.
+
 ### Compare: hardware and memory evidence
 
 The Compare route supports two or three selected models. Beneath the quality,
