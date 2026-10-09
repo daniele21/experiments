@@ -7,6 +7,7 @@ import { bytes, capabilityLabel, milliseconds, percent, providerCostValue, score
 import { MethodologyAccordion } from './DecisionComponents';
 import { ModelParametersComparison } from './ModelParameters';
 import { PageHeader } from './Shell';
+import { CompareThree } from './CompareThree';
 import './compareDecision.css';
 
 type Preference = 'balanced' | 'quality' | 'speed' | 'reliability';
@@ -49,8 +50,10 @@ function currentQuery(name: string): string | null {
   if (window.location.hash.includes('?')) return new URLSearchParams(window.location.hash.split('?')[1]).get(name);
   return null;
 }
-function compareHref(a: string, b: string) {
-  return '/compare?' + new URLSearchParams({ modelA: a, modelB: b }).toString();
+function compareHref(a: string, b: string, c?: string) {
+  const params = new URLSearchParams({ modelA: a, modelB: b });
+  if (c) params.set('modelC', c);
+  return '/compare?' + params.toString();
 }
 
 function guidance(preference: Preference, a: DecisionModelSummary, b: DecisionModelSummary) {
@@ -235,6 +238,7 @@ export function CompareDecision() {
   const datasetRows = overview.decision?.dataset_summaries ?? [];
   const [aKey, setAKey] = useState(() => currentQuery('modelA') ?? models[0]?.model_key ?? '');
   const [bKey, setBKey] = useState(() => currentQuery('modelB') ?? models.find((model) => model.model_key !== aKey && model.deployment === 'local')?.model_key ?? models.find((model) => model.model_key !== aKey)?.model_key ?? '');
+  const [cKey, setCKey] = useState(() => currentQuery('modelC') ?? '');
   const [preference, setPreference] = useState<Preference>('balanced');
   useEffect(() => {
     const syncSelectionFromUrl = () => {
@@ -242,6 +246,7 @@ export function CompareDecision() {
       const nextB = currentQuery('modelB');
       if (nextA) setAKey(nextA);
       if (nextB) setBKey(nextB);
+      setCKey(currentQuery('modelC') ?? '');
     };
     window.addEventListener('popstate', syncSelectionFromUrl);
     window.addEventListener('hashchange', syncSelectionFromUrl);
@@ -253,23 +258,51 @@ export function CompareDecision() {
 
   const a = models.find((model) => model.model_key === aKey) ?? models[0];
   const b = models.find((model) => model.model_key === bKey && model.model_key !== a?.model_key) ?? models.find((model) => model.model_key !== a?.model_key);
+  const c = cKey ? models.find(model => model.model_key === cKey && model.model_key !== a?.model_key && model.model_key !== b?.model_key)
+    ?? models.find(model => model.model_key !== a?.model_key && model.model_key !== b?.model_key) : undefined;
+  const freeThird = (first: string, second: string, preferred: string) =>
+    preferred && preferred !== first && preferred !== second ? preferred :
+      models.find(model => model.model_key !== first && model.model_key !== second)?.model_key ?? '';
   const changeA = (key: string) => {
     const nextB = key === b?.model_key ? a?.model_key ?? '' : b?.model_key ?? '';
-    setAKey(key); setBKey(nextB); navigate(compareHref(key, nextB));
+    const nextC = cKey ? freeThird(key, nextB, cKey) : '';
+    setAKey(key); setBKey(nextB); setCKey(nextC);
+    navigate(compareHref(key, nextB, nextC));
   };
-  const changeB = (key: string) => { setBKey(key); navigate(compareHref(a?.model_key ?? '', key)); };
+  const changeB = (key: string) => {
+    const nextC = cKey ? freeThird(a?.model_key ?? '', key, cKey) : '';
+    setBKey(key); setCKey(nextC);
+    navigate(compareHref(a?.model_key ?? '', key, nextC));
+  };
+  const changeC = (key: string) => {
+    setCKey(key);
+    navigate(compareHref(a?.model_key ?? '', b?.model_key ?? '', key));
+  };
+  const setMode = (three: boolean) => {
+    const nextC = three ? freeThird(a?.model_key ?? '', b?.model_key ?? '', cKey) : '';
+    setCKey(nextC);
+    navigate(compareHref(a?.model_key ?? '', b?.model_key ?? '', nextC));
+  };
 
   return (
     <div className="compare-v2">
       <PageHeader eyebrow="Decision intelligence" title="Compare models"
         description="Choose based on trade-offs, task-level strengths and the evidence behind each result."
-        actions={<div className="cmp-selectors">
+        actions={<div className={'cmp-selectors' + (c ? ' cmp3-selectors' : '')}>
+          <div className="cmp-model-count" role="group" aria-label="Number of models to compare">
+            <button type="button" className={!c ? 'active' : ''} aria-pressed={!c} onClick={() => setMode(false)}>2 models</button>
+            <button type="button" className={c ? 'active' : ''} aria-pressed={Boolean(c)} disabled={models.length < 3} onClick={() => setMode(true)}>3 models</button>
+          </div>
           <label><span>Model A</span><select aria-label="Model A" value={a?.model_key ?? ''} onChange={(event) => changeA(event.target.value)}>{models.map((model) => <option key={model.model_key} value={model.model_key}>{model.model_key}</option>)}</select></label>
           <span>vs</span>
           <label><span>Model B</span><select aria-label="Model B" value={b?.model_key ?? ''} onChange={(event) => changeB(event.target.value)}>{models.filter((model) => model.model_key !== a?.model_key).map((model) => <option key={model.model_key} value={model.model_key}>{model.model_key}</option>)}</select></label>
+          {c && <><span>vs</span><label><span>Model C</span><select aria-label="Model C" value={c.model_key} onChange={(event) => changeC(event.target.value)}>{models.filter(model => model.model_key !== a?.model_key && model.model_key !== b?.model_key).map(model => <option key={model.model_key} value={model.model_key}>{model.model_key}</option>)}</select></label>
+            <button type="button" className="cmp-remove-third" aria-label="Remove third model" onClick={() => setMode(false)}>Remove C ×</button></>}
         </div>}
       />
-      {a && b ? (() => {
+      {a && b ? c
+        ? <CompareThree selected={[a, b, c]} field={models} datasetRows={datasetRows} preference={preference} onPreferenceChange={setPreference}/>
+        : (() => {
         const { pairs, union } = pairDatasets(datasetRows, a, b);
         const insight = guidance(preference, a, b);
         const qualityDelta = a.overall_quality_score != null && b.overall_quality_score != null ? a.overall_quality_score - b.overall_quality_score : null;
