@@ -1,5 +1,6 @@
 import { ArrowUpRight, Check, ChevronRight, Copy, Info, Layers3, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { DecisionDatasetSummary, DecisionModelSummary } from '../types';
 import { bytes, capabilityLabel, milliseconds, percent, score } from '../utils';
 import { getHardwareComparability, peakAttribution, peakRss } from './hardwareEvidence';
@@ -205,7 +206,7 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
               {row.values.map((value,i)=><span role="cell" key={i}
                 className={'dc-heat-cell dc-heat-'+LETTERS[i].toLowerCase()+(row.winner===i?' dc-heat-winner':'')}
                 title={LETTERS[i]+' · '+row.dataset+': '+(value==null?'No comparable score':score(value))}
-                style={{'--dc-score': value==null?'0%':Math.round(Math.min(100,Math.max(0,value))*.21)+'%'} as React.CSSProperties}>
+                style={{'--dc-score': value==null?'0%':Math.round(Math.min(100,Math.max(0,value))*.21)+'%'} as CSSProperties}>
                 {value==null?'—':score(value)}
               </span>)}
             </div>)}
