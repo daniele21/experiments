@@ -61,6 +61,89 @@ def _mean(values: list[float]) -> float | None:
     return sum(values) / len(values) if values else None
 
 
+def _summarize_model_resources(
+    cells: list[dict[str, Any]],
+    environments: dict[tuple[str, str], dict[str, Any]],
+) -> dict[str, Any]:
+    """Summarize selected resource samples with the device of the actual peak.
+
+    Peak RSS is the maximum measured across the current capability cells.
+    Its device is NOT inferred from the latest run. Null values indicate
+    missing evidence, not a memory usage of zero.
+    """
+    resource_cells = [
+        row for row in cells
+        if isinstance(row.get("resource_summary"), dict)
+    ]
+    resources = [row["resource_summary"] for row in resource_cells]
+
+    def numbers(key: str) -> list[float]:
+        return [
+            float(row[key])
+            for row in resources
+            if _number(row.get(key)) is not None
+        ]
+
+    valid_peak_cells = [
+        cell for cell in resource_cells
+        if _number(cell["resource_summary"].get("process_rss_bytes_peak")) is not None
+        and float(cell["resource_summary"]["process_rss_bytes_peak"]) > 0
+    ]
+    peak_cell = (
+        max(
+            valid_peak_cells,
+            key=lambda row: (
+                float(row["resource_summary"]["process_rss_bytes_peak"]),
+                str(row.get("completed_at_utc") or ""),
+            ),
+        )
+        if valid_peak_cells else None
+    )
+    peak_environment = (
+        environments.get((
+            str(peak_cell["run_id"]),
+            str(peak_cell["execution_signature"]),
+        ))
+        if peak_cell is not None else None
+    )
+    scopes = {str(x["scope"]) for x in resources if x.get("scope")}
+    sources = {str(x["source"]) for x in resources if x.get("source")}
+    available = numbers("system_available_memory_bytes_min")
+    accelerator = numbers("accelerator_memory_bytes_peak")
+    return {
+        "process_cpu_percent_avg": _mean(numbers("process_cpu_percent_avg")),
+        "process_rss_bytes_avg": _mean(numbers("process_rss_bytes_avg")),
+        "process_rss_bytes_peak": (
+            float(peak_cell["resource_summary"]["process_rss_bytes_peak"])
+            if peak_cell is not None else None
+        ),
+        "system_available_memory_bytes_min": (
+            min(available) if available else None
+        ),
+        "accelerator_memory_bytes_peak": (
+            max(accelerator) if accelerator else None
+        ),
+        "sample_count": sum(int(x.get("sample_count") or 0) for x in resources),
+        "sampling_error_count": sum(
+            int(x.get("sampling_error_count") or 0) for x in resources
+        ),
+        "scope": (
+            next(iter(scopes)) if len(scopes) == 1
+            else "mixed" if scopes else "unavailable"
+        ),
+        "source": (
+            next(iter(sources)) if len(sources) == 1
+            else "mixed" if sources else "unavailable"
+        ),
+        "peak_run_id": str(peak_cell["run_id"]) if peak_cell else None,
+        "peak_execution_signature": (
+            str(peak_cell["execution_signature"]) if peak_cell else None
+        ),
+        "peak_execution_environment": peak_environment,
+        "resource_cell_count": len(resource_cells),
+    }
+
+
 def _selected_cohorts(
     current: list[dict[str, Any]],
 ) -> tuple[dict[str, str], list[dict[str, Any]]]:
@@ -676,66 +759,9 @@ def build_decision_overview(
                     run_info = alt_info
                     break
 
-        # Keep resource values attached to their actual benchmark cell. In
-        # particular, the peak memory run may differ from the most recent run
-        # (the latter supplies the generic execution_environment field).
-        resource_cells = [
-            row for row in model_current_cells
-            if isinstance(row.get("resource_summary"), dict)
-        ]
-        resource_rows = [row["resource_summary"] for row in resource_cells]
-        cpu_values = [
-            float(row["process_cpu_percent_avg"])
-            for row in resource_rows
-            if _number(row.get("process_cpu_percent_avg")) is not None
-        ]
-        rss_average_values = [
-            float(row["process_rss_bytes_avg"])
-            for row in resource_rows
-            if _number(row.get("process_rss_bytes_avg")) is not None
-        ]
-        available_values = [
-            float(row["system_available_memory_bytes_min"])
-            for row in resource_rows
-            if _number(row.get("system_available_memory_bytes_min")) is not None
-        ]
-        accelerator_values = [
-            float(row["accelerator_memory_bytes_peak"])
-            for row in resource_rows
-            if _number(row.get("accelerator_memory_bytes_peak")) is not None
-        ]
-        rss_peak_cells = [
-            row for row in resource_cells
-            if _number(row["resource_summary"].get("process_rss_bytes_peak")) is not None
-            and float(row["resource_summary"]["process_rss_bytes_peak"]) > 0
-        ]
-        peak_cell = (
-            max(
-                rss_peak_cells,
-                key=lambda row: (
-                    float(row["resource_summary"]["process_rss_bytes_peak"]),
-                    str(row.get("completed_at_utc") or ""),
-                ),
-            )
-            if rss_peak_cells else None
+        resource_summary = _summarize_model_resources(
+            model_current_cells, environments
         )
-        peak_environment = (
-            environments.get((
-                str(peak_cell["run_id"]),
-                str(peak_cell["execution_signature"]),
-            ))
-            if peak_cell is not None else None
-        )
-        resource_scopes = {
-            str(row.get("scope"))
-            for row in resource_rows
-            if row.get("scope")
-        }
-        resource_sources = {
-            str(row.get("source"))
-            for row in resource_rows
-            if row.get("source")
-        }
 
         pricing = _pricing_for_model(
             run_pricing,
@@ -761,48 +787,7 @@ def build_decision_overview(
                 "execution_environment": latest_environment,
                 "execution_profile": run_info.get("profile"),
                 "generation_parameters": run_info.get("generation") or {},
-                "resource_summary": {
-                    "process_cpu_percent_avg": _mean(cpu_values),
-                    "process_rss_bytes_avg": _mean(rss_average_values),
-                    "process_rss_bytes_peak": (
-                        float(peak_cell["resource_summary"]["process_rss_bytes_peak"])
-                        if peak_cell is not None else None
-                    ),
-                    "system_available_memory_bytes_min": (
-                        min(available_values) if available_values else None
-                    ),
-                    "accelerator_memory_bytes_peak": (
-                        max(accelerator_values) if accelerator_values else None
-                    ),
-                    "sample_count": sum(
-                        int(row.get("sample_count") or 0)
-                        for row in resource_rows
-                    ),
-                    "sampling_error_count": sum(
-                        int(row.get("sampling_error_count") or 0)
-                        for row in resource_rows
-                    ),
-                    "scope": (
-                        next(iter(resource_scopes))
-                        if len(resource_scopes) == 1 else "mixed"
-                        if resource_scopes else "unavailable"
-                    ),
-                    "source": (
-                        next(iter(resource_sources))
-                        if len(resource_sources) == 1 else "mixed"
-                        if resource_sources else "unavailable"
-                    ),
-                    "peak_run_id": (
-                        str(peak_cell["run_id"])
-                        if peak_cell is not None else None
-                    ),
-                    "peak_execution_signature": (
-                        str(peak_cell["execution_signature"])
-                        if peak_cell is not None else None
-                    ),
-                    "peak_execution_environment": peak_environment,
-                    "resource_cell_count": len(resource_cells),
-                },
+                "resource_summary": resource_summary,
                 "latest_completed_at_utc": latest_cell.get("completed_at_utc"),
                 "current_run_ids": sorted(
                     {str(row["run_id"]) for row in model_current_cells}
