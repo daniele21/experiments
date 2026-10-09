@@ -1,0 +1,54 @@
+/* Hardware and resource efficiency: 2 and 3 model compare. */
+.compare-v2 .mem-section{min-width:0}
+.compare-v2 .mem-section-heading{align-items:center}
+.compare-v2 .mem-confidence{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #dce6f0;border-radius:10px;font-size:12px;font-weight:800;white-space:nowrap}
+.compare-v2 .mem-confidence-matched{background:#f2fbf6;color:#0c8461;border-color:#c5ead9}
+.compare-v2 .mem-confidence-mismatch{background:#fff6ed;color:#b26724;border-color:#f1d7bc}
+.compare-v2 .mem-confidence-unknown{background:#f7f9fd;color:#61728b}
+.compare-v2 .mem-card-grid{display:grid;gap:13px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.compare-v2 .mem-card-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.compare-v2 .mem-card{border:1px solid #e0e6ef;background:linear-gradient(140deg,#fff,#f9fbff);border-radius:13px;padding:18px;min-width:0}
+.compare-v2 .mem-card-heading{display:flex;align-items:center;gap:8px;min-width:0}
+.compare-v2 .mem-card-heading strong{font-size:13px;font-weight:850;min-width:0;flex:1;overflow-wrap:anywhere}
+.compare-v2 .mem-letter{flex:0 0 25px;height:25px;display:grid;place-items:center;border-radius:7px;background:var(--cmp-a);color:white;font-size:12px;font-weight:850}
+.compare-v2 .mem-letter-b{background:var(--cmp-b)}
+.compare-v2 .mem-letter-c{background:var(--cmp-c)}
+.compare-v2 .mem-deployment{text-transform:uppercase;color:#8290a4;font-size:10px;letter-spacing:.05em;font-weight:850}
+.compare-v2 .mem-primary-label{margin-top:20px;font-size:11px;text-transform:uppercase;letter-spacing:.055em;color:#697c97;font-weight:850}
+.compare-v2 .mem-primary{font-size:clamp(28px,3vw,39px);font-weight:850;letter-spacing:-.04em;color:#243550;margin:5px 0 11px;font-variant-numeric:tabular-nums}
+.compare-v2 .mem-bar-track{height:11px;background:#e9edf5;border-radius:8px;overflow:hidden}
+.compare-v2 .mem-bar-track i{display:block;height:100%;border-radius:8px;background:var(--cmp-a)}
+.compare-v2 .mem-bar-track .mem-bar-b{background:var(--cmp-b)}
+.compare-v2 .mem-bar-track .mem-bar-c{background:var(--cmp-c)}
+.compare-v2 .mem-card-facts{display:grid;gap:0;margin:18px 0 0}
+.compare-v2 .mem-card-facts>div{display:flex;justify-content:space-between;align-items:start;gap:10px;padding:8px 0;border-bottom:1px solid #edf1f7}
+.compare-v2 .mem-card-facts dt{font-size:11px;color:#71829a;flex:0 0 42%}
+.compare-v2 .mem-card-facts dd{margin:0;min-width:0;text-align:right;color:#24344d;font-size:12px;line-height:1.4;font-weight:800;overflow-wrap:anywhere}
+.compare-v2 .mem-source{display:flex;gap:7px;align-items:start;padding-top:12px;color:#71819b;font-size:11px;line-height:1.4}
+.compare-v2 .mem-source svg{flex-shrink:0;margin-top:1px}
+.compare-v2 .mem-evidence-line{display:flex;gap:10px;align-items:start;background:#f5f8fd;border:1px solid #e3e9f4;border-radius:10px;padding:14px;margin-top:14px;color:#5b6d86;font-size:12px;line-height:1.6}
+.compare-v2 .mem-evidence-line svg{flex-shrink:0;margin-top:2px}
+.compare-v2 .mem-chart-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:25px 0 11px}
+.compare-v2 .mem-chart-heading h3{margin:0;font-size:19px;letter-spacing:-.025em;font-weight:850}
+.compare-v2 .mem-chart-heading p{font-size:12px;color:#7a89a1;margin:4px 0 0}
+.compare-v2 .mem-chart-key{display:inline-flex;gap:7px;align-items:center;font-size:11px;font-weight:750;color:#71819b}
+.compare-v2 .mem-other-swatch{width:9px;height:9px;display:inline-block;border-radius:50%;background:#a8b5ca}
+.compare-v2 .mem-chart-frame{border:1px solid #e8ecf4;border-radius:11px;background:#fbfcff;padding:8px;overflow:hidden}
+.compare-v2 .mem-chart{width:100%;height:auto;display:block}
+.compare-v2 .mem-grid{stroke:#e2e8f2;stroke-width:1}
+.compare-v2 .mem-axis{fill:#7a8ba1;font-size:12px;font-weight:750}
+.compare-v2 .mem-axis-title{fill:#50607b;font-size:13px;font-weight:800}
+.compare-v2 .mem-other-point{fill:#9eacc2;opacity:.63}
+.compare-v2 .mem-scatter-a{fill:var(--cmp-a);stroke:white;stroke-width:3}
+.compare-v2 .mem-scatter-b{fill:var(--cmp-b);stroke:white;stroke-width:3}
+.compare-v2 .mem-scatter-c{fill:var(--cmp-c);stroke:white;stroke-width:3}
+.compare-v2 .mem-scatter-letter{fill:white;font-weight:850;font-size:12px;pointer-events:none}
+.compare-v2 .mem-empty{font-size:13px;color:#7d8ca2;text-align:center;padding:42px 16px;background:#f6f8fb;border-radius:10px}
+.compare-v2 .mem-details{margin-top:18px}
+.compare-v2 .mem-evidence-table td,.compare-v2 .mem-evidence-table th{min-width:120px}
+.compare-v2 .mem-evidence-table td:first-child{min-width:175px;display:table-cell;font-weight:750}
+.compare-v2 .mem-evidence-table td{overflow-wrap:anywhere;max-width:260px}
+.compare-v2 .mem-footnote{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px;color:#8a98ae;font-size:11px}
+.compare-v2 .mem-footnote svg{flex:0 0 auto}
+@media(max-width:1180px){.compare-v2 .mem-card-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.compare-v2 .mem-card-grid-3 .mem-card:last-child{grid-column:1/-1}}
+@media(max-width:730px){.compare-v2 .mem-card-grid,.compare-v2 .mem-card-grid-3{grid-template-columns:1fr}.compare-v2 .mem-card-grid-3 .mem-card:last-child{grid-column:auto}.compare-v2 .mem-chart-frame{overflow-x:auto}.compare-v2 .mem-chart{min-width:570px}.compare-v2 .mem-primary{font-size:33px}}
