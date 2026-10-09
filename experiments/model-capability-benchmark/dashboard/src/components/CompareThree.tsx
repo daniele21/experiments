@@ -28,7 +28,7 @@ function ThreeMetric({ title, icon, values, format, lowerBetter, footnote }: {
   format: (n: number | null | undefined) => string;
   lowerBetter: boolean; footnote: string;
 }) {
-  const leaders = leaderIndices(values, lowerBetter);
+  const leaders = leaderIndices(values, lowerBetter, lowerBetter ? 0 : 0.05);
   const maximum = Math.max(1e-9, ...values.filter((value): value is number => value != null && Number.isFinite(value)));
   const titleLabel = leaders.length === 1 ? 'Model ' + LABELS[leaders[0]] + ' leads' : leaders.length > 1 ? 'Shared lead' : 'Insufficient evidence';
   return <article className="cmp-metric-card cmp3-metric">
