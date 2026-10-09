@@ -1,5 +1,5 @@
 import { ArrowUpRight, Check, ChevronRight, Copy, Info, Layers3, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { DecisionDatasetSummary, DecisionModelSummary } from '../types';
 import { bytes, capabilityLabel, milliseconds, percent, score } from '../utils';
@@ -131,6 +131,7 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
 }) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [copied, setCopied] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const report = cockpitDatasets(selected,datasetRows);
   const insight = cockpitDecision(selected,report.shared,report.union);
   const hardware = getHardwareComparability(selected);
@@ -139,9 +140,21 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
   const maxRSS = Math.max(1,...selected.map(m=>peakRss(m)??0));
   useEffect(()=>{
     if (!detail) return;
-    const keydown=(event:KeyboardEvent)=>{if(event.key==='Escape')setDetail(null);};
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
+    const keydown = (event:KeyboardEvent) => {
+      if(event.key==='Escape') setDetail(null);
+      if(event.key==='Tab') {
+        const dialog = closeButtonRef.current?.closest('[role="dialog"]');
+        const focusable = [...(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]') ?? [])];
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {event.preventDefault(); last.focus();}
+        else if (!event.shiftKey && document.activeElement === last) {event.preventDefault(); first.focus();}
+      }
+    };
     window.addEventListener('keydown',keydown);
-    return ()=>window.removeEventListener('keydown',keydown);
+    return ()=>{window.removeEventListener('keydown',keydown); previousFocus?.focus();};
   },[detail]);
 
   const share = async () => {
@@ -259,7 +272,7 @@ export function CompareCockpit({ selected, field, datasetRows, onModeChange, onM
       <button className="dc-detail-backdrop" aria-label="Close detail" type="button" onClick={()=>setDetail(null)}/>
       <section className="dc-detail" role="dialog" aria-modal="true" aria-label={DETAILS[detail]}>
         <div className="dc-detail-header"><div><span className="dc-kicker">MCB · measurement detail</span><h2>{DETAILS[detail]}</h2></div>
-          <button type="button" className="dc-close" aria-label="Close detail" onClick={()=>setDetail(null)}><X size={19}/></button></div>
+          <button type="button" ref={closeButtonRef} className="dc-close" aria-label="Close detail" onClick={()=>setDetail(null)}><X size={19}/></button></div>
         {(['quality','speed','reliability'] as const).includes(detail as 'quality'|'speed'|'reliability') ?
           <><MetricsTable selected={selected} metric={detail as 'quality'|'speed'|'reliability'}/>
             <p className="dc-detail-note">All values are observed benchmark aggregates. A leader is shown only when every selected model has a valid measurement and the result is not tied.</p></> : null}
