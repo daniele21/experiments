@@ -5,10 +5,13 @@ on:
     branches:
       - feat/mcb-compare-decision-intelligence
       - feat/mcb-compare-optional-third-model
+      - feat/mcb-hardware-memory-compare
       - main
     paths:
       - ".github/workflows/mcb-compare-decision-validation.yml"
       - "experiments/model-capability-benchmark/dashboard/**"
+      - "experiments/model-capability-benchmark/src/model_capability_bench/analytics/**"
+      - "experiments/model-capability-benchmark/tests/test_decision_memory.py"
   workflow_dispatch:
 
 permissions:
@@ -33,6 +36,11 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: experiments/model-capability-benchmark/dashboard/package-lock.json
+      - name: Verify Python resource aggregation
+        working-directory: experiments/model-capability-benchmark
+        run: |
+          uv run ruff check src/model_capability_bench/analytics/decision_summary.py tests/test_decision_memory.py
+          uv run pytest -q tests/test_decision_memory.py
       - run: npm ci
       - run: npm run test:compare
       - run: npm run lint
