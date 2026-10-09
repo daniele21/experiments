@@ -261,7 +261,7 @@ export function CompareDecision() {
   const c = cKey ? models.find(model => model.model_key === cKey && model.model_key !== a?.model_key && model.model_key !== b?.model_key)
     ?? models.find(model => model.model_key !== a?.model_key && model.model_key !== b?.model_key) : undefined;
   const freeThird = (first: string, second: string, preferred: string) =>
-    preferred && preferred !== first && preferred !== second ? preferred :
+    preferred && preferred !== first && preferred !== second && models.some(model => model.model_key === preferred) ? preferred :
       models.find(model => model.model_key !== first && model.model_key !== second)?.model_key ?? '';
   const changeA = (key: string) => {
     const nextB = key === b?.model_key ? a?.model_key ?? '' : b?.model_key ?? '';
