@@ -1,7 +1,6 @@
 import { CompareDecision } from '../components/CompareDecision';
 import {
   Activity,
-  AlertTriangle,
   BarChart3,
   CheckCircle2,
   Cpu,
@@ -32,7 +31,6 @@ import {
   providerCostCoverage,
   providerCostValue,
   score,
-  usd,
 } from '../utils';
 import {
   DatasetHeatmap,
