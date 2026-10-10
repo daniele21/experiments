@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 # Run RedactGuard's full realistic model benchmark on a local Apple Silicon Mac.
-# Usage: bash scripts/run_realistic_local.sh [--model MODEL] [--korgis-repo PATH]
+# Usage: bash scripts/run_realistic_local.sh [--models ID1,ID2] [--model MODEL]
+#                                            [--korgis-repo PATH]
 #                                            [--llama-server-bin PATH] [--check-only]
-#                                            [--download-missing]
 set -Eeuo pipefail
 
 usage() {
   cat <<'USAGE'
-Run the RedactGuard realistic dataset against the configured four local models.
+Run the COMPLETE RedactGuard realistic benchmark against ONLY the requested
+Korgis model IDs (quality on all 11 documents, plus configured latency).
+With no model arguments, use suite.models from config/suite.yaml.
 Run from any directory. Korgis and the local model artifacts must be installed.
 
   bash scripts/run_realistic_local.sh
   bash scripts/run_realistic_local.sh --check-only
   bash scripts/run_realistic_local.sh --model qwen3.5-4b-q4km
+  bash scripts/run_realistic_local.sh --models "qwen3.5-4b-q4km,qwen3.5-9b-q4km"
+  bash scripts/run_realistic_local.sh --model nemotron-nano-4b --model nemotron-nano-4b-q8
   bash scripts/run_realistic_local.sh --korgis-repo "$HOME/Personal/korgis"
 
 Options:
-  --model MODEL             Run just this Korgis model ID (repeatable).
+  --model MODEL             Add a single Korgis model ID (repeatable).
+  --models ID1,ID2          Explicit comma-separated model IDs. May combine
+                            with --model; duplicates are removed.
   --korgis-repo PATH        Path to an existing Korgis/local-llm-server clone.
   --llama-server-bin PATH   Path to a compatible llama-server executable.
   --check-only             Validate local setup without launching inference.
@@ -55,6 +61,11 @@ while (( $# )); do
     --model)
       (( $# >= 2 )) || error "Missing value for --model."
       MODELS+=("$2"); shift 2 ;;
+    --models)
+      (( $# >= 2 )) || error "Missing value for --models."
+      [[ -n "$2" ]] || error "--models cannot be empty."
+      IFS=',' read -r -a parsed_models <<< "$2"
+      MODELS+=("${parsed_models[@]}"); shift 2 ;;
     --korgis-repo)
       (( $# >= 2 )) || error "Missing value for --korgis-repo."
       KORGIS_DIR="$2"; shift 2 ;;
@@ -122,8 +133,23 @@ info "Validating realistic data and the Korgis model registry ..."
 uv_native run --frozen redact-bench check-realistic-dataset --dataset-dir data/realistic
 
 if (( ${#MODELS[@]} == 0 )); then
-  MODELS=(nemotron-nano-4b nemotron-nano-4b-q8 qwen3.5-4b-q4km qwen3.5-9b-q4km)
+  info "No model override: reading the configured suite model IDs."
+  MODEL_CSV="$(uv_native run --frozen python -c 'import yaml; cfg=yaml.safe_load(open("config/suite.yaml", encoding="utf-8")); print(",".join(cfg["suite"]["models"]))')"
+  [[ -n "$MODEL_CSV" ]] || error "No model IDs in config/suite.yaml."
+  IFS=',' read -r -a MODELS <<< "$MODEL_CSV"
 fi
+UNIQUE_MODELS=()
+for model in "${MODELS[@]}"; do
+  # Model IDs are registry keys, not paths/URLs or arbitrary shell expressions.
+  [[ "$model" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || error "Invalid Korgis model ID: '$model'"
+  already_added=0
+  for previous in "${UNIQUE_MODELS[@]}"; do
+    if [[ "$previous" == "$model" ]]; then already_added=1; break; fi
+  done
+  if (( ! already_added )); then UNIQUE_MODELS+=("$model"); fi
+done
+MODELS=("${UNIQUE_MODELS[@]}")
+(( ${#MODELS[@]} > 0 )) || error "You must provide at least one model ID."
 MODEL_CSV="$(IFS=,; echo "${MODELS[*]}")"
 export REDACT_MODEL_CSV="$MODEL_CSV"
 
@@ -200,7 +226,8 @@ PY
 export LOCAL_LLM_SERVER_BIN="$LLAMA_BIN"
 info "Verified llama-server: $LOCAL_LLM_SERVER_BIN"
 
-info "Models: $MODEL_CSV"
+info "Selected models ONLY: $MODEL_CSV"
+info "Dataset: data/realistic (all 11 documents); latency config: config/suite.yaml"
 if (( CHECK_ONLY )); then
   info "All setup checks passed; --check-only requested, no inference executed."
   exit 0
@@ -210,7 +237,7 @@ STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG_DIR="$EXPERIMENT_DIR/results/manual-logs"
 mkdir -p "$LOG_DIR"
 RUN_LOG="$LOG_DIR/realistic-$STAMP.log"
-info "Starting full realistic benchmark (quality + latency), sequential by model."
+info "Starting full realistic benchmark for these ${#MODELS[@]} model(s) (quality + latency), sequentially."
 info "Log: $RUN_LOG"
 info "Use Ctrl+C to interrupt. Raw results stay on this Mac."
 
