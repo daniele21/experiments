@@ -5,7 +5,7 @@ one model at a time (no runner registration or GitHub Actions required).
 
 ## Start from your Mac Terminal
 
-From a checkout of `daniele21/experiments` with this change:
+From a Git checkout of `daniele21/experiments` (the script automatically initializes the repository's pinned `korgis/` submodule if it is not populated):
 
 ```bash
 cd experiments/redactguard-local-anonymization
@@ -35,7 +35,13 @@ You can start with a smaller single-model run. The command line's `--models` and
 bash scripts/run_realistic_local.sh --model qwen3.5-4b-q4km
 ```
 
-If Korgis cannot be found, pass your existing checkout explicitly:
+By default, `KORGIS_REPO` points to the **pinned `korgis/` submodule** in the repository root. If the submodule needs initialization, the script runs `git submodule update --init --depth 1 -- korgis`. You can also initialize it beforehand from the repository root:
+
+```bash
+git submodule update --init --depth 1 -- korgis
+```
+
+To explicitly use a different Korgis checkout, override the pinned submodule:
 
 ```bash
 bash scripts/run_realistic_local.sh \
