@@ -73,6 +73,29 @@ with `--download-missing`. A missing model fails before benchmarking.
 This can be compute-intensive. The script avoids concurrent model runs; it
 does not impose a hard RAM limit.
 
+### macOS / `llama-cpp-python` build failures
+
+Korgis depends on `llama-cpp-python`, which may be built from source on macOS.
+The launcher now resolves a **native ARM64 CPython 3.12 before any `uv sync`**,
+recreates incompatible local `.venv` environments if needed, and configures
+`CMAKE_OSX_ARCHITECTURES=arm64`, Metal, and CURL-off flags. If native
+Python is not already installed, uv can download a CPython runtime (it still
+does **not download model weights**).
+
+A warning such as `Target mtmd has PRIVATE_HEADER files but no PRIVATE_HEADER DESTINATION`
+is not the root error. If compilation fails, the script writes the full
+`uv sync` diagnostics to
+`results/manual-logs/korgis-install-<timestamp>.log`, and prints compiler/linker
+error signatures plus the log tail. Check the earliest `FAILED:`, `Undefined
+symbols`, or `clang: error:` lines to diagnose the underlying failure.
+
+Example after pulling the fix:
+
+```bash
+cd experiments/redactguard-local-anonymization
+bash scripts/run_realistic_local.sh --check-only
+```
+
 ## Results and troubleshooting
 
 - Combined suites: `results/suites/<suite-id>/` (quality, latency, manifest)
