@@ -1,0 +1,3 @@
+[submodule "korgis"]
+	path = korgis
+	url = https://github.com/daniele21/korgis.git
