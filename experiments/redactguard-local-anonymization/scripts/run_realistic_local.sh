@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# Run RedactGuard's full realistic model benchmark on a local Apple Silicon Mac.
+# Usage: bash scripts/run_realistic_local.sh [--model MODEL] [--korgis-repo PATH]
+#                                            [--llama-server-bin PATH] [--check-only]
+#                                            [--download-missing]
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Run the RedactGuard realistic dataset against the configured four local models.
+Run from any directory. Korgis and the local model artifacts must be installed.
+
+  bash scripts/run_realistic_local.sh
+  bash scripts/run_realistic_local.sh --check-only
+  bash scripts/run_realistic_local.sh --model qwen3.5-4b-q4km
+  bash scripts/run_realistic_local.sh --korgis-repo "$HOME/Personal/korgis"
+
+Options:
+  --model MODEL             Run just this Korgis model ID (repeatable).
+  --korgis-repo PATH        Path to an existing Korgis/local-llm-server clone.
+  --llama-server-bin PATH   Path to a compatible llama-server executable.
+  --check-only             Validate local setup without launching inference.
+  --download-missing       Opt in to model downloads (never default).
+  -h, --help               Show this help.
+
+Full suite includes quality and repeated latency evaluations. Results are kept
+locally under results/suites/; this script does not upload files to GitHub.
+USAGE
+}
+
+error() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+info() { printf '[RedactGuard] %s\n' "$*"; }
+
+[[ "$(uname -s)" == "Darwin" ]] || error "This script is intended for macOS on Apple Silicon."
+# Rosetta-inherited environments otherwise compile x86_64 wheels.
+if [[ "$(uname -m)" != "arm64" ]]; then
+  if [[ "${REDACT_ARM64_REEXEC:-0}" == "1" ]]; then
+    error "Could not switch to a native ARM64 shell."
+  fi
+  exec /usr/bin/arch -arm64 /usr/bin/env REDACT_ARM64_REEXEC=1 /bin/bash "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+EXPERIMENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
+[[ -f "$EXPERIMENT_DIR/config/suite.yaml" && -f "$EXPERIMENT_DIR/pyproject.toml" ]] \
+  || error "Run the script from a RedactGuard experiment checkout (missing config/suite.yaml)."
+
+KORGIS_DIR="${KORGIS_REPO:-}"
+LLAMA_BIN="${LOCAL_LLM_SERVER_BIN:-}"
+CHECK_ONLY=0
+DOWNLOAD_MISSING=0
+MODELS=()
+while (( $# )); do
+  case "$1" in
+    --model)
+      (( $# >= 2 )) || error "Missing value for --model."
+      MODELS+=("$2"); shift 2 ;;
+    --korgis-repo)
+      (( $# >= 2 )) || error "Missing value for --korgis-repo."
+      KORGIS_DIR="$2"; shift 2 ;;
+    --llama-server-bin)
+      (( $# >= 2 )) || error "Missing value for --llama-server-bin."
+      LLAMA_BIN="$2"; shift 2 ;;
+    --check-only) CHECK_ONLY=1; shift ;;
+    --download-missing) DOWNLOAD_MISSING=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) error "Unknown argument: $1 (see --help)." ;;
+  esac
+done
+
+# Korgis auto-discovery is intentionally limited to plausible local clone paths.
+if [[ -z "$KORGIS_DIR" ]]; then
+  for candidate in \
+    "$EXPERIMENT_DIR/../../korgis" \
+    "$EXPERIMENT_DIR/../../../korgis" \
+    "$EXPERIMENT_DIR/../../../local-llm-server" \
+    "$HOME/Personal/korgis" \
+    "$HOME/Personal/local-llm-server" \
+    "$HOME/korgis" \
+    "$HOME/local-llm-server"; do
+    if [[ -f "$candidate/pyproject.toml" && -d "$candidate/src/local_llm_server" ]]; then
+      KORGIS_DIR="$candidate"
+      break
+    fi
+  done
+fi
+[[ -n "$KORGIS_DIR" ]] || error "Korgis checkout not found. Specify --korgis-repo /absolute/path/to/korgis."
+KORGIS_DIR="$(cd "$KORGIS_DIR" && pwd -P)" || error "Invalid Korgis path."
+[[ -f "$KORGIS_DIR/pyproject.toml" && -d "$KORGIS_DIR/src/local_llm_server" ]] \
+  || error "Not a Korgis checkout: $KORGIS_DIR"
+export KORGIS_REPO="$KORGIS_DIR"
+
+command -v uv >/dev/null 2>&1 || error "Install uv first: brew install uv"
+UV_BIN="$(command -v uv)"
+/usr/bin/arch -arm64 "$UV_BIN" --version >/dev/null 2>&1 \
+  || error "uv must support native ARM64. Install it with Homebrew."
+uv_native() { /usr/bin/arch -arm64 "$UV_BIN" "$@"; }
+
+# Constrain CPU-related native libraries, without claiming a hard RAM quota.
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+export TOKENIZERS_PARALLELISM=false
+export CMAKE_OSX_ARCHITECTURES="arm64"
+export CMAKE_ARGS="${CMAKE_ARGS:--DGGML_METAL=ON -DGGML_CURL=OFF -DLLAMA_CURL=OFF}"
+
+cd "$EXPERIMENT_DIR"
+info "Experiment: $EXPERIMENT_DIR"
+info "Korgis: $KORGIS_DIR"
+info "Runtime: native ARM64"
+
+info "Preparing benchmark and Korgis Python environments ..."
+uv_native sync --extra dev --python 3.12
+(cd "$KORGIS_DIR" && uv_native sync --frozen --python 3.12)
+
+# Prevent accidentally using an x86_64 Python environment.
+for interpreter in "$EXPERIMENT_DIR/.venv/bin/python" "$KORGIS_DIR/.venv/bin/python"; do
+  "$interpreter" -c 'import platform,sys; sys.exit(0 if platform.machine()=="arm64" else 1)' \
+    || error "Non-ARM64 Python environment at $interpreter; recreate that venv with native ARM64 uv."
+done
+
+info "Validating realistic data and the Korgis model registry ..."
+uv_native run --frozen redact-bench check-realistic-dataset --dataset-dir data/realistic
+
+if (( ${#MODELS[@]} == 0 )); then
+  MODELS=(nemotron-nano-4b nemotron-nano-4b-q8 qwen3.5-4b-q4km qwen3.5-9b-q4km)
+fi
+MODEL_CSV="$(IFS=,; echo "${MODELS[*]}")"
+export REDACT_MODEL_CSV="$MODEL_CSV"
+
+# Verify each artifact locally, without silently downloading large GGUF weights.
+if (( DOWNLOAD_MISSING )); then
+  info "Model downloads explicitly enabled. Checking/downloading selected models ..."
+  for model in "${MODELS[@]}"; do
+    (cd "$KORGIS_DIR" && uv_native run --frozen local-llm download "$model")
+  done
+fi
+"$KORGIS_DIR/.venv/bin/python" - <<'PY'
+import os
+from pathlib import Path
+from local_llm_server.config import build_config
+
+missing = []
+for name in os.environ["REDACT_MODEL_CSV"].split(","):
+    if not name:
+        continue
+    try:
+        conf = build_config(model=name)
+        path = conf.get("model_path")
+        downloaded = bool(conf.get("model_downloaded"))
+        valid = bool(path and Path(path).is_file() and downloaded)
+    except Exception as exc:
+        print(f"  MODEL {name}: CONFIG ERROR ({type(exc).__name__}: {exc})")
+        valid = False
+    else:
+        print(f"  MODEL {name}: {'READY' if valid else 'NOT FOUND'} (backend: {conf.get('backend', 'unknown')})")
+    if not valid:
+        missing.append(name)
+if missing:
+    raise SystemExit("Missing model artifacts: " + ", ".join(missing)
+                     + ". Download explicitly using --download-missing or Korgis local-llm download.")
+PY
+
+# The RedactGuard suite manages its own Korgis service on localhost:12435.
+# It must not reuse, kill or interfere with any unrelated service on this port.
+if /usr/sbin/lsof -nP -iTCP:12435 -sTCP:LISTEN -t 2>/dev/null | grep -q .; then
+  error "Port 12435 is already listening. Stop the existing process or adjust config/suite.yaml."
+fi
+
+# Version verification uses the same Korgis library that enforces the runtime floor.
+# Prefer Homebrew llama-server over LM Studio extension builds with unparseable identities.
+export REDACT_REQUESTED_LLAMA_BIN="$LLAMA_BIN"
+LLAMA_BIN="$("$KORGIS_DIR/.venv/bin/python" - <<'PY'
+import os
+from pathlib import Path
+from local_llm_server.llama_server_compat import validate_llama_server_binary
+
+home = Path.home()
+explicit = os.getenv("REDACT_REQUESTED_LLAMA_BIN", "")
+if explicit:
+    candidates = [Path(explicit).expanduser()]
+else:
+    candidates = [Path("/opt/homebrew/bin/llama-server"), home / ".local/bin/llama-server",
+                  Path("/usr/local/bin/llama-server")]
+    candidates.extend(sorted((home / ".lmstudio/extensions/backends").glob("llama.cpp-*/llama-server"), reverse=True))
+for path in candidates:
+    if not path.is_file() or not os.access(path, os.X_OK):
+        continue
+    try:
+        verdict = validate_llama_server_binary(path)
+    except (RuntimeError, OSError):
+        continue
+    if verdict.supported:
+        print(path)
+        break
+else:
+    raise SystemExit("No supported llama-server found (Korgis needs an attributable build >=10621). "
+                     "Use --llama-server-bin /path/to/verified/llama-server.")
+PY
+)" || error "llama-server version check failed."
+export LOCAL_LLM_SERVER_BIN="$LLAMA_BIN"
+info "Verified llama-server: $LOCAL_LLM_SERVER_BIN"
+
+info "Models: $MODEL_CSV"
+if (( CHECK_ONLY )); then
+  info "All setup checks passed; --check-only requested, no inference executed."
+  exit 0
+fi
+
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+LOG_DIR="$EXPERIMENT_DIR/results/manual-logs"
+mkdir -p "$LOG_DIR"
+RUN_LOG="$LOG_DIR/realistic-$STAMP.log"
+info "Starting full realistic benchmark (quality + latency), sequential by model."
+info "Log: $RUN_LOG"
+info "Use Ctrl+C to interrupt. Raw results stay on this Mac."
+
+# Pipefail preserves the true benchmark exit status while tee saves logs.
+# Korgis is owned/stopped by redact-bench's managed suite.
+SUITE_ARGS=(suite --config "$EXPERIMENT_DIR/config/suite.yaml" --korgis-repo "$KORGIS_DIR" --models "$MODEL_CSV")
+if (( DOWNLOAD_MISSING )); then
+  SUITE_ARGS+=(--ensure-models)
+else
+  SUITE_ARGS+=(--no-ensure-models)
+fi
+if ! uv_native run --frozen redact-bench "${SUITE_ARGS[@]}" 2>&1 | tee "$RUN_LOG"; then
+  error "Benchmark failed. Inspect $RUN_LOG and the latest results/suites/*/logs/*.log for Korgis errors."
+fi
+info "Benchmark finished. Results: $EXPERIMENT_DIR/results/suites"
+info "To inspect results: (cd '$EXPERIMENT_DIR' && uv run redact-bench ui)"
