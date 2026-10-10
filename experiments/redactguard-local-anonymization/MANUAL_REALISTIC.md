@@ -61,7 +61,7 @@ with `--download-missing`. A missing model fails before benchmarking.
 ## What the script does
 
 1. Forces the process to native arm64 (avoids x86_64/Rosetta wheel builds).
-2. Installs/reconciles Python 3.12 dependencies with `uv` for both projects.
+2. Prepares Python 3.12 for the benchmark, **reuses Korgis's existing healthy ARM64 `.venv`** without rebuilding `llama-cpp-python`, and bootstraps Korgis only if it has no installed environment.
 3. Validates the realistic dataset's canonical text and gold spans.
 4. Checks the local GGUF models using the Korgis model registry.
 5. Verifies an attributable `llama-server` binary meeting Korgis's build floor.
@@ -72,6 +72,29 @@ with `--download-missing`. A missing model fails before benchmarking.
 **Full** means the quality suite plus configured repeated latency checks.
 This can be compute-intensive. The script avoids concurrent model runs; it
 does not impose a hard RAM limit.
+
+### Korgis is already in the repository
+
+The launcher uses the `korgis/` directory at the root of the
+`experiments` checkout by default. **The local source checkout and the
+installed Python environment are different things.** If
+`korgis/.venv/bin/python` already imports `local_llm_server` and
+`llama_cpp` successfully on ARM64, the launcher reuses it and skips
+`uv sync` for Korgis. It also prevents Korgis's subsequent `uv run`
+subprocesses from resynchronizing the environment.
+
+If `korgis/.venv` exists but is broken or incompatible, the script now
+fails without deleting or rebuilding it. If no Korgis `.venv` exists,
+the script performs a one-time installation and records the build log.
+A cloned repository alone does not contain compiled `llama-cpp-python`
+binaries.
+
+To inspect the local installation:
+
+```bash
+cd korgis
+.venv/bin/python -c 'import platform, llama_cpp, local_llm_server; print(platform.machine())'
+```
 
 ### macOS / `llama-cpp-python` build failures
 
