@@ -1,0 +1,37 @@
+name: Local runner eligibility diagnostic
+
+on:
+  push:
+    branches:
+      - experiment/redactguard-local-mac-run
+    paths:
+      - ".github/workflows/local-runner-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  any-self-hosted:
+    name: Probe self-hosted reachability
+    runs-on: [self-hosted]
+    timeout-minutes: 3
+    steps:
+      - name: Print assigned runner identity
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Runner architecture: $RUNNER_ARCH"
+          echo "Repo: $GITHUB_REPOSITORY"
+          echo "Result: assignment succeeded"
+  mac-arm:
+    name: Probe macOS ARM64 label matching
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 3
+    steps:
+      - name: Print matching runner identity
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Runner architecture: $RUNNER_ARCH"
+          echo "Result: macOS ARM64 assignment succeeded"
