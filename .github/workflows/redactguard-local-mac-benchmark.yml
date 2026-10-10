@@ -1,0 +1,193 @@
+name: RedactGuard local model benchmark
+
+# Run the real models only on the repository owner's local macOS runner.
+# A workflow change pushed to the dedicated experiment branch starts one run.
+# After merging, workflow_dispatch permits a manually scoped run.
+on:
+  push:
+    branches:
+      - experiment/redactguard-local-mac-run
+    paths:
+      - ".github/workflows/redactguard-local-mac-benchmark.yml"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Benchmark phase (default: all after the smoke gate)"
+        type: choice
+        required: true
+        default: all
+        options:
+          - smoke
+          - realistic
+          - challenge
+          - all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: redactguard-local-model-benchmark
+  cancel-in-progress: false
+
+jobs:
+  run-local:
+    name: RedactGuard 4-model local suite
+    if: github.repository == 'daniele21/experiments'
+    runs-on: [self-hosted, macOS, ARM64, mac-pool]
+    timeout-minutes: 360
+    defaults:
+      run:
+        shell: bash
+        working-directory: experiments/redactguard-local-anonymization
+    env:
+      # A push of this workflow runs all datasets, always after the smoke gate.
+      BENCH_SCOPE: ${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'all' }}
+      KORGIS_REPO: ${{ github.workspace }}/external-korgis
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - name: Checkout experiments (no untrusted submodules)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Checkout pinned Korgis backend
+        uses: actions/checkout@v4
+        with:
+          repository: daniele21/korgis
+          ref: eadd5dca94417dd037a5d43650377b349875ab17
+          path: external-korgis
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.13"
+
+      - name: Bootstrap environments and validate data
+        run: |
+          set -euo pipefail
+          uv sync --extra dev
+          (cd "$KORGIS_REPO" && uv sync --frozen)
+          uv run redact-bench check-data --dataset data/smoke/cases.jsonl
+          uv run redact-bench check-data --dataset data/challenge/cases.jsonl
+          uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
+          uv run pytest -q tests/test_suite.py
+          echo "Korgis revision: $(git -C "$KORGIS_REPO" rev-parse HEAD)"
+          echo "Experiment revision: $GITHUB_SHA"
+          echo "Model artifacts must already exist on this Mac: no model download will be attempted."
+          mkdir -p runner-local-logs
+          (cd "$KORGIS_REPO" && uv run --frozen local-llm models) > runner-local-logs/model-inventory.log 2>&1 || {
+            echo "::error::Could not inspect Korgis model inventory. See local runner-local-logs/model-inventory.log."
+            exit 1
+          }
+
+      - name: Create minimal smoke configuration
+        run: |
+          set -euo pipefail
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+          import yaml
+
+          first_line = next(line for line in Path("data/smoke/cases.jsonl").read_text().splitlines() if line.strip())
+          obj = json.loads(first_line)
+          case_id = str(obj.get("id") or obj.get("case_id"))
+          if not case_id or case_id == "None":
+              raise ValueError("Smoke case has no id")
+          Path("data/cache").mkdir(parents=True, exist_ok=True)
+          Path("data/cache/runner-smoke.jsonl").write_text(first_line + "\n")
+          data = yaml.safe_load(Path("config/suite.yaml").read_text())
+          suite = data["suite"]
+          suite["dataset"] = "data/cache/runner-smoke.jsonl"
+          suite["ensure_models"] = False
+          suite["quality_warmups"] = 0
+          suite["benchmark_timeout_seconds"] = 120
+          suite["latency"] = {"case_ids": [case_id], "warmups": 0, "repeats": 1}
+          Path("config/runner-smoke.generated.yaml").write_text(yaml.safe_dump(data))
+          print("Prepared smoke case:", case_id)
+          PY
+
+      - name: Run small inference gate against all four models
+        run: |
+          set -euo pipefail
+          if ! uv run redact-bench suite --config config/runner-smoke.generated.yaml --no-ensure-models --korgis-repo "$KORGIS_REPO" > runner-local-logs/smoke.log 2>&1; then
+            echo "::error::Local smoke suite failed; complete diagnostics remain only in runner-local-logs/smoke.log on this Mac."
+            exit 1
+          fi
+          echo "Smoke suite completed."
+
+      - name: Full realistic model benchmark
+        if: env.BENCH_SCOPE == 'realistic' || env.BENCH_SCOPE == 'all'
+        run: |
+          set -euo pipefail
+          if ! uv run redact-bench suite --no-ensure-models --korgis-repo "$KORGIS_REPO" > runner-local-logs/realistic.log 2>&1; then
+            echo "::error::Realistic suite failed; diagnostics remain local. No raw PII artifacts were uploaded."
+            exit 1
+          fi
+          echo "Realistic suite completed."
+
+      - name: Semantic challenge model benchmark
+        if: env.BENCH_SCOPE == 'challenge' || env.BENCH_SCOPE == 'all'
+        run: |
+          set -euo pipefail
+          if ! uv run redact-bench suite --config config/suite-challenge.yaml --no-ensure-models --korgis-repo "$KORGIS_REPO" > runner-local-logs/challenge.log 2>&1; then
+            echo "::error::Challenge suite failed; diagnostics remain local. No raw PII artifacts were uploaded."
+            exit 1
+          fi
+          echo "Challenge suite completed."
+
+      - name: Build privacy-safe aggregate summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("results/suites")
+          allow = ("status", "quality_available", "cases", "evaluated_cases",
+                   "preflight_passed", "inference_success_rate", "contract_valid_rate",
+                   "truncation_rate", "pii_recall", "system_pii_recall",
+                   "precision", "leakage_rate", "system_leakage_rate",
+                   "zero_leak_document_rate", "system_zero_leak_document_rate",
+                   "span_f1", "over_redaction_rate", "latency_p50_ms", "latency_p95_ms",
+                   "latency_p99_ms")
+          out = {"experiment_sha": __import__("os").environ.get("GITHUB_SHA"), "suites": []}
+          for folder in sorted(root.glob("*")) if root.is_dir() else []:
+              row = {"suite_id": folder.name}
+              try:
+                  state = json.loads((folder / "suite.json").read_text())
+                  row["status"] = state.get("status")
+                  row["dataset_id"] = state.get("dataset_id")
+              except (FileNotFoundError, ValueError):
+                  row["status"] = "unknown"
+              for tier in ("quality", "latency"):
+                  metrics_path = folder / tier / "metrics.json"
+                  if not metrics_path.is_file():
+                      continue
+                  try:
+                      obj = json.loads(metrics_path.read_text())
+                  except (OSError, ValueError):
+                      continue
+                  row[tier] = {}
+                  for model, measures in obj.items():
+                      if not isinstance(measures, dict):
+                          continue
+                      sample = measures.get("micro") or measures
+                      row[tier][model] = {k: sample.get(k) for k in allow
+                                          if k in sample and isinstance(sample[k], (type(None), str, int, float, bool))}
+              out["suites"].append(row)
+          Path("runner-aggregate-summary.json").write_text(json.dumps(out, indent=2))
+          print("Exported", len(out["suites"]), "sanitized suite summaries; raw input, outputs, findings and logs remain local.")
+          PY
+
+      - name: Upload aggregate metrics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: redactguard-local-summary-${{ github.run_id }}
+          path: experiments/redactguard-local-anonymization/runner-aggregate-summary.json
+          if-no-files-found: warn
+          retention-days: 14
