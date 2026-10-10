@@ -13,17 +13,23 @@ cd experiments/redactguard-local-anonymization
 # Check installed models, dataset, Apple Silicon Python and llama-server.
 bash scripts/run_realistic_local.sh --check-only
 
-# Full realistic quality + repeated latency suite, all four models.
+# Full realistic quality + repeated latency suite, all models in config/suite.yaml.
 bash scripts/run_realistic_local.sh
+
+# Full realistic suite, restricted to the two IDs provided here.
+bash scripts/run_realistic_local.sh --models "qwen3.5-4b-q4km,qwen3.5-9b-q4km"
+
+# Alternative form: explicitly provide multiple model IDs.
+bash scripts/run_realistic_local.sh --model nemotron-nano-4b --model nemotron-nano-4b-q8
 ```
 
-By default the suite compares:
+By default the suite compares the four IDs in `config/suite.yaml`:
 - `nemotron-nano-4b`
 - `nemotron-nano-4b-q8`
 - `qwen3.5-4b-q4km`
 - `qwen3.5-9b-q4km`
 
-You can start with a smaller single-model run:
+You can start with a smaller single-model run. The command line's `--models` and `--model` values completely override the YAML model list; no additional models are run:
 
 ```bash
 bash scripts/run_realistic_local.sh --model qwen3.5-4b-q4km
@@ -54,8 +60,8 @@ with `--download-missing`. A missing model fails before benchmarking.
 4. Checks the local GGUF models using the Korgis model registry.
 5. Verifies an attributable `llama-server` binary meeting Korgis's build floor.
 6. Refuses to interfere with an existing service on benchmark port 12435.
-7. Executes `redact-bench suite --config config/suite.yaml --no-ensure-models`
-   with managed Korgis startup/restart per model.
+7. Executes `redact-bench suite --config config/suite.yaml --models <exact-selected-ids> --no-ensure-models`
+   with managed Korgis startup/restart per model. Model selection is passed explicitly, and all cases of the realistic dataset are evaluated for every selected model.
 
 **Full** means the quality suite plus configured repeated latency checks.
 This can be compute-intensive. The script avoids concurrent model runs; it
