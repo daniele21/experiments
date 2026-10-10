@@ -17,6 +17,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate manual runner shell and Korgis submodule
+        run: |
+          bash -n scripts/run_realistic_local.sh
+          test "$(git -C ../.. config -f .gitmodules --get submodule.korgis.path)" = "korgis"
+          test "$(git -C ../.. config -f .gitmodules --get submodule.korgis.url)" = "https://github.com/daniele21/korgis.git"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
