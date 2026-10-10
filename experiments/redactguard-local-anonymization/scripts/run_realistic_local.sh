@@ -139,7 +139,7 @@ export ARCHFLAGS="-arch arm64"
 export CMAKE_ARGS="${CMAKE_ARGS:--DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_APPLE_SILICON_PROCESSOR=arm64 -DGGML_METAL=ON -DGGML_CURL=OFF -DLLAMA_CURL=OFF}"
 
 # Make sure uv will not pick an inherited Rosetta venv or an x86_64 interpreter.
-unset VIRTUAL_ENV PYTHONHOME UV_PYTHON
+unset VIRTUAL_ENV PYTHONHOME UV_PYTHON UV_NO_SYNC
 PYTHON_REQUEST="cpython-3.12-macos-aarch64-none"
 info "Resolving a native ARM64 Python 3.12 before building llama-cpp-python ..."
 if ! PYTHON_BIN="$(uv_native python find "$PYTHON_REQUEST" 2>/dev/null)"; then
@@ -159,41 +159,59 @@ info "Korgis: $KORGIS_DIR"
 info "Python: $PYTHON_BIN (native ARM64)"
 info "CMake: $CMAKE_ARGS"
 
-# Repair stale environments created under Rosetta before asking CMake to build.
-for venv in "$EXPERIMENT_DIR/.venv" "$KORGIS_DIR/.venv"; do
-  if [[ -x "$venv/bin/python" ]] \
-    && ! "$venv/bin/python" -c 'import platform,sys; sys.exit(0 if platform.machine()=="arm64" and sys.version_info[:2]==(3,12) else 1)' 2>/dev/null; then
-    info "Removing incompatible x86_64 / non-3.12 virtualenv: $venv"
-    rm -rf -- "$venv" \
-      || error "Unable to recreate incompatible Python environment: $venv"
-  fi
-done
+# The benchmark owns only its own venv. Do not delete/rebuild an existing
+# Korgis venv: it may have been installed locally and can be reused as-is.
+BENCH_VENV="$EXPERIMENT_DIR/.venv"
+if [[ -x "$BENCH_VENV/bin/python" ]] \
+  && ! "$BENCH_VENV/bin/python" -c 'import platform,sys; sys.exit(0 if platform.machine()=="arm64" and sys.version_info[:2]==(3,12) else 1)' 2>/dev/null; then
+  info "Recreating incompatible benchmark-only virtualenv: $BENCH_VENV"
+  rm -rf -- "$BENCH_VENV" || error "Unable to recreate benchmark virtualenv: $BENCH_VENV"
+fi
 
 info "Preparing benchmark Python environment ..."
 uv_native sync --extra dev --python "$PYTHON_BIN" \
   || error "RedactGuard uv sync failed."
 
-# Save a complete build trace, while surfacing the first *real* compiler/linker
-# diagnostics (not trailing CMake install warnings) if Korgis compilation fails.
-BUILD_LOG_DIR="$EXPERIMENT_DIR/results/manual-logs"
-mkdir -p "$BUILD_LOG_DIR"
-BUILD_LOG="$BUILD_LOG_DIR/korgis-install-$(date -u +%Y%m%dT%H%M%SZ).log"
-info "Installing pinned Korgis dependencies (full log: $BUILD_LOG) ..."
-if ! (cd "$KORGIS_DIR" && uv_native sync --frozen --python "$PYTHON_BIN") >"$BUILD_LOG" 2>&1; then
-  echo "" >&2
-  echo "Korgis build failed. Compiler and linker errors:" >&2
-  grep -inE 'FAILED:|Undefined symbols|symbol\\(s\\) not found|ld: |clang: error|clang\\+\\+: error|fatal error:|error:|failed to build|CMake Error' "$BUILD_LOG" | tail -n 35 >&2 || true
-  echo "Last 45 lines of the full build log:" >&2
-  tail -n 45 "$BUILD_LOG" >&2
-  error "Korgis installation failed. Full diagnostic log: $BUILD_LOG"
-fi
-info "Korgis dependencies installed."
+# A local Korgis source checkout is not necessarily an installed Python
+# environment. Reuse its existing arm64 venv whenever it is healthy.
+KORGIS_PYTHON="$KORGIS_DIR/.venv/bin/python"
+korgis_env_healthy() {
+  [[ -x "$KORGIS_PYTHON" ]] && "$KORGIS_PYTHON" -c \
+    'import platform,sys; import local_llm_server.cli; import llama_cpp; import yaml; import fastapi; sys.exit(0 if platform.machine()=="arm64" else 1)' \
+    >/dev/null 2>&1
+}
+if korgis_env_healthy; then
+  info "Reusing existing Korgis Python environment: $KORGIS_DIR/.venv"
+  info "Skipping Korgis uv sync and llama-cpp-python compilation."
+else
+  if [[ -e "$KORGIS_DIR/.venv" ]]; then
+    error "Korgis has an existing but unusable .venv (or missing dependencies): $KORGIS_DIR/.venv. To protect your existing environment, this script will not overwrite it. Repair Korgis dependencies manually and retry. Run '$KORGIS_PYTHON -c \"import llama_cpp, local_llm_server.cli\"' for diagnostics."
+  fi
 
-# Detect an architecture mismatch before launching inference.
-for interpreter in "$EXPERIMENT_DIR/.venv/bin/python" "$KORGIS_DIR/.venv/bin/python"; do
-  "$interpreter" -c 'import platform,sys; sys.exit(0 if platform.machine()=="arm64" and sys.version_info[:2]==(3,12) else 1)' \
-    || error "Non-ARM64 Python environment at $interpreter; check $BUILD_LOG."
-done
+  # Bootstrap only when Korgis has no pre-existing venv.
+  # Save a complete build trace and surface compiler/linker errors, not just
+  # the trailing, mostly harmless CMake header warnings.
+  BUILD_LOG_DIR="$EXPERIMENT_DIR/results/manual-logs"
+  mkdir -p "$BUILD_LOG_DIR"
+  BUILD_LOG="$BUILD_LOG_DIR/korgis-install-$(date -u +%Y%m%dT%H%M%SZ).log"
+  info "No installed Korgis environment found; installing once (log: $BUILD_LOG) ..."
+  if ! (cd "$KORGIS_DIR" && uv_native sync --frozen --python "$PYTHON_BIN") >"$BUILD_LOG" 2>&1; then
+    echo "Korgis build failed. Compiler and linker errors:" >&2
+    grep -inE 'FAILED:|Undefined symbols|symbol\\(s\\) not found|ld: |clang: error|clang\\+\\+: error|fatal error:|error:|failed to build|CMake Error' "$BUILD_LOG" | tail -n 35 >&2 || true
+    echo "Last 45 lines of the build log:" >&2
+    tail -n 45 "$BUILD_LOG" >&2
+    error "Korgis installation failed. Full log: $BUILD_LOG"
+  fi
+  korgis_env_healthy || error "Korgis installation completed, but runtime imports or native architecture validation failed; see $BUILD_LOG."
+fi
+
+"$BENCH_VENV/bin/python" -c 'import platform,sys; sys.exit(0 if platform.machine()=="arm64" and sys.version_info[:2]==(3,12) else 1)' \
+  || error "Benchmark Python is not native ARM64 CPython 3.12."
+
+# Both venvs are now installed. Korgis's managed subprocesses invoke uv run;
+# ensure that invocation NEVER starts a new package sync/llama-cpp build.
+unset UV_PYTHON
+export UV_NO_SYNC=1
 
 info "Validating realistic data and the Korgis model registry ..."
 uv_native run --frozen redact-bench check-realistic-dataset --dataset-dir data/realistic
