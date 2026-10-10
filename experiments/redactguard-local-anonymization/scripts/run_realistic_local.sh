@@ -79,10 +79,30 @@ while (( $# )); do
   esac
 done
 
-# Korgis auto-discovery is intentionally limited to plausible local clone paths.
+# Prefer the Korgis version pinned in the experiments repository.
+# The repository root's korgis/ entry is a gitlink; the files exist only after
+# the submodule has been initialized. Do not silently fall back to a different
+# local clone when this repository's pinned submodule can be initialized.
+REPO_ROOT="$(cd "$EXPERIMENT_DIR/../.." && pwd -P)"
+if [[ -z "$KORGIS_DIR" ]]; then
+  PINNED_KORGIS="$REPO_ROOT/korgis"
+  if [[ ! -f "$PINNED_KORGIS/pyproject.toml" && -f "$REPO_ROOT/.gitmodules" ]] \
+      && command -v git >/dev/null 2>&1 \
+      && [[ "$(git -C "$REPO_ROOT" rev-parse --show-toplevel 2>/dev/null || true)" == "$REPO_ROOT" ]]; then
+    info "Initializing the repository-pinned Korgis submodule ..."
+    git -C "$REPO_ROOT" submodule update --init --depth 1 -- korgis \
+      || error "Unable to initialize pinned Korgis. Check Git/network access, or pass --korgis-repo PATH."
+  fi
+  if [[ -f "$PINNED_KORGIS/pyproject.toml" && -d "$PINNED_KORGIS/src/local_llm_server" ]]; then
+    KORGIS_DIR="$PINNED_KORGIS"
+    info "Using repository-pinned Korgis: $PINNED_KORGIS"
+  fi
+fi
+
+# External Korgis directories are only fallbacks when the repository submodule
+# cannot be used (e.g. a source ZIP without Git metadata), or explicit overrides.
 if [[ -z "$KORGIS_DIR" ]]; then
   for candidate in \
-    "$EXPERIMENT_DIR/../../korgis" \
     "$EXPERIMENT_DIR/../../../korgis" \
     "$EXPERIMENT_DIR/../../../local-llm-server" \
     "$HOME/Personal/korgis" \
@@ -91,6 +111,7 @@ if [[ -z "$KORGIS_DIR" ]]; then
     "$HOME/local-llm-server"; do
     if [[ -f "$candidate/pyproject.toml" && -d "$candidate/src/local_llm_server" ]]; then
       KORGIS_DIR="$candidate"
+      info "Using external Korgis fallback: $KORGIS_DIR"
       break
     fi
   done
