@@ -11,14 +11,17 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
  const text=doc.text ?? "";
  const until=Math.min(text.length,windowStart+WINDOW);
  const visible=useMemo(()=>{
-   const kept=result.items.filter(s=>s.end>windowStart && s.start<until && (!showDifferences||s.status!=="detected"))
+   // Never drop detected spans in "only differences": otherwise their original
+   // PII becomes plain unmasked text in the canonical document.
+   const kept=result.items.filter(s=>s.end>windowStart && s.start<until)
      .sort((a,b)=>a.start-b.start || (a.status==="missed"?-1:1));
    const parts=[];let pos=windowStart;
    for (const span of kept) {
-     if(span.start<pos)continue; // overlaps: one label per visible position
-     if(span.start>pos)parts.push({text:text.slice(pos,span.start),kind:"plain",id:`text-${pos}`});
+     const from=Math.max(span.start,windowStart);
+     if(from<pos)continue; // overlaps: one masked label per source position
+     if(from>pos)parts.push({text:text.slice(pos,from),kind:"plain",id:`text-${pos}`});
      parts.push({span,kind:"pii",id:spanKey(span)});
-     pos=span.end;
+     pos=Math.min(until,span.end);
    }
    if(pos<until)parts.push({text:text.slice(pos,until),kind:"plain",id:`text-${pos}`});
    return parts;
@@ -32,7 +35,9 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
   {current?.status!=="ok" && <div role="status" className="rb2-canvas-warning">Output non valido o non disponibile: il testo è mostrato come riferimento, non come protezione riuscita.</div>}
   {result.invalidOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidOffsets} annotazioni escluse per offset non coerente con il testo canonico.</div>}
   <div className="rb2-pane-scroll" ref={scrollRef} onScroll={onScroll}>
-   {!text ? <div className="rb2-workspace-empty">Testo canonico non disponibile in questa suite.</div> :
+   {current?.status!=="ok" ? <div className="rb2-workspace-empty">Non è disponibile un'anonimizzazione valida di questo documento. Il testo grezzo resta nascosto in questa vista.</div> :
+    result.invalidOffsets>0 ? <div className="rb2-workspace-empty">Il testo e gli offset delle PII non coincidono. Anteprima oscurata per evitare evidenziazioni scorrette e esposizioni involontarie.</div> :
+    !text ? <div className="rb2-workspace-empty">Testo canonico non disponibile in questa suite.</div> :
     <div className="rb2-paper" aria-label={`Testo canonico di ${doc.caseId}, modello ${model}`}>
      {windowStart>0 && <p className="rb2-paper-info">… estratto dal carattere {windowStart.toLocaleString("it-IT")}</p>}
      <div className="rb2-paper-content">
@@ -42,7 +47,7 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
        const selectedHere=selected?.start===s.start && selected?.end===s.end && selected?.pii_type===s.pii_type;
        const open=revealed.has(`${model}|${id}`);
        return <button key={id} type="button" data-rb2-focus={selectedHere ? "true":undefined}
-        className={`rb2-inline-pii rb2-inline-pii--${s.status} ${selectedHere?"rb2-inline-pii--selected":""}`}
+        className={`rb2-inline-pii rb2-inline-pii--${s.status} ${selectedHere?"rb2-inline-pii--selected":""} ${showDifferences&&s.status==="detected"?"rb2-inline-pii--deemphasized":""}`}
         aria-label={`${TYPE_LABEL(s.pii_type)} ${s.status==="missed"?"mancata":s.status==="extra"?"extra":"rilevata"}; ${open?"nascondi":"esamina"} valore`}
         onClick={()=>{onSelect(s);}} title={`${TYPE_LABEL(s.pii_type)} · ${s.status}`}>
         {open?s.value:`[ ${TYPE_LABEL(s.pii_type).toUpperCase()} ]`}
@@ -66,7 +71,7 @@ function EvidenceList({doc,model,tab,selected,onSelect}){
  return <div className="rb2-issue-list">{from.slice(0,500).map((span,i)=>{
  const id=spanKey(span);
  const active=selected?.start===span.start && selected?.end===span.end && selected?.pii_type===span.pii_type;
- return <button key={`${id}-${i}`} type="button" className={active?"active":""} onClick={()=>onSelect(span)}><span className={`rb2-issue-indicator rb2-issue-indicator--${tab}`}/><span><strong>{TYPE_LABEL(span.pii_type)}</strong><small>Caratteri {span.start}–{span.end}</small></span><span aria-hidden="true">›</span></button>;
+ return <button key={`${id}-${i}`} type="button" className={active?"active":""} onClick={()=>onSelect({...span,status:tab==="missed"?"missed":tab==="extra"?"extra":"detected"})}><span className={`rb2-issue-indicator rb2-issue-indicator--${tab}`}/><span><strong>{TYPE_LABEL(span.pii_type)}</strong><small>Caratteri {span.start}–{span.end}</small></span><span aria-hidden="true">›</span></button>;
  })}{from.length>500&&<p className="rb2-paper-info">Visualizzate le prime 500 annotazioni. Filtra per tipo o naviga al documento.</p>}</div>;
 }
 export default function DocumentWorkspace({detail,documentName,models,initialModel,onBack,onSelectModel}){
