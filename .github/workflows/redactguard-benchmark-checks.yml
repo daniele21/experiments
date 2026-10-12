@@ -42,6 +42,9 @@ jobs:
       - name: Build dashboard
         run: npm --prefix ui run build
 
+      - name: Test dashboard evidence selectors
+        run: npm --prefix ui run test
+
       - name: Install dependencies
         run: uv sync --extra dev
 
