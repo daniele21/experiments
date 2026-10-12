@@ -299,10 +299,8 @@ def test_quality_only_suite_config_requires_no_latency_cases(tmp_path: Path):
 def test_quality_only_suite_skips_latency_and_keeps_quality_artifacts(
     tmp_path: Path, monkeypatch,
 ):
-    from contextlib import nullcontext
 
     from redact_bench import suite as module
-    from redact_bench.models import Case
 
     config_path = tmp_path / "suite.yaml"
     data_path = tmp_path / "dataset.jsonl"
