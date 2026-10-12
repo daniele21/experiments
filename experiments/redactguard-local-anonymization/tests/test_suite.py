@@ -239,3 +239,42 @@ def test_resolve_suite_dataset_handles_jsonl_without_gold_version(tmp_path: Path
 
     dataset_id = _resolve_suite_dataset(jsonl_file)
     assert dataset_id == "smoke-cases"
+
+
+def test_suite_defaults_to_no_korgis_inference_cache(tmp_path: Path):
+    from redact_bench.suite import load_suite_config
+
+    cfg = tmp_path / "suite.yaml"
+    cfg.write_text(
+        "suite:\n"
+        "  models: [example]\n"
+        "  dataset: cases.jsonl\n"
+        "  profiles: profiles.yaml\n"
+        "  latency:\n"
+        "    case_ids: [case-1]\n",
+        encoding="utf-8",
+    )
+    assert load_suite_config(cfg, root=tmp_path).inference_cache_max_entries == 0
+
+
+def test_managed_korgis_cache_disabled_verified_fail_closed(tmp_path: Path):
+    import pytest
+
+    from redact_bench.korgis_process import ManagedKorgis
+
+    server = ManagedKorgis(
+        repo=tmp_path,
+        anchor_model="model-a",
+        log_path=tmp_path / "model.log",
+        inference_cache_max_entries=0,
+    )
+    server.controller.health = lambda: {"inference_cache_max_entries": 0}
+    server._assert_inference_cache()
+
+    server.controller.health = lambda: {"inference_cache_max_entries": 256}
+    with pytest.raises(RuntimeError, match="Latency measurements would be invalid"):
+        server._assert_inference_cache()
+
+    server.controller.health = lambda: {"ok": True}  # Older Korgis protocol.
+    with pytest.raises(RuntimeError, match="got None"):
+        server._assert_inference_cache()

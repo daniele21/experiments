@@ -141,6 +141,50 @@ not included in the denominator. ETAs are extrapolations from observed timings,
 **not promises**. An active run will not acquire this feature mid-run: update
 the code and start a new run.
 
+## Valid latency benchmarks and post-run audit
+
+**Korgis must have the new inference-response cache control.** After pulling
+the experiments repository, bring its Korgis submodule to the pinned SHA.
+Preserve any changes you have in `korgis/` before updating:
+
+```bash
+cd ~/Personal/experiments
+git pull origin main
+git submodule update --init -- korgis
+
+cd experiments/redactguard-local-anonymization
+bash scripts/run_realistic_local.sh --check-only
+```
+
+The managed suite now passes
+`local-llm serve --inference-cache-max-entries 0` and requires Korgis's
+`/health` to confirm exactly **zero cache entries** on **every** model.
+An older or incompatible Korgis runtime fails rather than reporting misleading
+2–10 ms response-cache retrieval times as real inference latency. The test still
+may benefit from low-level llama.cpp KV/prefix caching; the eliminated cache is
+Korgis's HTTP whole-response cache. This flag is for benchmark runs only: Korgis
+default behavior remains unchanged.
+
+Latency and quality use new real inference; prior suites with cache hits are
+**not retroactively corrected**. Repeat the test to obtain valid latency
+p50/p95 after this update. It can take substantially longer than the old
+cache-dominated suite.
+
+After a completed suite, run the privacy-safe audit (no raw PII text copied):
+
+```bash
+LATEST=$(ls -td results/suites/*/ | head -1)
+uv run redact-bench audit-suite "$LATEST"
+cat "$LATEST/audit.md"
+```
+
+This writes `audit.json` and `audit.md` alongside the suite, covering
+system micro recall, macro recall by document and independent semantic family,
+failed documents/segment indexes, provenance, and server cache-hit counts.
+Any gold labels marked `human_reviewed=false` are explicitly disclosed; do
+not present this as a human-verified quality evaluation. The largest Excel
+file can disproportionately influence micro recall.
+
 ## Results and troubleshooting
 
 - Combined suites: `results/suites/<suite-id>/` (quality, latency, manifest)

@@ -161,6 +161,7 @@ class ManagedKorgis:
         api_base: str | None = None,
         reuse_existing: bool = False,
         startup_progress: Callable[[float], None] | None = None,
+        inference_cache_max_entries: int | None = None,
     ) -> None:
         self.repo = repo
         self.anchor_model = anchor_model
@@ -169,6 +170,7 @@ class ManagedKorgis:
         self.controller = KorgisController(api_base)
         self.reuse_existing = reuse_existing
         self.startup_progress = startup_progress
+        self.inference_cache_max_entries = inference_cache_max_entries
         self.process: subprocess.Popen[str] | None = None
         self._log_handle = None
         self.reused_existing = False
@@ -182,6 +184,7 @@ class ManagedKorgis:
                     "change suite.korgis_base_url."
                 )
             self._assert_admin_api()
+            self._assert_inference_cache()
             self.reused_existing = True
             return self
 
@@ -207,6 +210,21 @@ class ManagedKorgis:
                 "Restart it with --enable-admin-api."
             ) from exc
 
+    def _assert_inference_cache(self) -> None:
+        """Never accept cached latency samples when uncached inference is requested."""
+        if self.inference_cache_max_entries is None:
+            return
+        health = self.controller.health()
+        reported = health.get("inference_cache_max_entries")
+        if reported != self.inference_cache_max_entries:
+            raise RuntimeError(
+                "Korgis inference response cache setting was not verified: "
+                f"expected {self.inference_cache_max_entries}, got {reported!r}. "
+                "Update the Korgis submodule to the benchmark-compatible revision "
+                "(git submodule update --init -- korgis). "
+                "Latency measurements would be invalid with cached responses."
+            )
+
     def start(self) -> None:
         parsed = urlparse(self.controller.api_base)
         host = parsed.hostname or "127.0.0.1"
@@ -231,6 +249,8 @@ class ManagedKorgis:
             "--port",
             str(port),
         ]
+        if self.inference_cache_max_entries is not None:
+            command.extend(["--inference-cache-max-entries", str(self.inference_cache_max_entries)])
         self.process = subprocess.Popen(
             command,
             cwd=self.repo,
@@ -241,6 +261,7 @@ class ManagedKorgis:
         )
         self._wait_until_ready()
         self._assert_admin_api()
+        self._assert_inference_cache()
 
     def _wait_until_ready(self) -> None:
         started_at = time.monotonic()

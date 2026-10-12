@@ -46,6 +46,7 @@ class SuiteConfig:
     chunk_overlap_chars: int = 256
     max_output_tokens: int = 4096
     adaptive_subdivision: bool = True
+    inference_cache_max_entries: int = 0
 
 
 def _resolve_path(value: str, root: Path) -> Path:
@@ -94,6 +95,7 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         chunk_overlap_chars=int(suite.get("chunk_overlap_chars", 256)),
         max_output_tokens=int(suite.get("max_output_tokens", 4096)),
         adaptive_subdivision=bool(suite.get("adaptive_subdivision", True)),
+        inference_cache_max_entries=int(suite.get("inference_cache_max_entries", 0)),
     )
 
 
@@ -174,6 +176,8 @@ def run_managed_suite(
     models = tuple(model_override) if model_override else config.models
     if not models:
         raise ValueError("At least one model is required")
+    if config.inference_cache_max_entries != 0:
+        raise ValueError("Benchmark inference_cache_max_entries must be 0 (no response cache).")
     ensure_models = (
         config.ensure_models
         if ensure_models_override is None
@@ -205,6 +209,7 @@ def run_managed_suite(
         "korgis_repo": str(resolved_korgis),
         "korgis_source_sha": source_sha,
         "korgis_base_url": config.korgis_base_url,
+        "inference_cache_max_entries": config.inference_cache_max_entries,
     }
     _write_status(status_path, {**base_status, "status": "preparing"})
 
@@ -261,6 +266,7 @@ def run_managed_suite(
                     api_base=config.korgis_base_url,
                     reuse_existing=False,
                     startup_progress=progress.startup_wait,
+                    inference_cache_max_entries=config.inference_cache_max_entries,
                 ):
                     quality_runs.append(
                         run_compare(
