@@ -1,4 +1,3 @@
-from collections import Counter
 from pathlib import Path
 
 from redact_bench.dataset_audit import audit_cases
