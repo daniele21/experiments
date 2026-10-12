@@ -165,10 +165,15 @@ may benefit from low-level llama.cpp KV/prefix caching; the eliminated cache is
 Korgis's HTTP whole-response cache. This flag is for benchmark runs only: Korgis
 default behavior remains unchanged.
 
-Latency and quality use new real inference; prior suites with cache hits are
-**not retroactively corrected**. Repeat the test to obtain valid latency
-p50/p95 after this update. It can take substantially longer than the old
-cache-dominated suite.
+Latency and quality now use real uncached inference; prior suites with cache
+hits are **not retroactively corrected**. The default exploratory protocol
+has therefore been reduced to **1 latency warmup and 5 repeats per each of 3
+cases per model**, or 60 measured document requests across 4 models, versus
+360 previously cached repetitions. These samples support a first-pass speed
+ranking, **not a high-confidence p95 estimate**. To strengthen the tails,
+edit `config/suite.yaml` and increase `latency.repeats` for a follow-up
+run of only the two finalists. Even the shorter uncached test can take much
+longer than the old cache-dominated suite.
 
 After a completed suite, run the privacy-safe audit (no raw PII text copied):
 
