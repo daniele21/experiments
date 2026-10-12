@@ -6,7 +6,6 @@ quality suite, but executes only selected case IDs, without the latency phase.
 from __future__ import annotations
 
 import json
-import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
