@@ -121,6 +121,26 @@ cd experiments/redactguard-local-anonymization
 bash scripts/run_realistic_local.sh --check-only
 ```
 
+## Live progress in Terminal
+
+The managed suite now prints **line-oriented live progress** (no ANSI
+rewrites), both to Terminal and to the `results/manual-logs/realistic-*.log`
+file recorded by `tee`. There is no separate progress flag to enable.
+
+- **Model startup:** current model out of total, plus a heartbeat every
+  approximately 15 seconds while Korgis is loading.
+- **Quality:** one progress line per evaluated document, with stage percentage,
+  last case, evaluation latency, errors, and approximate stage/overall ETA.
+- **Latency:** first sample, every fifth sample, and the final sample, with
+  repetitions completed, percentage and approximate ETA.
+- **Completion:** per-model elapsed time, total progress and report aggregation.
+
+The overall progress denominator counts quality documents and timed latency
+samples; model loading, preflight and warmups are reported separately and are
+not included in the denominator. ETAs are extrapolations from observed timings,
+**not promises**. An active run will not acquire this feature mid-run: update
+the code and start a new run.
+
 ## Results and troubleshooting
 
 - Combined suites: `results/suites/<suite-id>/` (quality, latency, manifest)
