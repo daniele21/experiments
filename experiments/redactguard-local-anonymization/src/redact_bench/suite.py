@@ -47,6 +47,7 @@ class SuiteConfig:
     max_output_tokens: int = 4096
     adaptive_subdivision: bool = True
     inference_cache_max_entries: int = 0
+    quality_only: bool = False
 
 
 def _resolve_path(value: str, root: Path) -> Path:
@@ -71,6 +72,9 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         )
 
     latency = suite.get("latency") or {}
+    quality_only = bool(suite.get("quality_only", False))
+    if not quality_only and not latency.get("case_ids"):
+        raise ValueError("suite.latency.case_ids is required unless quality_only=true")
     return SuiteConfig(
         models=models,
         dataset=_resolve_path(str(suite["dataset"]), root),
@@ -81,7 +85,7 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         ).rstrip("/"),
         runtime_strategy=runtime_strategy,
         quality_warmups=int(suite.get("quality_warmups", 1)),
-        latency_case_ids=tuple(str(value) for value in latency["case_ids"]),
+        latency_case_ids=tuple(str(value) for value in latency.get("case_ids", [])),
         latency_warmups=int(latency.get("warmups", 5)),
         latency_repeats=int(latency.get("repeats", 30)),
         ensure_models=bool(suite.get("ensure_models", True)),
@@ -96,6 +100,7 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         max_output_tokens=int(suite.get("max_output_tokens", 4096)),
         adaptive_subdivision=bool(suite.get("adaptive_subdivision", True)),
         inference_cache_max_entries=int(suite.get("inference_cache_max_entries", 0)),
+        quality_only=quality_only,
     )
 
 
@@ -210,6 +215,7 @@ def run_managed_suite(
         "korgis_source_sha": source_sha,
         "korgis_base_url": config.korgis_base_url,
         "inference_cache_max_entries": config.inference_cache_max_entries,
+        "quality_only": config.quality_only,
     }
     _write_status(status_path, {**base_status, "status": "preparing"})
 
@@ -223,8 +229,8 @@ def run_managed_suite(
     progress = SuiteProgress(
         models=len(models),
         quality_cases=len(all_cases),
-        latency_cases=latency_cases,
-        latency_repeats=config.latency_repeats,
+        latency_cases=0 if config.quality_only else latency_cases,
+        latency_repeats=0 if config.quality_only else config.latency_repeats,
     )
     progress.suite_started(output=str(suite_dir))
 
@@ -278,20 +284,21 @@ def run_managed_suite(
                             progress=progress,
                         )
                     )
-                    progress.latency_started()
-                    latency_runs.append(
-                        run_latency(
-                            models=[model],
-                            dataset_path=str(config.dataset),
-                            profiles_path=str(config.profiles),
-                            results_dir=str(work_dir / "latency"),
-                            warmups=config.latency_warmups,
-                            repeats=config.latency_repeats,
-                            case_ids=list(config.latency_case_ids),
-                            on_sample=progress.latency_sample,
+                    if not config.quality_only:
+                        progress.latency_started()
+                        latency_runs.append(
+                            run_latency(
+                                models=[model],
+                                dataset_path=str(config.dataset),
+                                profiles_path=str(config.profiles),
+                                results_dir=str(work_dir / "latency"),
+                                warmups=config.latency_warmups,
+                                repeats=config.latency_repeats,
+                                case_ids=list(config.latency_case_ids),
+                                on_sample=progress.latency_sample,
+                            )
                         )
-                    )
-                    progress.latency_finished()
+                        progress.latency_finished()
                 progress.model_finished()
 
         progress.combining()
@@ -301,30 +308,39 @@ def run_managed_suite(
             suite_id=suite_id,
             kind="quality",
         )
-        latency_dir = combine_model_runs(
-            latency_runs,
-            output=suite_dir / "latency",
-            suite_id=suite_id,
-            kind="latency",
+        latency_dir = (
+            combine_model_runs(
+                latency_runs,
+                output=suite_dir / "latency",
+                suite_id=suite_id,
+                kind="latency",
+            )
+            if latency_runs else None
         )
         shutil.rmtree(suite_dir / "_work", ignore_errors=True)
 
-        entry = build_history_entry(
-            suite_id=suite_id,
-            dataset_id=dataset_id,
-            suite_dir=suite_dir,
-            quality_dir=quality_dir,
-            latency_dir=latency_dir,
-            korgis_repo=resolved_korgis,
-            korgis_sha=source_sha,
-            korgis_base_url=config.korgis_base_url,
-        )
-        history_path = config.results_dir / "history.jsonl"
-        append_history(history_path, entry)
-        dashboard_path = write_history_dashboard(
-            history_path,
-            config.results_dir / "dashboard.html",
-        )
+        # The historical HTML dashboard expects paired quality+latency.
+        # Quality-only capability runs remain fully discoverable in the React
+        # dashboard via their suite/quality directory.
+        history_path = None
+        dashboard_path = None
+        if latency_dir is not None:
+            entry = build_history_entry(
+                suite_id=suite_id,
+                dataset_id=dataset_id,
+                suite_dir=suite_dir,
+                quality_dir=quality_dir,
+                latency_dir=latency_dir,
+                korgis_repo=resolved_korgis,
+                korgis_sha=source_sha,
+                korgis_base_url=config.korgis_base_url,
+            )
+            history_path = config.results_dir / "history.jsonl"
+            append_history(history_path, entry)
+            dashboard_path = write_history_dashboard(
+                history_path,
+                config.results_dir / "dashboard.html",
+            )
 
         _write_status(
             status_path,
@@ -333,9 +349,9 @@ def run_managed_suite(
                 "status": "completed",
                 "completed_at": datetime.now(timezone.utc).isoformat(),
                 "quality": str(quality_dir),
-                "latency": str(latency_dir),
-                "history": str(history_path),
-                "dashboard": str(dashboard_path),
+                "latency": str(latency_dir) if latency_dir else None,
+                "history": str(history_path) if history_path else None,
+                "dashboard": str(dashboard_path) if dashboard_path else None,
             },
         )
         progress.suite_finished()
