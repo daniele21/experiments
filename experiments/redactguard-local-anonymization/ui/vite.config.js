@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { summarizeCapabilitySuite } from "./src/v2/capabilitySummary.js";
 
 const UI_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_ROOT = path.resolve(UI_ROOT, "../results");
@@ -460,6 +461,24 @@ async function discoverRuns() {
   });
 }
 
+// Dataset-level capability reports are read-only and summary-only: the
+// response cannot expose document texts, annotation values or original files.
+async function buildCapabilities() {
+  const qualityRuns = (await discoverRuns()).filter(run =>
+    run.source === "suite" && run.kind === "quality" && run.status === "complete");
+  const entries = await Promise.all(qualityRuns.map(async run => {
+    const root = path.resolve(RESULTS_ROOT, ...run.key.split("/"));
+    const status = await readJson(path.join(path.dirname(root), "suite.json"));
+    if (status?.status !== "completed") return null;
+    const metrics = await readJson(path.join(root, "metrics.json"));
+    return summarizeCapabilitySuite({
+      key: run.key, suiteId: run.suiteId, datasetId: status.dataset_id ?? run.dataset,
+      createdAt: status.completed_at ?? run.createdAt, models:run.models,
+    }, metrics);
+  }));
+  return {capabilities: entries.filter(Boolean)};
+}
+
 const CANONICAL_DIR = path.resolve(UI_ROOT, "../data/realistic/canonical");
 const ANNOTATIONS_DIR = path.resolve(UI_ROOT, "../data/realistic/annotations");
 const STRUCTURE_MARKER_RE = /^\s*<!--\s*(page|sheet|slide|embedded-image)\s*:\s*(.*?)\s*-->\s*$/;
@@ -817,6 +836,11 @@ function resultsApi() {
 
       if (url.pathname === "/api/runs") {
         sendJson(response, 200, { runs: await discoverRuns() });
+        return;
+      }
+
+      if (url.pathname === "/api/capabilities") {
+        sendJson(response, 200, await buildCapabilities());
         return;
       }
 

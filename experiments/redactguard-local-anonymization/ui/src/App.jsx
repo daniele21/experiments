@@ -246,6 +246,8 @@ export default function App() {
               onClick={() => route.navigate(appRoutes.clientModels)}><span aria-hidden="true">◈</span>Modelli</button>
             <button type="button" className={route.page === "documents" || route.page === "detail" ? "active" : ""}
               onClick={() => route.navigate(appRoutes.clientDocuments)}><span aria-hidden="true">▤</span>Documenti</button>
+            <button type="button" className={route.page === "capabilities" ? "active" : ""}
+              onClick={() => route.navigate(appRoutes.clientCapabilities)}><span aria-hidden="true">◉</span>Capacità</button>
             <button type="button" onClick={() => route.navigate(appRoutes.advancedModels)}
               title="Workbench tecnico"><span aria-hidden="true">⚙</span>Avanzate</button>
           </nav>
