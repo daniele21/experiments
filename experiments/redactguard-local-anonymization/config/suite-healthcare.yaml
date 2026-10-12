@@ -1,0 +1,20 @@
+suite:
+  dataset: data/healthcare/cases.jsonl
+  profiles: config/profiles.yaml
+  results_dir: results
+  korgis_base_url: http://127.0.0.1:12435/v1
+  models:
+    - qwen3.5-4b-q4km
+    - qwen3.5-9b-q4km
+  ensure_models: false
+  korgis_startup_timeout_seconds: 600
+  runtime_strategy: restart_per_model
+  inference_cache_max_entries: 0
+  quality_only: true
+  quality_warmups: 0
+  benchmark_timeout_seconds: 360
+  chunk_max_chars: 4000
+  chunk_overlap_chars: 256
+  max_output_tokens: 4096
+  adaptive_subdivision: true
+  min_split_chars: 500
