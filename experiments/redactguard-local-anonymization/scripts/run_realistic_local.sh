@@ -185,7 +185,30 @@ if korgis_env_healthy; then
   info "Skipping Korgis uv sync and llama-cpp-python compilation."
 else
   if [[ -e "$KORGIS_DIR/.venv" ]]; then
-    error "Korgis has an existing but unusable .venv (or missing dependencies): $KORGIS_DIR/.venv. To protect your existing environment, this script will not overwrite it. Repair Korgis dependencies manually and retry. Run '$KORGIS_PYTHON -c \"import llama_cpp, local_llm_server.cli\"' for diagnostics."
+    info "Korgis venv exists, but validation failed. Diagnosing without modifying it ..."
+    if [[ ! -x "$KORGIS_PYTHON" ]]; then
+      printf '  FAIL interpreter: %s does not exist or is not executable.\n' "$KORGIS_PYTHON" >&2
+    else
+      "$KORGIS_PYTHON" - <<'PY' || true
+import importlib
+import platform
+import sys
+
+print(f"  Python: {sys.executable}")
+print(f"  Version: {sys.version.split()[0]}")
+print(f"  Architecture: {platform.machine()}")
+if platform.machine() != "arm64":
+    print("  FAIL architecture: expected native arm64, not Rosetta/x86_64")
+for module in ("local_llm_server.cli", "llama_cpp", "yaml", "fastapi"):
+    try:
+        imported = importlib.import_module(module)
+    except Exception as exc:
+        print(f"  FAIL {module}: {type(exc).__name__}: {exc}")
+    else:
+        print(f"  OK   {module}: {getattr(imported, '__file__', '<built-in>')}")
+PY
+    fi
+    error "Existing Korgis .venv is not usable. It was not changed. See the failed checks above. If imports work outside this script, compare the exact interpreter paths; activating a venv does not install missing dependencies."
   fi
 
   # Bootstrap only when Korgis has no pre-existing venv.

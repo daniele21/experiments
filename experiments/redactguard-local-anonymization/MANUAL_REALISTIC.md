@@ -84,7 +84,9 @@ installed Python environment are different things.** If
 subprocesses from resynchronizing the environment.
 
 If `korgis/.venv` exists but is broken or incompatible, the script now
-fails without deleting or rebuilding it. If no Korgis `.venv` exists,
+prints the Python path, version, CPU architecture, and the exact failed imports
+(`local_llm_server.cli`, `llama_cpp`, `yaml`, `fastapi`) before exiting without
+deleting or rebuilding it. If no Korgis `.venv` exists,
 the script performs a one-time installation and records the build log.
 A cloned repository alone does not contain compiled `llama-cpp-python`
 binaries.
