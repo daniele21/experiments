@@ -60,5 +60,12 @@ jobs:
       - name: Validate realistic dataset
         run: uv run redact-bench check-realistic-dataset --dataset-dir data/realistic
 
+      - name: Validate specialized synthetic challenge datasets
+        run: |
+          uv run redact-bench check-data --dataset data/healthcare/cases.jsonl
+          uv run redact-bench check-data --dataset data/ambiguous/cases.jsonl
+          uv run redact-bench audit-data --dataset data/healthcare/cases.jsonl > /dev/null
+          uv run redact-bench audit-data --dataset data/ambiguous/cases.jsonl > /dev/null
+
       - name: Unit tests
         run: uv run pytest

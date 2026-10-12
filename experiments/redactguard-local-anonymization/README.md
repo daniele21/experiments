@@ -263,6 +263,66 @@ produce a valid RedactGuard v2 structured response before any dataset quality sc
 accepted. `compare` and `latency` run the same gate automatically unless explicitly
 disabled for diagnostics with `--no-preflight`.
 
+## Vertical capability benchmark suites (synthetic, quality-only)
+
+Beyond the 11-document realistic dataset and the original 46-case semantic
+challenge, two separate **frozen synthetic datasets** test less common and
+more ambiguous data under the existing RedactGuard profile definitions:
+
+| Dataset | Cases | Independent semantic contrast pairs | Profiles | Purpose |
+| --- | ---: | ---: | --- | --- |
+| `data/healthcare/cases.jsonl` | 48 | 24 | Healthcare | Diagnosis, medication, rare condition, measurements, labs, genetics, personal clinical context |
+| `data/ambiguous/cases.jsonl` | 48 | 24 | General, Healthcare, Financial, Legal | Same identifier/expression in a protected record vs public/demo/generic context |
+
+All cases use the existing model-facing `pii_type + value` contract; the
+`pii_subtype` is benchmark-only metadata. Negative contrast cases have
+**zero annotated entities by policy**. They are meant to probe over-redaction
+rather than prove that a particular string is inherently public.
+
+**No real patient data are included**, and the new gold annotations have not
+undergone independent adjudication (`human_reviewed=false`). Use results
+for exploration and error analysis, not clinical, GDPR or product compliance
+claims. Follow-up datasets should source and independently annotate more
+realistic clinical documents; don't change the gold after looking at model
+answers without versioning and a held-out set.
+
+Validate locally:
+
+```bash
+uv run redact-bench check-data --dataset data/healthcare/cases.jsonl
+uv run redact-bench check-data --dataset data/ambiguous/cases.jsonl
+uv run redact-bench audit-data --dataset data/healthcare/cases.jsonl
+uv run redact-bench audit-data --dataset data/ambiguous/cases.jsonl
+```
+
+Run the two downloaded local Qwen finalists (sequentially; **quality only**):
+
+```bash
+uv run redact-bench suite --config config/suite-healthcare.yaml --no-ensure-models
+uv run redact-bench suite --config config/suite-ambiguous.yaml --no-ensure-models
+```
+
+These configurations set `quality_only: true`: Korgis restarts for each
+model, uses its verified response-cache-off mode, evaluates all 48 cases, and
+writes `results/suites/<suite-id>/quality/` **without latency repetitions**.
+No stale static history/dashboard is written for a quality-only suite. Its
+output is detected automatically by the live React interface:
+
+```bash
+uv run redact-bench ui
+```
+
+Open **http://127.0.0.1:5173/client/capabilities**. Four capability selectors
+show their most recent completed suites independently; datasets with no run
+display a runnable command, not fabricated scores. Each model shows (1)
+positive-case entity recall, (2) gold-empty **negative-case false-positive
+rate** computed only over valid negative inferences, (3) failed case counts
+and (4) category-level recall. These statistics must **never be averaged
+across benchmark families**: the 11-document dataset is dominated by a
+large spreadsheet whereas the challenge sets deliberately over-sample rare
+ambiguous categories. The normal /client/models view remains available for
+an in-depth comparison within the selected suite.
+
 ## Dataset audit and semantic challenge set
 
 Before interpreting model rankings, audit the dataset itself:

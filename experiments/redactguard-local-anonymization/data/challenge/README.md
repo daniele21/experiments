@@ -7,7 +7,7 @@ policy contextually rather than merely recognizing obvious patterns.
 
 ## Design
 
-- 45 compact cases across General, Healthcare, Financial, and Legal.
+- 46 compact cases across General, Healthcare, Financial, and Legal.
 - Positive, negative, and contrast-pair cases.
 - Hard negatives reuse values or surface forms that would be protected in another context.
 - Every case carries a `content_family_id` so contrast variants can be analyzed together.
