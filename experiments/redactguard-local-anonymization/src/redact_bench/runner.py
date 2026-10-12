@@ -8,6 +8,7 @@ import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 from redact_bench.datasets import load_dataset
 from redact_bench.metrics import EVALUATION_SCHEMA, aggregate_detailed, score_case
@@ -259,6 +260,7 @@ def run_latency(
     chunk_overlap_chars: int | None = None,
     max_output_tokens: int | None = None,
     adaptive_subdivision: bool | None = None,
+    on_sample: Callable[[str, int, int, str, float], None] | None = None,
 ) -> Path:
     controller = KorgisController()
     controller.health()
@@ -316,7 +318,7 @@ def run_latency(
         model_rows: list[dict] = []
         raw_path = output / f"{model.replace('/', '_')}.jsonl"
         with raw_path.open("w", encoding="utf-8") as raw_file:
-            for case in cases:
+            for case_index, case in enumerate(cases):
                 for repeat in range(repeats):
                     result = provider.evaluate(case)
                     row = score_case(case, result)
@@ -335,6 +337,15 @@ def run_latency(
                         )
                         + "\n"
                     )
+                    raw_file.flush()
+                    if on_sample is not None:
+                        on_sample(
+                            model,
+                            case_index * repeats + repeat + 1,
+                            len(cases) * repeats,
+                            case.case_id,
+                            result.latency_ms,
+                        )
         summaries[model] = aggregate_detailed(model_rows)
 
     manifest = {

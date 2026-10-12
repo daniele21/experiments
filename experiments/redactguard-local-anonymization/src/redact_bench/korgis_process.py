@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
+from typing import Callable
 from urllib.parse import urlparse
 
 from redact_bench.provider import KorgisController, KorgisUnavailableError
@@ -159,6 +160,7 @@ class ManagedKorgis:
         startup_timeout_seconds: float = 600.0,
         api_base: str | None = None,
         reuse_existing: bool = False,
+        startup_progress: Callable[[float], None] | None = None,
     ) -> None:
         self.repo = repo
         self.anchor_model = anchor_model
@@ -166,6 +168,7 @@ class ManagedKorgis:
         self.startup_timeout_seconds = startup_timeout_seconds
         self.controller = KorgisController(api_base)
         self.reuse_existing = reuse_existing
+        self.startup_progress = startup_progress
         self.process: subprocess.Popen[str] | None = None
         self._log_handle = None
         self.reused_existing = False
@@ -240,7 +243,9 @@ class ManagedKorgis:
         self._assert_admin_api()
 
     def _wait_until_ready(self) -> None:
-        deadline = time.monotonic() + self.startup_timeout_seconds
+        started_at = time.monotonic()
+        deadline = started_at + self.startup_timeout_seconds
+        last_reported_at = started_at
         while time.monotonic() < deadline:
             if self.process is not None and self.process.poll() is not None:
                 raise RuntimeError(
@@ -249,6 +254,10 @@ class ManagedKorgis:
                 )
             if self._server_is_healthy():
                 return
+            now = time.monotonic()
+            if self.startup_progress is not None and now - last_reported_at >= 15:
+                self.startup_progress(now - started_at)
+                last_reported_at = now
             time.sleep(2)
 
         self.stop()

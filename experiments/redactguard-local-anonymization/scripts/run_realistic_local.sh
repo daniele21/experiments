@@ -235,6 +235,9 @@ fi
 # ensure that invocation NEVER starts a new package sync/llama-cpp build.
 unset UV_PYTHON
 export UV_NO_SYNC=1
+# The suite is streamed through tee. Without unbuffered Python, print() output
+# can stay in memory until the subprocess ends rather than appear in Terminal.
+export PYTHONUNBUFFERED=1
 
 info "Validating realistic data and the Korgis model registry ..."
 uv_native run --frozen redact-bench check-realistic-dataset --dataset-dir data/realistic

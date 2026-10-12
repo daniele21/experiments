@@ -21,6 +21,7 @@ from redact_bench.korgis_process import (
     korgis_git_sha,
     resolve_korgis_repo,
 )
+from redact_bench.progress import SuiteProgress
 from redact_bench.realistic_dataset import validate_realistic_dataset
 from redact_bench.runner import run_compare, run_latency
 from redact_bench.suite_artifacts import combine_model_runs
@@ -207,6 +208,21 @@ def run_managed_suite(
     }
     _write_status(status_path, {**base_status, "status": "preparing"})
 
+    # The progress denominator counts actual document evaluations and latency
+    # samples, not inference-time startup or warmup work (shown separately).
+    all_cases = load_dataset(config.dataset)
+    case_ids_present = {case.case_id for case in all_cases}
+    latency_cases = sum(
+        case_id in case_ids_present for case_id in config.latency_case_ids
+    )
+    progress = SuiteProgress(
+        models=len(models),
+        quality_cases=len(all_cases),
+        latency_cases=latency_cases,
+        latency_repeats=config.latency_repeats,
+    )
+    progress.suite_started(output=str(suite_dir))
+
     try:
         if ensure_models:
             ensure_korgis_models(resolved_korgis, list(models))
@@ -236,6 +252,7 @@ def run_managed_suite(
 
                 model_key = model.replace("/", "_")
                 work_dir = suite_dir / "_work" / model_key
+                progress.model_preparing(model=model, index=index)
                 with ManagedKorgis(
                     repo=resolved_korgis,
                     anchor_model=model,
@@ -243,6 +260,7 @@ def run_managed_suite(
                     startup_timeout_seconds=config.korgis_startup_timeout_seconds,
                     api_base=config.korgis_base_url,
                     reuse_existing=False,
+                    startup_progress=progress.startup_wait,
                 ):
                     quality_runs.append(
                         run_compare(
@@ -251,8 +269,10 @@ def run_managed_suite(
                             profiles_path=str(config.profiles),
                             results_dir=str(work_dir / "quality"),
                             warmups=config.quality_warmups,
+                            progress=progress,
                         )
                     )
+                    progress.latency_started()
                     latency_runs.append(
                         run_latency(
                             models=[model],
@@ -262,9 +282,13 @@ def run_managed_suite(
                             warmups=config.latency_warmups,
                             repeats=config.latency_repeats,
                             case_ids=list(config.latency_case_ids),
+                            on_sample=progress.latency_sample,
                         )
                     )
+                    progress.latency_finished()
+                progress.model_finished()
 
+        progress.combining()
         quality_dir = combine_model_runs(
             quality_runs,
             output=suite_dir / "quality",
@@ -308,6 +332,7 @@ def run_managed_suite(
                 "dashboard": str(dashboard_path),
             },
         )
+        progress.suite_finished()
         return suite_dir
     except Exception as exc:
         _write_status(

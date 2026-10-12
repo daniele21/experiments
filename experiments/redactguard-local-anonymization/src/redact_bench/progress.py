@@ -227,3 +227,179 @@ class TerminalProgress:
 
     def run_completed(self) -> None:
         self._line("✓ Run complete")
+
+
+class SuiteProgress(NullProgress):
+    """Line-oriented, unbuffered progress for the managed multi-model suite.
+
+    Intentionally avoids ANSI / carriage returns: the manual shell launcher
+    pipes stdout through tee, and each progress update must remain visible in
+    both the terminal and the saved log.
+    """
+
+    def __init__(
+        self,
+        *,
+        models: int,
+        quality_cases: int,
+        latency_cases: int,
+        latency_repeats: int,
+        stream: TextIO | None = None,
+        clock: Callable[[], float] = time.perf_counter,
+    ) -> None:
+        self.stream = stream or sys.stdout
+        self.clock = clock
+        self.models = models
+        self.quality_cases = quality_cases
+        self.latency_samples = latency_cases * latency_repeats
+        self.total_units = models * (quality_cases + self.latency_samples)
+        self.done_units = 0
+        self.started_at = clock()
+        self.stage_started_at = self.started_at
+        self.model_started_at = self.started_at
+        self.model_index = 0
+        self.model = ""
+        self.quality_done = 0
+        self.latency_done = 0
+
+    def _line(self, message: str) -> None:
+        self.stream.write(f"[Progress] {message}\n")
+        self.stream.flush()
+
+    @staticmethod
+    def _pct(done: int, total: int) -> str:
+        return f"{done / total * 100:.0f}%" if total else "100%"
+
+    def _eta(self, done: int, total: int, started_at: float) -> str:
+        if done < 2:
+            return "calculating"
+        elapsed = max(0.0, self.clock() - started_at)
+        return "~" + _format_duration((elapsed / done) * (total - done))
+
+    def _overall(self) -> str:
+        return (
+            f"overall {self.done_units}/{self.total_units} "
+            f"({self._pct(self.done_units, self.total_units)})"
+            f" | ETA {self._eta(self.done_units, self.total_units, self.started_at)}"
+        )
+
+    def suite_started(self, *, output: str) -> None:
+        self._line(
+            f"Suite started | {self.models} models | "
+            f"{self.quality_cases} quality documents/model | "
+            f"{self.latency_samples} latency samples/model"
+        )
+        self._line(f"Suite results: {output}")
+        self._line("ETA is approximate; model loading and varying inference speeds affect it.")
+
+    def model_preparing(self, *, model: str, index: int) -> None:
+        self.model = model
+        self.model_index = index
+        self.model_started_at = self.clock()
+        self.quality_done = 0
+        self.latency_done = 0
+        self._line(f"Model {index}/{self.models}: {model} | starting Korgis | {self._overall()}")
+
+    def startup_wait(self, elapsed: float) -> None:
+        self._line(
+            f"Model {self.model_index}/{self.models}: {self.model} "
+            f"| Korgis startup in progress ({_format_duration(elapsed)} elapsed)"
+        )
+
+    # ProgressReporter hooks wired into run_compare().
+    def run_started(self, **_: object) -> None:
+        self.stage_started_at = self.clock()
+        self._line(f"Model {self.model_index}/{self.models}: {self.model} | quality preflight")
+
+    def model_started(self, **_: object) -> None:
+        pass
+
+    def warmups_started(self, *, total: int, **_: object) -> None:
+        if total:
+            self._line(f"{self.model} | quality warmup 0/{total}")
+
+    def warmup_completed(self, *, completed: int, total: int, **_: object) -> None:
+        if completed == total:
+            self._line(f"{self.model} | quality warmup {completed}/{total} done")
+
+    def cases_started(self, *, total: int, **_: object) -> None:
+        self.stage_started_at = self.clock()
+        self._line(f"{self.model} | quality 0/{total} | {self._overall()}")
+
+    def case_completed(
+        self,
+        *,
+        completed: int,
+        total: int,
+        case_id: str,
+        latency_ms: float,
+        errors: int,
+        **_: object,
+    ) -> None:
+        increment = max(0, completed - self.quality_done)
+        self.done_units += increment
+        self.quality_done = completed
+        self._line(
+            f"{self.model} | quality {completed}/{total} ({self._pct(completed, total)})"
+            f" | {case_id} | last {_format_latency(latency_ms)} | errors {errors}"
+            f" | stage ETA {self._eta(completed, total, self.stage_started_at)}"
+            f" | {self._overall()}"
+        )
+
+    def model_completed(self, *, completed: int, total: int, errors: int, **_: object) -> None:
+        if completed < total:
+            # A preflight failure skips the planned quality evaluations.
+            self.done_units += total - self.quality_done
+            self.quality_done = total
+            self._line(f"{self.model} | quality skipped after preflight | errors {errors}")
+        else:
+            self._line(f"{self.model} | quality complete: {completed}/{total} | errors {errors}")
+
+    def run_completed(self) -> None:
+        pass
+
+    def latency_started(self) -> None:
+        self.stage_started_at = self.clock()
+        self._line(
+            f"{self.model} | latency preflight + warmup; "
+            f"planned {self.latency_samples} samples | {self._overall()}"
+        )
+
+    def latency_sample(
+        self,
+        model: str,
+        completed: int,
+        total: int,
+        case_id: str,
+        latency_ms: float,
+    ) -> None:
+        self.done_units += max(0, completed - self.latency_done)
+        self.latency_done = completed
+        if completed == 1 or completed % 5 == 0 or completed == total:
+            self._line(
+                f"{model} | latency {completed}/{total} ({self._pct(completed, total)})"
+                f" | {case_id} | last {_format_latency(latency_ms)}"
+                f" | stage ETA {self._eta(completed, total, self.stage_started_at)}"
+                f" | {self._overall()}"
+            )
+
+    def latency_finished(self) -> None:
+        if self.latency_done < self.latency_samples:
+            self.done_units += self.latency_samples - self.latency_done
+            self._line(f"{self.model} | latency preflight failed or samples skipped")
+        else:
+            self._line(f"{self.model} | latency complete: {self.latency_done}/{self.latency_samples}")
+        self.latency_done = self.latency_samples
+
+    def model_finished(self) -> None:
+        elapsed = self.clock() - self.model_started_at
+        self._line(
+            f"Model {self.model_index}/{self.models}: {self.model} complete"
+            f" | elapsed {_format_duration(elapsed)} | {self._overall()}"
+        )
+
+    def combining(self) -> None:
+        self._line("All models evaluated; aggregating quality, latency and dashboard ...")
+
+    def suite_finished(self) -> None:
+        self._line(f"Suite complete | elapsed {_format_duration(self.clock() - self.started_at)}")
