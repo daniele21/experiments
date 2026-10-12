@@ -341,7 +341,12 @@ def suite(
         raise typer.Exit(code=2) from exc
 
     typer.echo(f"suite: {output}")
-    typer.echo(f"dashboard: {ROOT / 'results/dashboard.html'}")
+    suite_status = json.loads((output / "suite.json").read_text(encoding="utf-8"))
+    if suite_status.get("quality_only"):
+        typer.echo(f"quality artifacts: {output / 'quality'}")
+        typer.echo("Interactive dashboard: uv run redact-bench ui")
+    else:
+        typer.echo(f"dashboard: {ROOT / 'results/dashboard.html'}")
 
 
 @app.command("probe-quality")

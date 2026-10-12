@@ -278,3 +278,95 @@ def test_managed_korgis_cache_disabled_verified_fail_closed(tmp_path: Path):
     server.controller.health = lambda: {"ok": True}  # Older Korgis protocol.
     with pytest.raises(RuntimeError, match="got None"):
         server._assert_inference_cache()
+
+
+def test_quality_only_suite_config_requires_no_latency_cases(tmp_path: Path):
+    cfg = tmp_path / "quality-only.yaml"
+    cfg.write_text(
+        "suite:\n"
+        "  models: [qwen]\n"
+        "  dataset: data/challenge/cases.jsonl\n"
+        "  profiles: config/profiles.yaml\n"
+        "  quality_only: true\n",
+        encoding="utf-8",
+    )
+    config = load_suite_config(cfg, root=tmp_path)
+    assert config.quality_only
+    assert config.latency_case_ids == ()
+    assert config.inference_cache_max_entries == 0
+
+
+def test_quality_only_suite_skips_latency_and_keeps_quality_artifacts(
+    tmp_path: Path, monkeypatch,
+):
+
+    from redact_bench import suite as module
+
+    config_path = tmp_path / "suite.yaml"
+    data_path = tmp_path / "dataset.jsonl"
+    data_path.write_text(
+        json.dumps({
+            "id": "case-1",
+            "profile": "general",
+            "text": "Example text.",
+            "entities": [],
+            "gold_version": "qualityonly_v1",
+        }) + "\n",
+        encoding="utf-8",
+    )
+    config_path.write_text(
+        "suite:\n"
+        "  models: [qwen]\n"
+        "  dataset: dataset.jsonl\n"
+        "  profiles: profiles.yaml\n"
+        "  results_dir: results\n"
+        "  quality_only: true\n"
+        "  ensure_models: false\n",
+        encoding="utf-8",
+    )
+    korgis = tmp_path / "korgis"
+    korgis.mkdir()
+
+    class FakeKorgis:
+        def __init__(self, **kwargs):
+            assert kwargs["inference_cache_max_entries"] == 0
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Quality-only suite must never run the latency path")
+
+    monkeypatch.setattr(module, "resolve_korgis_repo", lambda *a, **kw: korgis)
+    monkeypatch.setattr(module, "korgis_git_sha", lambda *a: "fake-korgis-sha")
+    monkeypatch.setattr(module, "ManagedKorgis", FakeKorgis)
+    monkeypatch.setattr(
+        module,
+        "run_compare",
+        lambda **kwargs: _fake_model_run(
+            Path(kwargs["results_dir"]) / "quality-one",
+            kwargs["models"][0],
+            1.0,
+        ),
+    )
+    monkeypatch.setattr(module, "run_latency", forbidden)
+    monkeypatch.setattr(module, "build_history_entry", forbidden)
+    monkeypatch.setattr(module, "write_history_dashboard", forbidden)
+
+    output = module.run_managed_suite(
+        config_path=config_path,
+        experiment_root=tmp_path,
+    )
+    info = json.loads((output / "suite.json").read_text(encoding="utf-8"))
+    assert info["status"] == "completed"
+    assert info["quality_only"] is True
+    assert info["dataset_id"] == "qualityonly_v1"
+    assert (output / "quality" / "metrics.json").exists()
+    assert (output / "quality" / "report.html").exists()
+    assert not (output / "latency").exists()
+    assert info["latency"] is None
+    assert info["history"] is None
+    assert info["dashboard"] is None
