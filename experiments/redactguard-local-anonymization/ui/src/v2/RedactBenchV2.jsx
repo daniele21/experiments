@@ -50,7 +50,7 @@ export default function RedactBenchV2({
    <div className="rb2-content">
     {page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
      page==="documents" ? <DocumentComparison detail={detail} models={selectedModels} onOpenDocument={openDoc}/>:
-     page==="detail" ? <DocumentWorkspace detail={detail} documentName={route.params.documentName} initialModel={route.params.model} models={[route.params.model,...selectedModels.filter(m=>m!==route.params.model)].filter(m=>available.includes(m)).slice(0,2)} onBack={onDocuments} onSelectModel={onSelectModel}/>:
+     page==="detail" ? <DocumentWorkspace detail={detail} documentName={route.params.documentName} initialModel={route.params.model} models={[route.params.model,...selectedModels.filter(m=>m!==route.params.model)].filter(m=>available.includes(m)).slice(0,2)} onBack={onDocuments} onSelectModel={(model)=>{onSelectModel?.(model);route.navigate(appRoutes.clientDetail(route.params.documentName,model),{replace:true});}}/>:
      <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>}
    </div>
    {page!=="detail"&&<footer className="rb2-legal-note">Dati elaborati localmente · Misure sperimentali su gold non necessariamente revisionato. Non costituiscono certificazione GDPR.</footer>}
