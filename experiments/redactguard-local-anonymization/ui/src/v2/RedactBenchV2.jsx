@@ -5,6 +5,7 @@ import { modelsIn, shortModel } from "./evidence";
 import ModelComparison from "./ModelComparison";
 import DocumentComparison from "./DocumentComparison";
 import DocumentWorkspace from "./DocumentWorkspace";
+import CapabilitiesPage from "./CapabilitiesPage";
 import "./base.css";
 
 export default function RedactBenchV2({
@@ -33,7 +34,7 @@ export default function RedactBenchV2({
  return <div className="rb2-root">
    <header className="rb2-topbar">
      <div className="rb2-run-context"><span className="rb2-kicker">BENCHMARK LOCALE / RISULTATI</span>
-      <div className="rb2-run-title"><strong>{detail?.summary?.suiteId||detail?.summary?.runId||"Benchmark"}</strong><span className="rb2-run-indicator">{status}</span></div>
+      <div className="rb2-run-title"><strong>{page==="capabilities"?"Confronto per capacità":detail?.summary?.suiteId||detail?.summary?.runId||"Benchmark"}</strong><span className="rb2-run-indicator">{page==="capabilities"?"Suite indipendenti":status}</span></div>
       <span className="rb2-run-subtitle">{caption}</span>
      </div>
      <div className="rb2-head-actions">
@@ -48,7 +49,8 @@ export default function RedactBenchV2({
      </div>
    </header>
    <div className="rb2-content">
-    {page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
+    {page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey)=>{onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
+     page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
      page==="documents" ? <DocumentComparison detail={detail} models={selectedModels} onOpenDocument={openDoc}/>:
      page==="detail" ? <DocumentWorkspace detail={detail} documentName={route.params.documentName} initialModel={route.params.model} models={[route.params.model,...selectedModels.filter(m=>m!==route.params.model)].filter(m=>available.includes(m)).slice(0,2)} onBack={onDocuments} onSelectModel={(model)=>{onSelectModel?.(model);route.navigate(appRoutes.clientDetail(route.params.documentName,model),{replace:true});}}/>:
      <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>}
