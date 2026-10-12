@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export const appRoutes = {
   clientModels: "/client/models",
   clientDocuments: "/client/documents",
+  clientCapabilities: "/client/capabilities",
   clientDetail: (documentName, model) =>
     `/client/documents/${encodeURIComponent(documentName)}/models/${encodeURIComponent(model)}`,
   advancedExecutive: "/advanced/executive",
@@ -29,6 +30,15 @@ export function parseAppRoute(pathname) {
       page: "models",
       params: {},
       canonicalPath: appRoutes.clientModels,
+    };
+  }
+
+  if (path === "/client/capabilities") {
+    return {
+      area: "client",
+      page: "capabilities",
+      params: {},
+      canonicalPath: appRoutes.clientCapabilities,
     };
   }
 
