@@ -250,9 +250,13 @@ for model in "${MODELS[@]}"; do
   # Model IDs are registry keys, not paths/URLs or arbitrary shell expressions.
   [[ "$model" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || error "Invalid Korgis model ID: '$model'"
   already_added=0
-  for previous in "${UNIQUE_MODELS[@]}"; do
-    if [[ "$previous" == "$model" ]]; then already_added=1; break; fi
-  done
+  # macOS ships Bash 3.2: with `set -u`, expanding an empty array via
+  # "${UNIQUE_MODELS[@]}" raises "unbound variable". Check its length first.
+  if (( ${#UNIQUE_MODELS[@]} > 0 )); then
+    for previous in "${UNIQUE_MODELS[@]}"; do
+      if [[ "$previous" == "$model" ]]; then already_added=1; break; fi
+    done
+  fi
   if (( ! already_added )); then UNIQUE_MODELS+=("$model"); fi
 done
 MODELS=("${UNIQUE_MODELS[@]}")
