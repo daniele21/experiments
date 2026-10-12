@@ -39,5 +39,8 @@ suite:
       - lettera.txt
       - presentazione.pptx
       - contratto.pdf
-    warmups: 5
-    repeats: 30
+    # Cached repeats were cheap but invalid. Each repeat is now real inference.
+    # Default exploratory sweep: 3 documents x 5 repeats x 4 models = 60 samples.
+    # For p95 publication-quality statistics, increase repeats and rerun only finalists.
+    warmups: 1
+    repeats: 5
