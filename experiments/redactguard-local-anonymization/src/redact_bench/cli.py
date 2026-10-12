@@ -344,6 +344,33 @@ def suite(
     typer.echo(f"dashboard: {ROOT / 'results/dashboard.html'}")
 
 
+@app.command("probe-quality")
+def probe_quality(
+    models: str = typer.Option(..., "--models", help="Comma-separated model IDs."),
+    cases: str = typer.Option(..., "--cases", help="Comma-separated document IDs/filenames."),
+    config: Path = typer.Option(ROOT / "config/suite.yaml"),
+    korgis_repo: Path | None = typer.Option(None, "--korgis-repo"),
+    chunk_max_chars: int | None = typer.Option(None, "--chunk-max-chars", min=512),
+) -> None:
+    """Run only selected failing documents with managed Korgis, no latency repetitions."""
+    from redact_bench.quality_probe import run_quality_probe
+
+    try:
+        output = run_quality_probe(
+            config_path=config,
+            root=ROOT,
+            models=[v.strip() for v in models.split(",") if v.strip()],
+            case_ids=[v.strip() for v in cases.split(",") if v.strip()],
+            korgis_repo=korgis_repo,
+            chunk_max_chars=chunk_max_chars,
+        )
+    except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"probe: {output}")
+    typer.echo(f"raw quality evidence: {output}/<model>/<run-id>/*.jsonl")
+
+
 @app.command("audit-suite")
 def audit_suite(
     suite_dir: Path = typer.Argument(..., help="Completed results/suites/<suite-id> directory."),
