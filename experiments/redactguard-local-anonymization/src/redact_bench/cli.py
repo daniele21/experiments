@@ -344,6 +344,22 @@ def suite(
     typer.echo(f"dashboard: {ROOT / 'results/dashboard.html'}")
 
 
+@app.command("audit-suite")
+def audit_suite(
+    suite_dir: Path = typer.Argument(..., help="Completed results/suites/<suite-id> directory."),
+) -> None:
+    """Audit raw suite evidence (micro/macro/family recall, cache hits, JSON failures)."""
+    from redact_bench.suite_audit import write_suite_audit
+
+    try:
+        json_path, markdown_path = write_suite_audit(suite_dir)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"audit JSON: {json_path}")
+    typer.echo(f"audit Markdown: {markdown_path}")
+
+
 @app.command("dashboard")
 def dashboard(
     history: Path = typer.Option(ROOT / "results/history.jsonl"),
