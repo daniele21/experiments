@@ -190,6 +190,37 @@ Any gold labels marked `human_reviewed=false` are explicitly disclosed; do
 not present this as a human-verified quality evaluation. The largest Excel
 file can disproportionately influence micro recall.
 
+## Isolate Nemotron invalid-JSON failures without repeating latency tests
+
+The prior suite failed on `tabella_piccola.xlsx`, `contratto.docx`
+and `contratto.doc` for both Nemotron quantizations. Use a **managed
+quality-only probe** to reproduce errors on just those documents. Korgis
+starts/stops per model, its full-response cache is disabled and checked,
+and the raw per-case quality JSONL is retained under `results/probes/`.
+
+```bash
+uv run redact-bench probe-quality \
+  --models "nemotron-nano-4b,nemotron-nano-4b-q8" \
+  --cases "tabella_piccola.xlsx,contratto.docx,contratto.doc"
+```
+
+For a controlled experiment on segmentation size, change *only* the
+chunk size while preserving models/cases:
+
+```bash
+uv run redact-bench probe-quality \
+  --models "nemotron-nano-4b,nemotron-nano-4b-q8" \
+  --cases "tabella_piccola.xlsx,contratto.docx,contratto.doc" \
+  --chunk-max-chars 1500
+```
+
+Compare the two `probe.json` manifests, `<model>/<run-id>/metrics.json`,
+`<model>/<run-id>/<model>.jsonl` and `logs/<model>.log`.
+Look specifically at segment numbers, output JSON errors, successful
+segments, and whether recall improves when chunks are smaller. This
+experiment changes the *effective chunking policy*, so results are
+not identical-condition model rankings and should be labelled separately.
+
 ## Results and troubleshooting
 
 - Combined suites: `results/suites/<suite-id>/` (quality, latency, manifest)
