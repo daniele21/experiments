@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { summarizeCapabilitySuite } from "./src/v2/capabilitySummary.js";
+import { bundledDatasetTextPath, indexBenchmarkTexts } from "./src/v2/datasetText.js";
 
 const UI_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_ROOT = path.resolve(UI_ROOT, "../results");
@@ -488,8 +489,12 @@ function stripStructureMarkers(text) {
   return lines.filter((line) => !STRUCTURE_MARKER_RE.test(line.trim())).join("\n");
 }
 
-async function loadDocumentSpans(directory) {
+async function loadDocumentSpans(directory, datasetId = null) {
   const docSpans = {};
+  const sourcePath = bundledDatasetTextPath(datasetId);
+  const sourceTexts = sourcePath
+    ? indexBenchmarkTexts(await readJsonLines(path.resolve(UI_ROOT, "..", sourcePath)))
+    : new Map();
   try {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
     for (const dirent of dirents) {
@@ -570,17 +575,25 @@ async function loadDocumentSpans(directory) {
 
     // Attach canonical inference text and fallback gold annotations
     for (const caseId of Object.keys(docSpans)) {
-      // 1. Text
-      try {
-        let raw = null;
-        try {
-          raw = await fs.readFile(path.join(CANONICAL_DIR, `${caseId}.md`), "utf-8");
-        } catch {
-          raw = await fs.readFile(path.join(CANONICAL_DIR, caseId), "utf-8");
-        }
-        docSpans[caseId].text = stripStructureMarkers(raw);
-      } catch {
+      // 1. Text. For bundled synthetic challenge sets, use *exactly* the
+      // JSONL text evaluated by the model, so span offsets stay aligned.
+      if (sourceTexts.has(caseId)) {
+        docSpans[caseId].text = sourceTexts.get(caseId);
+      } else if (sourcePath) {
+        // Never accidentally display realistic content for a different suite.
         docSpans[caseId].text = null;
+      } else {
+        try {
+          let raw = null;
+          try {
+            raw = await fs.readFile(path.join(CANONICAL_DIR, `${caseId}.md`), "utf-8");
+          } catch {
+            raw = await fs.readFile(path.join(CANONICAL_DIR, caseId), "utf-8");
+          }
+          docSpans[caseId].text = stripStructureMarkers(raw);
+        } catch {
+          docSpans[caseId].text = null;
+        }
       }
 
       // 2. Fallback gold if missing or empty
@@ -651,7 +664,7 @@ async function loadRunFromSummary(summary) {
   }
 
   const preflight = await readJson(path.join(directory, "preflight.json"), {});
-  const docSpans = await loadDocumentSpans(directory);
+  const docSpans = await loadDocumentSpans(directory, suiteMeta?.dataset_id);
   return { summary, manifest, metrics, failures, latency, preflight, docSpans, suiteMeta };
 }
 
