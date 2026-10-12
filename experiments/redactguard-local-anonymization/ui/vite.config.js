@@ -611,6 +611,13 @@ async function loadRunFromSummary(summary) {
     ]),
   );
 
+  // A paired run only measures real speed if the parent suite explicitly
+  // disabled Korgis's whole-response cache. Keep this machine-readable.
+  const suiteMeta = summary.suiteId && summary.source === "suite"
+    ? await readJson(path.join(RESULTS_ROOT, "suites", summary.suiteId, "suite.json"),
+        await readJson(path.join(RESULTS_ROOT, "suite", summary.suiteId, "suite.json")))
+    : null;
+
   let latency = null;
   if (summary.pairedLatencyKey) {
     const latencyDirectory = path.resolve(
@@ -626,7 +633,7 @@ async function loadRunFromSummary(summary) {
 
   const preflight = await readJson(path.join(directory, "preflight.json"), {});
   const docSpans = await loadDocumentSpans(directory);
-  return { summary, manifest, metrics, failures, latency, preflight, docSpans };
+  return { summary, manifest, metrics, failures, latency, preflight, docSpans, suiteMeta };
 }
 
 async function loadRun(key) {
