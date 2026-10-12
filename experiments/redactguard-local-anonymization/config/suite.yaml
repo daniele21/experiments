@@ -22,6 +22,8 @@ suite:
   # runtimes from accumulating and makes cross-model memory state comparable.
   runtime_strategy: restart_per_model
 
+  # 0 = disable Korgis whole-response cache. Mandatory for valid latency data.
+  inference_cache_max_entries: 0
   quality_warmups: 1
 
   # Execution resilience & capacity settings
