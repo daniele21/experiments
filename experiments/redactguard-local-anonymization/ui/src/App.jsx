@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ClientEvaluationJourney from "./components/ClientEvaluationJourney";
+import RedactBenchV2 from "./v2/RedactBenchV2";
 import DocumentComparisonView from "./components/DocumentComparisonView";
 import ExecutiveBriefingView from "./components/ExecutiveBriefingView";
 import FailureExplorer from "./components/FailureExplorer";
@@ -51,7 +51,7 @@ export default function App() {
     (runKey) => {
       route.setQueryParam(
         "run",
-        runKey === "__overview__" ? null : runKey,
+        runKey,
       );
     },
     [route],
@@ -74,6 +74,7 @@ export default function App() {
 
   // AbortController ref to cancel obsolete in-flight fetches
   const abortControllerRef = useRef(null);
+  const initialRunChosen = useRef(false);
 
   /**
    * Fetches data for the given run key and updates runs list.
@@ -163,6 +164,18 @@ export default function App() {
     fetchData(selectedKey, false);
   }, [selectedKey, fetchData]);
 
+  // Prefer a single completed, paired suite rather than a mixed cross-run
+  // leaderboard on initial page load. Explicit run selections are preserved.
+  useEffect(() => {
+    if (initialRunChosen.current || route.searchParams.has("run") ||
+        activeView !== "client" || !runs.length) return;
+    initialRunChosen.current = true;
+    const latest = runs.find((r) =>
+      r.source === "suite" && r.status === "complete" && r.pairedLatencyKey
+    ) ?? runs.find((r) => r.source === "suite" && r.status === "complete");
+    if (latest) route.setQueryParam("run", latest.key, { replace: true });
+  }, [runs, activeView, route]);
+
   // Set up background polling interval
   useEffect(() => {
     if (refreshInterval <= 0) return undefined;
@@ -216,7 +229,7 @@ export default function App() {
   const latencyP95 = currentLatency.latency_p95_ms ?? currentMicro.latency_p95_ms;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${activeView === "client" ? "rb2-app-shell" : ""}`}>
       {/* Sidebar navigation */}
       <aside className="sidebar">
         <div className="brand">
@@ -227,6 +240,16 @@ export default function App() {
           </div>
         </div>
 
+        {activeView === "client" && (
+          <nav className="rb2-shell-nav" aria-label="Navigazione principale">
+            <button type="button" className={route.page === "models" ? "active" : ""}
+              onClick={() => route.navigate(appRoutes.clientModels)}><span aria-hidden="true">◈</span>Modelli</button>
+            <button type="button" className={route.page === "documents" || route.page === "detail" ? "active" : ""}
+              onClick={() => route.navigate(appRoutes.clientDocuments)}><span aria-hidden="true">▤</span>Documenti</button>
+            <button type="button" onClick={() => route.navigate(appRoutes.advancedModels)}
+              title="Workbench tecnico"><span aria-hidden="true">⚙</span>Avanzate</button>
+          </nav>
+        )}
         <div className="sidebar-heading">
           <span>Runs</span>
           <span
@@ -407,12 +430,15 @@ export default function App() {
 
             {/* Primary progressive-disclosure client journey */}
             {activeView === "client" ? (
-              <ClientEvaluationJourney
+              <RedactBenchV2
                 detail={detail}
+                route={route}
+                runs={runs}
+                selectedKey={selectedKey}
+                onSelectRun={handleSelectRun}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
-                route={route}
-                taxonomy={taxonomy}
+                onRefresh={() => fetchData(selectedKey, false)}
               />
             ) : advancedView === "executive" ? (
               <ExecutiveBriefingView
