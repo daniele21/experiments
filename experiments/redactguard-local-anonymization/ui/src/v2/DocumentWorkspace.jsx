@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { documentEvidence, modelsIn, shortModel, spansForModel, spanKey, ratioText } from "./evidence";
 import "./workspace.css";
+import StructuredDocument from "./StructuredDocument";
 
 const WINDOW = 4800;
 const TYPE_NAMES = {private_person:"Nome",private_email:"Email",private_phone:"Telefono",private_address:"Indirizzo",private_date:"Data",account_number:"Identificativo"};
@@ -27,6 +28,18 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
    return parts;
  },[result,text,windowStart,until,showDifferences]);
  const current = doc.metrics.find(m=>m.model===model);
+ const renderPart = (part,key) => {
+   if(part.kind==="plain")return <span key={key}>{part.text}</span>;
+   const s=part.span,id=part.id;
+   const selectedHere=selected?.start===s.start && selected?.end===s.end && selected?.pii_type===s.pii_type;
+   const open=revealed.has(`${model}|${id}`);
+   return <button key={key} type="button" data-rb2-focus={selectedHere ? "true":undefined}
+     className={`rb2-inline-pii rb2-inline-pii--${s.status} ${selectedHere?"rb2-inline-pii--selected":""} ${showDifferences&&s.status==="detected"?"rb2-inline-pii--deemphasized":""}`}
+     aria-label={`${TYPE_LABEL(s.pii_type)} ${s.status==="missed"?"mancata":s.status==="extra"?"extra":"rilevata"}; ${open?"nascondi":"esamina"} valore`}
+     onClick={()=>onSelect(s)} title={`${TYPE_LABEL(s.pii_type)} · ${s.status}`}>
+     {open?s.value:`[ ${TYPE_LABEL(s.pii_type).toUpperCase()} ]`}
+   </button>;
+ };
  return <div className="rb2-pane">
   <header className="rb2-pane-head">
    <div className="rb2-pane-title"><span className="rb2-pane-model-dot"/><strong title={model}>{shortModel(model)}</strong></div>
@@ -41,20 +54,9 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
     <div className="rb2-paper" aria-label={`Testo canonico di ${doc.caseId}, modello ${model}`}>
      {windowStart>0 && <p className="rb2-paper-info">… estratto dal carattere {windowStart.toLocaleString("it-IT")}</p>}
      <div className="rb2-paper-content">
-      {visible.map(part=>{
-       if(part.kind==="plain")return <span key={part.id}>{part.text}</span>;
-       const s=part.span,id=part.id;
-       const selectedHere=selected?.start===s.start && selected?.end===s.end && selected?.pii_type===s.pii_type;
-       const open=revealed.has(`${model}|${id}`);
-       return <button key={id} type="button" data-rb2-focus={selectedHere ? "true":undefined}
-        className={`rb2-inline-pii rb2-inline-pii--${s.status} ${selectedHere?"rb2-inline-pii--selected":""} ${showDifferences&&s.status==="detected"?"rb2-inline-pii--deemphasized":""}`}
-        aria-label={`${TYPE_LABEL(s.pii_type)} ${s.status==="missed"?"mancata":s.status==="extra"?"extra":"rilevata"}; ${open?"nascondi":"esamina"} valore`}
-        onClick={()=>{onSelect(s);}} title={`${TYPE_LABEL(s.pii_type)} · ${s.status}`}>
-        {open?s.value:`[ ${TYPE_LABEL(s.pii_type).toUpperCase()} ]`}
-       </button>;
-      })}
-     </div>
-     {until<text.length && <p className="rb2-paper-info">… visualizzati {(until-windowStart).toLocaleString("it-IT")} di {text.length.toLocaleString("it-IT")} caratteri. Naviga al segmento successivo.</p>}
+       <StructuredDocument parts={visible} renderPart={renderPart}/>
+      </div>
+      {until<text.length && <p className="rb2-paper-info">… visualizzati {(until-windowStart).toLocaleString("it-IT")} di {text.length.toLocaleString("it-IT")} caratteri. Naviga al segmento successivo.</p>}
     </div>}
   </div>
   {text.length>WINDOW && <footer className="rb2-pane-pagination">
