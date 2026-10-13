@@ -28,7 +28,7 @@ test("standalone and overview runs resolve source only from an exact bundled dat
  assert.equal(resolveBundledDatasetSource(null,"data/healthcare/cases.jsonl"),"data/healthcare/cases.jsonl");
  assert.equal(resolveBundledDatasetSource(null,"../../secrets/cases.jsonl"),null);
  assert.equal(resolveBundledDatasetSource(null,"/tmp/data/ambiguous/cases.jsonl.hacked"),null);
- assert.equal(resolveBundledDatasetSource(null,"http://evil.test/data/ambiguous/cases.jsonl"),"data/ambiguous/cases.jsonl");
+ assert.equal(resolveBundledDatasetSource(null,"http://evil.test/data/ambiguous/cases.jsonl"),null);
 });
 
 test("unified document inspection is blocked when selected models came from different datasets", () => {
