@@ -550,6 +550,7 @@ async function buildCapabilities() {
       modelFingerprints:capabilityInputFingerprints(
         rows,Object.keys(metrics??{})),
       latencyByModel,
+      providerKind:status.backend==="openai_api"?"cloud":"local",
     }, metrics);
   }));
   return {capabilities: entries.filter(Boolean)};
