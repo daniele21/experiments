@@ -488,6 +488,44 @@ function capabilityInputFingerprints(rows, models) {
   return out;
 }
 
+// Only measurements from the *same managed suite* and an explicitly
+// cache-disabled runtime can enter the efficiency frontier. Never infer
+// CPU/GPU equivalence or recombine a latency-only run with another suite.
+async function pairedCapabilityLatency(qualityRoot, status, qualityManifest, models) {
+  if (status?.quality_only || status?.inference_cache_max_entries !== 0) return {};
+  const latencyRoot=path.join(path.dirname(qualityRoot),"latency");
+  const [manifest,metrics]=await Promise.all([
+    readJson(path.join(latencyRoot,"manifest.json")),
+    readJson(path.join(latencyRoot,"metrics.json")),
+  ]);
+  if (manifest?.kind!=="latency" || !Array.isArray(manifest?.models)) return {};
+  const caseIds=Array.isArray(manifest.case_ids) ? manifest.case_ids : null;
+  if(!caseIds?.length) return {};
+  const protocol=createHash("sha256").update(JSON.stringify({
+    datasetId:status.dataset_id,
+    caseIds:[...caseIds].sort(),
+    repeats:manifest.repeats_per_case??null,
+    cache:0,
+    runtime:status.runtime_strategy??null,
+    evaluation:qualityManifest?.evaluation_schema??null,
+  })).digest("hex");
+  const output={};
+  for(const model of models){
+    const stats=metrics?.[model]?.micro ?? metrics?.[model] ?? null;
+    if(!manifest.models.includes(model) || !stats) continue;
+    const p50=stats.latency_p50_ms;
+    const samples=stats.cases??stats.evaluated_cases??null;
+    if(typeof p50!=="number" || !Number.isFinite(p50) || p50<=0 ||
+       typeof samples!=="number" || samples<2)continue;
+    output[model]={
+      latencyVerified:true,p50Ms:p50,p95Ms:stats.latency_p95_ms??null,
+      latencySamples:samples,latencyProtocol:protocol,
+      latencyWorkloadCases:caseIds.length,
+    };
+  }
+  return output;
+}
+
 async function buildCapabilities() {
   const qualityRuns = (await discoverRuns()).filter(run =>
     run.source === "suite" && run.kind === "quality" && run.status === "complete");
@@ -500,6 +538,8 @@ async function buildCapabilities() {
       readJson(path.join(root,"manifest.json")),
       readJson(path.join(root,"rows.json"), []),
     ]);
+    const latencyByModel=await pairedCapabilityLatency(
+      root,status,manifest,Object.keys(metrics??{}));
     return summarizeCapabilitySuite({
       key:run.key, suiteId:run.suiteId,
       datasetId:status.dataset_id ?? run.dataset,
@@ -509,6 +549,7 @@ async function buildCapabilities() {
       evaluationSchema:manifest?.evaluation_schema ?? null,
       modelFingerprints:capabilityInputFingerprints(
         rows,Object.keys(metrics??{})),
+      latencyByModel,
     }, metrics);
   }));
   return {capabilities: entries.filter(Boolean)};
