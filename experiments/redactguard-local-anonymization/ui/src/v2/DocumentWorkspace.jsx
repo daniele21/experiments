@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { documentEvidence, modelsIn, shortModel, spansForModel, spanKey, ratioText } from "./evidence";
+import { documentEvidence, modelsIn, shortModel, spansForModel, spanKey, spanMatchesText, ratioText } from "./evidence";
 import "./workspace.css";
 import StructuredDocument from "./StructuredDocument";
 import { emptyRevealState, isRevealed, setAllRevealed, toggleSpanReveal } from "./revealState";
@@ -48,10 +48,11 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
    <span className={current?.status==="ok"?"rb2-pane-good":"rb2-pane-fail"}>{current?.status==="ok" ? `${ratioText(current.recall)} recall` : "Inferenza non valida"}</span>
   </header>
   {current?.status!=="ok" && <div role="status" className="rb2-canvas-warning">Output non valido o non disponibile: il testo è mostrato come riferimento, non come protezione riuscita.</div>}
-  {result.invalidOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidOffsets} annotazioni escluse per offset non coerente con il testo canonico.</div>}
+  {result.invalidGoldOffsets>0 && <div className="rb2-canvas-warning" role="alert">{result.invalidGoldOffsets} annotazioni gold non allineate: anteprima protetta.</div>}
+  {result.invalidExtraOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidExtraOffsets} rilevazioni extra del modello non posizionabili nel testo. Le PII gold restano visibili e mascherate; controlla “Extra” nell’Inspector.</div>
   <div className="rb2-pane-scroll" ref={scrollRef} onScroll={onScroll}>
    {current?.status!=="ok" ? <div className="rb2-workspace-empty">Non è disponibile un'anonimizzazione valida di questo documento. Il testo grezzo resta nascosto in questa vista.</div> :
-    result.invalidOffsets>0 ? <div className="rb2-workspace-empty">Il testo e gli offset delle PII non coincidono. Anteprima oscurata per evitare evidenziazioni scorrette e esposizioni involontarie.</div> :
+    result.invalidGoldOffsets>0 ? <div className="rb2-workspace-empty">Gli offset delle PII gold non coincidono con il testo canonico. Anteprima oscurata per non esporre dati non correttamente mascherati.</div> :
     !text ? <div className="rb2-workspace-empty">Testo canonico non disponibile in questa suite.</div> :
     <div className="rb2-paper" aria-label={`Testo canonico di ${doc.caseId}, modello ${model}`}>
      {windowStart>0 && <p className="rb2-paper-info">… estratto dal carattere {windowStart.toLocaleString("it-IT")}</p>}
@@ -74,8 +75,15 @@ function EvidenceList({doc,model,tab,selected,onSelect}){
  if(!from.length) return <div className="rb2-inspector-empty">Nessuna annotazione in questa categoria.</div>;
  return <div className="rb2-issue-list">{from.slice(0,500).map((span,i)=>{
  const id=spanKey(span);
+ const locatable=spanMatchesText(doc.text,span);
  const active=selected?.start===span.start && selected?.end===span.end && selected?.pii_type===span.pii_type;
- return <button key={`${id}-${i}`} type="button" className={active?"active":""} onClick={()=>onSelect({...span,status:tab==="missed"?"missed":tab==="extra"?"extra":"detected"})}><span className={`rb2-issue-indicator rb2-issue-indicator--${tab}`}/><span><strong>{TYPE_LABEL(span.pii_type)}</strong><small>Caratteri {span.start}–{span.end}</small></span><span aria-hidden="true">›</span></button>;
+ return <button key={`${id}-${i}`} type="button" disabled={!locatable} className={active?"active":""}
+   title={locatable?"Vai all'annotazione":"Non posizionabile: il valore non coincide con gli offset restituiti dal modello"}
+   onClick={()=>onSelect({...span,status:tab==="missed"?"missed":tab==="extra"?"extra":"detected"})}>
+   <span className={`rb2-issue-indicator rb2-issue-indicator--${tab}`}/>
+   <span><strong>{TYPE_LABEL(span.pii_type)}</strong><small>{locatable?`Caratteri ${span.start}–${span.end}`:"Offset non allineato · non localizzabile"}</small></span>
+   <span aria-hidden="true">{locatable?"›":"!"}</span>
+ </button>;
  })}{from.length>500&&<p className="rb2-paper-info">Visualizzate le prime 500 annotazioni. Filtra per tipo o naviga al documento.</p>}</div>;
 }
 export default function DocumentWorkspace({detail,documentName,models,initialModel,onBack,onSelectModel}){
@@ -126,6 +134,7 @@ export default function DocumentWorkspace({detail,documentName,models,initialMod
  const raw=doc.metrics.find(m=>m.model===inspectedModel)?.raw;
  const missed=raw?.missed?.length??0, extra=raw?.overRedacted?.length??0, detected=raw?.identified?.length??0;
  const rawStatus=doc.metrics.find(m=>m.model===inspectedModel);
+ const inspectorOffsets=spansForModel(doc,inspectedModel);
  const validSelected=selected && rawStatus?.status==="ok" &&
    spansForModel(doc,inspectedModel).items.some(s=>
      spanKey(s)===spanKey(selected) && s.value===selected.value);
@@ -166,7 +175,8 @@ export default function DocumentWorkspace({detail,documentName,models,initialMod
      <div className="rb2-inspector-tabs" role="tablist" aria-label="Categoria PII">{[["overview","Riepilogo"],["missed",`Mancate ${missed}`],["extra",`Extra ${extra}`],["detected","Rilevate"],["raw","Raw"]].map(([value,label])=><button key={value} type="button" role="tab" aria-selected={tab===value} className={tab===value?"active":""} onClick={()=>setTab(value)}>{label}</button>)}</div>
      {tab==="overview"?<div className="rb2-inspector-body">
       <div className="rb2-inspector-stats"><div><strong>{ratioText(rawStatus?.recall)}</strong><span>Recall sul documento</span></div><div><strong>{detected}</strong><span>PII individuate</span></div><div className={missed?"rb2-risk":""}><strong>{missed}</strong><span>PII mancate</span></div><div><strong>{extra}</strong><span>Extra vs gold</span></div></div>
-      <h3>Problemi da verificare</h3>
+      {inspectorOffsets.invalidExtraOffsets>0 && <p className="rb2-offset-note">{inspectorOffsets.invalidExtraOffsets} extra non localizzabili: non vengono sovrapposti al testo, ma restano conteggiati nei risultati.</p>}
+       <h3>Problemi da verificare</h3>
       {missed+extra>0?<div className="rb2-inspector-actions">{missed>0&&<button type="button" onClick={()=>setTab("missed")}>Esamina {missed} PII mancate →</button>}{extra>0&&<button type="button" onClick={()=>setTab("extra")}>Esamina {extra} extra →</button>}</div>:<p className="rb2-inspector-muted">Nessuna anomalia annotata per questo modello.</p>}
       {rawStatus?.status!=="ok"&&<p className="rb2-canvas-warning">Risposta non valida: risultati di qualità non disponibili.</p>}
      </div>:tab==="raw"?<div className="rb2-inspector-body"><h3>Evidenza tecnica</h3><p>Stato: <strong>{rawStatus?.status??"n/d"}</strong></p><p>Output strutturato completo conservato nei file JSONL del run locale. Nessun dato raw non mascherato viene esposto qui automaticamente.</p>{rawStatus?.error&&<p className="rb2-canvas-warning">Errore inferenza. Consulta il JSONL locale per dettagli non filtrati.</p>}</div>:
