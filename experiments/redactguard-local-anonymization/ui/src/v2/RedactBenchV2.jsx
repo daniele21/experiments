@@ -6,6 +6,7 @@ import ModelComparison from "./ModelComparison";
 import DocumentComparison from "./DocumentComparison";
 import DocumentWorkspace from "./DocumentWorkspace";
 import CapabilitiesPage from "./CapabilitiesPage";
+import ExecutiveDashboard from "./ExecutiveDashboard";
 import "./base.css";
 
 export default function RedactBenchV2({
@@ -38,7 +39,7 @@ export default function RedactBenchV2({
  return <div className="rb2-root">
    <header className="rb2-topbar">
      <div className="rb2-run-context"><span className="rb2-kicker">BENCHMARK LOCALE / RISULTATI</span>
-      <div className="rb2-run-title"><strong>{page==="capabilities"?"Confronto per capacità":detail?.summary?.suiteId||detail?.summary?.runId||"Benchmark"}</strong><span className="rb2-run-indicator">{page==="capabilities"?"Suite indipendenti":status}</span></div>
+      <div className="rb2-run-title"><strong>{page==="executive"?"Executive intelligence":page==="capabilities"?"Confronto per capacità":detail?.summary?.suiteId||detail?.summary?.runId||"Benchmark"}</strong><span className="rb2-run-indicator">{page==="executive"?"Multi-run":page==="capabilities"?"Suite indipendenti":status}</span></div>
       <span className="rb2-run-subtitle">{caption}</span>
      </div>
      <div className="rb2-head-actions">
@@ -66,6 +67,14 @@ export default function RedactBenchV2({
          {suiteChoices.map(run=><option key={run.key} value={run.key}>{run.suiteId||run.runId} · {run.dataset||"dataset non indicato"}</option>)}
        </select></label>
       </section> :
+     page==="executive" ? <ExecutiveDashboard
+       onOpenCapabilities={()=>route.navigate(appRoutes.clientCapabilities)}
+       onOpenRun={(runKey,modelId)=>{
+         if(!runKey)return;
+         if(modelId)onSelectModel?.(modelId);
+         onSelectRun(runKey);
+         route.navigate(appRoutes.clientModels);
+       }}/>:
      page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey,modelId)=>{if(modelId)onSelectModel?.(modelId);onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
      page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
      page==="documents" ? <DocumentComparison detail={detail} models={selectedModels} onOpenDocument={openDoc}/>:
