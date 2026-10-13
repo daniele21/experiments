@@ -31,6 +31,10 @@ export default function RedactBenchV2({
  const status=detail?.summary?.status==="complete"?"Run completo":detail?.summary?.status==="incomplete"?"Run parziale":"Prove aggregate";
  const caption=detail?.summary?.source==="overview"?"Confronto tra run diversi — verifica comparabilità":`${available.length} modelli · ${date}`;
  const onDocuments=()=>route.navigate(appRoutes.clientDocuments);
+ const needsSingleSuite = detail?.summary?.documentsRequireSingleRun === true &&
+   (page === "documents" || page === "detail");
+ const suiteChoices = runs.filter(r=>r.source === "suite" &&
+   r.kind === "quality" && r.status === "complete");
  return <div className="rb2-root">
    <header className="rb2-topbar">
      <div className="rb2-run-context"><span className="rb2-kicker">BENCHMARK LOCALE / RISULTATI</span>
@@ -49,7 +53,20 @@ export default function RedactBenchV2({
      </div>
    </header>
    <div className="rb2-content">
-    {page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey)=>{onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
+    {needsSingleSuite ? <section className="rb2-mixed-document-notice" role="status">
+       <span className="rb2-kicker">EVIDENZA DOCUMENTALE / SELEZIONA SUITE</span>
+       <h1>Seleziona un benchmark per visualizzare i documenti</h1>
+       <p>La vista aggregata raccoglie modelli testati su dataset differenti.
+        Associare un documento o i suoi offset PII a un altro dataset produrrebbe
+        errori e confronti fuorvianti. Apri una suite completata per confrontare
+        solo modelli e annotazioni riferiti allo stesso testo.</p>
+       <label>Benchmark <select aria-label="Apri una suite documentale" defaultValue=""
+         onChange={e=>{if(e.target.value){onSelectRun(e.target.value);route.navigate(appRoutes.clientDocuments);}}}>
+         <option value="" disabled>Scegli un benchmark…</option>
+         {suiteChoices.map(run=><option key={run.key} value={run.key}>{run.suiteId||run.runId} · {run.dataset||"dataset non indicato"}</option>)}
+       </select></label>
+      </section> :
+     page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey)=>{onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
      page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
      page==="documents" ? <DocumentComparison detail={detail} models={selectedModels} onOpenDocument={openDoc}/>:
      page==="detail" ? <DocumentWorkspace detail={detail} documentName={route.params.documentName} initialModel={route.params.model} models={[route.params.model,...selectedModels.filter(m=>m!==route.params.model)].filter(m=>available.includes(m)).slice(0,2)} onBack={onDocuments} onSelectModel={(model)=>{onSelectModel?.(model);route.navigate(appRoutes.clientDetail(route.params.documentName,model),{replace:true});}}/>:
