@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CAPABILITY_DEFS, selectLatestCapabilityRuns } from "./capabilitySummary";
 import { shortModel } from "./evidence";
-import CapabilityMatrix from "./CapabilityMatrix";
+import CapabilityMatrix from "./ModelDatasetMatrixView.jsx";
 import "./capabilities.css";
 
 const fmt = x => x === null || x === undefined ? "—" : `${(x * 100).toFixed(1)}%`;
