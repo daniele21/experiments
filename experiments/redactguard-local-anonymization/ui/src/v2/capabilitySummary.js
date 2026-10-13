@@ -48,12 +48,15 @@ export function summarizeModelCapability(id,aggregate) {
  };
 }
 
-export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models},metrics) {
+export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models,contractSnapshot=null,evaluationSchema=null,modelFingerprints={}},metrics) {
  const category=capabilityFromDataset(datasetId);
  if(!category||!metrics||typeof metrics!=="object")return null;
  return {
   category, runKey:key, suiteId, datasetId, createdAt,
-  models:Object.entries(metrics).map(([id,m])=>summarizeModelCapability(id,m)),
+  contractSnapshot, evaluationSchema,
+  models:Object.entries(metrics).map(([id,m])=>({
+    ...summarizeModelCapability(id,m),inputFingerprint:modelFingerprints[id]??null,
+  })),
  };
 }
 // The latest SUITE is not necessarily the latest result for every MODEL.
