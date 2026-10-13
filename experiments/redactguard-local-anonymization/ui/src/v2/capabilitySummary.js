@@ -90,6 +90,7 @@ export function selectLatestCapabilityRuns(runs) {
        [item.contractSnapshot,group.contractSnapshot],
        [model.inputFingerprint,group.models[0]?.inputFingerprint],
      ];
+     const reference=group.models.length===0;
      const mismatch=checks.some(([x,y])=>x!=null && y!=null && x!==y);
      const unverified=checks.some(([x,y])=>x==null || y==null);
      group.models.push({
@@ -99,7 +100,7 @@ export function selectLatestCapabilityRuns(runs) {
        createdAt:item.createdAt,
        contractSnapshot:item.contractSnapshot??null,
        inputFingerprint:model.inputFingerprint??null,
-       comparability:mismatch?"different_protocol":unverified?"unverified":"verified",
+       comparability:reference?"reference":mismatch?"different_protocol":unverified?"unverified":"verified",
      });
      added=true;
    }
