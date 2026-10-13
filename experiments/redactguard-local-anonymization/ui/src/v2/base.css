@@ -12,3 +12,8 @@
 .rb2-mixed-document-notice label{display:flex;align-items:center;gap:12px;color:var(--rb2-muted);font-size:13px}
 .rb2-mixed-document-notice select{flex:1;min-width:0;max-width:600px;padding:12px;border:1px solid var(--rb2-border);border-radius:8px;background:var(--rb2-panel-soft);color:var(--rb2-text);font-size:13px}
 @media(max-width:600px){.rb2-mixed-document-notice label{flex-direction:column;align-items:stretch}}
+
+/* Distinguish remote API references from on-device GGUF evidence. */
+.rb2-cap-provider,.rb3-provider-tag{display:inline-block;font-size:10px!important;letter-spacing:.02em;font-weight:650!important;color:#e8c899!important;background:#533c26;border:1px solid #946e43;border-radius:5px;padding:3px 6px;white-space:nowrap;vertical-align:middle}
+.rb2-cap-provider{margin-left:7px}
+.rb3-provider-tag{margin-top:5px}
