@@ -89,7 +89,7 @@ export default function CapabilityBenchmark({onOpenRun}){
    </div>
    <div className="rb2-cap-modelgrid">
     {active.models.map(m=><article id={`rb2-cap-model-${encodeURIComponent(m.modelId)}`} className={`rb2-cap-model ${focusedModel===m.modelId?"rb2-cap-model--focused":""}`} key={m.modelId}>
-      <h3>{shortModel(m.modelId)}</h3>
+      <h3>{shortModel(m.modelId)} <span className="rb2-cap-provider">{m.providerKind==="cloud"?"Cloud API":"Locale"}</span></h3>
       <div className="rb2-cap-provenance"><span>{dateLabel(m.createdAt)}</span><span title={m.suiteId}>{m.suiteId??"Run"}</span></div>
       <span className={`rb2-cap-confidence ${m.comparability==="different_protocol"?"rb2-cap-confidence--warning":""}`}
         title="Confronto tra run: versione dataset, schema, configurazione e fingerprint dei casi">
