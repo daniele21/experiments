@@ -75,13 +75,15 @@ export function efficiencyFrontier(report, selectedModels) {
 export function summarizeExecutive(latest, category, selectedModels, mode) {
  const report=latest?.[category]??null;
  const chosen=(report?.models??[]).filter(m=>selectedModels.includes(m.modelId));
+ // A known contract mismatch must not become an executive "winner".
+ const comparable=chosen.filter(m=>m.comparability!=="different_protocol");
  const frontier=mode==="efficiency"?
    efficiencyFrontier(report,selectedModels):privacyFrontier(report,selectedModels);
- const withRecall=chosen.filter(m=>valid(m.positiveRecall)&&m.totalGold>0);
- const withNegative=chosen.filter(m=>valid(m.negativeFalsePositiveRate)&&m.negativeValidated>0);
+ const withRecall=comparable.filter(m=>valid(m.positiveRecall)&&m.totalGold>0);
+ const withNegative=comparable.filter(m=>valid(m.negativeFalsePositiveRate)&&m.negativeValidated>0);
  const bestRecall=[...withRecall].sort((a,b)=>b.positiveRecall-a.positiveRecall)[0]??null;
  const leastOverredaction=[...withNegative].sort((a,b)=>a.negativeFalsePositiveRate-b.negativeFalsePositiveRate)[0]??null;
- const worstTypes=chosen.flatMap(m=>(m.types??[]).filter(t=>valid(t.recall)&&t.gold>0)
+ const worstTypes=comparable.flatMap(m=>(m.types??[]).filter(t=>valid(t.recall)&&t.gold>0)
     .map(t=>({modelId:m.modelId,type:t.type,recall:t.recall,gold:t.gold})))
     .sort((a,b)=>a.recall-b.recall||b.gold-a.gold).slice(0,8);
  const reliable=chosen.filter(m=>m.documents>0&&m.validDocuments===m.documents);
