@@ -41,14 +41,16 @@ test("no-negative-data or all failed negatives yield null, not zero FP rate",()=
  });
  assert.equal(s.models[0].negativeFalsePositiveRate,null);
 });
-test("latest run per category retained without mixing model cohorts",()=>{
+test("latest results stay separated by capability dataset",()=>{
  const latest=selectLatestCapabilityRuns([
-  {category:"healthcare",createdAt:"2026-10-10T00:00:00Z",runKey:"old"},
-  {category:"healthcare",createdAt:"2026-10-12T00:00:00Z",runKey:"new"},
-  {category:"ambiguous",createdAt:"2026-10-11T00:00:00Z",runKey:"amb"},
+  {category:"healthcare",datasetId:"healthcare_synthetic_v0.1",createdAt:"2026-10-10T00:00:00Z",runKey:"old",models:[{modelId:"qwen4"}]},
+  {category:"healthcare",datasetId:"healthcare_synthetic_v0.1",createdAt:"2026-10-12T00:00:00Z",runKey:"new",models:[{modelId:"nemotron4"}]},
+  {category:"ambiguous",datasetId:"ambiguous_synthetic_v0.1",createdAt:"2026-10-11T00:00:00Z",runKey:"amb",models:[{modelId:"qwen4"}]},
  ]);
  assert.equal(latest.healthcare.runKey,"new");
+ assert.equal(latest.healthcare.models.length,2);
  assert.equal(latest.ambiguous.runKey,"amb");
+ assert.equal(latest.ambiguous.models.length,1);
 });
 
 test("latest result is selected PER MODEL from independent runs on the same dataset",()=>{
