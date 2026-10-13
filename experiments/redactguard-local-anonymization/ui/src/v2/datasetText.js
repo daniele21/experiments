@@ -19,3 +19,32 @@ export function indexBenchmarkTexts(rows) {
   }
   return lookup;
 }
+
+
+// A suite can be opened from its own manifest, a standalone quality run,
+// or a unified overview. Prefer the pinned dataset ID; fall back only to an
+// EXACT known dataset filename suffix, never open paths from untrusted metadata.
+export function resolveBundledDatasetSource(datasetId, manifestDataset) {
+  const fromId = bundledDatasetTextPath(datasetId);
+  if (fromId) return fromId;
+  if (typeof manifestDataset !== "string") return null;
+  const normalized = manifestDataset.replaceAll("\\", "/");
+  for (const source of Object.values(DATASET_TEXT_SOURCE)) {
+    if (normalized === source || normalized.endsWith("/" + source)) return source;
+  }
+  return null;
+}
+
+// When results are read after a repository update, the current dataset text
+// may no longer be identical to the bytes used in the actual inference.
+// Such texts must not be shown as if their span offsets were trustworthy.
+export function textMatchesBenchmarkHash(text, digest) {
+  if (typeof text !== "string") return false;
+  if (typeof digest !== "string" || !/^[0-9a-f]{64}$/i.test(digest)) return null;
+  return null; // Hash comparison is performed with node:crypto in the Vite server.
+}
+
+export function canCompareOverviewDocuments(datasetIds) {
+  const ids = [...new Set((datasetIds ?? []).filter(Boolean))];
+  return ids.length === 1;
+}
