@@ -10,6 +10,7 @@ const dateLabel = value => {
  return Number.isFinite(date) ? new Date(date).toLocaleDateString("it-IT",{day:"2-digit",month:"short",year:"numeric"}) : "Data non disponibile";
 };
 const confidenceLabel = value =>
+ value==="reference"?"Run di riferimento":
  value==="different_protocol"?"Configurazione diversa":
  value==="unverified"?"Comparabilità non verificata":"Stesso dataset e protocollo verificati";
 function StatLine({label,value,good=false}){
