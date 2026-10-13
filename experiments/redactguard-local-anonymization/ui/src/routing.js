@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const appRoutes = {
   clientModels: "/client/models",
+  clientExecutive: "/client/executive",
   clientDocuments: "/client/documents",
   clientCapabilities: "/client/capabilities",
   clientDetail: (documentName, model) =>
@@ -30,6 +31,15 @@ export function parseAppRoute(pathname) {
       page: "models",
       params: {},
       canonicalPath: appRoutes.clientModels,
+    };
+  }
+
+  if (path === "/client/executive") {
+    return {
+      area: "client",
+      page: "executive",
+      params: {},
+      canonicalPath: appRoutes.clientExecutive,
     };
   }
 
