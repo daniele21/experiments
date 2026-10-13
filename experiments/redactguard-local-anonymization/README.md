@@ -76,7 +76,7 @@ OpenAI API. It never sends arbitrary project files or the realistic dataset
 access, and the explicit `--confirm-cloud` flag are all required. No default
 run, UI refresh, Korgis launch or GitHub CI uploads any text to OpenAI.
 The client passes `store=false`, uses `reasoning_effort=none`,
-`max_completion_tokens=4096`, JSON mode and disables automatic retries.
+`max_completion_tokens=4096`, `temperature=0`, JSON mode and disables automatic retries.
 This doesn't make the API the same as an on-device runtime; review your
 organization's data processing and compliance requirements before using it.
 OpenAI API model access and usage are billed separately from ChatGPT.
