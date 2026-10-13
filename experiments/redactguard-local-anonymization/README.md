@@ -59,6 +59,80 @@ All four keys are present in the pinned Korgis registry:
 | `qwen3.5-4b-q4km` | Qwen3.5-4B | Q4_K_M | same-size model comparison |
 | `qwen3.5-9b-q4km` | Qwen3.5-9B | Q4_K_M | larger-local reference |
 
+## Optional OpenAI GPT-6 Luna cloud reference
+
+The same RedactGuard **PII taxonomy, frozen gold, segmentation, structured
+`pii_fields` output contract, deterministic value-to-source offset mapping,
+quality metrics and preflight** can be tested on the official OpenAI API model
+`gpt-6-luna`, without running Korgis. This is a **cloud reference**, not
+on-device inference and not the ChatGPT web subscription. It is not a
+clinical compliance certification or an independent ground truth: the
+Healthcare, Ambiguous, and Challenge gold labels are synthetic and not human reviewed.
+
+**Privacy / cost boundaries:** This sends the entire selected synthetic
+benchmark texts, profile-specific system prompt and preflight test to the
+OpenAI API. It never sends arbitrary project files or the realistic dataset
+(the file names are hard-allowlisted). A key in `OPENAI_API_KEY`, paid API
+access, and the explicit `--confirm-cloud` flag are all required. No default
+run, UI refresh, Korgis launch or GitHub CI uploads any text to OpenAI.
+The client passes `store=false`, uses `reasoning_effort=none`,
+`max_completion_tokens=4096`, JSON mode and disables automatic retries.
+This doesn't make the API the same as an on-device runtime; review your
+organization's data processing and compliance requirements before using it.
+OpenAI API model access and usage are billed separately from ChatGPT.
+
+From `experiments/redactguard-local-anonymization`:
+
+```bash
+# Offline: confirms dataset, case count and model, with no network request
+uv run redact-bench cloud-reference --dataset healthcare --check-only
+
+# Set your API key locally, without putting its value into shell history.
+read -s "OPENAI_API_KEY?OpenAI API key: "; echo
+export OPENAI_API_KEY
+
+# Optional, 4-case API smoke test (NOT included in capability leaderboards)
+uv run redact-bench cloud-reference --dataset healthcare --max-cases 4 --confirm-cloud
+
+# Full benchmark, comparable to existing 48-case local runs
+uv run redact-bench cloud-reference --dataset healthcare --confirm-cloud
+uv run redact-bench cloud-reference --dataset ambiguous --confirm-cloud
+
+# Optional: semantic challenge (46 cases)
+uv run redact-bench cloud-reference --dataset challenge --confirm-cloud
+
+# Start the existing local-only result explorer: no remote API calls
+uv run redact-bench ui
+```
+
+On macOS Bash or zsh the interactive `read` syntax varies; if the
+above prompt is not supported, set `OPENAI_API_KEY` in your existing
+local secrets workflow instead. Do **not** paste credentials in chat,
+tickets, logs, or commits.
+
+Completed results are stored under
+`results/suites/<suite-cloud-id>/quality/`, with a `suite.json` that
+identifies `backend=openai_api` and an indicative observed-token cost.
+The local UI (`/client/executive` and `/client/capabilities`) will display
+the full-run model `gpt-6-luna` alongside GGUF results for **the same
+dataset version**; smoke tests remain accessible as individual run
+artifacts but are excluded from the latest-per-model leaderboard.
+No benchmark weights need to be downloaded.
+
+The cloud timing is **API/network latency**, *not* GGUF device inference.
+The Executive **Efficiency Frontier must not mix it with local latency**.
+Use the common recall / false positives / valid cases for quality comparisons,
+with the provider source visible in the UI. Unequal inference envelopes,
+quantization, network conditions, or changed prompts remain limitations.
+Inference failures count toward system recall rather than being silently
+dropped. The tool preserves original test artifacts and local scoring.
+
+At the standard GPT-6 Luna text prices published in October 2026
+(`$0.10 / 1M input tokens` and `$0.50 / 1M output tokens`),
+the CLI calculates an indicative observed-token cost. It is **not**
+a live quote, budget cap or invoice (preflight, retries outside this
+client, discounts, cached rates and provider processing may change bills).
+
 ## Managed benchmark suite
 
 For normal use, **do not start `local-llm` from this experiment environment**. The `local-llm` executable belongs to the Korgis project, which has its own Python environment.
