@@ -465,6 +465,29 @@ async function discoverRuns() {
 
 // Dataset-level capability reports are read-only and summary-only: the
 // response cannot expose document texts, annotation values or original files.
+// Hash only a normalized evidence identity. Never return gold PII or model
+// completions to the capability dashboard. A missing hash is "unverified",
+// NOT proof that two independently executed suites had identical inputs.
+function capabilityInputFingerprints(rows, models) {
+  const byModel=new Map(models.map(id=>[id, []]));
+  for(const row of rows??[]){
+    const id=row?.model;
+    if(!byModel.has(id))continue;
+    const hash=row?.semantic_content_sha256;
+    if(typeof hash!=="string" || !/^[0-9a-f]{64}$/i.test(hash))continue;
+    byModel.get(id).push([String(row.case_id??""),hash,row.gold_count??null]);
+  }
+  const out={};
+  for(const [model, cases] of byModel){
+    // We need every scored case, not just a subset of the available hashes.
+    const scored=(rows??[]).filter(x=>x?.model===model).length;
+    if(!scored || cases.length!==scored || cases.some(x=>!x[0]))continue;
+    cases.sort((a,b)=>a[0].localeCompare(b[0]));
+    out[model]=createHash("sha256").update(JSON.stringify(cases)).digest("hex");
+  }
+  return out;
+}
+
 async function buildCapabilities() {
   const qualityRuns = (await discoverRuns()).filter(run =>
     run.source === "suite" && run.kind === "quality" && run.status === "complete");
@@ -472,10 +495,20 @@ async function buildCapabilities() {
     const root = path.resolve(RESULTS_ROOT, ...run.key.split("/"));
     const status = await readJson(path.join(path.dirname(root), "suite.json"));
     if (status?.status !== "completed") return null;
-    const metrics = await readJson(path.join(root, "metrics.json"));
+    const [metrics, manifest, rows] = await Promise.all([
+      readJson(path.join(root,"metrics.json")),
+      readJson(path.join(root,"manifest.json")),
+      readJson(path.join(root,"rows.json"), []),
+    ]);
     return summarizeCapabilitySuite({
-      key: run.key, suiteId: run.suiteId, datasetId: status.dataset_id ?? run.dataset,
-      createdAt: status.completed_at ?? run.createdAt, models:run.models,
+      key:run.key, suiteId:run.suiteId,
+      datasetId:status.dataset_id ?? run.dataset,
+      createdAt:status.completed_at ?? run.createdAt,
+      models:run.models,
+      contractSnapshot:manifest?.redactguard_contract?.snapshot_sha256 ?? null,
+      evaluationSchema:manifest?.evaluation_schema ?? null,
+      modelFingerprints:capabilityInputFingerprints(
+        rows,Object.keys(metrics??{})),
     }, metrics);
   }));
   return {capabilities: entries.filter(Boolean)};
