@@ -15,3 +15,5 @@
 .rb2-cap-view-switch button:focus-visible{outline:2px solid #9ecbff;outline-offset:2px}
 .rb2-cap-model:target{outline:2px solid #67b4ed}
 @media(max-width:650px){.rb2-cap-view-switch{width:100%}.rb2-cap-view-switch button{flex:1;font-size:12px;padding:10px 6px}}
+
+.rb2-cap-model--focused{border-color:#5da8ea;box-shadow:0 0 0 1px #5da8ea77}
