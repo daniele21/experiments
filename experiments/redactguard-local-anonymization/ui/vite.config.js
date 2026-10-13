@@ -1,11 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { summarizeCapabilitySuite } from "./src/v2/capabilitySummary.js";
-import { bundledDatasetTextPath, indexBenchmarkTexts } from "./src/v2/datasetText.js";
+import { resolveBundledDatasetSource, indexBenchmarkTexts, canCompareOverviewDocuments } from "./src/v2/datasetText.js";
 
 const UI_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_ROOT = path.resolve(UI_ROOT, "../results");
@@ -489,12 +490,16 @@ function stripStructureMarkers(text) {
   return lines.filter((line) => !STRUCTURE_MARKER_RE.test(line.trim())).join("\n");
 }
 
-async function loadDocumentSpans(directory, datasetId = null) {
+async function loadDocumentSpans(directory, datasetId = null, manifestDataset = null) {
   const docSpans = {};
-  const sourcePath = bundledDatasetTextPath(datasetId);
+  const sourcePath = resolveBundledDatasetSource(datasetId, manifestDataset);
   const sourceTexts = sourcePath
     ? indexBenchmarkTexts(await readJsonLines(path.resolve(UI_ROOT, "..", sourcePath)))
     : new Map();
+  const observedSourceHashes = new Map();
+  const embeddedCaseTexts = new Map();
+  const conflictingSources = new Set();
+  const sha256 = text => createHash("sha256").update(text, "utf8").digest("hex");
   try {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
     for (const dirent of dirents) {
@@ -506,6 +511,21 @@ async function loadDocumentSpans(directory, datasetId = null) {
       for (const row of rows) {
         const caseId = row.case?.id ?? row.case_id;
         if (!caseId) continue;
+        const digest = row.score?.semantic_content_sha256;
+        if (typeof digest === "string" && /^[0-9a-f]{64}$/i.test(digest)) {
+          const previous = observedSourceHashes.get(caseId);
+          if (previous && previous !== digest) conflictingSources.add(caseId);
+          observedSourceHashes.set(caseId, digest);
+        }
+        // Recent runs can embed the exact inference input. Historical suites
+        // use the versioned local dataset, verified against the run digest.
+        if (typeof row.case?.text === "string") {
+          const previous = embeddedCaseTexts.get(caseId);
+          if (previous !== undefined && previous !== row.case.text) {
+            conflictingSources.add(caseId);
+          }
+          embeddedCaseTexts.set(caseId, row.case.text);
+        }
         if (!docSpans[caseId]) {
           docSpans[caseId] = {
             gold: (row.case?.gold || []).map((g) => ({
@@ -575,25 +595,39 @@ async function loadDocumentSpans(directory, datasetId = null) {
 
     // Attach canonical inference text and fallback gold annotations
     for (const caseId of Object.keys(docSpans)) {
-      // 1. Text. For bundled synthetic challenge sets, use *exactly* the
-      // JSONL text evaluated by the model, so span offsets stay aligned.
-      if (sourceTexts.has(caseId)) {
-        docSpans[caseId].text = sourceTexts.get(caseId);
-      } else if (sourcePath) {
-        // Never accidentally display realistic content for a different suite.
-        docSpans[caseId].text = null;
-      } else {
-        try {
-          let raw = null;
+      // 1. Exact text provenance is essential for correct PII offsets.
+      // Do not confuse unavailable text with a corrupt gold annotation.
+      let text = embeddedCaseTexts.get(caseId) ?? sourceTexts.get(caseId) ?? null;
+      if (text === null && !sourcePath) {
+        // Legacy realistic suites kept canonical Markdown separately.
+        // Only use this fallback for named file cases, never synthetic IDs.
+        if (/\.(?:txt|csv|xlsx|xls|docx?|pdf|pptx?|eml)$/i.test(caseId)) {
           try {
-            raw = await fs.readFile(path.join(CANONICAL_DIR, `${caseId}.md`), "utf-8");
+            let raw;
+            try {
+              raw = await fs.readFile(path.join(CANONICAL_DIR, `${caseId}.md`), "utf-8");
+            } catch {
+              raw = await fs.readFile(path.join(CANONICAL_DIR, caseId), "utf-8");
+            }
+            text = stripStructureMarkers(raw);
           } catch {
-            raw = await fs.readFile(path.join(CANONICAL_DIR, caseId), "utf-8");
+            text = null;
           }
-          docSpans[caseId].text = stripStructureMarkers(raw);
-        } catch {
-          docSpans[caseId].text = null;
         }
+      }
+      const expectedHash = observedSourceHashes.get(caseId);
+      if (conflictingSources.has(caseId)) {
+        docSpans[caseId].text = null;
+        docSpans[caseId].textStatus = "source_conflict";
+      } else if (text === null) {
+        docSpans[caseId].text = null;
+        docSpans[caseId].textStatus = "missing_source";
+      } else if (expectedHash && sha256(text) !== expectedHash) {
+        docSpans[caseId].text = null;
+        docSpans[caseId].textStatus = "source_hash_mismatch";
+      } else {
+        docSpans[caseId].text = text;
+        docSpans[caseId].textStatus = expectedHash ? "verified" : "unverified";
       }
 
       // 2. Fallback gold if missing or empty
@@ -664,7 +698,7 @@ async function loadRunFromSummary(summary) {
   }
 
   const preflight = await readJson(path.join(directory, "preflight.json"), {});
-  const docSpans = await loadDocumentSpans(directory, suiteMeta?.dataset_id);
+  const docSpans = await loadDocumentSpans(directory, suiteMeta?.dataset_id, manifest?.dataset);
   return { summary, manifest, metrics, failures, latency, preflight, docSpans, suiteMeta };
 }
 
@@ -728,6 +762,7 @@ async function buildOverview() {
         failures: detail.failures?.[model] ?? [],
         latencyMetrics: detail.latency?.metrics?.[model] ?? null,
         preflight: detail.preflight?.[model] ?? metrics?.preflight ?? null,
+        docSpans: detail.docSpans,
       };
       const current = bestByModel.get(model);
       if (isBetterCandidate(candidate, current)) {
@@ -776,34 +811,42 @@ async function buildOverview() {
     };
   }
 
-  const docSpans = {};
-  for (const [model, candidate] of bestByModel.entries()) {
-    const candidateDirectory = path.resolve(
-      RESULTS_ROOT,
-      ...candidate.run.key.split("/"),
-    );
-    const candidateDocSpans = await loadDocumentSpans(candidateDirectory);
-    for (const [caseId, data] of Object.entries(candidateDocSpans)) {
-      if (!docSpans[caseId]) {
-        docSpans[caseId] = { gold: data.gold, text: data.text, models: {} };
-      } else {
-        if (!docSpans[caseId].text && data.text) {
-          docSpans[caseId].text = data.text;
-        }
-        if ((data.gold?.length || 0) > (docSpans[caseId].gold?.length || 0)) {
-          docSpans[caseId].gold = data.gold;
-        }
-      }
-      if (data.models[model]) {
-        docSpans[caseId].models[model] = data.models[model];
-      }
-    }
-  }
-
   const statuses = Object.values(evidence);
   const datasets = [...new Set(
     statuses.map((item) => item.dataset).filter(Boolean),
   )];
+  // A caseId from Healthcare must never be merged with a caseId from
+  // Financial/Realistic just because the strings match. Compare document
+  // evidence only within a single explicit benchmark suite.
+  const mixedDocuments = !canCompareOverviewDocuments(datasets);
+  const docSpans = {};
+  if (!mixedDocuments) {
+    for (const [model, candidate] of bestByModel.entries()) {
+      // Already loaded using the candidate's own suite dataset provenance.
+      const candidateDocSpans = candidate.docSpans ?? {};
+      for (const [caseId, data] of Object.entries(candidateDocSpans)) {
+        if (!docSpans[caseId]) {
+          docSpans[caseId] = {
+            gold: data.gold, text: data.text,
+            textStatus: data.textStatus,
+            models: {},
+          };
+        } else if (docSpans[caseId].text && data.text &&
+                   docSpans[caseId].text !== data.text) {
+          docSpans[caseId].text = null;
+          docSpans[caseId].textStatus = "source_conflict";
+        } else if (!docSpans[caseId].text && data.text &&
+                   docSpans[caseId].textStatus !== "source_conflict") {
+          docSpans[caseId].text = data.text;
+          docSpans[caseId].textStatus = data.textStatus;
+        }
+        if ((data.gold?.length || 0) > (docSpans[caseId].gold?.length || 0)) {
+          docSpans[caseId].gold = data.gold;
+        }
+        if (data.models[model]) docSpans[caseId].models[model] = data.models[model];
+      }
+    }
+  }
 
   return {
     summary: {
@@ -825,6 +868,7 @@ async function buildOverview() {
       ).length,
       sourceRuns: new Set(statuses.map((item) => item.runKey)).size,
       datasets,
+      documentsRequireSingleRun: mixedDocuments,
     },
     manifest: {},
     metrics,

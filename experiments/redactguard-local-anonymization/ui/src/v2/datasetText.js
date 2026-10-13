@@ -19,3 +19,23 @@ export function indexBenchmarkTexts(rows) {
   }
   return lookup;
 }
+
+
+// A suite can be opened from its own manifest, a standalone quality run,
+// or a unified overview. Prefer the pinned dataset ID; fall back only to an
+// EXACT known dataset filename suffix, never open paths from untrusted metadata.
+export function resolveBundledDatasetSource(datasetId, manifestDataset) {
+  const fromId = bundledDatasetTextPath(datasetId);
+  if (fromId) return fromId;
+  if (typeof manifestDataset !== "string" || /^[a-z][a-z0-9+.-]*:\/\//i.test(manifestDataset)) return null;
+  const normalized = manifestDataset.replaceAll("\\", "/");
+  for (const source of Object.values(DATASET_TEXT_SOURCE)) {
+    if (normalized === source || normalized.endsWith("/" + source)) return source;
+  }
+  return null;
+}
+
+export function canCompareOverviewDocuments(datasetIds) {
+  const ids = [...new Set((datasetIds ?? []).filter(Boolean))];
+  return ids.length === 1;
+}
