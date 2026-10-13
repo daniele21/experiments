@@ -27,7 +27,7 @@ export function indexBenchmarkTexts(rows) {
 export function resolveBundledDatasetSource(datasetId, manifestDataset) {
   const fromId = bundledDatasetTextPath(datasetId);
   if (fromId) return fromId;
-  if (typeof manifestDataset !== "string") return null;
+  if (typeof manifestDataset !== "string" || /^[a-z][a-z0-9+.-]*:\/\//i.test(manifestDataset)) return null;
   const normalized = manifestDataset.replaceAll("\\", "/");
   for (const source of Object.values(DATASET_TEXT_SOURCE)) {
     if (normalized === source || normalized.endsWith("/" + source)) return source;
