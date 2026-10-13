@@ -102,3 +102,10 @@
 @media(max-width:740px){.rb3-insight-column{display:flex}.rb3-page-head{align-items:flex-start}.rb3-hero-controls{align-items:stretch}.rb3-hero-controls>.rb3-action-ghost{margin-left:0}.rb3-mode-switch{flex:1}.rb3-mode-switch button{flex:1}.rb3-field{flex:1}.rb3-field select{width:100%}.rb3-chart-title{flex-wrap:wrap}.rb3-heatmap table{min-width:690px}.rb3-type-list{grid-template-columns:repeat(2,minmax(0,1fr))}.rb3-section-head{flex-direction:column}.rb3-section-head label{align-self:flex-start}.rb3-metadata{gap:9px}}
 @media(max-width:520px){.rb3-page-head h1{font-size:26px}.rb3-page-head p{font-size:12px}.rb3-hero-controls{flex-direction:column;align-items:stretch}.rb3-field select{max-width:none;flex:1}.rb3-mode-switch{width:100%}.rb3-mode-switch button{font-size:11px;padding:8px 5px}.rb3-hero-controls>.rb3-action-ghost{width:100%}.rb3-panel{padding:13px}.rb3-chart-legend button{font-size:10px}.rb3-type-list{grid-template-columns:1fr 1fr;gap:12px}.rb3-scatter{min-height:210px}.rb3-metadata span{overflow-wrap:anywhere}}
 @media(prefers-reduced-motion:reduce){.rb3-executive *{transition:none!important;scroll-behavior:auto!important}}
+
+/* Sortable dataset headers; keyboard and touch affordances. */
+.rb3-heatmap .rb3-th-sort{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;width:100%;background:transparent;border:0;padding:2px 0;color:inherit;font:inherit;font-weight:650;cursor:pointer;min-height:34px}
+.rb3-heatmap .rb3-th-sort:hover{color:#93d0ff}
+.rb3-heatmap .rb3-th-sort:focus-visible{outline:2px solid #80b8ff;outline-offset:3px;border-radius:3px}
+.rb3-heatmap .rb3-th-sort span{font-size:17px;color:#7197bd;flex-shrink:0}
+.rb3-heatmap th[aria-sort="ascending"] .rb3-th-sort span,.rb3-heatmap th[aria-sort="descending"] .rb3-th-sort span{color:#76c2ff}
