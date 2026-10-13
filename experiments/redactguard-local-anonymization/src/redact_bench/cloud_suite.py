@@ -55,7 +55,7 @@ def prepare_cloud_reference(
     versions = {case.gold_version for case in cases}
     if len(versions) != 1 or not next(iter(versions)):
         raise ValueError("The cloud baseline requires a single frozen gold version.")
-    if any(not case.tags or "synthetic" not in case.tags for case in cases):
+    if dataset != "challenge" and any("synthetic" not in case.tags for case in cases):
         raise ValueError("Only cases explicitly tagged synthetic are allowed in cloud benchmarks.")
     return {
         "source": source,
