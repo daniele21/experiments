@@ -22,6 +22,7 @@ export default function CapabilityBenchmark({onOpenRun}){
  const [selected,setSelected]=useState("healthcare");
  const [view,setView]=useState("matrix");
  const [jumpToModel,setJumpToModel]=useState(null);
+ const [focusedModel,setFocusedModel]=useState(null);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState(null);
  const [reload,setReload]=useState(0);
@@ -47,6 +48,7 @@ export default function CapabilityBenchmark({onOpenRun}){
  const inspectCell=(category,modelId)=>{
    setSelected(category);
    setJumpToModel(modelId);
+   setFocusedModel(modelId);
    setView("dataset");
  };
  const command=selected==="realistic"?"config/suite.yaml":
@@ -86,7 +88,7 @@ export default function CapabilityBenchmark({onOpenRun}){
      {active.excludedDatasetVersions.length>0&&<span className="rb2-cap-run-note"> {active.excludedDatasetVersions.length} versioni diverse del dataset escluse per non mescolare il gold.</span>}
    </div>
    <div className="rb2-cap-modelgrid">
-    {active.models.map(m=><article id={`rb2-cap-model-${encodeURIComponent(m.modelId)}`} className="rb2-cap-model" key={m.modelId}>
+    {active.models.map(m=><article id={`rb2-cap-model-${encodeURIComponent(m.modelId)}`} className={`rb2-cap-model ${focusedModel===m.modelId?"rb2-cap-model--focused":""}`} key={m.modelId}>
       <h3>{shortModel(m.modelId)}</h3>
       <div className="rb2-cap-provenance"><span>{dateLabel(m.createdAt)}</span><span title={m.suiteId}>{m.suiteId??"Run"}</span></div>
       <span className={`rb2-cap-confidence ${m.comparability==="different_protocol"?"rb2-cap-confidence--warning":""}`}
