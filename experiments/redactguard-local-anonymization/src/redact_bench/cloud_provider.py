@@ -35,7 +35,7 @@ class OpenAICloudRedactProvider(KorgisRedactProvider):
             "backend": "openai_api",
             "model": model,
             "reasoning_effort": "none",
-            "temperature": "provider_default",
+            "temperature": 0,
             "response_format": "json_object",
             "store": False,
             "api_retry_count": 0,
@@ -45,7 +45,7 @@ class OpenAICloudRedactProvider(KorgisRedactProvider):
     def _completion_kwargs(self, case: Case, segment: TextSegment) -> dict:
         request=super()._completion_kwargs(case, segment)
         request.pop("extra_body", None)  # Korgis-only llama-server controls
-        request.pop("temperature", None)  # reasoning models restrict temperature
+        # GPT-6 Luna supports temperature when reasoning_effort="none".\n        # Keep the same temperature=0 as the local Korgis quality protocol.
         request["max_completion_tokens"]=request.pop("max_tokens")
         request["reasoning_effort"]="none"
         request["store"]=False
