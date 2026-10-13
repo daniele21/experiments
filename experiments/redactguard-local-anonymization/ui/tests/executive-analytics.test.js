@@ -81,3 +81,15 @@ test("executive insight is tied to selected dataset and selected models",()=>{
  assert.equal(e.fullyValid,1);
  assert.equal(e.goldReviewed,false);
 });
+
+test("incompatible run cannot become executive best-model recommendation",()=>{
+ const mismatch={
+  ...healthcare,
+  models:healthcare.models.map(m=>m.modelId==="qwen9"
+   ? {...m,comparability:"different_protocol"} : m),
+ };
+ const r=summarizeExecutive({healthcare:mismatch},"healthcare",ids,"privacy");
+ assert.equal(r.bestRecall.modelId,"qwen4");
+ assert.equal(r.frontier.points.find(p=>p.modelId==="qwen9").eligible,false);
+ assert.equal(r.frontier.excluded,1);
+});
