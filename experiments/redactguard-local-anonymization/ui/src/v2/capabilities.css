@@ -6,3 +6,14 @@
 .rb2-cap-confidence{display:inline-block;margin-top:12px;border:1px solid var(--rb2-border);border-radius:6px;padding:5px 8px;color:var(--rb2-muted);font-size:10px}
 .rb2-cap-confidence--warning{border-color:#ad8146;color:#f2c183}
 .rb2-cap-card-action{width:100%;text-align:center;margin-top:15px;display:block}
+
+/* Alternate, non-destructive views of the same underlying capability results. */
+.rb2-cap-view-switch{display:flex;align-self:flex-start;padding:4px;gap:3px;border:1px solid var(--rb2-border);background:var(--rb2-panel);border-radius:10px}
+.rb2-cap-view-switch button{background:transparent;border:1px solid transparent;border-radius:7px;color:var(--rb2-muted);padding:10px 17px;min-height:43px;cursor:pointer;font-size:13px}
+.rb2-cap-view-switch button.active{background:#235081;border-color:#3579c5;color:#eaf4ff;font-weight:700}
+.rb2-cap-view-switch button:hover:not(.active){background:var(--rb2-hover);color:var(--rb2-text)}
+.rb2-cap-view-switch button:focus-visible{outline:2px solid #9ecbff;outline-offset:2px}
+.rb2-cap-model:target{outline:2px solid #67b4ed}
+@media(max-width:650px){.rb2-cap-view-switch{width:100%}.rb2-cap-view-switch button{flex:1;font-size:12px;padding:10px 6px}}
+
+.rb2-cap-model--focused{border-color:#5da8ea;box-shadow:0 0 0 1px #5da8ea77}

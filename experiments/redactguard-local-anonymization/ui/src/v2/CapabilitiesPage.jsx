@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CAPABILITY_DEFS, selectLatestCapabilityRuns } from "./capabilitySummary";
 import { shortModel } from "./evidence";
+import CapabilityMatrix from "./CapabilityMatrix";
 import "./capabilities.css";
 
 const fmt = x => x === null || x === undefined ? "—" : `${(x * 100).toFixed(1)}%`;
@@ -19,6 +20,9 @@ function StatLine({label,value,good=false}){
 export default function CapabilityBenchmark({onOpenRun}){
  const [items,setItems]=useState([]);
  const [selected,setSelected]=useState("healthcare");
+ const [view,setView]=useState("matrix");
+ const [jumpToModel,setJumpToModel]=useState(null);
+ const [focusedModel,setFocusedModel]=useState(null);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState(null);
  const [reload,setReload]=useState(0);
@@ -35,6 +39,18 @@ export default function CapabilityBenchmark({onOpenRun}){
  const latest=useMemo(()=>selectLatestCapabilityRuns(items),[items]);
  const active=latest[selected]??null;
  const definition=CAPABILITY_DEFS.find(x=>x.id===selected);
+ useEffect(()=>{
+   if(view!=="dataset"||!jumpToModel)return;
+   const target=document.getElementById(`rb2-cap-model-${encodeURIComponent(jumpToModel)}`);
+   target?.scrollIntoView({behavior:"smooth",block:"center"});
+   setJumpToModel(null);
+ },[view,selected,jumpToModel]);
+ const inspectCell=(category,modelId)=>{
+   setSelected(category);
+   setJumpToModel(modelId);
+   setFocusedModel(modelId);
+   setView("dataset");
+ };
  const command=selected==="realistic"?"config/suite.yaml":
    selected==="challenge"?"config/suite-challenge.yaml":`config/suite-${selected}.yaml`;
  return <section className="rb2-capabilities">
@@ -42,6 +58,13 @@ export default function CapabilityBenchmark({onOpenRun}){
    <button className="rb2-cap-refresh" type="button" onClick={()=>setReload(x=>x+1)}>↻ Aggiorna</button></div>
   {loading&&<div className="rb2-cap-note">Caricamento delle suite locali…</div>}
   {error&&<div role="alert" className="rb2-cap-error">Impossibile leggere le suite: {error}</div>}
+  <div className="rb2-cap-view-switch" role="group" aria-label="Modalità della panoramica">
+    <button type="button" aria-pressed={view==="matrix"} className={view==="matrix"?"active":""}
+      onClick={()=>setView("matrix")}>▦ Modelli × dataset</button>
+    <button type="button" aria-pressed={view==="dataset"} className={view==="dataset"?"active":""}
+      onClick={()=>setView("dataset")}>◈ Dettaglio per dataset</button>
+   </div>
+  {view==="matrix" ? (!loading && <CapabilityMatrix latest={latest} onSelectCell={inspectCell}/>) : <>
   <div className="rb2-cap-picker" role="tablist" aria-label="Area del benchmark">
    {CAPABILITY_DEFS.map(cap=>{
      const report=latest[cap.id];
@@ -65,7 +88,7 @@ export default function CapabilityBenchmark({onOpenRun}){
      {active.excludedDatasetVersions.length>0&&<span className="rb2-cap-run-note"> {active.excludedDatasetVersions.length} versioni diverse del dataset escluse per non mescolare il gold.</span>}
    </div>
    <div className="rb2-cap-modelgrid">
-    {active.models.map(m=><article className="rb2-cap-model" key={m.modelId}>
+    {active.models.map(m=><article id={`rb2-cap-model-${encodeURIComponent(m.modelId)}`} className={`rb2-cap-model ${focusedModel===m.modelId?"rb2-cap-model--focused":""}`} key={m.modelId}>
       <h3>{shortModel(m.modelId)}</h3>
       <div className="rb2-cap-provenance"><span>{dateLabel(m.createdAt)}</span><span title={m.suiteId}>{m.suiteId??"Run"}</span></div>
       <span className={`rb2-cap-confidence ${m.comparability==="different_protocol"?"rb2-cap-confidence--warning":""}`}
@@ -91,6 +114,7 @@ export default function CapabilityBenchmark({onOpenRun}){
      </div>
    </div>
    <p className="rb2-cap-note">I risultati sono selezionati singolarmente per modello all'interno della stessa versione del dataset. Se la configurazione o gli input differiscono, i punteggi non costituiscono un confronto controllato. Gold non necessariamente revisionato; nessuna certificazione privacy. Le quattro capacità rimangono benchmark separati.</p>
+  </>}
   </>}
  </section>;
 }
