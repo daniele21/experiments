@@ -110,17 +110,38 @@ export function spanKey(span) {
 export function spansForModel(doc, model) {
   const raw = doc?.metrics?.find(m => m.model === model)?.raw;
   const text = doc?.text ?? "";
-  if (!raw) return { items: [], invalidOffsets: 0 };
+  if (!raw) return {
+    items: [], invalidOffsets: 0, invalidGoldOffsets: 0, invalidExtraOffsets: 0,
+  };
   const missed = new Set((raw.missed ?? []).map(spanKey));
-  const extras = raw.overRedacted ?? [];
-  const items = [
-    ...(doc.gold ?? []).map(g => ({...g, status: missed.has(spanKey(g)) ? "missed" : "detected"})),
-    ...extras.map(f => ({...f, status:"extra"})),
-  ];
-  let invalidOffsets = 0;
-  const result = items.filter(s => { const ok=spanMatchesText(text,s); if(!ok)invalidOffsets+=1; return ok; });
-  result.sort((a,b) => a.start-b.start || a.end-b.end || a.status.localeCompare(b.status));
-  return {items:result, invalidOffsets};
+  const gold = (doc.gold ?? []).map(g => ({
+    ...g, status: missed.has(spanKey(g)) ? "missed" : "detected",
+  }));
+  const extras = (raw.overRedacted ?? []).map(f => ({...f, status:"extra"}));
+
+  // A mismatched GOLD annotation means the masking boundaries themselves
+  // cannot be trusted, so keep the existing fail-closed document preview.
+  // By contrast, model-generated false positives can have inaccurate offsets
+  // or normalized values: omit only those overlays, retain the valid gold
+  // highlights, and report the unpositioned extras in the inspector.
+  const validGold = gold.filter(s => spanMatchesText(text, s));
+  const validExtras = extras.filter(s => spanMatchesText(text, s));
+  const invalidGoldOffsets = gold.length - validGold.length;
+  const invalidExtraOffsets = extras.length - validExtras.length;
+  const items = [...validGold, ...validExtras];
+
+  // Gold labels must win over overlapping model-generated extras so a
+  // false positive never conceals a missed ground-truth annotation.
+  const priority = s => s.status === "extra" ? 1 : 0;
+  items.sort((a,b) =>
+    a.start-b.start || priority(a)-priority(b) ||
+    a.end-b.end || a.status.localeCompare(b.status));
+  return {
+    items,
+    invalidGoldOffsets,
+    invalidExtraOffsets,
+    invalidOffsets: invalidGoldOffsets + invalidExtraOffsets,
+  };
 }
 export function compareInsight(a, b, focus) {
   if (!a || !b) return "Scegli due modelli per confrontarli.";
