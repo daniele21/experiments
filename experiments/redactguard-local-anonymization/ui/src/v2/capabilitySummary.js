@@ -48,18 +48,67 @@ export function summarizeModelCapability(id,aggregate) {
  };
 }
 
-export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models},metrics) {
+export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models,contractSnapshot=null,evaluationSchema=null,modelFingerprints={}},metrics) {
  const category=capabilityFromDataset(datasetId);
  if(!category||!metrics||typeof metrics!=="object")return null;
  return {
   category, runKey:key, suiteId, datasetId, createdAt,
-  models:Object.entries(metrics).map(([id,m])=>summarizeModelCapability(id,m)),
+  contractSnapshot, evaluationSchema,
+  models:Object.entries(metrics).map(([id,m])=>({
+    ...summarizeModelCapability(id,m),inputFingerprint:modelFingerprints[id]??null,
+  })),
  };
 }
+// The latest SUITE is not necessarily the latest result for every MODEL.
+// Build one capability view from the newest available measurement of each
+// model in the same exact dataset version, keeping the underlying run provenance.
 export function selectLatestCapabilityRuns(runs) {
- const out={};
- const sorted=[...runs].filter(Boolean).sort((a,b)=>
-   (Date.parse(b.createdAt??"")||0)-(Date.parse(a.createdAt??"")||0));
- for(const item of sorted)if(!out[item.category])out[item.category]=item;
+ const out = {};
+ const sorted = [...runs].filter(Boolean).sort((a,b) =>
+   (Date.parse(b.createdAt??"")||0)-(Date.parse(a.createdAt??"")||0) ||
+   String(b.runKey??"").localeCompare(String(a.runKey??"")));
+ for (const item of sorted) {
+   if (!item.category || !item.datasetId || !Array.isArray(item.models)) continue;
+   if (!out[item.category]) {
+     out[item.category] = {
+       ...item, models: [], mergedRunCount: 0,
+       excludedDatasetVersions: new Set(), referenceRunKey: item.runKey,
+     };
+   }
+   const group=out[item.category];
+   if (item.datasetId !== group.datasetId) {
+     group.excludedDatasetVersions.add(item.datasetId);
+     continue;
+   }
+   let added=false;
+   for (const model of item.models) {
+     if (!model?.modelId || group.models.some(m=>m.modelId===model.modelId)) continue;
+     // Not all older suites have a stored content fingerprint. That is an
+     // unknown verification status, not proof of equality.
+     const checks=[
+       [item.evaluationSchema,group.evaluationSchema],
+       [item.contractSnapshot,group.contractSnapshot],
+       [model.inputFingerprint,group.models[0]?.inputFingerprint],
+     ];
+     const reference=group.models.length===0;
+     const mismatch=checks.some(([x,y])=>x!=null && y!=null && x!==y);
+     const unverified=checks.some(([x,y])=>x==null || y==null);
+     group.models.push({
+       ...model,
+       runKey:item.runKey,
+       suiteId:item.suiteId,
+       createdAt:item.createdAt,
+       contractSnapshot:item.contractSnapshot??null,
+       inputFingerprint:model.inputFingerprint??null,
+       comparability:reference?"reference":mismatch?"different_protocol":unverified?"unverified":"verified",
+     });
+     added=true;
+   }
+   if (added) group.mergedRunCount++;
+ }
+ for (const group of Object.values(out)) {
+   group.excludedDatasetVersions=[...group.excludedDatasetVersions];
+   group.models.sort((a,b)=>a.modelId.localeCompare(b.modelId));
+ }
  return out;
 }

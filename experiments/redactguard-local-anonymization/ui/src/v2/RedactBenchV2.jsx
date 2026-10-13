@@ -66,7 +66,7 @@ export default function RedactBenchV2({
          {suiteChoices.map(run=><option key={run.key} value={run.key}>{run.suiteId||run.runId} · {run.dataset||"dataset non indicato"}</option>)}
        </select></label>
       </section> :
-     page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey)=>{onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
+     page==="capabilities" ? <CapabilitiesPage onOpenRun={(runKey,modelId)=>{if(modelId)onSelectModel?.(modelId);onSelectRun(runKey);route.navigate(appRoutes.clientModels);}}/>:
      page==="models" ? <ModelComparison detail={detail} models={selectedModels} onOpenDocuments={onDocuments}/>:
      page==="documents" ? <DocumentComparison detail={detail} models={selectedModels} onOpenDocument={openDoc}/>:
      page==="detail" ? <DocumentWorkspace detail={detail} documentName={route.params.documentName} initialModel={route.params.model} models={[route.params.model,...selectedModels.filter(m=>m!==route.params.model)].filter(m=>available.includes(m)).slice(0,2)} onBack={onDocuments} onSelectModel={(model)=>{onSelectModel?.(model);route.navigate(appRoutes.clientDetail(route.params.documentName,model),{replace:true});}}/>:
