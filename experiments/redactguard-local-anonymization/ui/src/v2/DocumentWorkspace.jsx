@@ -49,7 +49,7 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
   </header>
   {current?.status!=="ok" && <div role="status" className="rb2-canvas-warning">Output non valido o non disponibile: il testo è mostrato come riferimento, non come protezione riuscita.</div>}
   {result.invalidGoldOffsets>0 && <div className="rb2-canvas-warning" role="alert">{result.invalidGoldOffsets} annotazioni gold non allineate: anteprima protetta.</div>}
-  {result.invalidExtraOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidExtraOffsets} rilevazioni extra del modello non posizionabili nel testo. Le PII gold restano visibili e mascherate; controlla “Extra” nell’Inspector.</div>
+  {result.invalidExtraOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidExtraOffsets} rilevazioni extra del modello non posizionabili nel testo. Le PII gold restano visibili e mascherate; controlla “Extra” nell’Inspector.</div>}
   <div className="rb2-pane-scroll" ref={scrollRef} onScroll={onScroll}>
    {current?.status!=="ok" ? <div className="rb2-workspace-empty">Non è disponibile un'anonimizzazione valida di questo documento. Il testo grezzo resta nascosto in questa vista.</div> :
     result.invalidGoldOffsets>0 ? <div className="rb2-workspace-empty">Gli offset delle PII gold non coincidono con il testo canonico. Anteprima oscurata per non esporre dati non correttamente mascherati.</div> :
