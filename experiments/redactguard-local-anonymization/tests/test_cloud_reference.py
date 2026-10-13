@@ -72,7 +72,7 @@ def test_cloud_provider_is_same_prompt_and_postprocessing_but_no_korgis_fields(m
     assert body["max_completion_tokens"] == 2048
     assert body["reasoning_effort"] == "none"
     assert body["store"] is False
-    assert "extra_body" not in body and "temperature" not in body
+    assert "extra_body" not in body and body["temperature"] == 0
     assert "max_tokens" not in body
     assert "test-not-an-actual-secret" not in repr(p.execution_settings)
 
