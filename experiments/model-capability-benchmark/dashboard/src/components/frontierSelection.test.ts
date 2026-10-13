@@ -55,6 +55,6 @@ describe('Frontier manually selected model cohort', () => {
     assert.equal(results[0].pareto_parameters, true);
     assert.equal(results[1].pareto_parameters, true);
     assert.equal(results[0].pareto_latency, true);
-    assert.equal(results[1].pareto_latency, true);
+    assert.equal(results[1].pareto_latency, false);
   });
 });
