@@ -35,7 +35,7 @@ export function privacyFrontier(report, selectedModels) {
  const onFrontier=new Set(frontier.map(p=>p.modelId));
  const results=points.map(p=>({...p,frontier:p.eligible&&onFrontier.has(p.modelId),
    dominated:p.eligible&&!onFrontier.has(p.modelId)}));
- const provisional=good.some(p=>p.comparability==="unverified");
+ const provisional=good.some(p=>p.comparability!=="verified" && p.comparability!=="reference");
  return {points:results,frontier:frontier.sort((a,b)=>a.x-b.x||a.y-b.y),
    eligible:good.length,excluded:points.length-good.length,provisional};
 }
