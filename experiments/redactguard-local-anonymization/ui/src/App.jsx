@@ -242,6 +242,8 @@ export default function App() {
 
         {activeView === "client" && (
           <nav className="rb2-shell-nav" aria-label="Navigazione principale">
+            <button type="button" className={route.page === "executive" ? "active" : ""}
+              onClick={() => route.navigate(appRoutes.clientExecutive)}><span aria-hidden="true">✦</span>Executive</button>
             <button type="button" className={route.page === "models" ? "active" : ""}
               onClick={() => route.navigate(appRoutes.clientModels)}><span aria-hidden="true">◈</span>Modelli</button>
             <button type="button" className={route.page === "documents" || route.page === "detail" ? "active" : ""}
