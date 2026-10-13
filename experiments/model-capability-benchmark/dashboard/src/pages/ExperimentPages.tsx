@@ -15,6 +15,8 @@ import type {
 } from '../types';
 import { bytes, milliseconds, points, score } from '../utils';
 import { PageHeader } from '../components/Shell';
+import { FrontierModelPicker } from '../components/FrontierModelPicker';
+import { filterFrontierSelection, recalculateFrontier } from '../components/frontierSelection';
 
 type FrontierMetric =
   | 'parameters_b'
@@ -94,6 +96,7 @@ function FrontierChart({
   selectedSignature,
   onHover,
   onSelect,
+  noModelsSelected,
 }: {
   points: FrontierPoint[];
   metric: FrontierMetric;
@@ -102,6 +105,7 @@ function FrontierChart({
   selectedSignature: string | null;
   onHover: (signature: string | null) => void;
   onSelect: (signature: string) => void;
+  noModelsSelected: boolean;
 }) {
   const pointsWithData = data.filter(
     (point) => finite(point[metric]) && finite(point.quality),
@@ -116,8 +120,8 @@ function FrontierChart({
     return (
       <div className="frontier-empty-state">
         <div className="frontier-empty-icon"><TrendingUp size={18} /></div>
-        <strong>No comparable frontier evidence yet</strong>
-        <span>Run and project local standard benchmarks to populate this view.</span>
+        <strong>{noModelsSelected ? 'No models selected' : 'No comparable frontier evidence yet'}</strong>
+        <span>{noModelsSelected ? 'Select one or more models using the Models filter above.' : 'Run and project local standard benchmarks to populate this view.'}</span>
       </div>
     );
   }
@@ -398,12 +402,13 @@ export function FrontierPage() {
   const [metric, setMetric] = useState<FrontierMetric>('parameters_b');
   const [mode, setMode] = useState<FrontierMode>('family');
   const [family, setFamily] = useState('all');
+  const [selectedModelSignatures, setSelectedModelSignatures] = useState<string[] | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<FrontierSort>('parameters');
   const [hoveredSignature, setHoveredSignature] = useState<string | null>(null);
   const [selectedSignature, setSelectedSignature] = useState<string | null>(null);
 
-  const localPoints = useMemo(
+  const familyPoints = useMemo(
     () =>
       (payload?.points ?? []).filter(
         (point) =>
@@ -411,6 +416,11 @@ export function FrontierPage() {
           (family === 'all' || point.family === family),
       ),
     [payload, family],
+  );
+
+  const localPoints = useMemo(
+    () => recalculateFrontier(filterFrontierSelection(familyPoints, selectedModelSignatures)),
+    [familyPoints, selectedModelSignatures],
   );
 
   const comparablePoints = localPoints.filter(
@@ -461,8 +471,9 @@ export function FrontierPage() {
       return Number(a.parameters_b ?? Infinity) - Number(b.parameters_b ?? Infinity);
     });
 
-  const selectedFamilyLabel =
-    family === 'all' ? 'all local families' : family;
+  const selectedFamilyLabel = selectedModelSignatures === null
+    ? (family === 'all' ? 'all local families' : family)
+    : 'the selected models';
 
   return (
     <div className="frontier-page">
@@ -517,6 +528,8 @@ export function FrontierPage() {
             value={family}
             onChange={(event) => {
               setFamily(event.target.value);
+              setSelectedModelSignatures(null);
+              setHoveredSignature(null);
               setSelectedSignature(null);
             }}
           >
@@ -526,6 +539,15 @@ export function FrontierPage() {
             ))}
           </select>
         </label>
+        <FrontierModelPicker
+          models={familyPoints}
+          selectedSignatures={selectedModelSignatures}
+          onChange={(selection) => {
+            setSelectedModelSignatures(selection);
+            setHoveredSignature(null);
+            setSelectedSignature(null);
+          }}
+        />
       </section>
 
       <div className="frontier-primary-grid">
@@ -545,6 +567,7 @@ export function FrontierPage() {
           </div>
           <FrontierChart
             points={localPoints}
+            noModelsSelected={selectedModelSignatures?.length === 0}
             metric={metric}
             mode={mode}
             highlightedSignature={highlightedSignature}

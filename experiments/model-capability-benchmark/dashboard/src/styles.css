@@ -3047,7 +3047,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 .frontier-filter-bar {
   display: grid;
-  grid-template-columns: minmax(190px, 250px) minmax(220px, 280px) minmax(190px, 250px);
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.12fr) minmax(180px, 1fr) minmax(210px, 1.1fr);
   gap: 14px;
   align-items: end;
   padding: 14px 16px;
@@ -3057,12 +3057,12 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 8px 26px rgba(26, 41, 69, .035);
 }
 
-.frontier-filter-bar label {
+.frontier-filter-bar > label {
   display: grid;
   gap: 6px;
 }
 
-.frontier-filter-bar label > span {
+.frontier-filter-bar > label > span {
   color: #637087;
   font-size: 10px;
   font-weight: 800;
@@ -3090,6 +3090,256 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .frontier-filter-bar select:focus {
   border-color: #6b82f3;
   box-shadow: 0 0 0 3px rgba(79, 99, 244, .10);
+}
+
+
+/* Frontier model cohort picker — a searchable, keyboard-operable multi-select. */
+.frontier-filter-bar {
+  position: relative;
+  z-index: 3;
+}
+
+.frontier-model-filter {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.frontier-control-label {
+  color: #637087;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.frontier-model-trigger {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: #1b273b;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  text-align: left;
+}
+
+.frontier-model-trigger:hover,
+.frontier-model-trigger.open {
+  border-color: #7287f3;
+  background: #fbfcff;
+}
+
+.frontier-model-trigger:focus-visible {
+  outline: 3px solid rgba(79, 99, 244, .18);
+  outline-offset: 1px;
+}
+
+.frontier-model-trigger svg {
+  flex: none;
+  color: #76839b;
+  transition: transform .15s ease;
+}
+
+.frontier-model-trigger.open svg {
+  transform: rotate(180deg);
+}
+
+.frontier-model-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: max(100%, 330px);
+  max-width: min(360px, calc(100vw - 52px));
+  padding: 11px;
+  border: 1px solid #dce4f1;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 19px 44px rgba(28, 40, 75, .17);
+}
+
+.frontier-model-panel-top,
+.frontier-model-bulk,
+.frontier-model-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.frontier-model-panel-top {
+  padding: 3px 3px 9px;
+}
+
+.frontier-model-panel-top strong {
+  color: #19243a;
+  font-size: 12px;
+}
+
+.frontier-model-panel-top > span {
+  color: #77849a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.frontier-model-bulk {
+  justify-content: flex-start;
+  padding: 1px 0 9px;
+}
+
+.frontier-model-bulk button {
+  padding: 5px 9px;
+  border: 1px solid #e0e6f3;
+  border-radius: 7px;
+  background: #f7f9ff;
+  color: #405bd6;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.frontier-model-bulk button:hover {
+  background: #eef2ff;
+}
+
+.frontier-model-search {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid #dce4f1;
+  border-radius: 8px;
+  color: #8491a7;
+}
+
+.frontier-model-search:focus-within {
+  border-color: #7388ef;
+  box-shadow: 0 0 0 3px rgba(79, 99, 244, .08);
+}
+
+.frontier-model-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: #1d293b;
+  font-size: 11px;
+}
+
+.frontier-model-options {
+  max-height: 254px;
+  margin-top: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.frontier-model-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 9px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.frontier-model-option:hover,
+.frontier-model-option:focus-within {
+  background: #f5f7ff;
+}
+
+.frontier-model-option:focus-within {
+  outline: 2px solid rgba(79, 99, 244, .3);
+  outline-offset: -2px;
+}
+
+.frontier-model-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.frontier-model-check {
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #c1cada;
+  border-radius: 5px;
+  background: #fff;
+  color: #fff;
+}
+
+.frontier-model-option input:checked + .frontier-model-check {
+  border-color: var(--frontier-blue);
+  background: var(--frontier-blue);
+}
+
+.frontier-model-option-text {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.frontier-model-option-text strong {
+  overflow: hidden;
+  color: #243249;
+  font-size: 10.5px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frontier-model-option-text small {
+  color: #8290a4;
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.frontier-model-no-results {
+  padding: 16px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.frontier-model-panel-footer {
+  justify-content: flex-end;
+  margin-top: 7px;
+  padding-top: 9px;
+  border-top: 1px solid #edf0f5;
+}
+
+.frontier-model-panel-footer button {
+  min-height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--frontier-blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .frontier-model-panel {
+    left: 0;
+    right: auto;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .frontier-primary-grid {
@@ -3623,13 +3873,15 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   }
 }
 
+@media (max-width: 1200px) {
+  .frontier-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .frontier-filter-bar {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .frontier-filter-bar label:last-child {
-    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .frontier-results-heading {
@@ -3662,10 +3914,6 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
   .frontier-filter-bar {
     grid-template-columns: 1fr;
-  }
-
-  .frontier-filter-bar label:last-child {
-    grid-column: auto;
   }
 
   .frontier-insights-card {
