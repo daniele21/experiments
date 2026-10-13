@@ -131,3 +131,70 @@ def test_cloud_runner_writes_discoverable_quality_suite_without_korgis(tmp_path,
     assert status["usage_estimate"]["input_tokens_observed"] == 200
     assert (result / "quality" / "manifest.json").exists()
     assert called
+
+
+def test_openai_wire_response_flows_through_real_resolver_and_gold_scoring(monkeypatch):
+    from redact_bench.metrics import score_case
+
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-test-only")
+    provider = OpenAICloudRedactProvider(
+        "gpt-6-luna", str(ROOT / "config/profiles.yaml")
+    )
+    case = load_dataset(ROOT / "data/healthcare/cases.jsonl")[0]
+    content = json.dumps({"pii_fields": [
+        {"pii_type": "account_number", "value": "PAZ-AX731"},
+        {"pii_type": "health_condition", "value": "diabete di tipo 2"},
+    ]})
+    provider.client = SimpleNamespace(chat=SimpleNamespace(
+        completions=SimpleNamespace(create=lambda **kwargs: SimpleNamespace(
+            choices=[SimpleNamespace(
+                message=SimpleNamespace(content=content), finish_reason="stop"
+            )],
+            usage=SimpleNamespace(prompt_tokens=100, completion_tokens=20),
+        ))
+    ))
+    result = provider.evaluate(case)
+    assert result.valid
+    assert len(result.findings) == 2
+    row = score_case(case, result)
+    assert row["tp"] == 2
+    assert row["fp"] == 0
+    assert row["fn"] == 0
+    assert result.input_tokens == 100
+    assert result.output_tokens == 20
+
+
+def test_cloud_backend_never_instantiates_korgis(monkeypatch, tmp_path):
+    from redact_bench import runner
+    from redact_bench.models import InferenceResult
+
+    def no_korgis(*args, **kwargs):
+        raise AssertionError("Cloud benchmark must never start Korgis")
+
+    class FakeRemote:
+        def __init__(self, model, profiles_path, **kw):
+            self.model = model
+            self.execution_settings = {"backend": "openai_api"}
+
+        def evaluate(self, case):
+            return InferenceResult(
+                case_id=case.case_id, model=self.model, valid=True,
+                latency_ms=125.0, findings=[], raw_content='{"pii_fields":[]}',
+            )
+
+    monkeypatch.setattr(runner, "KorgisController", no_korgis)
+    monkeypatch.setattr(runner, "OpenAICloudRedactProvider", FakeRemote)
+    monkeypatch.setattr(runner, "write_html", lambda *args, **kwargs: None)
+    result = runner.run_compare(
+        models=["gpt-6-luna"],
+        dataset_path=str(ROOT / "data/ambiguous/cases.jsonl"),
+        profiles_path=str(ROOT / "config/profiles.yaml"),
+        results_dir=str(tmp_path),
+        case_ids=["amb01-neg"], preflight=False, warmups=0,
+        backend="openai_api",
+    )
+    manifest = json.loads((result / "manifest.json").read_text())
+    assert manifest["backend"] == "openai_api"
+    assert manifest["korgis"] is None
+    assert manifest["cloud"]["model"] == "gpt-6-luna"
+    assert (result / "rows.json").exists()
