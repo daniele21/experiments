@@ -48,7 +48,7 @@ export function summarizeModelCapability(id,aggregate) {
  };
 }
 
-export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models,contractSnapshot=null,evaluationSchema=null,modelFingerprints={},latencyByModel={}},metrics) {
+export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models,contractSnapshot=null,evaluationSchema=null,modelFingerprints={},latencyByModel={},providerKind="local"},metrics) {
  const category=capabilityFromDataset(datasetId);
  if(!category||!metrics||typeof metrics!=="object")return null;
  return {
@@ -56,6 +56,7 @@ export function summarizeCapabilitySuite({key,suiteId,datasetId,createdAt,models
   contractSnapshot, evaluationSchema,
   models:Object.entries(metrics).map(([id,m])=>({
     ...summarizeModelCapability(id,m),inputFingerprint:modelFingerprints[id]??null,
+    providerKind,
     ...(latencyByModel[id]??{}),
   })),
  };

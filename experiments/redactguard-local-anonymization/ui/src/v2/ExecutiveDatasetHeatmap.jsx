@@ -35,7 +35,7 @@ export default function ExecutiveDatasetHeatmap({latest,modelFilter,onOpenRun}) 
          aria-label={`Ordina per ${d.title}, ${MATRIX_METRICS.find(m=>m.id===metric)?.label}`}>
          {d.title}<span aria-hidden="true">{arrow(d.id)}</span></button></th>)}</tr></thead>
   <tbody>{selected.map(row=><tr key={row.modelId}>
-    <th scope="row">{shortModel(row.modelId)}</th>
+    <th scope="row">{shortModel(row.modelId)}{datasets.some(d=>row.cells[d.id]?.providerKind==="cloud")&&<small className="rb3-provider-tag">Cloud API</small>}</th>
     {datasets.map(d=>{
       const m=row.cells[d.id];
       const value=matrixMetric(m,metric), tone=matrixTone(value,metric);

@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+from redact_bench.cloud_provider import OpenAICloudRedactProvider
 from redact_bench.datasets import load_dataset
 from redact_bench.metrics import EVALUATION_SCHEMA, aggregate_detailed, score_case
 from redact_bench.preflight import contract_failed_summary, run_model_preflight
@@ -46,9 +47,13 @@ def run_compare(
     max_output_tokens: int | None = None,
     adaptive_subdivision: bool | None = None,
     case_ids: list[str] | None = None,
+    backend: str = "korgis",
 ) -> Path:
-    controller = KorgisController()
-    controller.health()
+    if backend not in {"korgis", "openai_api"}:
+        raise ValueError(f"Unsupported benchmark backend: {backend}")
+    controller = KorgisController() if backend == "korgis" else None
+    if controller is not None:
+        controller.health()
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     output = Path(results_dir) / run_id
     output.mkdir(parents=True, exist_ok=True)
@@ -79,9 +84,13 @@ def run_compare(
 
     for model_index, model in enumerate(models, start=1):
         reporter.model_started(model=model, index=model_index, total=len(models))
-        controller.activate(model)
-        identities[model] = controller.model_identity(model)
-        provider = KorgisRedactProvider(
+        if controller is not None:
+            controller.activate(model)
+            identities[model] = controller.model_identity(model)
+        else:
+            identities[model] = {"provider": "openai_api", "model": model}
+        provider_class = KorgisRedactProvider if backend == "korgis" else OpenAICloudRedactProvider
+        provider = provider_class(
             model,
             profiles_path,
             timeout=timeout,
@@ -180,6 +189,7 @@ def run_compare(
     manifest = {
         "run_id": run_id,
         "benchmark_mode": "model-capability",
+        "backend": backend,
         "execution_unit": "canonical-document-with-v2-segmentation",
         "evaluation_schema": EVALUATION_SCHEMA,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -193,7 +203,13 @@ def run_compare(
             "tested_sha": os.getenv("KORGIS_SOURCE_SHA", KORGIS_TESTED_SHA),
             "base_url": os.getenv("KORGIS_BASE_URL", "http://127.0.0.1:1235/v1"),
             "runtime_identity": identities,
-        },
+        } if backend == "korgis" else None,
+        "cloud": {
+            "provider": "openai",
+            "model": models[0],
+            "storage": False,
+            "remote_network_latency": True,
+        } if backend == "openai_api" else None,
         "redactguard_contract": {
             "repository": contract.get("repository", REDACTGUARD_REPOSITORY),
             "source_sha": contract.get("ref"),

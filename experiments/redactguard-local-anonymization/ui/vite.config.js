@@ -532,7 +532,7 @@ async function buildCapabilities() {
   const entries = await Promise.all(qualityRuns.map(async run => {
     const root = path.resolve(RESULTS_ROOT, ...run.key.split("/"));
     const status = await readJson(path.join(path.dirname(root), "suite.json"));
-    if (status?.status !== "completed") return null;
+    if (status?.status !== "completed" || status.benchmark_scope === "smoke") return null;
     const [metrics, manifest, rows] = await Promise.all([
       readJson(path.join(root,"metrics.json")),
       readJson(path.join(root,"manifest.json")),
@@ -550,6 +550,7 @@ async function buildCapabilities() {
       modelFingerprints:capabilityInputFingerprints(
         rows,Object.keys(metrics??{})),
       latencyByModel,
+      providerKind:status.backend==="openai_api"?"cloud":"local",
     }, metrics);
   }));
   return {capabilities: entries.filter(Boolean)};

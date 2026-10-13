@@ -7,6 +7,7 @@ import subprocess
 
 import typer
 
+from redact_bench.cloud_suite import prepare_cloud_reference, run_cloud_reference
 from redact_bench.dataset_audit import audit_cases
 from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
@@ -305,6 +306,53 @@ def check_realistic_dataset(
     )
     typer.echo(f"by_type: {summary['by_type']}")
 
+
+
+@app.command("cloud-reference")
+def cloud_reference(
+    dataset: str = typer.Option(
+        "healthcare", help="Frozen synthetic fixture: healthcare, ambiguous or challenge."
+    ),
+    model: str = typer.Option("gpt-6-luna", help="Approved API model ID."),
+    max_cases: int | None = typer.Option(
+        None, min=1, help="Smoke-test the first N cases; smoke results are excluded from leaderboards."
+    ),
+    confirm_cloud: bool = typer.Option(
+        False, "--confirm-cloud", help="Explicitly permit sending synthetic text to the OpenAI API."
+    ),
+    check_only: bool = typer.Option(
+        False, "--check-only", help="Validate dataset and print the plan without making API calls."
+    ),
+) -> None:
+    """Run a separately identified GPT-6 Luna cloud reference, scored like local GGUF."""
+    try:
+        plan = prepare_cloud_reference(
+            experiment_root=ROOT, dataset=dataset, model=model, max_cases=max_cases,
+        )
+        typer.echo(
+            f"Cloud reference: {model} | {dataset} | "
+            f"{len(plan['cases'])}/{plan['total_cases']} synthetic cases "
+            f"| scope={plan['scope']}"
+        )
+        if check_only:
+            typer.echo("Check only. No network requests, credentials or charges.")
+            return
+        if not confirm_cloud:
+            typer.echo(
+                "ERROR: --confirm-cloud required. Dataset text and prompts leave this Mac. "
+                "API billing is separate from ChatGPT.",
+                err=True,
+            )
+            raise typer.Exit(code=2)
+        output = run_cloud_reference(
+            experiment_root=ROOT, dataset=dataset, model=model,
+            max_cases=max_cases, confirm_cloud=confirm_cloud,
+        )
+        typer.echo(f"Suite: {output}")
+        typer.echo("UI: uv run redact-bench ui  -> /client/capabilities")
+    except (ValueError, RuntimeError, FileNotFoundError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
 
 
 @app.command("suite")

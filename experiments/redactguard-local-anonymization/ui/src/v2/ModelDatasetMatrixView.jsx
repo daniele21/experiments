@@ -97,7 +97,7 @@ export default function CapabilityMatrix({latest,onSelectCell}) {
              <small>{d.report?.datasetId??"Non testato"}</small></th>)}
          </tr></thead>
          <tbody>{rows.map(row=><tr key={row.modelId}>
-           <th scope="row"><strong>{shortModel(row.modelId)}</strong><small>{datasets.filter(d=>Boolean(row.cells[d.id])).length} / {datasets.length} dataset</small></th>
+           <th scope="row"><strong>{shortModel(row.modelId)}</strong><small>{datasets.filter(d=>Boolean(row.cells[d.id])).length} / {datasets.length} dataset</small>{datasets.some(d=>row.cells[d.id]?.providerKind==="cloud")&&<small className="rb3-provider-tag">Cloud API</small>}</th>
            {datasets.map(d=><td key={d.id}><MatrixCell model={row.cells[d.id]} dataset={d} metric={metric} onSelect={onSelectCell}/></td>)}
          </tr>)}</tbody>
        </table>

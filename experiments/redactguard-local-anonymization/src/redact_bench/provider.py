@@ -189,6 +189,22 @@ class KorgisRedactProvider:
             settings=self.settings,
         )
 
+    def _completion_kwargs(self, case: Case, segment: TextSegment) -> dict:
+        """Local Korgis wire contract; cloud benchmarks override transport only."""
+        return {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": build_system_prompt(
+                    case.profile, self.profiles_path,
+                )},
+                {"role": "user", "content": segment.text},
+            ],
+            "temperature": 0,
+            "max_tokens": self.max_tokens,
+            "response_format": {"type": "json_object"},
+            "extra_body": {"enable_thinking": False, "show_thinking": False},
+        }
+
     def _evaluate_segment(
         self,
         case: Case,
@@ -202,24 +218,7 @@ class KorgisRedactProvider:
 
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": build_system_prompt(
-                            case.profile,
-                            self.profiles_path,
-                        ),
-                    },
-                    {"role": "user", "content": segment.text},
-                ],
-                temperature=0,
-                max_tokens=self.max_tokens,
-                response_format={"type": "json_object"},
-                extra_body={
-                    "enable_thinking": False,
-                    "show_thinking": False,
-                },
+                **self._completion_kwargs(case, segment)
             )
             latency_ms = (time.perf_counter() - started) * 1000
             choice = response.choices[0]
