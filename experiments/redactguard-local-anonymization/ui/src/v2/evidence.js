@@ -87,6 +87,7 @@ export function documentEvidence(detail, caseId, models = modelsIn(detail)) {
     goldCount: choose(primary?.gold_count, raw?.gold?.length) ?? 0,
     humanReviewed: primary?.human_reviewed === true,
     text: raw?.text ?? null,
+    textStatus: raw?.textStatus ?? "missing_source",
     gold: raw?.gold ?? [],
     metrics,
   };
