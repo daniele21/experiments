@@ -21,7 +21,7 @@ export default function ExecutiveDatasetHeatmap({latest,modelFilter,onOpenRun}) 
  <table>
   <thead><tr><th scope="col">Modello</th>{datasets.map(d=><th key={d.id} scope="col">{d.title}</th>)}</tr></thead>
   <tbody>{selected.map(row=><tr key={row.modelId}>
-    <th scope="row">{shortModel(row.modelId)}</th>
+    <th scope="row">{shortModel(row.modelId)}{datasets.some(d=>row.cells[d.id]?.providerKind==="cloud")&&<small className="rb3-provider-tag">Cloud API</small>}</th>
     {datasets.map(d=>{
       const m=row.cells[d.id];
       const value=matrixMetric(m,metric), tone=matrixTone(value,metric);
