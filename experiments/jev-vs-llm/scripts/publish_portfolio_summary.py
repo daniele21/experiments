@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Export an explicit, privacy-safe/publication-safe summary for the portfolio.
 
 The source may contain proprietary benchmark results, raw prompts, or case data.
