@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "benchmark": "jev-vs-llm",
+  "publication": {
+    "scope": "non_restricted_aggregates_only",
+    "restricted_jev_typesafe_clm_metrics_included": false,
+    "raw_case_data_included": false,
+    "comparison_status": "partial_provider_subset"
+  },
+  "source": {
+    "repository": "daniele21/experiments",
+    "ref": "5d0563b0624fd476ed9b07137bb873408869d700",
+    "path": "experiments/jev-vs-llm/results/benchmark_data.json"
+  },
+  "experiments": [
+    {
+      "id": "routing",
+      "status": "published_subset",
+      "published_model_count": 5
+    },
+    {
+      "id": "calibration",
+      "status": "not_published",
+      "published_model_count": 0
+    },
+    {
+      "id": "scaling",
+      "status": "not_published",
+      "published_model_count": 0
+    },
+    {
+      "id": "workflow",
+      "status": "not_published",
+      "published_model_count": 0
+    },
+    {
+      "id": "agent",
+      "status": "not_published",
+      "published_model_count": 0
+    }
+  ],
+  "routing": {
+    "status": "published_subset",
+    "providers": [
+      "local-korgis"
+    ],
+    "models": [
+      {
+        "model": "qwen3.5-9b-q4km",
+        "provider": "local-korgis",
+        "requests": 77,
+        "accuracy": 0.64,
+        "latency_p50_ms": 8295.732999918982,
+        "latency_p95_ms": 9540.261737583207,
+        "valid_rate": 0.974025974025974
+      },
+      {
+        "model": "qwen3.5-2b-q4km",
+        "provider": "local-korgis",
+        "requests": 77,
+        "accuracy": 0.5671641791044776,
+        "latency_p50_ms": 2003.6781249800697,
+        "latency_p95_ms": 2044.5410089450888,
+        "valid_rate": 0.8701298701298701
+      },
+      {
+        "model": "nemotron-nano-4b-q8",
+        "provider": "local-korgis",
+        "requests": 77,
+        "accuracy": 0.5211267605633803,
+        "latency_p50_ms": 6071.0112089291215,
+        "latency_p95_ms": 6323.589125007857,
+        "valid_rate": 0.922077922077922
+      },
+      {
+        "model": "nemotron-nano-4b",
+        "provider": "local-korgis",
+        "requests": 77,
+        "accuracy": 0.5,
+        "latency_p50_ms": 5984.068854013458,
+        "latency_p95_ms": 6296.277231245767,
+        "valid_rate": 0.935064935064935
+      },
+      {
+        "model": "qwen3.5-0.8b-q4km",
+        "provider": "local-korgis",
+        "requests": 24,
+        "accuracy": 0.25,
+        "latency_p50_ms": 704.274499497842,
+        "latency_p95_ms": 751.3477936154231,
+        "valid_rate": 1
+      }
+    ],
+    "total_model_requests": 332,
+    "comparison_group": {
+      "requests_per_model": 77,
+      "model_count": 4,
+      "models": [
+        "qwen3.5-9b-q4km",
+        "qwen3.5-2b-q4km",
+        "nemotron-nano-4b-q8",
+        "nemotron-nano-4b"
+      ],
+      "comparability": "equal_request_counts_only",
+      "note": "Same case count does not establish identical cases, prompts or configurations."
+    },
+    "other_runs": [
+      {
+        "model": "qwen3.5-0.8b-q4km",
+        "requests": 24
+      }
+    ]
+  },
+  "limitations": [
+    "No JEV/TypeSafe/CLM numeric metrics are released by this exporter.",
+    "No direct JEV-vs-LLM comparison can be claimed from this artifact.",
+    "Other experiment types require separately reviewed public aggregates.",
+    "Matching case counts alone do not prove paired identical benchmark samples."
+  ]
+}
