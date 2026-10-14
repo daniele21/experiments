@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 
 import pytest
+
 from scripts.publish_portfolio_summary import build_public_summary
+
 
 def _row(model: str, *, provider: str = "local-korgis", requests: int = 77) -> dict:
     return {
