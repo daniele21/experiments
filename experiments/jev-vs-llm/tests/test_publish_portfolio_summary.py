@@ -1,19 +1,10 @@
 """Publication contract: no proprietary Jev metrics, raw cases or invented comparisons."""
 from __future__ import annotations
 
-import importlib.util
 import json
-from pathlib import Path
 
 import pytest
-
-
-PUBLISHER = Path(__file__).resolve().parents[1] / "scripts" / "publish_portfolio_summary.py"
-spec = importlib.util.spec_from_file_location("publish_portfolio_summary", PUBLISHER)
-assert spec and spec.loader
-publisher = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(publisher)
-
+from scripts.publish_portfolio_summary import build_public_summary
 
 def _row(model: str, *, provider: str = "local-korgis", requests: int = 77) -> dict:
     return {
@@ -44,7 +35,7 @@ def _payload() -> dict:
 
 
 def test_public_projection_contains_only_allowlisted_metrics() -> None:
-    result = publisher.build_public_summary(
+    result = build_public_summary(
         _payload(), source_ref="immutable-sha", source_path="results/benchmark_data.json",
     )
     assert result["schema_version"] == 1
@@ -58,7 +49,7 @@ def test_public_projection_contains_only_allowlisted_metrics() -> None:
 
 
 def test_unpublished_experiments_do_not_inherit_source_counts() -> None:
-    result = publisher.build_public_summary(
+    result = build_public_summary(
         _payload(), source_ref="sha", source_path="results/benchmark_data.json",
     )
     statuses = {row["id"]: row for row in result["experiments"]}
@@ -70,7 +61,7 @@ def test_unpublished_experiments_do_not_inherit_source_counts() -> None:
 
 def test_no_allowed_aggregates_fails_closed() -> None:
     with pytest.raises(ValueError, match="No publishable"):
-        publisher.build_public_summary(
+        build_public_summary(
             {"overview": [_row("jev", provider="jev")]},
             source_ref="sha", source_path="results/benchmark_data.json",
         )
@@ -80,15 +71,15 @@ def test_invalid_metrics_and_duplicate_models_fail() -> None:
     invalid = _row("broken")
     invalid["latency_p50_ms"] = float("nan")
     with pytest.raises(ValueError, match="No publishable"):
-        publisher.build_public_summary(
+        build_public_summary(
             {"overview": [invalid]}, source_ref="sha", source_path="p",
         )
     with pytest.raises(ValueError, match="Duplicate"):
-        publisher.build_public_summary(
+        build_public_summary(
             {"overview": [_row("same"), _row("same")]}, source_ref="sha", source_path="p",
         )
 
 
 def test_rejects_unversioned_input() -> None:
     with pytest.raises(ValueError, match="required"):
-        publisher.build_public_summary(_payload(), source_ref="", source_path="p")
+        build_public_summary(_payload(), source_ref="", source_path="p")
