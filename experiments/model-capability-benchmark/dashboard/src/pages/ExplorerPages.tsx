@@ -1,4 +1,5 @@
 import { CompareDecision } from '../components/CompareDecision';
+import { DatasetContextPanel } from '../components/DatasetGuide';
 import {
   Activity,
   BarChart3,
@@ -533,6 +534,8 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
         title={datasetId}
         description="Dataset-level ranking and execution trade-offs behind the capability result."
       />
+      <DatasetContextPanel datasetId={datasetId} primaryMetric={rows[0]?.primary_metric} sampleCount={rows[0]?.sample_count} />
+      {rows.length ? (<>
       <section className="dataset-detail-grid">
         <div className="analysis-card">
           <SectionTitle title="Dataset ranking" description="Primary metric normalized to the decision scale." />
@@ -583,6 +586,8 @@ export function DatasetPage({ datasetId }: { datasetId: string }) {
         <SectionTitle title="Models on this dataset" description="Quality, observed latency and known provider cost." />
         <DatasetHeatmap datasets={rows} models={models} />
       </section>
+      </>) : <div className="dataset-guide-empty">No CURRENT run evidence for this dataset version. The guide above describes its benchmark design; historical results are kept separate.</div>}
+
       <MethodologyAccordion policyLabel={overview.decision?.quality_policy.label} />
     </>
   );
