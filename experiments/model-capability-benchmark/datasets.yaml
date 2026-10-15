@@ -142,3 +142,17 @@ datasets:
       path: data/math-reasoning-controlled-v2.yaml
       human_reviewed: false
       difficulty_labels: authored-provisional
+
+  math-reasoning-controlled-v3:
+    version: "3"
+    adapter: controlled-yaml
+    source: repository-authored
+    revision: v3
+    split: controlled
+    license: repository-authored
+    sample_schema_version: "2"
+    cache_mode: repository
+    options:
+      path: data/math-reasoning-controlled-v3.yaml
+      human_reviewed: false
+      difficulty_labels: authored-provisional
