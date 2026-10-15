@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { capabilityPayloads } from './data';
 import { usePathname } from './router';
 import { Shell } from './components/Shell';
+import { DatasetCatalogPage } from './components/DatasetGuide';
 import { OverviewPage } from './pages/OverviewPage';
 import { FrontierPage, SensitivityPage } from './pages/ExperimentPages';
 import { ExecutivePage, type ExecutiveView } from './pages/ExecutivePages';
@@ -56,6 +57,8 @@ export function App() {
     ) : (
       <PlaceholderPage title="Capability not found" />
     );
+  } else if (pathname === '/datasets') {
+    page = <DatasetCatalogPage />;
   } else if (datasetMatch) {
     page = <DatasetPage datasetId={decodeURIComponent(datasetMatch[1])} />;
   } else if (pathname === '/frontier') {
