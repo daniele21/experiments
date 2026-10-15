@@ -13,10 +13,22 @@ from pathlib import Path
 
 DATASETS = (
     ("smoke", "Smoke", "data/smoke/cases.jsonl", "Contract and pipeline checks", "smoke"),
-    ("healthcare", "Healthcare", "data/healthcare/cases.jsonl", "Clinical and sensitive PII", "challenge"),
-    ("ambiguous", "Ambiguous PII", "data/ambiguous/cases.jsonl", "Context-dependent private vs public data", "challenge"),
-    ("challenge", "Hard cases", "data/challenge/cases.jsonl", "Semantic ambiguity and difficult PII", "challenge"),
-    ("document-e2e", "Document E2E", "data/documents/manifest.jsonl", "Extraction plus privacy evaluation", "documents"),
+    (
+        "healthcare", "Healthcare", "data/healthcare/cases.jsonl",
+        "Clinical and sensitive PII", "challenge",
+    ),
+    (
+        "ambiguous", "Ambiguous PII", "data/ambiguous/cases.jsonl",
+        "Context-dependent private vs public data", "challenge",
+    ),
+    (
+        "challenge", "Hard cases", "data/challenge/cases.jsonl",
+        "Semantic ambiguity and difficult PII", "challenge",
+    ),
+    (
+        "document-e2e", "Document E2E", "data/documents/manifest.jsonl",
+        "Extraction plus privacy evaluation", "documents",
+    ),
 )
 
 
@@ -56,7 +68,10 @@ def build_catalog(root: Path, *, source_ref: str) -> dict:
         "focus": "Heterogeneous formats and annotated PII",
         "documents": documents,
         "gold_spans": spans,
-        "source_path": "experiments/redactguard-local-anonymization/data/realistic/annotations/summary.json",
+        "source_path": (
+            "experiments/redactguard-local-anonymization/"
+            "data/realistic/annotations/summary.json"
+        ),
         "results_status": "no_published_run",
     })
     return {
@@ -129,7 +144,10 @@ def publish_run(catalog: dict, run: Path, *, approved: bool) -> dict:
         data = metrics.get(model)
         if not isinstance(model, str) or not isinstance(data, dict):
             raise ValueError("Missing model summary")
-        if data.get("evaluation_schema") != "redactguard-evaluation-v3" or data.get("status") == "contract_failed":
+        if (
+            data.get("evaluation_schema") != "redactguard-evaluation-v3"
+            or data.get("status") == "contract_failed"
+        ):
             raise ValueError("Cannot publish contract-failed or unversioned results")
         if data.get("quality_available") is not True:
             raise ValueError("No valid scored inference for model")
@@ -137,8 +155,12 @@ def publish_run(catalog: dict, run: Path, *, approved: bool) -> dict:
         for field in allowed_fields:
             value = data.get(field)
             if field == "latency_p95_ms":
-                if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or
-                                          not math.isfinite(value) or value <= 0):
+                if value is not None and (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(value)
+                    or value <= 0
+                ):
                     raise ValueError(f"Invalid {field}")
                 record[field] = value
             else:
@@ -159,13 +181,18 @@ def main() -> None:
     parser.add_argument("--source-ref", required=True)
     parser.add_argument("--run", type=Path)
     parser.add_argument("--approve-public-aggregates", action="store_true")
-    parser.add_argument("--output", type=Path, default=Path("results/published/portfolio-summary.json"))
+    parser.add_argument(
+        "--output", type=Path, default=Path("results/published/portfolio-summary.json")
+    )
     args = parser.parse_args()
     summary = build_catalog(args.root, source_ref=args.source_ref)
     if args.run:
         summary = publish_run(summary, args.run, approved=args.approve_public_aggregates)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":
