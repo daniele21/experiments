@@ -279,7 +279,7 @@ def test_smoke_capability_selection_is_actually_stratified(tmp_path: Path) -> No
         assert set(counts.values()) == {2}
 
 
-def test_v2_gold_outputs_self_score_perfectly(tmp_path: Path) -> None:
+def test_controlled_gold_outputs_self_score_perfectly(tmp_path: Path) -> None:
     bundle = load_capability_suite(ROOT)
     profile = bundle.profiles["core"]
 
@@ -302,6 +302,12 @@ def test_v2_gold_outputs_self_score_perfectly(tmp_path: Path) -> None:
         (
             "mathematical-reasoning",
             "math-reasoning-controlled-v2",
+            lambda sample: {"answer": str(sample.expected)},
+            "final_answer_accuracy",
+        ),
+        (
+            "mathematical-reasoning",
+            "math-reasoning-controlled-v3",
             lambda sample: {"answer": str(sample.expected)},
             "final_answer_accuracy",
         ),
