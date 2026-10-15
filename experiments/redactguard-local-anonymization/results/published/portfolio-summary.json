@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "benchmark": "redactguard-local-anonymization",
+  "source": {
+    "repository": "daniele21/experiments",
+    "ref": "e1c4cd6c206303e81ee6336f9c129eff605aaed2",
+    "path": "experiments/redactguard-local-anonymization"
+  },
+  "publication": {
+    "status": "dataset_evidence_only",
+    "has_published_model_metrics": false,
+    "contains_raw_pii": false
+  },
+  "datasets": [
+    {
+      "id": "smoke",
+      "title": "Smoke",
+      "kind": "smoke",
+      "focus": "Contract and pipeline checks",
+      "cases": 20,
+      "source_path": "experiments/redactguard-local-anonymization/data/smoke/cases.jsonl",
+      "results_status": "no_published_run"
+    },
+    {
+      "id": "healthcare",
+      "title": "Healthcare",
+      "kind": "challenge",
+      "focus": "Clinical and sensitive PII",
+      "cases": 48,
+      "source_path": "experiments/redactguard-local-anonymization/data/healthcare/cases.jsonl",
+      "results_status": "no_published_run"
+    },
+    {
+      "id": "ambiguous",
+      "title": "Ambiguous PII",
+      "kind": "challenge",
+      "focus": "Context-dependent private vs public data",
+      "cases": 48,
+      "source_path": "experiments/redactguard-local-anonymization/data/ambiguous/cases.jsonl",
+      "results_status": "no_published_run"
+    },
+    {
+      "id": "challenge",
+      "title": "Hard cases",
+      "kind": "challenge",
+      "focus": "Semantic ambiguity and difficult PII",
+      "cases": 46,
+      "source_path": "experiments/redactguard-local-anonymization/data/challenge/cases.jsonl",
+      "results_status": "no_published_run"
+    },
+    {
+      "id": "document-e2e",
+      "title": "Document E2E",
+      "kind": "documents",
+      "focus": "Extraction plus privacy evaluation",
+      "cases": 5,
+      "source_path": "experiments/redactguard-local-anonymization/data/documents/manifest.jsonl",
+      "results_status": "no_published_run"
+    },
+    {
+      "id": "realistic",
+      "title": "Realistic documents",
+      "kind": "documents",
+      "focus": "Heterogeneous formats and annotated PII",
+      "documents": 11,
+      "gold_spans": 1566,
+      "source_path": "experiments/redactguard-local-anonymization/data/realistic/annotations/summary.json",
+      "results_status": "no_published_run"
+    }
+  ],
+  "models": [],
+  "metric_contract": {
+    "model_quality": [
+      "pii_recall",
+      "precision"
+    ],
+    "privacy_risk": [
+      "system_pii_recall",
+      "system_leakage_rate"
+    ],
+    "reliability": [
+      "inference_success_rate"
+    ],
+    "latency": [
+      "latency_p95_ms"
+    ]
+  },
+  "limitations": [
+    "Dataset counts and gold spans are NOT model performance results.",
+    "No comparable measured model runs have been published for this benchmark.",
+    "Smoke datasets are not sufficient to claim general model quality.",
+    "Realistic annotations are machine-validated, not independently human-reviewed."
+  ]
+}
