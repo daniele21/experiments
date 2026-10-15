@@ -1,6 +1,6 @@
 suite:
   id: capability-core
-  version: "2"
+  version: "3"
   description: >-
     Vertical text-model capability suite with task-specific case budgets,
     deterministic stratification and paired-comparison metadata.
@@ -315,7 +315,7 @@ suite:
     mathematical-reasoning:
       task: mathematical-reasoning
       datasets:
-        - math-reasoning-controlled-v2
+        - math-reasoning-controlled-v3
       description: >-
         Final-answer-only reasoning across arithmetic, percentages, multi-step,
         algebra, logic and constrained problems.
@@ -364,11 +364,11 @@ suite:
           target_api_cost_usd: 0.12
           hard_api_cost_usd: 0.25
         extended:
-          max_cases: 40
+          max_cases: 72
           selection:
             strategy: fixed
-          hard_local_seconds: 900
-          hard_api_cost_usd: 0.25
+          hard_local_seconds: 2400
+          hard_api_cost_usd: 0.70
       comparison:
         practical_delta: 0.05
         metric: final_answer_accuracy
