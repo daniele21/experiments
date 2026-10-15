@@ -64,6 +64,10 @@ jobs:
         working-directory: experiments/model-capability-benchmark/dashboard
         run: npm run lint
 
+      - name: Verify dataset guide contracts
+        working-directory: experiments/model-capability-benchmark/dashboard
+        run: npm run test:guide
+
       - name: Build dashboard
         working-directory: experiments/model-capability-benchmark/dashboard
         run: npm run build
