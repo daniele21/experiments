@@ -55,6 +55,7 @@ def test_fail_closed_for_contract_failure(tmp_path):
     (tmp_path / "manifest.json").write_text(json.dumps({
         "evaluation_schema": "redactguard-evaluation-v3",
         "models": ["test-llm"], "dataset": "data/healthcare/cases.jsonl", "cases": 48,
+        "run_id": "test-run", "benchmark_commit": "source-commit",
     }), encoding="utf-8")
     (tmp_path / "metrics.json").write_text(json.dumps({
         "test-llm": {
