@@ -21,6 +21,17 @@ from model_capability_bench.datasets import build_dataset_registry
 from model_capability_bench.tasks import build_task_registry
 
 
+CAPABILITY_ALIASES: Mapping[str, str] = {
+    "mathematics": "mathematical-reasoning",
+    "math": "mathematical-reasoning",
+}
+
+
+def resolve_capability_id(capability_id: str) -> str:
+    """Resolve capability alias (e.g. 'mathematics' -> 'mathematical-reasoning')."""
+    return CAPABILITY_ALIASES.get(capability_id.strip(), capability_id.strip())
+
+
 @dataclass(frozen=True)
 class CapabilityMatrixArm:
     model_key: str
@@ -48,17 +59,22 @@ class CapabilitySuiteBundle:
         capability_ids: Sequence[str] | None = None,
     ) -> tuple[CapabilityMatrixArm, ...]:
         models = self.models.select(model_keys=model_keys)
+        resolved_requested_ids = (
+            tuple(resolve_capability_id(c) for c in capability_ids)
+            if capability_ids is not None
+            else None
+        )
         selected_capabilities = (
             self.resolved_capabilities
-            if capability_ids is None
+            if resolved_requested_ids is None
             else tuple(
                 capability
                 for capability in self.resolved_capabilities
-                if capability.spec.capability_id in set(capability_ids)
+                if capability.spec.capability_id in set(resolved_requested_ids)
             )
         )
-        if capability_ids is not None:
-            requested = list(dict.fromkeys(capability_ids))
+        if resolved_requested_ids is not None:
+            requested = list(dict.fromkeys(resolved_requested_ids))
             found = {item.spec.capability_id for item in selected_capabilities}
             missing = [capability_id for capability_id in requested if capability_id not in found]
             if missing:

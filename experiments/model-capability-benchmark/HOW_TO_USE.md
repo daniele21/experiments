@@ -95,6 +95,7 @@ qwen3.8-27b-q40
 nemotron-nano-4b
 spark-x2.5-4b-q4km
 ternary-bonsai2-27b-ptq1
+limite-1b-violetto
 gpt-5.6-luna
 minicpm-v-4.6-1b
 ~~~
@@ -277,6 +278,89 @@ export DECISIO_DEVICE="metal"
 > ~~~
 
 Secrets are read from the environment and are not persisted in benchmark manifests.
+
+
+## 5b. Paradigma Limite 1B Violetto (Mathematical Reasoning)
+
+[Paradigma Limite 1B - Violetto](https://huggingface.co/paradigma-inc/limite-1b-violetto) is a 1-billion parameter autoregressive language model specialized in competition-level mathematical reasoning.
+
+It uses a canonical mathematical prompt (`"You are a helpful assistant. Please reason step by step, and put your final answer within \\boxed{}."`) and outputs step-by-step reasoning terminating in `\boxed{answer}`. MCB automatically:
+1. Passes the raw math question without JSON schema pollution to preserve reasoning accuracy;
+2. Extracts and normalizes the final `\boxed{answer}` into the structured capability evaluation field;
+3. Supports the `--capabilities mathematics` alias for `mathematical-reasoning`;
+4. Applies Paradigma's recommended sampling parameters (`temperature=0.6`, `top_p=0.95`) automatically when running default evaluations.
+
+### Option A: In-Process Native Execution (Recommended on macOS / Local)
+
+No external server or open port required. MCB runs inference directly in-process via PyTorch with Metal Performance Shaders (MPS) on Apple Silicon or CUDA on Linux:
+
+~~~bash
+export MODEL="limite-1b-violetto"
+~~~
+
+### Option B: vLLM serving (Remote or Linux GPU)
+
+If serving via vLLM with the official Limite plugin:
+
+~~~bash
+VLLM_PLUGINS=limite uv run vllm serve paradigma-inc/limite-1b-violetto --port 8001
+~~~
+
+In your MCB terminal:
+
+~~~bash
+export VLLM_BASE_URL="http://127.0.0.1:8001/v1"
+export MODEL="limite-1b-violetto-vllm"
+~~~
+
+### Option C: Local Korgis / llama-server GGUF
+
+If running via a patched llama.cpp build with Limite architecture support:
+
+~~~bash
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="limite-1b-violetto-q4km"
+~~~
+
+### Execute benchmark on mathematics
+
+Validate preflight configuration:
+
+~~~bash
+uv run model-bench validate-config --models "$MODEL"
+~~~
+
+Inspect execution plan:
+
+~~~bash
+uv run model-bench plan --capabilities mathematics --profile smoke
+~~~
+
+Run smoke test (12 cases):
+
+~~~bash
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities mathematics \
+  --profile smoke \
+  --run-group "limite-violetto-smoke"
+~~~
+
+Run canonical core benchmark (40 cases):
+
+~~~bash
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities mathematical-reasoning \
+  --profile core \
+  --run-group "limite-violetto-canonical"
+~~~
+
+Refresh DuckDB analytics and dashboard:
+
+~~~bash
+uv run model-bench project --rebuild --export-dashboard
+~~~
 
 
 ## 6. Start one campaign

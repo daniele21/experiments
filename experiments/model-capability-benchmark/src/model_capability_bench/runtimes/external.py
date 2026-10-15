@@ -16,9 +16,17 @@ class ExternalProviderRuntime:
     ) -> None:
         self.environ = environ
         self.provider_builder = provider_builder
+        self._active_providers: list[InferenceProvider] = []
 
     def prepare(self, model: ResolvedModel) -> InferenceProvider:
-        return self.provider_builder(model, self.environ)
+        provider = self.provider_builder(model, self.environ)
+        self._active_providers.append(provider)
+        return provider
 
     def release(self, model: ResolvedModel) -> None:
+        while self._active_providers:
+            provider = self._active_providers.pop()
+            closer = getattr(provider, "close", None) or getattr(provider, "release", None)
+            if callable(closer):
+                closer()
         return None

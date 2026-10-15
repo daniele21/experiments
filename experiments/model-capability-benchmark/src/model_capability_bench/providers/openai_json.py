@@ -18,6 +18,9 @@ from benchmark_core.transports import create_openai_compatible_client
 from openai import OpenAI
 
 
+from model_capability_bench.providers.parsing import parse_chat_response_content
+
+
 def _input_payload(request: InferenceRequest) -> str:
     payload: dict[str, Any] = {"input": request.input}
     if request.response_schema is not None:
@@ -62,8 +65,15 @@ class OpenAICompatibleJsonProvider:
         started = time.perf_counter()
         try:
             messages: list[dict[str, Any]] = []
-            if request.system_prompt:
-                messages.append({"role": "system", "content": request.system_prompt})
+            canonical_sys = self.resolved.model.metadata.get("system_prompt")
+            if canonical_sys is not None:
+                system_prompt = canonical_sys if canonical_sys != "none" else None
+            else:
+                system_prompt = request.system_prompt
+
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+
             for message in request.messages:
                 messages.append(
                     {
@@ -72,34 +82,84 @@ class OpenAICompatibleJsonProvider:
                         **({"name": message.name} if message.name else {}),
                     }
                 )
-            messages.append({"role": "user", "content": _input_payload(request)})
+
+            raw_input = self.resolved.model.metadata.get("raw_input", False)
+            output_format = self.resolved.model.metadata.get("output_format")
+            if raw_input or output_format == "boxed":
+                messages.append({"role": "user", "content": str(request.input)})
+            else:
+                messages.append({"role": "user", "content": _input_payload(request)})
 
             kwargs: dict[str, Any] = {
                 "model": self.model_id,
                 "messages": messages,
-                "response_format": {"type": "json_object"},
             }
-            supports_temp = self.resolved.model.metadata.get("supports_temperature", True)
-            if request.generation.temperature is not None and supports_temp is not False:
-                kwargs["temperature"] = request.generation.temperature
+            supports_response_format = self.resolved.model.metadata.get(
+                "supports_response_format", True
+            )
+            if supports_response_format and output_format != "boxed":
+                kwargs["response_format"] = {"type": "json_object"}
+
+            supports_temp = self.resolved.model.metadata.get(
+                "supports_temperature", True
+            )
+            model_default_temp = self.resolved.model.metadata.get("default_temperature")
+            model_default_top_p = self.resolved.model.metadata.get("default_top_p")
+
+            if supports_temp is not False:
+                if model_default_temp is not None and (
+                    request.generation.temperature is None
+                    or request.generation.temperature == 0.0
+                ):
+                    kwargs["temperature"] = float(model_default_temp)
+                elif request.generation.temperature is not None:
+                    kwargs["temperature"] = float(request.generation.temperature)
+
             if request.generation.max_output_tokens is not None:
                 kwargs["max_tokens"] = request.generation.max_output_tokens
-            if request.generation.seed is not None:
+
+            supports_seed = self.resolved.model.metadata.get("supports_seed", True)
+            if request.generation.seed is not None and supports_seed is not False:
                 kwargs["seed"] = request.generation.seed
+
+            top_p_override = None
+            if request.generation.extra and "top_p" in request.generation.extra:
+                top_p_override = float(request.generation.extra["top_p"])
+            elif model_default_top_p is not None:
+                top_p_override = float(model_default_top_p)
+
+            if top_p_override is not None:
+                kwargs["top_p"] = top_p_override
+
             if request.generation.stop:
                 kwargs["stop"] = list(request.generation.stop)
             if request.generation.extra:
-                kwargs["extra_body"] = dict(request.generation.extra)
+                extra_clean = {
+                    k: v
+                    for k, v in request.generation.extra.items()
+                    if k not in ("top_p", "temperature")
+                }
+                if extra_clean:
+                    kwargs["extra_body"] = extra_clean
 
             response = self.client.chat.completions.create(**kwargs)
-            return self._parse_chat_result(response, started)
+            return self._parse_chat_result(response, started, request=request)
         except Exception as exc:  # noqa: BLE001 - provider boundary normalizes evidence
             err_msg = str(exc).lower()
+            needs_retry = False
             if "temperature" in err_msg and "temperature" in kwargs:
                 kwargs.pop("temperature", None)
+                needs_retry = True
+            if "top_p" in err_msg and "top_p" in kwargs:
+                kwargs.pop("top_p", None)
+                needs_retry = True
+            if "seed" in err_msg and "seed" in kwargs:
+                kwargs.pop("seed", None)
+                needs_retry = True
+            if needs_retry:
                 try:
                     response = self.client.chat.completions.create(**kwargs)
-                    return self._parse_chat_result(response, started)
+                    return self._parse_chat_result(response, started, request=request)
                 except Exception as retry_exc:  # noqa: BLE001
                     exc = retry_exc
 
@@ -122,10 +182,21 @@ class OpenAICompatibleJsonProvider:
                 metadata={"protocol": "chat-completions"},
             )
 
-    def _parse_chat_result(self, response: Any, started: float) -> InferenceResult:
+    def _parse_chat_result(
+        self,
+        response: Any,
+        started: float,
+        request: InferenceRequest | None = None,
+    ) -> InferenceResult:
         latency_ms = (time.perf_counter() - started) * 1000
         content = response.choices[0].message.content or ""
-        parsed = json.loads(content)
+        output_format = self.resolved.model.metadata.get("output_format")
+        response_schema = request.response_schema if request else None
+        parsed = parse_chat_response_content(
+            content,
+            response_schema=response_schema,
+            output_format=output_format,
+        )
         usage = getattr(response, "usage", None)
         return InferenceResult(
             provider_id=self.provider_id,

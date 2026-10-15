@@ -319,7 +319,7 @@ suite:
       description: >-
         Final-answer-only reasoning across arithmetic, percentages, multi-step,
         algebra, logic and constrained problems.
-      tags: [reasoning, math]
+      tags: [reasoning, math, mathematics]
       benchmark:
         smoke:
           max_cases: 12

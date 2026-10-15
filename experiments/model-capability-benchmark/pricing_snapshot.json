@@ -18,6 +18,38 @@
       "output": 1.2,
       "source": "OpenAI API standard short-context pricing snapshot inherited from the repository Jev benchmark.",
       "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "gpt-6-luna": {
+      "match": "exact",
+      "input": 0.2,
+      "cached_input": 0.02,
+      "output": 1.2,
+      "source": "OpenAI API standard pricing snapshot for Luna family.",
+      "source_url": "https://developers.openai.com/api/docs/pricing"
+    },
+    "gemini-3.8-flash": {
+      "match": "exact",
+      "input": 0.075,
+      "cached_input": 0.01875,
+      "output": 0.3,
+      "source": "Google Gemini API standard pricing snapshot for Flash tier.",
+      "source_url": "https://ai.google.dev/pricing"
+    },
+    "gemini-2.5-flash": {
+      "match": "exact",
+      "input": 0.075,
+      "cached_input": 0.01875,
+      "output": 0.3,
+      "source": "Google Gemini API standard pricing snapshot for Flash tier.",
+      "source_url": "https://ai.google.dev/pricing"
+    },
+    "gemini-3.5-flash": {
+      "match": "exact",
+      "input": 0.075,
+      "cached_input": 0.01875,
+      "output": 0.3,
+      "source": "Google Gemini API standard pricing snapshot for Flash tier.",
+      "source_url": "https://ai.google.dev/pricing"
     }
   },
   "notes": [

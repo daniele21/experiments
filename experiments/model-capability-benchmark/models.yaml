@@ -44,6 +44,38 @@ providers:
     options:
       protocol: decisio-engine
 
+  gemini:
+    type: openai-compatible
+    base_url_env: GEMINI_BASE_URL
+    api_key_env: GEMINI_API_KEY
+    required_env:
+      - GEMINI_API_KEY
+    options:
+      protocol: chat-completions
+      default_base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+
+  vllm:
+    type: openai-compatible
+    base_url_env: VLLM_BASE_URL
+    options:
+      protocol: chat-completions
+      default_base_url: http://localhost:8000/v1
+      local_provider_fee: 0
+
+  limite:
+    type: openai-compatible
+    base_url_env: LIMITE_BASE_URL
+    options:
+      protocol: chat-completions
+      default_base_url: http://localhost:8000/v1
+      local_provider_fee: 0
+
+  transformers:
+    type: transformers-local
+    options:
+      protocol: transformers-pipeline
+      local_provider_fee: 0
+
 
 runtimes:
   korgis-local:
@@ -77,6 +109,34 @@ runtimes:
 
   decisio-local:
     provider: decisio
+    deployment: local
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  gemini-api:
+    provider: gemini
+    deployment: api
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  vllm-local:
+    provider: vllm
+    deployment: local
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  limite-local:
+    provider: limite
+    deployment: local
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  transformers-local:
+    provider: transformers
     deployment: local
     lifecycle: external
     options:
@@ -118,6 +178,25 @@ models:
       - qwen
       - small
 
+  qwen3.5-2b-bf16:
+    model_id: unsloth/qwen3.5-2b-bf16
+    runtime_model_id: qwen3.5-2b-bf16
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 2
+    artifact:
+      format: gguf
+      quantization: BF16
+      size_bytes: 3775709216
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - small
+      - bf16
+
   qwen3.5-4b-q4km:
     model_id: unsloth/qwen3.5-4b
     runtime_model_id: qwen3.5-4b-q4km
@@ -134,6 +213,25 @@ models:
       - open-weight
       - qwen
       - 4b
+
+  qwen3.5-4b-q8:
+    model_id: unsloth/qwen3.5-4b-q8
+    runtime_model_id: qwen3.5-4b-q8
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: Q8_0
+      size_bytes: 4482403488
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - 4b
+      - q8
 
   nemotron-nano-4b:
     model_id: nvidia/nemotron-3-nano-4b
@@ -184,6 +282,25 @@ models:
       - local
       - open-weight
       - qwen
+
+  qwen3.5-9b-ud-q2kxl:
+    model_id: qwen/qwen3.5-9b-ud-q2kxl
+    runtime_model_id: qwen3.5-9b-ud-q2kxl
+    runtime: korgis-local
+    family: qwen3.5
+    parameters_b: 9
+    artifact:
+      format: gguf
+      quantization: UD-Q2_K_XL
+      size_bytes: 4121781472
+      metadata:
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - qwen
+      - 9b
+      - q2
 
   qwen3.8-27b-q40:
     model_id: Qwen/Qwen3.8-27B
@@ -285,6 +402,17 @@ models:
       - closed
       - openai
 
+  gpt-6-luna:
+    model_id: gpt-6-luna
+    runtime: openai-api
+    family: gpt-6
+    metadata:
+      supports_temperature: false
+    tags:
+      - api
+      - closed
+      - openai
+
   minicpm-v-4.6-1b:
     model_id: MiniCPM-V-4.6-1B
     runtime: minicpm-api
@@ -295,6 +423,48 @@ models:
       - open-weight
       - minicpm
       - small
+
+  gemini-3.8-flash:
+    model_id: gemini-3.8-flash
+    runtime: gemini-api
+    family: gemini-3.8
+    metadata:
+      supports_temperature: true
+      supports_seed: false
+    tags:
+      - api
+      - closed
+      - google
+      - gemini
+      - flash
+
+  gemini-2.5-flash:
+    model_id: gemini-2.5-flash
+    runtime: gemini-api
+    family: gemini-2.5
+    metadata:
+      supports_temperature: true
+      supports_seed: false
+    tags:
+      - api
+      - closed
+      - google
+      - gemini
+      - flash
+
+  gemini-3.5-flash:
+    model_id: gemini-3.5-flash
+    runtime: gemini-api
+    family: gemini-3.5
+    metadata:
+      supports_temperature: true
+      supports_seed: false
+    tags:
+      - api
+      - closed
+      - google
+      - gemini
+      - flash
 
   jev-1.13.0:
     model_id: jev-1.13.0
@@ -376,4 +546,96 @@ models:
       - open-weight
       - bonsai
       - 27b
+
+  limite-1b-violetto:
+    model_id: paradigma-inc/limite-1b-violetto
+    runtime: transformers-local
+    family: limite
+    parameters_b: 1
+    metadata:
+      supports_temperature: true
+      supports_seed: true
+      supports_response_format: false
+      output_format: boxed
+      system_prompt: >-
+        You are a helpful assistant.
+        Please reason step by step, and put your final answer within \boxed{}.
+      raw_input: true
+      default_temperature: 0.6
+      default_top_p: 0.95
+      default_max_output_tokens: 512
+      max_memory_gb: 4.0
+      mps_high_watermark_ratio: 0.3
+      mps_low_watermark_ratio: 0.1
+    tags:
+      - local
+      - open-weight
+      - limite
+      - violetto
+      - mathematics
+      - reasoning
+      - small
+      - 1b
+      - in-process
+
+  limite-1b-violetto-vllm:
+    model_id: paradigma-inc/limite-1b-violetto
+    runtime: vllm-local
+    family: limite
+    parameters_b: 1
+    metadata:
+      supports_temperature: true
+      supports_seed: true
+      supports_response_format: false
+      output_format: boxed
+      system_prompt: >-
+        You are a helpful assistant.
+        Please reason step by step, and put your final answer within \boxed{}.
+      raw_input: true
+      default_temperature: 0.6
+      default_top_p: 0.95
+    tags:
+      - local
+      - open-weight
+      - limite
+      - violetto
+      - mathematics
+      - reasoning
+      - small
+      - 1b
+      - vllm
+
+  limite-1b-violetto-q4km:
+    model_id: paradigma-inc/limite-1b-violetto
+    runtime_model_id: limite-1b-violetto-q4km
+    runtime: korgis-local
+    family: limite
+    parameters_b: 1
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      metadata:
+        resolved_by: korgis-model-registry
+        source_repo: yamura4/limite-1b-violetto-GGUF
+    metadata:
+      supports_temperature: true
+      supports_seed: true
+      supports_response_format: false
+      output_format: boxed
+      system_prompt: >-
+        You are a helpful assistant.
+        Please reason step by step, and put your final answer within \boxed{}.
+      raw_input: true
+      default_temperature: 0.6
+      default_top_p: 0.95
+    tags:
+      - local
+      - open-weight
+      - limite
+      - violetto
+      - mathematics
+      - reasoning
+      - small
+      - 1b
+      - q4km
 

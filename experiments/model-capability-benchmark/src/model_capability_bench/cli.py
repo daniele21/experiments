@@ -6,6 +6,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+# Guard Apple Silicon MPS memory footprint across all in-process benchmarks
+os.environ.setdefault("PYTORCH_MPS_HIGH_WATERMARK_RATIO", "0.3")
+os.environ.setdefault("PYTORCH_MPS_LOW_WATERMARK_RATIO", "0.1")
+
 from benchmark_core import (
     create_run_identity,
     parse_csv_selection,
@@ -35,7 +39,11 @@ from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runner.progress import TerminalProgress
 from model_capability_bench.runtimes import RegistryRuntimeResolver
 from model_capability_bench.sharing import create_share_snapshot, render_share_snapshot
-from model_capability_bench.suite import load_capability_suite
+from model_capability_bench.suite import (
+    CAPABILITY_ALIASES,
+    load_capability_suite,
+    resolve_capability_id,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,6 +54,13 @@ def _json(value: Any) -> None:
 
 def _selection(value: str, available: list[str]) -> tuple[str, ...]:
     return tuple(parse_csv_selection(value, available=available))
+
+
+def _select_capabilities(bundle, raw_value: str) -> tuple[str, ...]:
+    canonical = [c.spec.capability_id for c in bundle.resolved_capabilities]
+    available = canonical + list(CAPABILITY_ALIASES.keys())
+    selected = _selection(raw_value, available)
+    return tuple(dict.fromkeys(resolve_capability_id(c) for c in selected))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -406,13 +421,7 @@ def main() -> int:
         return 0
 
     if args.command == "plan":
-        capability_ids = _selection(
-            args.capabilities,
-            [
-                capability.spec.capability_id
-                for capability in bundle.resolved_capabilities
-            ],
-        )
+        capability_ids = _select_capabilities(bundle, args.capabilities)
         profile = args.profile or defaults.default_profile
         _json(
             plan_benchmark(
@@ -431,13 +440,7 @@ def main() -> int:
                 f"Unknown model {args.model!r}; available: "
                 + ", ".join(sorted(available_models))
             )
-        capability_ids = _selection(
-            args.capabilities,
-            [
-                capability.spec.capability_id
-                for capability in bundle.resolved_capabilities
-            ],
-        )
+        capability_ids = _select_capabilities(bundle, args.capabilities)
         profile = args.profile or defaults.default_profile
         seed = args.seed if args.seed is not None else defaults.default_seed
         cache_dir = (
@@ -548,13 +551,7 @@ def main() -> int:
     model_keys = _selection(args.models, available_models)
 
     if args.command == "estimate":
-        capability_ids = _selection(
-            args.capabilities,
-            [
-                capability.spec.capability_id
-                for capability in bundle.resolved_capabilities
-            ],
-        )
+        capability_ids = _select_capabilities(bundle, args.capabilities)
         profile = args.profile or defaults.default_profile
         seed = args.seed if args.seed is not None else defaults.default_seed
         cache_dir = (
@@ -592,13 +589,7 @@ def main() -> int:
         )
         return 0 if result.ok else 2
 
-    capability_ids = _selection(
-        args.capabilities,
-        [
-            capability.spec.capability_id
-            for capability in bundle.resolved_capabilities
-        ],
-    )
+    capability_ids = _select_capabilities(bundle, args.capabilities)
     profile = args.profile or defaults.default_profile
     seed = args.seed if args.seed is not None else defaults.default_seed
     resume = defaults.resume if args.resume is None else args.resume

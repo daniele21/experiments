@@ -97,11 +97,26 @@ def _decisio(
     )
 
 
+def _transformers_local(
+    model: ResolvedModel,
+    environ: Mapping[str, str],
+) -> InferenceProvider:
+    from model_capability_bench.providers.transformers_local import (
+        TransformersLocalProvider,
+    )
+
+    return TransformersLocalProvider(
+        model,
+        environ=environ,
+    )
+
+
 DEFAULT_PROVIDER_BUILDERS: Mapping[str, ProviderBuilder] = {
     "openai-compatible": _openai_compatible,
     "openai": _openai,
     "typesafe": _typesafe,
     "decisio": _decisio,
+    "transformers-local": _transformers_local,
 }
 
 
@@ -139,6 +154,14 @@ def build_inference_provider(
             f"protocol {protocol!r}"
         )
     if provider_type == "decisio" and protocol != "decisio-engine":
+        raise ProviderFactoryError(
+            f"Provider {model.provider.provider_key!r} uses unsupported "
+            f"protocol {protocol!r}"
+        )
+    if (
+        provider_type == "transformers-local"
+        and protocol != "transformers-pipeline"
+    ):
         raise ProviderFactoryError(
             f"Provider {model.provider.provider_key!r} uses unsupported "
             f"protocol {protocol!r}"
