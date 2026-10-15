@@ -398,7 +398,7 @@ def test_v3_reasoning_dataset_is_versioned_harder_and_reproducible(tmp_path: Pat
         "logic": 12,
         "constraints": 12,
     }
-    assert set(item.metadata["difficulty"] for item in full.samples) == {
+    assert {item.metadata["difficulty"] for item in full.samples} == {
         "medium", "hard", "challenge"
     }
     assert all(item.metadata["challenge_type"] for item in full.samples)
