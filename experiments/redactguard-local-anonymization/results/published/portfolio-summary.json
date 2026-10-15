@@ -4,12 +4,60 @@
   "source": {
     "repository": "daniele21/experiments",
     "ref": "e1c4cd6c206303e81ee6336f9c129eff605aaed2",
-    "path": "experiments/redactguard-local-anonymization"
+    "path": "experiments/redactguard-local-anonymization",
+    "archive_sha256": "b35b31d37e779fbf02e76c354f5f3d35f2177ca5a7ee86401c9fbbb2bb9cd39b",
+    "selection_policy": "reviewed complete v3 quality runs; one selected run per dataset/model; no original text",
+    "selected_runs": [
+      {
+        "dataset": "realistic",
+        "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+        "benchmark_commit": "3ee69898a87207c01ca79eecf2b6454dcdcae9a6",
+        "cohort_id": "b1a07eb2a82bf3bd",
+        "model_count": 4
+      },
+      {
+        "dataset": "healthcare",
+        "run_id": "20261012T193156Z-suite-34584908-quality",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "cohort_id": "6bdc41919961bfe2",
+        "model_count": 2
+      },
+      {
+        "dataset": "ambiguous",
+        "run_id": "20261012T193357Z-suite-6c13b7b2-quality",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "cohort_id": "91644f4aa8569999",
+        "model_count": 2
+      },
+      {
+        "dataset": "healthcare",
+        "run_id": "20261013T081117Z-suite-39803d12-quality",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "cohort_id": "d915d058f6936254",
+        "model_count": 2
+      },
+      {
+        "dataset": "ambiguous",
+        "run_id": "20261013T081358Z-suite-39ba2ab2-quality",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "cohort_id": "7a301c0a0cd35342",
+        "model_count": 2
+      },
+      {
+        "dataset": "challenge",
+        "run_id": "20261013T082146Z-suite-6c00207c-quality",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "cohort_id": "1d6ee30831076cf4",
+        "model_count": 4
+      }
+    ]
   },
   "publication": {
-    "status": "dataset_evidence_only",
-    "has_published_model_metrics": false,
-    "contains_raw_pii": false
+    "status": "model_aggregates_published",
+    "has_published_model_metrics": true,
+    "contains_raw_pii": false,
+    "run_count": 6,
+    "latency_provenance": "quality_run_observed_p95"
   },
   "datasets": [
     {
@@ -28,7 +76,7 @@
       "focus": "Clinical and sensitive PII",
       "cases": 48,
       "source_path": "experiments/redactguard-local-anonymization/data/healthcare/cases.jsonl",
-      "results_status": "no_published_run"
+      "results_status": "published"
     },
     {
       "id": "ambiguous",
@@ -37,7 +85,7 @@
       "focus": "Context-dependent private vs public data",
       "cases": 48,
       "source_path": "experiments/redactguard-local-anonymization/data/ambiguous/cases.jsonl",
-      "results_status": "no_published_run"
+      "results_status": "published"
     },
     {
       "id": "challenge",
@@ -46,7 +94,7 @@
       "focus": "Semantic ambiguity and difficult PII",
       "cases": 46,
       "source_path": "experiments/redactguard-local-anonymization/data/challenge/cases.jsonl",
-      "results_status": "no_published_run"
+      "results_status": "published"
     },
     {
       "id": "document-e2e",
@@ -65,10 +113,395 @@
       "documents": 11,
       "gold_spans": 1566,
       "source_path": "experiments/redactguard-local-anonymization/data/realistic/annotations/summary.json",
-      "results_status": "no_published_run"
+      "results_status": "published"
     }
   ],
-  "models": [],
+  "models": [
+    {
+      "model": "nemotron-nano-4b",
+      "dataset": "ambiguous",
+      "cases": 48,
+      "evaluated_cases": 47,
+      "inference_failures": 1,
+      "run_id": "20261013T081358Z-suite-39ba2ab2-quality",
+      "pii_recall": 0.68,
+      "system_pii_recall": 0.6296296296296297,
+      "system_leakage_rate": 0.32943469785575047,
+      "precision": 0.7083333333333334,
+      "inference_success_rate": 0.9791666666666666,
+      "latency_p95_ms": 2742.8583955334007,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T081358Z-suite-39ba2ab2-quality",
+        "created_at": "2026-10-13T08:15:01.176876+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "7a301c0a0cd35342",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b-q8",
+      "dataset": "ambiguous",
+      "cases": 48,
+      "evaluated_cases": 47,
+      "inference_failures": 1,
+      "run_id": "20261013T081358Z-suite-39ba2ab2-quality",
+      "pii_recall": 0.68,
+      "system_pii_recall": 0.6296296296296297,
+      "system_leakage_rate": 0.32943469785575047,
+      "precision": 0.7083333333333334,
+      "inference_success_rate": 0.9791666666666666,
+      "latency_p95_ms": 3079.8507080995446,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T081358Z-suite-39ba2ab2-quality",
+        "created_at": "2026-10-13T08:15:01.176876+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "7a301c0a0cd35342",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-4b-q4km",
+      "dataset": "ambiguous",
+      "cases": 48,
+      "evaluated_cases": 48,
+      "inference_failures": 0,
+      "run_id": "20261012T193357Z-suite-6c13b7b2-quality",
+      "pii_recall": 0.8888888888888888,
+      "system_pii_recall": 0.8888888888888888,
+      "system_leakage_rate": 0.1871345029239766,
+      "precision": 0.6153846153846154,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 2155.6310169020426,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T193357Z-suite-6c13b7b2-quality",
+        "created_at": "2026-10-12T19:34:48.947020+00:00",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "91644f4aa8569999",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-9b-q4km",
+      "dataset": "ambiguous",
+      "cases": 48,
+      "evaluated_cases": 48,
+      "inference_failures": 0,
+      "run_id": "20261012T193357Z-suite-6c13b7b2-quality",
+      "pii_recall": 0.9629629629629629,
+      "system_pii_recall": 0.9629629629629629,
+      "system_leakage_rate": 0.10136452241715399,
+      "precision": 0.5531914893617021,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 3533.110743740687,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T193357Z-suite-6c13b7b2-quality",
+        "created_at": "2026-10-12T19:34:48.947020+00:00",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "91644f4aa8569999",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b",
+      "dataset": "challenge",
+      "cases": 46,
+      "evaluated_cases": 45,
+      "inference_failures": 1,
+      "run_id": "20261013T082146Z-suite-6c00207c-quality",
+      "pii_recall": 0.7857142857142857,
+      "system_pii_recall": 0.7333333333333333,
+      "system_leakage_rate": 0.24548192771084337,
+      "precision": 0.825,
+      "inference_success_rate": 0.9782608695652174,
+      "latency_p95_ms": 3029.3054587906227,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T082146Z-suite-6c00207c-quality",
+        "created_at": "2026-10-13T08:23:04.701421+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "1d6ee30831076cf4",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b-q8",
+      "dataset": "challenge",
+      "cases": 46,
+      "evaluated_cases": 46,
+      "inference_failures": 0,
+      "run_id": "20261013T082146Z-suite-6c00207c-quality",
+      "pii_recall": 0.8666666666666667,
+      "system_pii_recall": 0.8666666666666667,
+      "system_leakage_rate": 0.11897590361445783,
+      "precision": 0.9069767441860465,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 4338.5397600068245,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T082146Z-suite-6c00207c-quality",
+        "created_at": "2026-10-13T08:23:04.701421+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "1d6ee30831076cf4",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-4b-q4km",
+      "dataset": "challenge",
+      "cases": 46,
+      "evaluated_cases": 46,
+      "inference_failures": 0,
+      "run_id": "20261013T082146Z-suite-6c00207c-quality",
+      "pii_recall": 0.9333333333333333,
+      "system_pii_recall": 0.9333333333333333,
+      "system_leakage_rate": 0.07981927710843373,
+      "precision": 0.8076923076923077,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 1975.660259995493,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T082146Z-suite-6c00207c-quality",
+        "created_at": "2026-10-13T08:23:04.701421+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "1d6ee30831076cf4",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-9b-q4km",
+      "dataset": "challenge",
+      "cases": 46,
+      "evaluated_cases": 46,
+      "inference_failures": 0,
+      "run_id": "20261013T082146Z-suite-6c00207c-quality",
+      "pii_recall": 1,
+      "system_pii_recall": 1,
+      "system_leakage_rate": 0,
+      "precision": 0.75,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 3800.374437516439,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T082146Z-suite-6c00207c-quality",
+        "created_at": "2026-10-13T08:23:04.701421+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "1d6ee30831076cf4",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b",
+      "dataset": "healthcare",
+      "cases": 48,
+      "evaluated_cases": 46,
+      "inference_failures": 2,
+      "run_id": "20261013T081117Z-suite-39803d12-quality",
+      "pii_recall": 0.48148148148148145,
+      "system_pii_recall": 0.41935483870967744,
+      "system_leakage_rate": 0.6799336650082919,
+      "precision": 0.7222222222222222,
+      "inference_success_rate": 0.9583333333333334,
+      "latency_p95_ms": 1647.020322518074,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T081117Z-suite-39803d12-quality",
+        "created_at": "2026-10-13T08:12:12.995913+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "d915d058f6936254",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b-q8",
+      "dataset": "healthcare",
+      "cases": 48,
+      "evaluated_cases": 48,
+      "inference_failures": 0,
+      "run_id": "20261013T081117Z-suite-39803d12-quality",
+      "pii_recall": 0.5161290322580645,
+      "system_pii_recall": 0.5161290322580645,
+      "system_leakage_rate": 0.5257048092868989,
+      "precision": 0.7272727272727273,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 3377.2910336207133,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261013T081117Z-suite-39803d12-quality",
+        "created_at": "2026-10-13T08:12:12.995913+00:00",
+        "benchmark_commit": "63fef2c84fa148b78c6fe3d343d116afad04446a",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "d915d058f6936254",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-4b-q4km",
+      "dataset": "healthcare",
+      "cases": 48,
+      "evaluated_cases": 48,
+      "inference_failures": 0,
+      "run_id": "20261012T193156Z-suite-34584908-quality",
+      "pii_recall": 0.7096774193548387,
+      "system_pii_recall": 0.7096774193548387,
+      "system_leakage_rate": 0.4228855721393035,
+      "precision": 0.7857142857142857,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 1089.0686227096012,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T193156Z-suite-34584908-quality",
+        "created_at": "2026-10-12T19:32:40.010267+00:00",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "6bdc41919961bfe2",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-9b-q4km",
+      "dataset": "healthcare",
+      "cases": 48,
+      "evaluated_cases": 48,
+      "inference_failures": 0,
+      "run_id": "20261012T193156Z-suite-34584908-quality",
+      "pii_recall": 0.9354838709677419,
+      "system_pii_recall": 0.9354838709677419,
+      "system_leakage_rate": 0.1077943615257048,
+      "precision": 0.7073170731707317,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 1988.184899877524,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T193156Z-suite-34584908-quality",
+        "created_at": "2026-10-12T19:32:40.010267+00:00",
+        "benchmark_commit": "5e01a78df9c21688cac81407c919dcd50b15bf90",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "6bdc41919961bfe2",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b",
+      "dataset": "realistic",
+      "cases": 11,
+      "evaluated_cases": 8,
+      "inference_failures": 3,
+      "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+      "pii_recall": 0.4574468085106383,
+      "system_pii_recall": 0.08237547892720307,
+      "system_leakage_rate": 0.8981126039667306,
+      "precision": 0.832258064516129,
+      "inference_success_rate": 0.7272727272727273,
+      "latency_p95_ms": 31844.44561084964,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+        "created_at": "2026-10-12T09:18:29.644972+00:00",
+        "benchmark_commit": "3ee69898a87207c01ca79eecf2b6454dcdcae9a6",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "b1a07eb2a82bf3bd",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "nemotron-nano-4b-q8",
+      "dataset": "realistic",
+      "cases": 11,
+      "evaluated_cases": 8,
+      "inference_failures": 3,
+      "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+      "pii_recall": 0.30851063829787234,
+      "system_pii_recall": 0.05555555555555555,
+      "system_leakage_rate": 0.9289827255278311,
+      "precision": 0.6904761904761905,
+      "inference_success_rate": 0.7272727272727273,
+      "latency_p95_ms": 20450.097576866385,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+        "created_at": "2026-10-12T09:18:29.644972+00:00",
+        "benchmark_commit": "3ee69898a87207c01ca79eecf2b6454dcdcae9a6",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "b1a07eb2a82bf3bd",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-4b-q4km",
+      "dataset": "realistic",
+      "cases": 11,
+      "evaluated_cases": 11,
+      "inference_failures": 0,
+      "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+      "pii_recall": 0.9016602809706258,
+      "system_pii_recall": 0.9016602809706258,
+      "system_leakage_rate": 0.05390275111964171,
+      "precision": 0.889168765743073,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 286170.13464606134,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+        "created_at": "2026-10-12T09:18:29.644972+00:00",
+        "benchmark_commit": "3ee69898a87207c01ca79eecf2b6454dcdcae9a6",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "b1a07eb2a82bf3bd",
+        "comparison_scope": "same_run_exploratory"
+      }
+    },
+    {
+      "model": "qwen3.5-9b-q4km",
+      "dataset": "realistic",
+      "cases": 11,
+      "evaluated_cases": 11,
+      "inference_failures": 0,
+      "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+      "pii_recall": 0.8805874840357599,
+      "system_pii_recall": 0.8805874840357599,
+      "system_leakage_rate": 0.06186020473448497,
+      "precision": 0.9187208527648234,
+      "inference_success_rate": 1,
+      "latency_p95_ms": 356075.450186996,
+      "latency_provenance": "observed_quality_run_p95_not_repeated_latency_benchmark",
+      "provenance": {
+        "run_id": "20261012T090358Z-suite-d1ff4d13-quality",
+        "created_at": "2026-10-12T09:18:29.644972+00:00",
+        "benchmark_commit": "3ee69898a87207c01ca79eecf2b6454dcdcae9a6",
+        "contract_snapshot_sha256": "e314be6637b37b6189318328c3c7f4ea02ae913f12f2b3278b88c11e3fdf5b74",
+        "backend": "local-korgis",
+        "cohort_id": "b1a07eb2a82bf3bd",
+        "comparison_scope": "same_run_exploratory"
+      }
+    }
+  ],
   "metric_contract": {
     "model_quality": [
       "pii_recall",
@@ -87,8 +520,11 @@
   },
   "limitations": [
     "Dataset counts and gold spans are NOT model performance results.",
-    "No comparable measured model runs have been published for this benchmark.",
     "Smoke datasets are not sufficient to claim general model quality.",
-    "Realistic annotations are machine-validated, not independently human-reviewed."
+    "Realistic annotations are machine-validated, not independently human-reviewed.",
+    "Observed p95 values come from quality runs, not benchmark-grade repeated latency runs.",
+    "Healthcare and Ambiguous contain model results collected in distinct suites and benchmark commits; no controlled across-cohort leaderboard.",
+    "Realistic run contains inference failures; system-level recall and leakage reflect failures as well as model accuracy.",
+    "Historical source revisions and contract hashes are retained per selected run; gold spans have not been independently human-adjudicated."
   ]
 }
