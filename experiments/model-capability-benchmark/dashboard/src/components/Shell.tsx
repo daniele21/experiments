@@ -3,6 +3,7 @@ import {
   BarChart3,
   Boxes,
   FileBarChart2,
+  BookOpen,
   GitCompareArrows,
   Layers3,
   Presentation,
@@ -62,6 +63,7 @@ export function Shell({ children }: { children: ReactNode }) {
     ['/overview', BarChart3, 'Overview'],
     ['/executive/scorecard', Presentation, 'Executive'],
     ['/models', Boxes, 'Models'],
+    ['/datasets', BookOpen, 'Datasets'],
     ['/capabilities/structured-output', Layers3, 'Capabilities'],
     ['/frontier', TrendingUp, 'Frontier'],
     ['/sensitivity', SlidersHorizontal, 'Sensitivity'],
@@ -86,6 +88,7 @@ export function Shell({ children }: { children: ReactNode }) {
               pathname === href ||
               (href === '/executive/scorecard' && pathname.startsWith('/executive')) ||
               (href === '/models' && pathname.startsWith('/models/')) ||
+              (href === '/datasets' && pathname.startsWith('/datasets/')) ||
               (href.includes('capabilities') && pathname.startsWith('/capabilities')) ||
               (href === '/runs' && pathname.startsWith('/runs/'));
             return (
