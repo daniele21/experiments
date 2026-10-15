@@ -409,24 +409,26 @@ def test_v3_reasoning_dataset_is_versioned_harder_and_reproducible(tmp_path: Pat
     assert gold["math3-constraints-05"] == "4"  # integer equation
 
     capability = next(
-        item.spec for item in bundle.resolved_capabilities
+        item for item in bundle.resolved_capabilities
         if item.spec.capability_id == "mathematical-reasoning"
     )
-    assert capability.dataset_ids == ("math-reasoning-controlled-v3",)
+    assert capability.spec.dataset_ids == ("math-reasoning-controlled-v3",)
 
     # Keep the canonical 40-case vertical and deterministic family quotas.
     cache: dict = {}
     first = load_capability_datasets(
-        bundle,
-        capability,
+        suite=bundle,
+        capability=capability,
+        profile=bundle.profiles["core"],
         profile_id="core",
         cache_dir=tmp_path,
         seed=42,
         cache=cache,
     )
     second = load_capability_datasets(
-        bundle,
-        capability,
+        suite=bundle,
+        capability=capability,
+        profile=bundle.profiles["core"],
         profile_id="core",
         cache_dir=tmp_path,
         seed=42,
