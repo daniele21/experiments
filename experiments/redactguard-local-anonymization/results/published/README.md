@@ -19,11 +19,14 @@ python3 scripts/publish_portfolio_summary.py --source-ref "$(git rev-parse HEAD)
 ## Publishing measured model runs
 
 The local React dashboard reads live runs under `results/` and is intentionally independent of GitHub.
-Once a run is COMPLETE and publicly reviewable, export allowlisted **aggregate metrics only**:
+Once runs are COMPLETE, reviewed, and generated from the **same checked-out source commit**, export allowlisted **aggregate metrics only**:
 
 ```bash
 python3 scripts/publish_portfolio_summary.py --source-ref "$(git rev-parse HEAD)" \
-  --run results/<reviewed-complete-run> --approve-public-aggregates \
+  --run results/<reviewed-healthcare-run> \
+  --run results/<reviewed-ambiguous-run> \
+  --run results/<reviewed-challenge-run> \
+  --approve-public-aggregates \
   --output results/published/portfolio-summary.json
 ```
 
@@ -31,3 +34,18 @@ Check the source dataset, sample coverage, license, privacy, contract, execution
 The exporter rejects missing/partial/contract-failed model summaries and never copies raw inputs, annotations, predictions or case-level evidence.
 
 The portfolio presents dataset coverage separately from PII recall, precision, system leakage and p95 latency. It never replaces missing metrics with placeholder scores.
+
+The `--run` flag can be repeated for different model/dataset cohorts. The exporter checks
+the recorded `benchmark_commit` against `--source-ref`, the complete dataset
+case count and every model's evaluated/failure coverage. It rejects duplicate
+model/dataset pairs instead of silently picking a favorable run. It preserves
+a non-sensitive run identifier, contract digest, provider, date, host type and
+same-run cohort ID. Model results from separate cohorts must **not** be
+represented as one controlled Pareto frontier.
+
+The homepage only computes exploratory system-recall/p95 Pareto points among
+two or more models inside the same complete run. The model × dataset matrix
+shows standalone scores by dataset; a missing score is not zero.
+
+To publish old runs whose `benchmark_commit` differs from the current repository,
+check out that exact commit before exporting. Never fake source provenance.
