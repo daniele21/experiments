@@ -219,6 +219,9 @@ def publish_runs(catalog: dict, runs: list[Path], *, approved: bool) -> dict:
         run_id = str(manifest.get("run_id") or "").strip()
         if not run_id:
             raise ValueError("Missing recorded run identity")
+        benchmark_commit = manifest.get("benchmark_commit")
+        if not isinstance(benchmark_commit, str) or benchmark_commit != catalog["source"]["ref"]:
+            raise ValueError("Run benchmark_commit differs from catalog source revision")
         backend = str(manifest.get("backend") or "unknown")
         evaluation_schema = manifest["evaluation_schema"]
         contract = manifest.get("redactguard_contract") or {}
