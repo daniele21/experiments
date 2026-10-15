@@ -37,7 +37,7 @@ def test_real_suite_composes_five_capabilities_and_four_task_families() -> None:
     bundle = load_capability_suite(ROOT)
 
     assert bundle.suite.suite_id == "capability-core"
-    assert bundle.suite.version == "2"
+    assert bundle.suite.version == "3"
     assert len(bundle.resolved_capabilities) == 5
     assert {
         capability.spec.capability_id
@@ -78,7 +78,7 @@ def test_suite_plans_multiple_models_and_capabilities_without_runner_branches() 
         ("oos-calibration", "clinc150-oos"),
         ("structured-output", "structured-output-controlled-v2"),
         ("qa-abstention", "qa-abstention-controlled-v2"),
-        ("mathematical-reasoning", "math-reasoning-controlled-v2"),
+        ("mathematical-reasoning", "math-reasoning-controlled-v3"),
     }
 
 

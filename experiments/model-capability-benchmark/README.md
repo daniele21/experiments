@@ -109,7 +109,9 @@ See `.env.example` for the currently supported environment variables.
 BANKING77 + CLINC150 OOS/top-label calibration, structured output with real JSON Schema
 validation, QA with abstention, and final-answer-only mathematical reasoning.
 
-The v2 core profile is task-vertical: 154 intent-classification cases, 154 OOS/calibration cases, 60 structured-output cases, 60 QA/abstention cases and 40 reasoning cases, for 468 cases per model.
+The v3 suite retains the task-vertical core profile: 154 intent-classification cases, 154 OOS/calibration cases, 60 structured-output cases, 60 QA/abstention cases and 40 reasoning cases, for 468 cases per model.
+
+Mathematical reasoning now uses the **v3 repository-authored dataset** by default (72 new problems across six families; 12 smoke / 40 core / 72 extended). It includes more multistep numerical reasoning, algebra, logic/combinatorics and integer constraints. v1 and v2 remain registered and unchanged for reproducing earlier runs. All v3 answers are final numeric answers; difficulty labels are provisional and not human-reviewed. Changing from v2 to v3 creates a different dataset revision, checksum and case fingerprint, so compare models on matching v3 cases, not v2 versus v3.
 
 Inspect the same suite across a local and API model without provider calls:
 

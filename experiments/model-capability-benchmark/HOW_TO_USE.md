@@ -23,6 +23,8 @@ completed runs later for cross-model comparison.
 
 Total core budget: **468 cases per model**.
 
+As of suite v3, the `mathematical-reasoning` capability uses the new 72-case `math-reasoning-controlled-v3` dataset: **12 smoke, 40 core, 72 extended**. Core keeps the original 468-case total. Versions v1/v2 remain available in the dataset registry for historical runs. Do not interpret v2-v3 accuracy differences as model changes: run all compared models against the same v3 case set. Difficulty metadata is authored/provisional, not human-calibrated. To run the entire math v3 dataset, use `--profile extended --capabilities mathematical-reasoning`.
+
 Recommended execution order:
 
 ~~~text

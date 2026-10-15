@@ -1,0 +1,724 @@
+{
+  "cases": [
+    {
+      "sample_id": "math3-arithmetic-01",
+      "input": "Compute (37 × 24 - 18 × 13) / 6.",
+      "expected": "109",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "expression-order"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-02",
+      "input": "What is the sum of all multiples of 7 from 14 through 98, inclusive?",
+      "expected": "728",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "arithmetic-series"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-03",
+      "input": "Find the greatest common divisor of 252 and 198.",
+      "expected": "18",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "gcd"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-04",
+      "input": "Find the least common multiple of 24 and 90.",
+      "expected": "360",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "lcm"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-05",
+      "input": "Find the remainder when 7^5 is divided by 13.",
+      "expected": "11",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "challenge",
+        "challenge_type": "modular-powers"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-06",
+      "input": "What is the sum of the decimal digits of 2^15?",
+      "expected": "26",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "digit-sum"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-07",
+      "input": "What is the greatest integer whose square does not exceed 500?",
+      "expected": "22",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "integer-root"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-08",
+      "input": "Add three eighths of 640 to 7^3. What is the result?",
+      "expected": "583",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "fractions-powers"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-09",
+      "input": "Compute 19^2 - 18^2.",
+      "expected": "37",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "medium",
+        "challenge_type": "difference-of-squares"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-10",
+      "input": "How many positive integer divisors does 540 have?",
+      "expected": "24",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "challenge",
+        "challenge_type": "divisor-count"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-11",
+      "input": "Calculate 15! / 13!.",
+      "expected": "210",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "factorial-ratio"
+      }
+    },
+    {
+      "sample_id": "math3-arithmetic-12",
+      "input": "The numeral 234 is written in base 5. What is its value in base 10?",
+      "expected": "69",
+      "metadata": {
+        "family": "arithmetic",
+        "difficulty": "hard",
+        "challenge_type": "base-conversion"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-01",
+      "input": "A price of 350 EUR rises by 20% and then falls by 20%. What is the final price in EUR?",
+      "expected": "336",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "successive-changes"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-02",
+      "input": "After a 30% discount an item costs 210 EUR. What was its original price in EUR?",
+      "expected": "300",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "reverse-discount"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-03",
+      "input": "An 800 EUR item gets a 25% discount followed by another 10% discount on the reduced price. Final EUR?",
+      "expected": "540",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "stacked-discounts"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-04",
+      "input": "An amount of 400 increases by 15%, then decreases by 20% of its new value. Final amount?",
+      "expected": "368",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "sequential-changes"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-05",
+      "input": "An item costs a store 120 EUR and sells for 174 EUR. What is the markup percentage relative to cost?",
+      "expected": "45",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "markup-vs-margin"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-06",
+      "input": "In a group of 240 people, 40% are in team A. If 25% of team A are absent, how many from team A are absent?",
+      "expected": "24",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "subset-percentages"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-07",
+      "input": "A bill totals 575 EUR including a 15% tax on the pretax amount. What is the pretax amount in EUR?",
+      "expected": "500",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "reverse-tax"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-08",
+      "input": "Of 200 candidates, 60% pass exam one; of those, 75% pass exam two. How many pass both exams?",
+      "expected": "90",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "conditional-percent"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-09",
+      "input": "A balance of 1000 EUR earns 10% compound interest annually for two years with no deposits. Final balance?",
+      "expected": "1210",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "compound-growth"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-10",
+      "input": "A value of 240 falls by 25%, then rises by 40% of the reduced value. Final value?",
+      "expected": "252",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "hard",
+        "challenge_type": "asymmetric-recovery"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-11",
+      "input": "A stock loses 20% of its value. What percentage gain on the reduced value is required to return to the starting price?",
+      "expected": "25",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "challenge",
+        "challenge_type": "recovery-rate"
+      }
+    },
+    {
+      "sample_id": "math3-percentages-12",
+      "input": "An amount of 360 increases by 12.5%, then decreases by one ninth of the increased amount. Final amount?",
+      "expected": "360",
+      "metadata": {
+        "family": "percentages",
+        "difficulty": "challenge",
+        "challenge_type": "percent-and-fraction"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-01",
+      "input": "Pipe A fills a tank in 6 hours and pipe B in 3 hours. They work together at constant rates. How many hours to fill the tank?",
+      "expected": "2",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "combined-rates"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-02",
+      "input": "Two buses travel toward each other from towns 405 km apart at 60 and 75 km/h. How many hours until they meet?",
+      "expected": "3",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "relative-speed"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-03",
+      "input": "A boat goes 20 km/h downstream and 12 km/h upstream on the same river. What is its speed in still water in km/h?",
+      "expected": "16",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "river-current"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-04",
+      "input": "A machine makes 8 parts per minute for 25 minutes. Exactly 15% are defective. How many good parts remain?",
+      "expected": "170",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "percentage-throughput"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-05",
+      "input": "Five identical workers complete a job in 12 days. At the same constant rate, how many days do eight workers need?",
+      "expected": "7.5",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "worker-days"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-06",
+      "input": "A tank starts with 120 liters; 25% is drained, then half of the remainder is drained, and finally 16 liters are added. Final liters?",
+      "expected": "61",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "sequential-fractions"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-07",
+      "input": "Three fifths of 250 books are textbooks. Of those textbooks 40% are sold, then 12 sold textbooks are returned. How many textbooks are now in stock?",
+      "expected": "102",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "inventory-returns"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-08",
+      "input": "A deposit of 5000 EUR earns 6% simple annual interest for 3 years. What is principal plus interest in EUR?",
+      "expected": "5900",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "medium",
+        "challenge_type": "simple-interest"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-09",
+      "input": "A square has perimeter 80 cm. A square hole of area 64 cm^2 is removed. What is the remaining area in cm^2?",
+      "expected": "336",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "area-removal"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-10",
+      "input": "Five test scores average 72. A sixth score of 90 is added. What is the new average?",
+      "expected": "75",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "weighted-mean"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-11",
+      "input": "Two cars travel in the same direction at 80 and 50 km/h. The faster car starts 90 km behind. How many hours until it catches up?",
+      "expected": "3",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "hard",
+        "challenge_type": "catch-up-motion"
+      }
+    },
+    {
+      "sample_id": "math3-multi_step-12",
+      "input": "Twelve machines make 18 parts in 4 hours. Assuming identical constant rates, how many parts do 20 machines make in 6 hours?",
+      "expected": "45",
+      "metadata": {
+        "family": "multi_step",
+        "difficulty": "challenge",
+        "challenge_type": "production-rates"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-01",
+      "input": "Real numbers x and y satisfy x + y = 23 and x - y = 7. Find x.",
+      "expected": "15",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "linear-system"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-02",
+      "input": "Numbers x and y satisfy 2x + 3y = 31 and x + y = 12. Find x.",
+      "expected": "5",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "linear-system-two"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-03",
+      "input": "Find the larger real root of x^2 - 9x + 20 = 0.",
+      "expected": "5",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "quadratic-larger-root"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-04",
+      "input": "Find the smaller real root of x^2 - 12x + 35 = 0.",
+      "expected": "5",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "quadratic-smaller-root"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-05",
+      "input": "For nonzero real x, x + 1/x = 5. Find x^2 + 1/x^2.",
+      "expected": "23",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "challenge",
+        "challenge_type": "reciprocal-identity"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-06",
+      "input": "An arithmetic sequence begins 7, 12, 17, ... What is its 25th term?",
+      "expected": "127",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "arithmetic-progression"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-07",
+      "input": "A geometric sequence begins 3, 6, 12, ... What is its 8th term?",
+      "expected": "384",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "geometric-progression"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-08",
+      "input": "Find the positive real solution of (x - 4)(x + 7) = 0.",
+      "expected": "4",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "factorization-positive-root"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-09",
+      "input": "How many distinct real solutions does |3x - 5| = 7 have?",
+      "expected": "2",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "challenge",
+        "challenge_type": "absolute-equation-solutions"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-10",
+      "input": "Solve 3^x = 243 for real x.",
+      "expected": "5",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "hard",
+        "challenge_type": "exponential-equation"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-11",
+      "input": "For f(x) = 2x^2 - 3x + 1, calculate f(-4).",
+      "expected": "45",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "medium",
+        "challenge_type": "polynomial-evaluation"
+      }
+    },
+    {
+      "sample_id": "math3-algebra-12",
+      "input": "Two positive integers x and y satisfy x + y = 19 and xy = 84, with x > y. Find x.",
+      "expected": "12",
+      "metadata": {
+        "family": "algebra",
+        "difficulty": "challenge",
+        "challenge_type": "sum-product-system"
+      }
+    },
+    {
+      "sample_id": "math3-logic-01",
+      "input": "A 3-digit code uses distinct digits from {1,2,3,4}. The first digit must be even. How many codes are possible?",
+      "expected": "12",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "digit-arrangements"
+      }
+    },
+    {
+      "sample_id": "math3-logic-02",
+      "input": "In a tournament every pair among 5 players plays exactly one match. How many matches occur?",
+      "expected": "10",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "round-robin"
+      }
+    },
+    {
+      "sample_id": "math3-logic-03",
+      "input": "From 6 students, how many different unordered pairs can be selected?",
+      "expected": "15",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "combinations"
+      }
+    },
+    {
+      "sample_id": "math3-logic-04",
+      "input": "A and B have the same truth value, while C has the opposite truth value from A. If C is true, how many of A, B, C are true?",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "boolean-deduction"
+      }
+    },
+    {
+      "sample_id": "math3-logic-05",
+      "input": "A sequence starts 2, 6, 12, 20, 30 and follows n(n+1) for positive integers n. What is the next term?",
+      "expected": "42",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "sequence-pattern"
+      }
+    },
+    {
+      "sample_id": "math3-logic-06",
+      "input": "How many binary strings of length 4 contain exactly two 1s?",
+      "expected": "6",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "binary-combinations"
+      }
+    },
+    {
+      "sample_id": "math3-logic-07",
+      "input": "Four distinct people stand in a row. Two named people must stand next to each other. How many arrangements are possible?",
+      "expected": "12",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "challenge",
+        "challenge_type": "adjacent-permutations"
+      }
+    },
+    {
+      "sample_id": "math3-logic-08",
+      "input": "Five distinct tasks A,B,C,D,E must be ordered. A precedes B precedes C, and D precedes E, with no other constraints. How many valid total orders are there?",
+      "expected": "10",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "challenge",
+        "challenge_type": "partial-orders"
+      }
+    },
+    {
+      "sample_id": "math3-logic-09",
+      "input": "In a class of 18, 11 play piano, 9 play violin, and 5 play both. How many play neither?",
+      "expected": "3",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "hard",
+        "challenge_type": "inclusion-exclusion"
+      }
+    },
+    {
+      "sample_id": "math3-logic-10",
+      "input": "Exactly one of P and Q is true. R has the same truth value as P. If R is false, how many of P,Q,R are true?",
+      "expected": "1",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "medium",
+        "challenge_type": "exclusive-or"
+      }
+    },
+    {
+      "sample_id": "math3-logic-11",
+      "input": "How many 3-letter strings can be made from distinct letters A,B,C,D without repetition if each string must contain A?",
+      "expected": "18",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "challenge",
+        "challenge_type": "required-letter"
+      }
+    },
+    {
+      "sample_id": "math3-logic-12",
+      "input": "How many positive integers from 1 through 100 are divisible by 4 but not divisible by 6?",
+      "expected": "17",
+      "metadata": {
+        "family": "logic",
+        "difficulty": "challenge",
+        "challenge_type": "count-with-exclusion"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-01",
+      "input": "Find the smallest integer strictly greater than 100 divisible by both 6 and 8.",
+      "expected": "120",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "lcm-bound"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-02",
+      "input": "A venue charges a fixed 25 EUR booking fee and 17 EUR per ticket. With 200 EUR total, what is the maximum whole tickets?",
+      "expected": "10",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "integer-budget"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-03",
+      "input": "Find the greatest nonnegative integer x satisfying 3x + 7 <= 55.",
+      "expected": "16",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "linear-inequality"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-04",
+      "input": "Find the smallest positive integer that leaves remainder 2 upon division by 5 and remainder 3 upon division by 7.",
+      "expected": "17",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "chinese-remainder"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-05",
+      "input": "Nonnegative integers a,b satisfy 7a + 11b = 100. What is the greatest possible b?",
+      "expected": "4",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "diophantine-maximum"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-06",
+      "input": "Five jobs run in sequence, each lasting 45 minutes, with a 10-minute break between consecutive jobs only. Total minutes?",
+      "expected": "265",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "schedule-bounds"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-07",
+      "input": "How many integers between 100 and 200 inclusive are divisible by both 9 and 5?",
+      "expected": "2",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "interval-divisibility"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-08",
+      "input": "How many ordered pairs (x,y) of nonnegative integers satisfy x + y = 12 and x <= 4?",
+      "expected": "5",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "integer-pairs"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-09",
+      "input": "What is the largest two-digit positive integer whose digits sum to 12 and that is divisible by 3?",
+      "expected": "93",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "hard",
+        "challenge_type": "digit-constraints"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-10",
+      "input": "Exactly 25 coins, each worth 2 or 5 units, have a total value of 83 units. How many coins are worth 5?",
+      "expected": "11",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "coin-equation"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-11",
+      "input": "A bus holds at most 46 people. How many buses are needed at minimum to transport 210 people in one trip?",
+      "expected": "5",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "medium",
+        "challenge_type": "ceiling-capacity"
+      }
+    },
+    {
+      "sample_id": "math3-constraints-12",
+      "input": "Find the greatest integer between 50 and 100 inclusive that is divisible by 4 and leaves remainder 2 when divided by 3.",
+      "expected": "92",
+      "metadata": {
+        "family": "constraints",
+        "difficulty": "challenge",
+        "challenge_type": "modular-range"
+      }
+    }
+  ]
+}

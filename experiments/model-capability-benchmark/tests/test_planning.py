@@ -23,6 +23,7 @@ def test_core_plan_is_vertical_and_bounded() -> None:
     assert by_id["structured-output"]["planned_cases"] == 60
     assert by_id["qa-abstention"]["planned_cases"] == 60
     assert by_id["mathematical-reasoning"]["planned_cases"] == 40
+    assert by_id["mathematical-reasoning"]["dataset_cases"] == {"math-reasoning-controlled-v3": 40}
     assert plan["planned_cases_per_model"] == 468
     assert plan["configured_budget_per_model"]["target_local_seconds"] == 1680
     assert plan["configured_budget_per_model"]["hard_local_seconds"] == 2700

@@ -10,6 +10,7 @@ profiles:
       structured-output-controlled-v2: 12
       qa-abstention-controlled-v2: 12
       math-reasoning-controlled-v2: 12
+      math-reasoning-controlled-v3: 12
 
   core:
     max_cases: 100
@@ -19,6 +20,7 @@ profiles:
       structured-output-controlled-v2: 60
       qa-abstention-controlled-v2: 60
       math-reasoning-controlled-v2: 40
+      math-reasoning-controlled-v3: 40
 
   extended:
     max_cases: 500
@@ -28,6 +30,7 @@ profiles:
       structured-output-controlled-v2: 60
       qa-abstention-controlled-v2: 60
       math-reasoning-controlled-v2: 40
+      math-reasoning-controlled-v3: 72
 
   # Legacy aliases retained while callers migrate to vertical tiers.
   budget:

@@ -111,6 +111,7 @@ tasks:
     compatible_datasets:
       - math-reasoning-controlled-v1
       - math-reasoning-controlled-v2
+      - math-reasoning-controlled-v3
     required_capabilities:
       text_input: true
     prompt:

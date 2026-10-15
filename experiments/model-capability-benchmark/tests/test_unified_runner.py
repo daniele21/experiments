@@ -15,6 +15,7 @@ from benchmark_core import (
 
 from model_capability_bench import load_capability_suite
 from model_capability_bench.runner import CapabilityRunner, EvidenceStore, RunnerConfig
+from model_capability_bench.runner.capability_data import load_capability_datasets
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -244,7 +245,22 @@ def test_unified_runner_executes_two_models_and_resumes(tmp_path: Path) -> None:
 
 
 def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
-    failing = _FakeRuntime(fail_sample_ids={"math2-arith-01"})
+    bundle = load_capability_suite(ROOT)
+    capability = next(
+        item for item in bundle.resolved_capabilities
+        if item.spec.capability_id == "mathematical-reasoning"
+    )
+    selected = load_capability_datasets(
+        suite=bundle,
+        capability=capability,
+        profile=bundle.profiles["core"],
+        profile_id="core",
+        cache_dir=tmp_path / "cache",
+        seed=42,
+        cache={},
+    )
+    failing_case_id = selected[capability.spec.dataset_ids[0]].samples[0].sample_id
+    failing = _FakeRuntime(fail_sample_ids={failing_case_id})
     config = RunnerConfig(
         run_group="retry-run",
         profile="core",
@@ -284,13 +300,13 @@ def test_retry_failures_reruns_only_failed_cases(tmp_path: Path) -> None:
         state
         for state in states
         if state.get("status") == "failed"
-        and state.get("metadata", {}).get("sample_id") == "math2-arith-01"
+        and state.get("metadata", {}).get("sample_id") == failing_case_id
     ]
     completed = [
         state
         for state in states
         if state.get("status") == "completed"
-        and state.get("metadata", {}).get("sample_id") == "math2-arith-01"
+        and state.get("metadata", {}).get("sample_id") == failing_case_id
     ]
     assert len(failed) == 1
     assert len(completed) == 1
