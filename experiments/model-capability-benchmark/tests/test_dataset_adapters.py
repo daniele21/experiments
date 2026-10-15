@@ -365,3 +365,91 @@ def test_stratified_selection_validates_quotas_even_when_selecting_all(
             dataset_id="fixture",
             context=context,
         )
+
+
+def test_v3_reasoning_dataset_is_versioned_harder_and_reproducible(tmp_path: Path) -> None:
+    registry = build_dataset_registry(DATASETS)
+    bundle = load_capability_suite(ROOT)
+    spec = registry.get("math-reasoning-controlled-v3").spec
+    assert spec.revision == "v3"
+    assert spec.options["human_reviewed"] is False
+    assert spec.options["difficulty_labels"] == "authored-provisional"
+
+    full = registry.load(
+        "math-reasoning-controlled-v3",
+        DatasetLoadContext(cache_dir=tmp_path, profile=bundle.profiles["full"], seed=42),
+    )
+    assert full.available_count == 72
+    assert len(full.samples) == 72
+    assert len({item.sample_id for item in full.samples}) == 72
+    assert len({str(item.input) for item in full.samples}) == 72
+    counts = Counter(item.metadata["family"] for item in full.samples)
+    assert counts == {
+        "arithmetic": 12,
+        "percentages": 12,
+        "multi_step": 12,
+        "algebra": 12,
+        "logic": 12,
+        "constraints": 12,
+    }
+    assert set(item.metadata["difficulty"] for item in full.samples) == {
+        "medium", "hard", "challenge"
+    }
+    assert all(item.metadata["challenge_type"] for item in full.samples)
+    assert all(str(item.expected).strip() for item in full.samples)
+    assert all(item.metadata["dataset_revision"] == "v3" for item in full.samples)
+
+    # Numeric gold answers and family boundaries are checked independently.
+    gold = {item.sample_id: item.expected for item in full.samples}
+    assert gold["math3-arithmetic-05"] == "11"  # 7^5 mod 13
+    assert gold["math3-percentages-07"] == "500"  # reverse 15% tax
+    assert gold["math3-multi_step-12"] == "45"  # machine-hours
+    assert gold["math3-algebra-05"] == "23"  # reciprocal identity
+    assert gold["math3-logic-08"] == "10"  # precedence constraints
+    assert gold["math3-constraints-05"] == "4"  # integer equation
+
+    capability = next(
+        item.spec for item in bundle.resolved_capabilities
+        if item.spec.capability_id == "mathematical-reasoning"
+    )
+    assert capability.dataset_ids == ("math-reasoning-controlled-v3",)
+
+    # Keep the canonical 40-case vertical and deterministic family quotas.
+    cache: dict = {}
+    first = load_capability_datasets(
+        bundle,
+        capability,
+        profile_id="core",
+        cache_dir=tmp_path,
+        seed=42,
+        cache=cache,
+    )
+    second = load_capability_datasets(
+        bundle,
+        capability,
+        profile_id="core",
+        cache_dir=tmp_path,
+        seed=42,
+        cache={},
+    )
+    selected = first["math-reasoning-controlled-v3"]
+    assert len(selected.samples) == 40
+    assert Counter(item.metadata["family"] for item in selected.samples) == {
+        "arithmetic": 7,
+        "percentages": 7,
+        "multi_step": 7,
+        "algebra": 7,
+        "logic": 6,
+        "constraints": 6,
+    }
+    assert selected.selection_fingerprint == (
+        second["math-reasoning-controlled-v3"].selection_fingerprint
+    )
+
+    # v2 remains loadable and unchanged for historical comparisons.
+    previous = registry.load(
+        "math-reasoning-controlled-v2",
+        DatasetLoadContext(cache_dir=tmp_path, profile=bundle.profiles["full"], seed=42),
+    )
+    assert len(previous.samples) == 40
+    assert set(gold).isdisjoint({item.sample_id for item in previous.samples})
