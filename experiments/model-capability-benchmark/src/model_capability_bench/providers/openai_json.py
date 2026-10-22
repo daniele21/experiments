@@ -17,7 +17,6 @@ from benchmark_core import (
 from benchmark_core.transports import create_openai_compatible_client
 from openai import OpenAI
 
-
 from model_capability_bench.providers.parsing import parse_chat_response_content
 
 
