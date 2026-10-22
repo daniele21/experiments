@@ -144,6 +144,19 @@ runtimes:
 
 
 models:
+  lfm2.5-24b-a2b-ud-q3-k-xl:
+    model_id: unsloth/LFM2.5-24B-A2B-GGUF
+    runtime_model_id: lfm2.5-24b-a2b-ud-q3-k-xl
+    runtime: korgis-local
+    family: lfm2.5
+    parameters_b: 24
+    artifact:
+      format: gguf
+      quantization: UD-Q3_K_XL
+      metadata:
+        resolved_by: korgis-model-registry
+    tags: [local, open-weight, moe]
+
   qwen3.5-0.8b-q4km:
     model_id: unsloth/qwen3.5-0.8b
     runtime_model_id: qwen3.5-0.8b-q4km
