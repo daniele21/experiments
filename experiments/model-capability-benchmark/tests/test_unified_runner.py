@@ -20,6 +20,51 @@ from model_capability_bench.runner.capability_data import load_capability_datase
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_recovery_executes_only_selected_samples_with_larger_budget(tmp_path: Path) -> None:
+    import json
+
+    from model_capability_bench.runner.recovery import select_error_cases
+
+    original_root = tmp_path / "original"
+    first = _runner(original_root, runtime=_FakeRuntime())
+    config = RunnerConfig(
+        run_group="original", profile="smoke", model_keys=("qwen3.5-2b-q4km",),
+        capability_ids=("mathematical-reasoning",),
+    )
+    first.run(config)
+    source = original_root / "evidence"
+    states = read_jsonl_records(source / "state.jsonl")
+    completed = [row for row in states if row["status"] == "completed"]
+    chosen = completed[0]["metadata"]["sample_id"]
+    for row in states:
+        if row["status"] == "completed" and row["metadata"]["sample_id"] == chosen:
+            row["metadata"]["valid"] = False
+    (source / "state.jsonl").write_text("\n".join(json.dumps(row) for row in states))
+    (source / "run_manifest.json").write_text(json.dumps({
+        "suite": {"profile": "smoke", "seed": 42}, "run": {"run_id": "original"},
+    }))
+    selected, metadata = select_error_cases(
+        [source], models=config.model_keys, capabilities=config.capability_ids,
+        profile="smoke", seed=42,
+    )
+    before = (source / "state.jsonl").read_bytes()
+    recovery = _runner(tmp_path / "recovery", runtime=_FakeRuntime())
+    retry_config = dataclasses.replace(
+        config, run_group="recovery", selected_cases=selected, metadata=metadata,
+        inference_config={"max_output_tokens": 4096},
+    )
+    summary = recovery.run(retry_config)
+    assert summary.planned_cases == summary.completed_cases == 1
+    raw = read_jsonl_records(tmp_path / "recovery" / "evidence" / "raw.jsonl")
+    assert [row["record"]["sample_id"] for row in raw] == [chosen]
+    started = read_jsonl_records(tmp_path / "recovery" / "evidence" / "state.jsonl")[0]
+    assert started["identity"]["generation"]["max_output_tokens"] == 4096
+    assert (source / "state.jsonl").read_bytes() == before
+    resumed = recovery.run(retry_config)
+    assert resumed.completed_cases == 0
+    assert resumed.skipped_cases == 1
+
+
 class _FakeProvider:
     provider_id = "fake"
 

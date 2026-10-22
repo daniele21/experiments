@@ -410,6 +410,26 @@ def _create_schema(connection: Any) -> None:
         )
         WHERE rn = 1;
 
+        CREATE OR REPLACE VIEW v_latest_quality_results AS
+        WITH consolidated AS (
+            SELECT b.*,
+                ROW_NUMBER() OVER (
+                    PARTITION BY b.model_signature, b.capability_id, b.profile
+                    ORDER BY b.completed_at_utc DESC, b.run_id DESC
+                ) AS rn
+            FROM benchmark_cells b
+            JOIN run_configurations rc ON rc.run_id = b.run_id
+            WHERE b.status = 'COMPLETED' AND rc.experiment_kind = 'consolidated'
+        )
+        SELECT * EXCLUDE (rn) FROM consolidated WHERE rn = 1
+        UNION ALL
+        SELECT q.* FROM v_current_quality_results q
+        WHERE NOT EXISTS (
+            SELECT 1 FROM consolidated c
+            WHERE c.rn = 1 AND c.model_signature = q.model_signature
+              AND c.capability_id = q.capability_id AND c.profile = q.profile
+        );
+
         CREATE OR REPLACE VIEW v_model_history AS
         SELECT
             b.*,

@@ -90,6 +90,7 @@ export interface QualityPolicy {
 }
 
 export interface DecisionModelSummary extends DashboardModel {
+  result_policy?: 'standard' | 'consolidated-latest-attempt';
   quality_policy_id: string;
   overall_quality_score: number | null;
   quality_coverage_capabilities: number;
@@ -280,6 +281,13 @@ export interface SensitivityPayload {
 
 export interface OverviewPayload {
   schema_version: string;
+  result_view?: 'latest' | 'standard';
+  consolidations?: Array<{
+    run_id: string;
+    model_key: string;
+    capability_id: string;
+    generation_policy: { mixed_generation?: boolean; generation_configs?: unknown[] };
+  }>;
   fixture?: boolean;
   models: DashboardModel[];
   capabilities: string[];
@@ -288,6 +296,15 @@ export interface OverviewPayload {
   decision?: DecisionPayload;
   frontier?: FrontierPayload;
   sensitivity?: SensitivityPayload;
+}
+
+export interface DashboardBundle {
+  schema_version: '1';
+  generated_at_utc: string;
+  overview: OverviewPayload;
+  capabilities: Record<string, CapabilityPayload>;
+  models: Record<string, ModelPayload>;
+  runs: Record<string, RunPayload>;
 }
 
 export interface FamilyBreakdown {

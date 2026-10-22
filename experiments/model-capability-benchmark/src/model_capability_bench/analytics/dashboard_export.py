@@ -9,6 +9,7 @@ from model_capability_bench.analytics.decision_summary import (
     build_decision_overview,
 )
 from model_capability_bench.analytics.pareto import build_frontier_payload
+from model_capability_bench.analytics.public_bundle import write_public_bundle
 from model_capability_bench.analytics.sensitivity import build_sensitivity_payload
 from model_capability_bench.runner.comparison import paired_binary_comparison
 
@@ -40,7 +41,12 @@ def export_dashboard_data(
     *,
     database_path: Path,
     output_dir: Path,
+    result_view: str = "latest",
+    public_output_path: Path | None = None,
 ) -> dict[str, str]:
+    if result_view not in {"latest", "standard"}:
+        raise ValueError("result_view must be latest or standard")
+    quality_view = "v_latest_quality_results" if result_view == "latest" else "v_current_quality_results"
     database_path = database_path.resolve()
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -49,7 +55,7 @@ def export_dashboard_data(
     try:
         current = _rows(
             connection,
-            """
+            f"""
             SELECT
                 q.run_id,
                 q.model_key,
@@ -76,13 +82,16 @@ def export_dashboard_data(
                 m.artifact_format,
                 m.family,
                 m.parameters_b,
-                m.artifact_size_bytes
-            FROM v_current_quality_results q
+                m.artifact_size_bytes,
+                rc.experiment_kind,
+                rc.inference_json AS generation_policy
+            FROM {quality_view} q
             JOIN models m
               ON m.run_id = q.run_id
              AND m.model_key = q.model_key
             JOIN runs r
               ON r.run_id = q.run_id
+            LEFT JOIN run_configurations rc ON rc.run_id = q.run_id
             ORDER BY q.capability_id, q.model_key
             """,
         )
@@ -111,6 +120,7 @@ def export_dashboard_data(
             for row in current_resources
         }
         for row in current:
+            row["generation_policy"] = _decode_json(row.get("generation_policy"))
             row["resource_summary"] = resources_by_cell.get(
                 (
                     str(row["run_id"]),
@@ -168,6 +178,12 @@ def export_dashboard_data(
         sensitivity = build_sensitivity_payload(connection)
         overview = {
             "schema_version": "2",
+            "result_view": result_view,
+            "consolidations": [
+                {"run_id": row["run_id"], "model_key": row["model_key"],
+                 "capability_id": row["capability_id"], "generation_policy": row["generation_policy"]}
+                for row in current if row.get("experiment_kind") == "consolidated"
+            ],
             "models": list(models.values()),
             "capabilities": capabilities,
             "cells": current,
@@ -214,7 +230,7 @@ def export_dashboard_data(
                 sig = benchmark_signatures[0]
                 case_rows = _rows(
                     connection,
-                    """
+                    f"""
                     SELECT
                         c.run_id,
                         c.case_id,
@@ -245,7 +261,7 @@ def export_dashboard_data(
                       AND c.benchmark_signature = ?
                       AND c.run_id IN (
                           SELECT run_id
-                          FROM v_current_quality_results
+                          FROM {quality_view}
                           WHERE capability_id = ?
                             AND benchmark_signature = ?
                       )
@@ -589,7 +605,15 @@ def export_dashboard_data(
     finally:
         connection.close()
 
+    if public_output_path is None:
+        public_output_path = (
+            output_dir.parent.parent / "published" / "dashboard-data.json"
+            if output_dir.name == "dashboard" and output_dir.parent.name == "analytics"
+            else output_dir / "dashboard-data.json"
+        )
+    bundle_path = write_public_bundle(output_dir, destination=public_output_path)
     return {
         "index": str(output_dir / "index.json"),
         "overview": str(output_dir / "overview.json"),
+        "bundle": str(bundle_path),
     }

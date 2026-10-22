@@ -122,6 +122,12 @@ class CapabilityRunner:
             model_keys=config.model_keys,
             capability_ids=config.capability_ids,
         )
+        selected_cases = set(config.selected_cases) if config.selected_cases is not None else None
+        if selected_cases is not None:
+            matrix = tuple(arm for arm in matrix if any(
+                key[:3] == (arm.model_key, arm.capability_id, arm.dataset_id)
+                for key in selected_cases
+            ))
         capability_ids = tuple(
             dict.fromkeys(arm.capability_id for arm in matrix)
         )
@@ -331,7 +337,13 @@ class CapabilityRunner:
                         metadata={
                             **capability_metadata,
                             "planned_cases": sum(
-                                len(loaded_for_capability[dataset_id].samples)
+                                sum(
+                                    selected_cases is None or (
+                                        model.model.model_key, capability.spec.capability_id,
+                                        dataset_id, sample.sample_id,
+                                    ) in selected_cases
+                                    for sample in loaded_for_capability[dataset_id].samples
+                                )
                                 for dataset_id in capability.spec.dataset_ids
                             ),
                         },
@@ -340,7 +352,19 @@ class CapabilityRunner:
 
                     for dataset_id in capability.spec.dataset_ids:
                         loaded = loaded_for_capability[dataset_id]
-                        planned_cases += len(loaded.samples)
+                        samples = tuple(sample for sample in loaded.samples if (
+                            selected_cases is None or (
+                                model.model.model_key, capability.spec.capability_id,
+                                dataset_id, sample.sample_id,
+                            ) in selected_cases
+                        ))
+                        if selected_cases is not None:
+                            expected = {key[3] for key in selected_cases if key[:3] == (
+                                model.model.model_key, capability.spec.capability_id, dataset_id,
+                            )}
+                            if expected != {sample.sample_id for sample in samples}:
+                                raise ValueError("Recovery samples no longer match the current dataset selection")
+                        planned_cases += len(samples)
                         task_context = TaskExecutionContext(
                             run_id=identity.run_id,
                             dataset_id=dataset_id,
@@ -349,7 +373,7 @@ class CapabilityRunner:
                             metadata=context_metadata,
                         )
 
-                        for sample in loaded.samples:
+                        for sample in samples:
                             case_identity = BenchmarkCaseIdentity(
                                 suite_id=self.suite.suite.suite_id,
                                 suite_version=self.suite.suite.version,
@@ -602,7 +626,7 @@ class CapabilityRunner:
                             self.evidence_store.complete_case(
                                 case_id,
                                 attempt,
-                                metadata=case_metadata,
+                                metadata={**case_metadata, "valid": bool(task_result.valid)},
                             )
                             completed_cases += 1
                     self.evidence_store.record_stage_event(

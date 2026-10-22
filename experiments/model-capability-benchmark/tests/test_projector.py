@@ -262,6 +262,25 @@ def _write_run(
     return run_dir
 
 
+def test_recovery_cannot_replace_canonical_current_results(tmp_path: Path) -> None:
+    results = tmp_path / "results"
+    _write_run(results, run_id="canonical", completed_at="2026-10-05T08:00:00+00:00", score=0.7)
+    recovery = _write_run(
+        results, run_id="recovery", completed_at="2026-10-05T09:00:00+00:00", score=1.0,
+    )
+    manifest_path = recovery / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["configuration"] = {"experiment_kind": "recovery"}
+    manifest_path.write_text(json.dumps(manifest))
+    summary = project_results(results_root=results, rebuild=True)
+    with duckdb.connect(summary.database_path, read_only=True) as connection:
+        for view in ("v_current_quality_results", "v_current_performance_results"):
+            assert connection.execute(f"SELECT run_id FROM {view}").fetchall() == [("canonical",)]
+        assert connection.execute("SELECT run_id FROM benchmark_cells ORDER BY run_id").fetchall() == [
+            ("canonical",), ("recovery",),
+        ]
+
+
 def test_projector_selects_latest_completed_comparable_result(tmp_path: Path) -> None:
     results = tmp_path / "results"
     _write_run(

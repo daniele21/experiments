@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { overview } from '../data';
 import { navigate, usePathname } from '../router';
 
 function Link({
@@ -123,7 +124,20 @@ export function Shell({ children }: { children: ReactNode }) {
           </span>
         </div>
       </aside>
-      <main className="app-content">{children}</main>
+      <main className="app-content">
+        {overview.consolidations?.length ? (
+          <div className="fixture-banner" role="status">
+            Consolidated results · latest attempt per sample ·
+            {overview.consolidations.some((row) => row.generation_policy.mixed_generation)
+              ? ' mixed generation budgets; not a uniform-budget comparison. '
+              : ' combined source runs. '}
+            {[...new Set(overview.consolidations.map((row) => row.run_id))].map((runId) => (
+              <Link key={runId} href={`/runs/${encodeURIComponent(runId)}`}>{runId} </Link>
+            ))}
+          </div>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }

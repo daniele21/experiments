@@ -165,8 +165,20 @@ New runs are stored by default under `results/runs/<run-id>`, while `run_group` 
 Korgis model residency is managed through its admin API; the Korgis server process itself
 is intentionally external to this benchmark.
 
+`model-bench consolidate` creates an immutable latest-attempt result from base and
+recovery runs, deduplicating logical samples and recalculating metrics without
+inference. Dashboard exports prefer explicitly consolidated results by default and
+label mixed budgets; `--result-view standard` retains the uniform-configuration
+CURRENT view. Source evidence is preserved. See [the consolidation runbook](HOW_TO_USE.md#consolidate-runs-by-latest-sample-attempt).
+
 See `MCB_7_UNIFIED_RUNNER.md` for architecture, failure semantics and the controlled
 real-provider validation runbook.
+
+Dashboard exports also atomically update `results/published/dashboard-data.json`,
+a public bundle containing every view's data. Set `window.__MCB_DATA_URL__` before
+loading the dashboard to fetch that single file from a stable hosting URL.
+See [the public-data runbook](HOW_TO_USE.md#one-public-json-file-for-every-dashboard-view)
+for the schema, automatic refresh commands and hosting setup.
 
 ## Capability report
 
