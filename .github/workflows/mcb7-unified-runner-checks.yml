@@ -65,6 +65,7 @@ jobs:
           OPENAI_API_KEY: ci-placeholder
           MINICPM_API_KEY: ci-placeholder
           TYPESAFE_API_KEY: ci-placeholder
+          GEMINI_API_KEY: ci-placeholder
         run: |
           uv run model-bench models
           uv run model-bench tasks

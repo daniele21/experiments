@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
 from benchmark_core import (
     GenerationConfig,
     InferenceRequest,
@@ -18,7 +17,7 @@ from model_capability_bench.providers import (
     extract_last_boxed_answer,
     parse_chat_response_content,
 )
-from model_capability_bench.suite import CAPABILITY_ALIASES, resolve_capability_id
+from model_capability_bench.suite import resolve_capability_id
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "models.yaml"

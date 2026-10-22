@@ -704,7 +704,14 @@ def build_decision_overview(
                 "artifact_format": cell.get("artifact_format") or artifact.get("format"),
                 "artifact_size_bytes": artifact.get("size_bytes"),
                 "tags": cfg.get("tags") or [],
+                "result_policy": (
+                    "consolidated-latest-attempt"
+                    if cell.get("experiment_kind") == "consolidated" else "standard"
+                ),
             }
+
+        if cell.get("experiment_kind") == "consolidated":
+            model_meta[model_key]["result_policy"] = "consolidated-latest-attempt"
 
     capability_count = len(selected_signatures)
     dataset_ids = sorted({str(row["dataset_id"]) for row in cases})

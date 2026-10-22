@@ -1221,7 +1221,7 @@ function ReliabilityBars({ models }: { models: DecisionModelSummary[] }) {
         return (
           <div className={tiedBest ? 'executive-reliability-row best' : 'executive-reliability-row'} key={model.model_signature}>
             <div>
-              <strong>{model.model_key}</strong>
+              <strong>{model.model_key}{model.result_policy === 'consolidated-latest-attempt' ? ' · consolidated' : ''}</strong>
               <span className="executive-model-meta">
                 <span>{model.quality_coverage_complete ? 'Complete quality coverage' : 'Partial quality coverage'}</span>
                 <RuntimeBadge model={model} compact />

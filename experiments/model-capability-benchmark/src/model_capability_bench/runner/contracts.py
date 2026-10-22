@@ -33,6 +33,7 @@ class RunnerConfig:
     inference_config: Mapping[str, object] = field(default_factory=dict)
     runtime_config: Mapping[str, object] = field(default_factory=dict)
     metadata: Mapping[str, object] = field(default_factory=dict)
+    selected_cases: tuple[tuple[str, str, str, str], ...] | None = None
 
     def __post_init__(self) -> None:
         if not self.run_group.strip():
@@ -49,6 +50,8 @@ class RunnerConfig:
             raise ValueError("capability_ids must not contain empty values")
         if not self.configuration_id.strip():
             raise ValueError("configuration_id must not be empty")
+        if self.selected_cases is not None and not self.selected_cases:
+            raise ValueError("selected_cases must not be empty")
 
 
 @dataclass(frozen=True)

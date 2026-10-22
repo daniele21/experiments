@@ -34,9 +34,11 @@ from model_capability_bench.runner import (
     load_sweep,
 )
 from model_capability_bench.runner.config import load_runner_defaults
+from model_capability_bench.runner.consolidation import consolidate_runs
 from model_capability_bench.runner.manifest import write_run_artifacts
 from model_capability_bench.runner.planning import plan_benchmark
 from model_capability_bench.runner.progress import TerminalProgress
+from model_capability_bench.runner.recovery import select_error_cases
 from model_capability_bench.runtimes import RegistryRuntimeResolver
 from model_capability_bench.sharing import create_share_snapshot, render_share_snapshot
 from model_capability_bench.suite import (
@@ -80,6 +82,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--run-id")
     run.add_argument("--output-dir", type=Path)
     run.add_argument("--cache-dir", type=Path)
+    run.add_argument("--max-output-tokens", type=int)
+    run.add_argument(
+        "--rerun-errors-from", type=Path, action="append", default=[],
+        help="Select invalid/failed latest cases from a source run directory; repeat for multiple runs.",
+    )
+    run.add_argument("--plan-only", action="store_true", help="Print selection without inference.")
     run.add_argument(
         "--progress",
         action=argparse.BooleanOptionalAction,
@@ -158,6 +166,15 @@ def build_parser() -> argparse.ArgumentParser:
     project.add_argument("--rebuild", action="store_true")
     project.add_argument("--export-dashboard", action="store_true")
 
+    project.add_argument("--result-view", choices=("latest", "standard"), default="latest")
+
+    consolidate = sub.add_parser("consolidate", help="Create an immutable latest-attempt consolidated run.")
+    consolidate.add_argument("--run-dir", type=Path, action="append", required=True)
+    consolidate.add_argument("--run-id", required=True)
+    consolidate.add_argument("--run-group", required=True)
+    consolidate.add_argument("--output-dir", type=Path)
+    consolidate.add_argument("--plan-only", action="store_true")
+
     dashboard_data = sub.add_parser(
         "dashboard-data",
         help="Export typed dashboard JSON from the analytics database.",
@@ -165,6 +182,7 @@ def build_parser() -> argparse.ArgumentParser:
     dashboard_data.add_argument("--results-root", type=Path)
     dashboard_data.add_argument("--database", type=Path)
     dashboard_data.add_argument("--output-dir", type=Path)
+    dashboard_data.add_argument("--result-view", choices=("latest", "standard"), default="latest")
 
     dashboard_build = sub.add_parser(
         "dashboard-build",
@@ -262,6 +280,19 @@ def main() -> int:
     args = build_parser().parse_args()
     root = args.root.resolve()
 
+    if args.command == "consolidate":
+        output = args.output_dir or root / "results" / "runs" / args.run_id
+        summary = consolidate_runs(
+            sources=args.run_dir, output_dir=output, run_id=args.run_id,
+            run_group=args.run_group, suite=load_capability_suite(root), plan_only=args.plan_only,
+        )
+        if not args.plan_only:
+            reporting_config = load_reporting_config(root)
+            report = load_benchmark_report(output, reporting_config)
+            write_report(report, reporting_config, output)
+        _json(summary)
+        return 0
+
     if args.command == "project":
         results_root = (
             args.results_root.resolve()
@@ -288,6 +319,8 @@ def main() -> int:
             payload["dashboard"] = export_dashboard_data(
                 database_path=database,
                 output_dir=results_root / "analytics" / "dashboard",
+                result_view=args.result_view,
+                public_output_path=results_root / "published" / "dashboard-data.json",
             )
         _json(payload)
         return 0
@@ -312,6 +345,8 @@ def main() -> int:
             export_dashboard_data(
                 database_path=database,
                 output_dir=output_dir,
+                result_view=args.result_view,
+                public_output_path=results_root / "published" / "dashboard-data.json",
             )
         )
         return 0
@@ -615,7 +650,37 @@ def main() -> int:
         if args.cache_dir is not None
         else defaults.cache_dir
     )
-
+    if args.max_output_tokens is not None and args.max_output_tokens < 1:
+        raise ValueError("--max-output-tokens must be positive")
+    inference_config = (
+        {"max_output_tokens": args.max_output_tokens}
+        if args.max_output_tokens is not None else {}
+    )
+    selected_cases = None
+    recovery_metadata = {}
+    if args.rerun_errors_from:
+        if output_dir.resolve() in {path.resolve() for path in args.rerun_errors_from}:
+            raise ValueError("Recovery output must differ from source run directories")
+        selected_cases, recovery_metadata = select_error_cases(
+            args.rerun_errors_from, models=model_keys, capabilities=capability_ids,
+            profile=profile, seed=seed,
+        )
+        if resolved_run_id in {item["run_id"] for item in recovery_metadata["recovery_sources"]}:
+            raise ValueError("Recovery requires a new run ID")
+        existing_manifest = output_dir / "run_manifest.json"
+        if existing_manifest.exists():
+            existing = json.loads(existing_manifest.read_text())
+            previous = existing["run"].get("metadata", {})
+            if (existing["configuration"]["experiment_kind"] != "recovery"
+                or existing["configuration"]["inference"] != inference_config
+                or any(previous.get(key) != value for key, value in recovery_metadata.items())):
+                raise ValueError("Use a new run ID: recovery selection or configuration changed")
+        elif output_dir.exists() and any(output_dir.iterdir()):
+            raise ValueError("Recovery requires an empty output directory or a matching recovery manifest")
+    if args.plan_only:
+        _json({"selected_cases": selected_cases, "selected_case_count": len(selected_cases) if selected_cases else None,
+               "inference": inference_config, "output_dir": str(output_dir), "metadata": recovery_metadata})
+        return 0
     config = RunnerConfig(
         run_group=args.run_group,
         profile=profile,
@@ -625,6 +690,9 @@ def main() -> int:
         resume=resume,
         retry_failures=retry_failures,
         run_id=resolved_run_id,
+        inference_config=inference_config,
+        selected_cases=selected_cases,
+        metadata=recovery_metadata,
     )
     with TerminalProgress(enabled=args.progress) as progress:
         runtime_resolver = RegistryRuntimeResolver(os.environ)

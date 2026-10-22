@@ -20,7 +20,6 @@ from benchmark_core import (
 from model_capability_bench.datasets import build_dataset_registry
 from model_capability_bench.tasks import build_task_registry
 
-
 CAPABILITY_ALIASES: Mapping[str, str] = {
     "mathematics": "mathematical-reasoning",
     "math": "mathematical-reasoning",

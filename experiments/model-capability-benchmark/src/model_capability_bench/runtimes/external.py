@@ -29,4 +29,3 @@ class ExternalProviderRuntime:
             closer = getattr(provider, "close", None) or getattr(provider, "release", None)
             if callable(closer):
                 closer()
-        return None

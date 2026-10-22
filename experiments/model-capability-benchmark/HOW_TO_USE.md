@@ -501,6 +501,99 @@ benchmark semantics. Start a new campaign/run instead.
 
 ## 12. Run all five core verticals for one model
 
+### Consolidate runs by latest sample attempt
+
+`model-bench consolidate` writes a new immutable run from existing evidence,
+without inference. Repeat `--run-dir` for every base/recovery run to include:
+
+```bash
+uv run model-bench consolidate \
+  --run-dir results/runs/base-run \
+  --run-dir results/runs/recovery-run \
+  --run-id model-consolidated-v1 \
+  --run-group model-consolidated \
+  --plan-only
+```
+
+Remove `--plan-only` to materialize the snapshot and report. The output must not
+exist: use a new run ID for each new consolidation. Add all five base capability
+runs to retain a complete model result, then include recovery runs as additional
+sources. The source directory order does not affect selection.
+
+The logical key includes model, capability, dataset revision/split, sample ID,
+task version, prompt version and suite version. Selection uses the latest state
+timestamp; ties use source run ID, attempt and case ID in that order. A newer
+invalid result replaces an older valid result. Inference and evaluation are copied
+from the same attempt. No latest incomplete/failed attempt without paired evidence
+is silently dropped or replaced by an older success: consolidate rejects it and
+requires recovery first. Profiles, seeds, artifacts and dataset/task definitions
+must be compatible. Sources are checksumed before and after reading.
+
+Each selected case retains its original run/case/attempt, generation settings,
+timestamp and benchmark/runtime signatures. Aggregate metrics are recalculated on
+the deduplicated cases; original runs are untouched. Mixed generation budgets are
+explicit in the manifest and dashboard. Consolidated benchmark signatures are
+separate from uniform-budget comparisons. Hardware/resource evidence is not
+attributed to a single new execution of the consolidated cases.
+
+```bash
+uv run model-bench project --rebuild --export-dashboard
+uv run model-bench dashboard-build
+```
+
+Dashboard exports default to `--result-view latest`: the newest completed
+consolidated result replaces the base cells for that model/capability/profile;
+other models keep their ordinary CURRENT cells. Recovery subsets alone never
+replace complete results. Consolidated runs are labeled in the dashboard.
+To inspect only ordinary uniform-configuration results instead:
+
+```bash
+uv run model-bench dashboard-data --result-view standard
+uv run model-bench dashboard-build
+```
+
+The canonical SQL views `v_current_quality_results` and
+`v_current_performance_results` remain restricted to standard runs. The dashboard's
+latest selection is separately exposed as `v_latest_quality_results`.
+
+### Recover only invalid or failed cases with a different output budget
+
+Use `--rerun-errors-from` to select unsuccessful latest cases from a previous run.
+This includes `completed` cases whose evaluation has `valid=false`, as well as
+pipeline `failed` cases. Unlike `--retry-failures`, this creates a separate recovery
+experiment and can change the token budget. A newer valid result for the same
+model/capability/dataset/sample supersedes an earlier invalid result in the source
+evidence. Repeat the source option to combine multiple run directories.
+
+```bash
+export BENCHMARK_TIMEOUT_SECONDS=180
+
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities structured-output \
+  --profile core \
+  --run-group "${CAMPAIGN}-recovery-4096" \
+  --run-id "${CAMPAIGN}-${MODEL}-structured-output-recovery-4096" \
+  --rerun-errors-from "results/runs/${CAMPAIGN}-${MODEL}-structured-output-core" \
+  --max-output-tokens 4096 \
+  --plan-only
+```
+
+Remove `--plan-only` to execute the selection. The preview does not contact a
+provider or create output files. Keep the source profile and seed; requested samples
+must still exist in the current dataset selection. Use a new run ID and output
+directory. Recovery manifests record source run IDs, state checksums, selected
+logical cases and the generation override; the original evidence is untouched.
+Repeating the same recovery command resumes it. If selection or token override
+changes, use another new run ID.
+
+Recovery runs remain available in history but are excluded from canonical CURRENT
+selection. Their scores measure recovery on an error-selected subset, not quality
+on the complete benchmark. The existing `BENCHMARK_TIMEOUT_SECONDS` environment
+variable controls provider request timeouts; more output tokens alone do not raise
+the timeout. `--max-output-tokens` also works for ordinary full runs without editing
+the shared suite configuration.
+
 After you are comfortable running the first vertical manually:
 
 ~~~bash
@@ -550,6 +643,55 @@ uv run model-bench dashboard-build
 ~~~
 
 ## 14. Move to the next model
+
+### One public JSON file for every dashboard view
+
+Every dashboard export automatically replaces
+`results/published/dashboard-data.json`. This is a single, versioned bundle with
+`overview`, `capabilities`, `models` and `runs` maps: all routes, including frontier
+and sensitivity (inside overview), can use the same snapshot. `generated_at_utc`
+identifies when it was exported. The source is the selected analytics view, so
+consolidated results and their mixed-budget labels are retained.
+
+Both commands refresh the public bundle automatically:
+
+```bash
+uv run model-bench project --export-dashboard
+uv run model-bench dashboard-data
+```
+
+The bundle is serialized completely and then atomically replaces the previous file.
+Failed exports preserve the previous public file. Only files referenced by the
+current export index are included; stale files are excluded. Known credential fields
+and local filesystem paths are redacted, including serialized event metadata.
+The original internal per-view exports remain available for local analysis.
+
+Host this file at a stable URL, for example `/data/dashboard-data.json`. To make the
+existing dashboard load all views dynamically, set this **before** its module script:
+
+```html
+<script>window.__MCB_DATA_URL__ = '/data/dashboard-data.json';</script>
+```
+
+The application fetches once on startup with `cache: 'no-store'`, validates the
+bundle envelope and initializes every route from it. A load error is displayed
+explicitly, without falling back to fixture data. Existing embedded/offline builds
+continue to work when no URL is configured. An external page can also consume it:
+
+```javascript
+const response = await fetch('/data/dashboard-data.json', { cache: 'no-store' });
+if (!response.ok) throw new Error(`Dashboard data: HTTP ${response.status}`);
+const snapshot = await response.json();
+const leaderboard = snapshot.overview.decision.model_summaries;
+const capabilities = snapshot.capabilities;
+const models = snapshot.models;
+const runs = snapshot.runs;
+```
+
+Updating the local bundle does not upload it: the hosting/deployment pipeline must
+sync `results/published/dashboard-data.json` to that URL. Serve JSON with compression
+and, if hosted on a different origin, appropriate CORS headers. Reloading the page
+loads the current snapshot; already-open pages do not poll automatically.
 
 Example:
 

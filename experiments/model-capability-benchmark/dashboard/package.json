@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:compare": "node --experimental-strip-types --test src/components/compareThreeLogic.test.ts src/components/hardwareEvidence.test.ts src/components/compareCockpitLogic.test.ts",
     "test:frontier": "node --experimental-strip-types --test src/components/frontierSelection.test.ts",
-    "test:guide": "node --experimental-strip-types --test src/datasetGuideData.test.ts"
+    "test:guide": "node --experimental-strip-types --test src/datasetGuideData.test.ts",
+    "test:bundle": "node --experimental-strip-types --test src/dashboardBundle.test.ts"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",
