@@ -103,6 +103,22 @@ read from the environment and is never written to the registry or manifest.
 
 See `.env.example` for the currently supported environment variables.
 
+## Public benchmark suite (opt-in)
+
+A second, independently versioned suite (`suite_public.yaml`) integrates pinned upstream
+test/validation subsets of **GSM8K**, **SQuAD 2.0** and **JSONSchemaBench**.
+It has 36 smoke / 140 core / 550 extended cases and does not replace the canonical
+468-case `suite.yaml`. The UI and persisted evidence keep the benchmark lineages distinct.
+JSONSchemaBench measures schema compliance, not semantic field extraction.
+
+See **[PUBLIC_BENCHMARKS.md](PUBLIC_BENCHMARKS.md)** for sources, data licenses,
+normalization/scoring semantics, reproducible run commands and the explicit
+differences from official full-benchmark leaderboard protocols.
+
+```bash
+uv run --frozen model-bench --suite suite_public.yaml plan --profile core --capabilities all
+```
+
 ## Capability suite
 
 `suite.yaml` now composes five capability families: BANKING77 intent classification,
