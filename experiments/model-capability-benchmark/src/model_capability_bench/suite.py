@@ -50,6 +50,7 @@ class CapabilitySuiteBundle:
     tasks: TaskRegistry
     datasets: DatasetRegistry
     profiles: Mapping[str, DatasetProfileSpec]
+    suite_filename: str = "suite.yaml"
 
     def plan_matrix(
         self,
@@ -115,6 +116,7 @@ def load_capability_suite(
         tasks=tasks,
         datasets=datasets,
         profiles=profiles,
+        suite_filename=suite_filename,
     )
     return CapabilitySuiteBundle(
         root=root_path,
