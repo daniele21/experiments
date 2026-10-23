@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import string
 from collections.abc import Mapping
 from typing import Any
 
@@ -48,6 +50,27 @@ class QaAbstentionTask:
     @staticmethod
     def _normalize_answer(value: str) -> str:
         return " ".join(value.strip().lower().split())
+
+    @staticmethod
+    def _answer_matches(sample: Sample, prediction: str, expected: str) -> bool:
+        """Preserve legacy exact semantics; SQuAD uses its published normalization."""
+        if sample.metadata.get("answer_normalization") != "squad-v2":
+            return QaAbstentionTask._normalize_answer(prediction) == (
+                QaAbstentionTask._normalize_answer(expected)
+            )
+        aliases = sample.metadata.get("accepted_answers")
+        if not isinstance(aliases, (list, tuple)) or not aliases:
+            aliases = [expected]
+
+        def squad_normalize(value: str) -> str:
+            lowered = value.lower()
+            no_punctuation = "".join(c for c in lowered if c not in string.punctuation)
+            no_articles = re.sub(r"\b(a|an|the)\b", " ", no_punctuation)
+            return " ".join(no_articles.split())
+
+        return squad_normalize(prediction) in {
+            squad_normalize(alias) for alias in aliases if isinstance(alias, str)
+        }
 
     def build_request(
         self,
@@ -106,8 +129,7 @@ class QaAbstentionTask:
         exact_match: float | None
         if answerable and valid and not abstain and predicted_answer is not None:
             exact_match = float(
-                self._normalize_answer(predicted_answer)
-                == self._normalize_answer(expected_answer)
+                self._answer_matches(sample, predicted_answer, expected_answer)
             )
         elif answerable:
             exact_match = 0.0
