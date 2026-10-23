@@ -60,7 +60,9 @@ def _selection(value: str, available: list[str]) -> tuple[str, ...]:
 
 def _select_capabilities(bundle, raw_value: str) -> tuple[str, ...]:
     canonical = [c.spec.capability_id for c in bundle.resolved_capabilities]
-    available = canonical + list(CAPABILITY_ALIASES.keys())
+    available = canonical + [
+        alias for alias, target in CAPABILITY_ALIASES.items() if target in canonical
+    ]
     selected = _selection(raw_value, available)
     return tuple(dict.fromkeys(resolve_capability_id(c) for c in selected))
 
