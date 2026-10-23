@@ -60,7 +60,9 @@ def _selection(value: str, available: list[str]) -> tuple[str, ...]:
 
 def _select_capabilities(bundle, raw_value: str) -> tuple[str, ...]:
     canonical = [c.spec.capability_id for c in bundle.resolved_capabilities]
-    available = canonical + list(CAPABILITY_ALIASES.keys())
+    available = canonical + [
+        alias for alias, target in CAPABILITY_ALIASES.items() if target in canonical
+    ]
     selected = _selection(raw_value, available)
     return tuple(dict.fromkeys(resolve_capability_id(c) for c in selected))
 
@@ -71,6 +73,10 @@ def build_parser() -> argparse.ArgumentParser:
         description="Unified model capability benchmark runner.",
     )
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument(
+        "--suite", default="suite.yaml",
+        help="Versioned suite YAML basename (e.g. suite_public.yaml); place before command.",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     run = sub.add_parser("run", help="Execute a model × capability benchmark matrix.")
@@ -284,7 +290,7 @@ def main() -> int:
         output = args.output_dir or root / "results" / "runs" / args.run_id
         summary = consolidate_runs(
             sources=args.run_dir, output_dir=output, run_id=args.run_id,
-            run_group=args.run_group, suite=load_capability_suite(root), plan_only=args.plan_only,
+            run_group=args.run_group, suite=load_capability_suite(root, suite_filename=args.suite), plan_only=args.plan_only,
         )
         if not args.plan_only:
             reporting_config = load_reporting_config(root)
@@ -448,7 +454,7 @@ def main() -> int:
         )
         return 0
 
-    bundle = load_capability_suite(root)
+    bundle = load_capability_suite(root, suite_filename=args.suite)
     defaults = load_runner_defaults(root)
 
     if args.command in {"models", "tasks", "datasets", "capabilities"}:

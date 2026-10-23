@@ -69,15 +69,18 @@ def test_catalog_profiles_and_task_references_are_consistent() -> None:
     profiles = load_dataset_profiles(PROFILES)
 
     assert datasets.summary() == {
-        "datasets": 9,
+        "datasets": 12,
         "dataset_ids": [
             "banking77",
             "clinc150-oos",
+            "gsm8k-main-test",
+            "jsonschemabench-github-easy-test",
             "math-reasoning-controlled-v1",
             "math-reasoning-controlled-v2",
             "math-reasoning-controlled-v3",
             "qa-abstention-controlled-v1",
             "qa-abstention-controlled-v2",
+            "squad-v2-validation",
             "structured-output-controlled-v1",
             "structured-output-controlled-v2",
         ],
@@ -85,6 +88,7 @@ def test_catalog_profiles_and_task_references_are_consistent() -> None:
             "banking77",
             "clinc150-oos",
             "controlled-yaml",
+            "public-parquet",
             "structured-output-controlled",
         ],
     }
@@ -192,7 +196,6 @@ def test_profiles_are_configuration_driven() -> None:
 
 
 def test_public_dataset_catalog_uses_pinned_revisions_and_no_moving_main() -> None:
-    text = DATASETS.read_text(encoding="utf-8")
     registry = build_dataset_registry(DATASETS)
 
     assert registry.get("banking77").spec.revision == (
@@ -201,8 +204,19 @@ def test_public_dataset_catalog_uses_pinned_revisions_and_no_moving_main() -> No
     assert registry.get("clinc150-oos").spec.revision == (
         "48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e"
     )
-    assert "/main/" not in text
-    assert "refs/heads/main" not in text
+    for dataset in registry.select():
+        if dataset.spec.cache_mode != "download":
+            continue
+        files = dataset.spec.options.get("files") or {
+            "source": dataset.spec.options.get("file")
+        }
+        for entry in files.values():
+            url = entry["url"]
+            if "huggingface.co/" in url:
+                assert f"/resolve/{dataset.spec.revision}/" in url
+            else:
+                assert f"/{dataset.spec.revision}/" in url
+            assert "refs/heads/main" not in url
 
 
 def test_v2_controlled_datasets_have_vertical_family_coverage(tmp_path: Path) -> None:

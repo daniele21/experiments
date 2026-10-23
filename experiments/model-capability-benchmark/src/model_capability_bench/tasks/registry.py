@@ -10,6 +10,7 @@ from model_capability_bench.tasks.classification import (
 )
 from model_capability_bench.tasks.qa_abstention import QaAbstentionTask
 from model_capability_bench.tasks.reasoning import MathematicalReasoningTask
+from model_capability_bench.tasks.schema_compliance import JsonSchemaComplianceTask
 from model_capability_bench.tasks.structured_output import StructuredOutputTask
 
 
@@ -23,6 +24,7 @@ def build_task_plugins() -> TaskPluginRegistry:
     plugins.register("qa-abstention", QaAbstentionTask)
     plugins.register("mathematical-reasoning", MathematicalReasoningTask)
     plugins.register("structured-output", StructuredOutputTask)
+    plugins.register("json-schema-compliance", JsonSchemaComplianceTask)
     return plugins
 
 
