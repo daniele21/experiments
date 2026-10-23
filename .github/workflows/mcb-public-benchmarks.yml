@@ -1,0 +1,58 @@
+name: MCB public benchmark integration
+
+on:
+  pull_request:
+    paths:
+      - "experiments/model-capability-benchmark/**"
+      - "packages/benchmark-core/**"
+      - ".github/workflows/mcb-public-benchmarks.yml"
+  workflow_dispatch:
+
+jobs:
+  public-benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: experiments/model-capability-benchmark
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: python -m pip install --disable-pip-version-check uv
+      - name: Sync locked dependencies
+        run: uv sync --frozen --extra dev
+      - name: Lint
+        run: uv run --frozen ruff check src tests/test_public_benchmarks.py
+      - name: Test public adapters and evaluators
+        run: uv run --frozen pytest -q tests/test_public_benchmarks.py
+      - name: Plan public Core without provider calls
+        run: uv run --frozen model-bench --suite suite_public.yaml plan --profile core --capabilities all
+      - name: Smoke-test real pinned upstream data without provider calls
+        run: |
+          uv run --frozen python - <<'PY'
+          from pathlib import Path
+          from benchmark_core import DatasetLoadContext
+          from model_capability_bench import load_capability_suite
+          suite = load_capability_suite(Path.cwd(), suite_filename="suite_public.yaml")
+          cache = Path.cwd() / ".cache/public-ci"
+          expected = {
+              "gsm8k-main-test": 12,
+              "squad-v2-validation": 12,
+              "jsonschemabench-github-easy-test": 12,
+          }
+          for dataset_id, count in expected.items():
+              result = suite.datasets.load(
+                  dataset_id,
+                  DatasetLoadContext(
+                      cache_dir=cache,
+                      profile=suite.profiles["smoke"],
+                      seed=42,
+                  ),
+              )
+              assert len(result.samples) == count, (dataset_id, len(result.samples))
+              assert result.source_checksums.get("source")
+              print(dataset_id, len(result.samples), result.available_count, result.selection_fingerprint)
+          PY
