@@ -5,7 +5,6 @@ from collections import Counter
 from pathlib import Path
 
 from benchmark_core import (
-    DatasetLoadContext,
     InferenceResult,
     TaskExecutionContext,
 )
@@ -48,7 +47,7 @@ def test_gsm8k_gold_final_answers_are_numeric_and_source_rows_preserved() -> Non
     samples, stats = adapter._convert(rows)
     assert [case.expected for case in samples] == ["1200", "3.5"]
     assert [case.metadata["source_index"] for case in samples] == [0, 1]
-    assert len(set(case.sample_id for case in samples)) == 2
+    assert len({case.sample_id for case in samples}) == 2
     assert stats == {"source_rows": 2, "excluded_rows": 0}
 
 
@@ -124,11 +123,11 @@ def test_squad_core_selects_balanced_answerability_without_network(
         c for c in bundle.resolved_capabilities
         if c.spec.capability_id == "public-qa-abstention"
     )
-    kwargs = dict(
-        suite=bundle, capability=capability,
-        profile=bundle.profiles["core"], profile_id="core",
-        cache_dir=tmp_path, seed=42,
-    )
+    kwargs = {
+        "suite": bundle, "capability": capability,
+        "profile": bundle.profiles["core"], "profile_id": "core",
+        "cache_dir": tmp_path, "seed": 42,
+    }
     a = load_capability_datasets(**kwargs, cache={})["squad-v2-validation"]
     b = load_capability_datasets(**kwargs, cache={})["squad-v2-validation"]
     assert len(a.samples) == 60
