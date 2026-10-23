@@ -9,8 +9,8 @@ from model_capability_bench.tasks.classification import (
     IntentClassificationTask,
 )
 from model_capability_bench.tasks.qa_abstention import QaAbstentionTask
-from model_capability_bench.tasks.schema_compliance import JsonSchemaComplianceTask
 from model_capability_bench.tasks.reasoning import MathematicalReasoningTask
+from model_capability_bench.tasks.schema_compliance import JsonSchemaComplianceTask
 from model_capability_bench.tasks.structured_output import StructuredOutputTask
 
 
