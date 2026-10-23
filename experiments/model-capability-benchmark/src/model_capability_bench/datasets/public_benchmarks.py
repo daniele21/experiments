@@ -26,13 +26,15 @@ from model_capability_bench.datasets.selection import select_samples
 
 
 def _rows(path, columns: tuple[str, ...]) -> list[dict]:
-    try:
-        import pyarrow.parquet as pq
-    except ImportError as exc:
-        raise RuntimeError(
-            "Public Parquet datasets require pyarrow; install MCB dependencies"
-        ) from exc
-    return pq.read_table(path, columns=list(columns)).to_pylist()
+    import duckdb
+
+    selected = ", ".join(f'"{column}"' for column in columns)
+    with duckdb.connect(":memory:") as conn:
+        result = conn.execute(
+            f"SELECT {selected} FROM read_parquet(?)", [str(path)]
+        )
+        names = [item[0] for item in result.description]
+        return [dict(zip(names, row, strict=True)) for row in result.fetchall()]
 
 
 def _required_text(value: object, *, case: str, field: str) -> str:
