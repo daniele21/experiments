@@ -196,7 +196,6 @@ def test_profiles_are_configuration_driven() -> None:
 
 
 def test_public_dataset_catalog_uses_pinned_revisions_and_no_moving_main() -> None:
-    text = DATASETS.read_text(encoding="utf-8")
     registry = build_dataset_registry(DATASETS)
 
     assert registry.get("banking77").spec.revision == (
@@ -205,8 +204,19 @@ def test_public_dataset_catalog_uses_pinned_revisions_and_no_moving_main() -> No
     assert registry.get("clinc150-oos").spec.revision == (
         "48a0e1cff8f43dd4d0836ecb4ed5df08733e3d2e"
     )
-    assert "/main/" not in text
-    assert "refs/heads/main" not in text
+    for dataset in registry.select():
+        if dataset.spec.cache_mode != "download":
+            continue
+        files = dataset.spec.options.get("files") or {
+            "source": dataset.spec.options.get("file")
+        }
+        for entry in files.values():
+            url = entry["url"]
+            if "huggingface.co/" in url:
+                assert f"/resolve/{dataset.spec.revision}/" in url
+            else:
+                assert f"/{dataset.spec.revision}/" in url
+            assert "refs/heads/main" not in url
 
 
 def test_v2_controlled_datasets_have_vertical_family_coverage(tmp_path: Path) -> None:
