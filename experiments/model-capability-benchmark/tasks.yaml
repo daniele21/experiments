@@ -86,6 +86,7 @@ tasks:
     compatible_datasets:
       - qa-abstention-controlled-v1
       - qa-abstention-controlled-v2
+      - squad-v2-validation
     required_capabilities:
       text_input: true
     prompt:
@@ -112,6 +113,7 @@ tasks:
       - math-reasoning-controlled-v1
       - math-reasoning-controlled-v2
       - math-reasoning-controlled-v3
+      - gsm8k-main-test
     required_capabilities:
       text_input: true
     prompt:
@@ -126,3 +128,24 @@ tasks:
         Solve the problem and return only the final answer in the requested structured
         field. Do not include private chain-of-thought or intermediate reasoning.
       output_field: answer
+  
+  json-schema-compliance:
+    version: "1"
+    plugin: json-schema-compliance
+    evaluator: json-schema-validation
+    evaluator_version: "1"
+    compatible_datasets:
+      - jsonschemabench-github-easy-test
+    required_capabilities:
+      text_input: true
+    prompt:
+      id: json-schema-compliance-v1
+      version: "1"
+    metrics:
+      - name: schema_valid_rate
+        primary: true
+      - name: parse_valid
+    options:
+      instruction: >-
+        Generate an example JSON object satisfying the provided JSON Schema.
+        Return only the JSON object and do not include explanatory text.
