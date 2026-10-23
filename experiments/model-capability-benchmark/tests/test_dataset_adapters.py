@@ -69,15 +69,18 @@ def test_catalog_profiles_and_task_references_are_consistent() -> None:
     profiles = load_dataset_profiles(PROFILES)
 
     assert datasets.summary() == {
-        "datasets": 9,
+        "datasets": 12,
         "dataset_ids": [
             "banking77",
             "clinc150-oos",
+            "gsm8k-main-test",
+            "jsonschemabench-github-easy-test",
             "math-reasoning-controlled-v1",
             "math-reasoning-controlled-v2",
             "math-reasoning-controlled-v3",
             "qa-abstention-controlled-v1",
             "qa-abstention-controlled-v2",
+            "squad-v2-validation",
             "structured-output-controlled-v1",
             "structured-output-controlled-v2",
         ],
@@ -85,6 +88,7 @@ def test_catalog_profiles_and_task_references_are_consistent() -> None:
             "banking77",
             "clinc150-oos",
             "controlled-yaml",
+            "public-parquet",
             "structured-output-controlled",
         ],
     }
