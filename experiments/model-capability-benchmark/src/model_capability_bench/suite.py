@@ -99,13 +99,17 @@ class CapabilitySuiteBundle:
         return tuple(arms)
 
 
-def load_capability_suite(root: str | Path) -> CapabilitySuiteBundle:
+def load_capability_suite(
+    root: str | Path, *, suite_filename: str = "suite.yaml"
+) -> CapabilitySuiteBundle:
+    if Path(suite_filename).name != suite_filename or not suite_filename.endswith(".yaml"):
+        raise ValueError("suite_filename must be a YAML basename within the benchmark root")
     root_path = Path(root)
     models = load_registry(root_path / "models.yaml")
     tasks = build_task_registry(root_path / "tasks.yaml")
     datasets = build_dataset_registry(root_path / "datasets.yaml")
     profiles = load_dataset_profiles(root_path / "profiles.yaml")
-    suite = load_suite_spec(root_path / "suite.yaml")
+    suite = load_suite_spec(root_path / suite_filename)
     resolved = validate_suite(
         suite,
         tasks=tasks,
