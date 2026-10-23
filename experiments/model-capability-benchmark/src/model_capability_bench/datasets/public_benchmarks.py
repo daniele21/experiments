@@ -19,6 +19,7 @@ from benchmark_core import (
     fingerprint_values,
     sha256_file,
 )
+from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from model_capability_bench.datasets.common import single_cached_source
@@ -59,7 +60,7 @@ def _gsm_final_answer(solution: str) -> str:
 
 def _squad_answers(value: object) -> tuple[str, ...]:
     if not isinstance(value, Mapping):
-        raise ValueError("SQuAD answers must be an object")
+        raise TypeError("SQuAD answers must be an object")
     texts = value.get("text")
     if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
         raise ValueError("SQuAD answers.text must be a string list")
@@ -69,10 +70,11 @@ def _squad_answers(value: object) -> tuple[str, ...]:
 def _unsafe_ref(value: object) -> bool:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if key in {"$ref", "$dynamicRef", "$recursiveRef"}:
-                # Avoid implicit network access and runtime-dependent reference resolution.
-                if not isinstance(item, str) or not item.startswith("#/"):
-                    return True
+            # Never fetch remote references implicitly while scoring.
+            if key in {"$ref", "$dynamicRef", "$recursiveRef"} and (
+                not isinstance(item, str) or not item.startswith("#/")
+            ):
+                return True
             if _unsafe_ref(item):
                 return True
     elif isinstance(value, list):
@@ -91,7 +93,7 @@ def _schema(value: object, *, max_chars: int) -> dict | None:
             return None
         validator_for(schema).check_schema(schema)
         return schema
-    except Exception:
+    except (ValueError, TypeError, SchemaError, RecursionError):
         # Third-party schema catalogs can include dialects/extensions outside
         # the local JSON Schema validator. Those cases are explicitly excluded.
         return None
