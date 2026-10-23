@@ -32,7 +32,7 @@ class JsonSchemaComplianceTask:
     def _schema(self, sample: Sample) -> Mapping:
         schema = sample.metadata.get("response_schema")
         if not isinstance(schema, Mapping):
-            raise ValueError(f"{sample.sample_id}: missing response_schema")
+            raise TypeError(f"{sample.sample_id}: missing response_schema")
         validator_for(schema).check_schema(schema)
         return schema
 
