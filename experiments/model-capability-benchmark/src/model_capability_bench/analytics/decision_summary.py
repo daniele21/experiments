@@ -180,7 +180,11 @@ def _selected_cohorts(
             r for r in rows if str(r.get("benchmark_signature")) == canonical_sig
         ]
         if matching:
-            filtered.append(matching[0])
+            latest_matching = max(
+                matching,
+                key=lambda r: str(r.get("completed_at_utc") or ""),
+            )
+            filtered.append(latest_matching)
         else:
             latest = max(rows, key=lambda r: str(r.get("completed_at_utc") or ""))
             filtered.append(latest)

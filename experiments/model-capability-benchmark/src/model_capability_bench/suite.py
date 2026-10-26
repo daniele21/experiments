@@ -23,6 +23,11 @@ from model_capability_bench.tasks import build_task_registry
 CAPABILITY_ALIASES: Mapping[str, str] = {
     "mathematics": "mathematical-reasoning",
     "math": "mathematical-reasoning",
+    "mathematics-v3": "mathematical-reasoning",
+    "math-v3": "mathematical-reasoning",
+    "mathematical-reasoning-v3": "mathematical-reasoning",
+    "mathematics-v2": "mathematical-reasoning-v2",
+    "math-v2": "mathematical-reasoning-v2",
 }
 
 

@@ -70,6 +70,14 @@ providers:
       default_base_url: http://localhost:8000/v1
       local_provider_fee: 0
 
+  lmstudio:
+    type: openai-compatible
+    base_url_env: LMSTUDIO_BASE_URL
+    options:
+      protocol: chat-completions
+      default_base_url: http://127.0.0.1:1234/v1
+      local_provider_fee: 0
+
   transformers:
     type: transformers-local
     options:
@@ -137,6 +145,13 @@ runtimes:
 
   transformers-local:
     provider: transformers
+    deployment: local
+    lifecycle: external
+    options:
+      runtime_type: provider-api
+
+  lmstudio-local:
+    provider: lmstudio
     deployment: local
     lifecycle: external
     options:
@@ -426,6 +441,17 @@ models:
       - closed
       - openai
 
+  gpt-6.1-sol:
+    model_id: gpt-6.1-sol
+    runtime: openai-api
+    family: gpt-6.1
+    metadata:
+      supports_temperature: false
+    tags:
+      - api
+      - closed
+      - openai
+
   minicpm-v-4.6-1b:
     model_id: MiniCPM-V-4.6-1B
     runtime: minicpm-api
@@ -576,7 +602,7 @@ models:
       raw_input: true
       default_temperature: 0.6
       default_top_p: 0.95
-      default_max_output_tokens: 512
+      default_max_output_tokens: 2048
       max_memory_gb: 4.0
       mps_high_watermark_ratio: 0.3
       mps_low_watermark_ratio: 0.1
@@ -607,6 +633,7 @@ models:
       raw_input: true
       default_temperature: 0.6
       default_top_p: 0.95
+      default_max_output_tokens: 2048
     tags:
       - local
       - open-weight
@@ -641,6 +668,7 @@ models:
       raw_input: true
       default_temperature: 0.6
       default_top_p: 0.95
+      default_max_output_tokens: 2048
     tags:
       - local
       - open-weight
@@ -651,4 +679,78 @@ models:
       - small
       - 1b
       - q4km
+
+  limite-1b-violetto-q80:
+    model_id: paradigma-inc/limite-1b-violetto
+    runtime_model_id: limite-1b-violetto-q80
+    runtime: korgis-local
+    family: limite
+    parameters_b: 1
+    artifact:
+      format: gguf
+      quantization: Q8_0
+      metadata:
+        resolved_by: korgis-model-registry
+        source_repo: EmogheneAkpomedaye/Limite-1B-Violetto-GGUF
+    metadata:
+      supports_temperature: true
+      supports_seed: true
+      supports_response_format: false
+      output_format: boxed
+      system_prompt: >-
+        You are a helpful assistant.
+        Please reason step by step, and put your final answer within \boxed{}.
+      raw_input: true
+      default_temperature: 0.6
+      default_top_p: 0.95
+      default_max_output_tokens: 2048
+    tags:
+      - local
+      - open-weight
+      - limite
+      - violetto
+      - mathematics
+      - reasoning
+      - small
+      - 1b
+      - q8_0
+      - gguf
+      - korgis
+
+  limite-1b-violetto-mlx:
+    model_id: gabe-rbo/limite-1b-violetto-mlx
+    runtime_model_id: limite-1b-violetto-mlx
+    runtime: korgis-local
+    family: limite
+    parameters_b: 1
+    artifact:
+      format: safetensors
+      metadata:
+        resolved_by: korgis-model-registry
+        source_repo: gabe-rbo/limite-1b-violetto-mlx
+        backend: mlx
+    metadata:
+      supports_temperature: true
+      supports_seed: true
+      supports_response_format: false
+      output_format: boxed
+      system_prompt: >-
+        You are a helpful assistant.
+        Please reason step by step, and put your final answer within \boxed{}.
+      raw_input: true
+      default_temperature: 0.6
+      default_top_p: 0.95
+      default_max_output_tokens: 2048
+    tags:
+      - local
+      - open-weight
+      - limite
+      - violetto
+      - mathematics
+      - reasoning
+      - small
+      - 1b
+      - mlx
+      - apple-silicon
+      - korgis
 

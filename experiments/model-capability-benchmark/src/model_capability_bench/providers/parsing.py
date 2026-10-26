@@ -49,6 +49,13 @@ def extract_last_boxed_answer(text: str) -> str | None:
     if depth == 0:
         extracted = text[start : end - 1].strip()
         return extracted if extracted else None
+
+    # Truncated boxed tag recovery (e.g. generation cut off right before or at closing brace):
+    if depth > 0 and end == len(text):
+        candidate = text[start:].strip().rstrip("}").strip()
+        if candidate and re.match(r"^-?\d+(?:\.\d+)?(?:/\d+)?$", candidate):
+            return candidate
+
     return None
 
 
@@ -97,28 +104,35 @@ def parse_chat_response_content(
     - \\boxed{...} LaTeX extraction (especially for mathematical reasoning models)
     - Fallback single-field assignment if output is concise
     """
+    target_field = _determine_target_field(response_schema)
+
     # 1. If output_format is strictly boxed, check for boxed answer first
     if output_format == "boxed":
         boxed = extract_last_boxed_answer(content)
         if boxed is not None:
-            field = _determine_target_field(response_schema)
-            return {field: boxed}
+            return {target_field: boxed}
 
     # 2. Try JSON decoding (raw, markdown, or substring)
     parsed = extract_json_from_text(content)
-    if parsed is not None:
+    if parsed is not None and (
+        output_format != "boxed"
+        or (isinstance(parsed, Mapping) and target_field in parsed and parsed[target_field])
+    ):
         return parsed
 
     # 3. Check for boxed answer (e.g. math models that don't output json)
     boxed = extract_last_boxed_answer(content)
     if boxed is not None:
-        field = _determine_target_field(response_schema)
-        return {field: boxed}
+        return {target_field: boxed}
 
     # 4. Fallback for concise single-line text if a single field is expected
-    target_field = _determine_target_field(response_schema)
     stripped = content.strip()
-    if stripped and "\n" not in stripped and len(stripped) <= 128:
+    if (
+        stripped
+        and "\n" not in stripped
+        and len(stripped) <= 128
+        and (output_format != "boxed" or re.match(r"^-?\d+(?:\.\d+)?(?:/\d+)?$", stripped))
+    ):
         return {target_field: stripped}
 
     if output_format == "boxed":

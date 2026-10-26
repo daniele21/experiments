@@ -103,7 +103,7 @@ export const datasetGuides: DatasetGuide[] = [
   },
   {
     id: 'math-reasoning-controlled-v2', name: 'Math reasoning · v2', group: 'Math reasoning', version: 2,
-    status: 'historical', origin: 'repository-authored', capabilityIds: ['mathematical-reasoning'], caseCount: 40,
+    status: 'historical', origin: 'repository-authored', capabilityIds: ['mathematical-reasoning', 'mathematical-reasoning-v2'], caseCount: 40,
     purpose: 'Test basic reasoning across six mathematical families.',
     measures: 'Arithmetic, percentages, multi-step problems, basic algebra, simple logic and constraints.',
     metric: 'Final-answer accuracy',

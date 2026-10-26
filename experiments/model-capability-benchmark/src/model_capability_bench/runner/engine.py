@@ -350,7 +350,28 @@ class CapabilityRunner:
                         status="started",
                     )
 
+                    consecutive_failures = 0
+                    circuit_broken = False
+                    model_max_tokens = model.model.metadata.get(
+                        "default_max_output_tokens"
+                    )
+                    if (
+                        model_max_tokens is not None
+                        and "max_output_tokens" not in config.inference_config
+                    ):
+                        case_generation = dataclasses.replace(
+                            generation,
+                            max_output_tokens=max(
+                                generation.max_output_tokens or 0,
+                                int(model_max_tokens),
+                            ),
+                        )
+                    else:
+                        case_generation = generation
+
                     for dataset_id in capability.spec.dataset_ids:
+                        if circuit_broken:
+                            break
                         loaded = loaded_for_capability[dataset_id]
                         samples = tuple(sample for sample in loaded.samples if (
                             selected_cases is None or (
@@ -369,7 +390,7 @@ class CapabilityRunner:
                             run_id=identity.run_id,
                             dataset_id=dataset_id,
                             profile=config.profile,
-                            generation=generation,
+                            generation=case_generation,
                             metadata=context_metadata,
                         )
 
@@ -391,7 +412,7 @@ class CapabilityRunner:
                                 selection_fingerprint=loaded.selection_fingerprint,
                                 sample_id=sample.sample_id,
                                 profile=config.profile,
-                                generation=generation,
+                                generation=case_generation,
                                 metadata={
                                     "context_fingerprints": context_fingerprints,
                                     "context_checksums": context_checksums,
@@ -476,6 +497,7 @@ class CapabilityRunner:
                                 )
                             except Exception as exc:  # noqa: BLE001 - task request boundary
                                 failed_cases += 1
+                                consecutive_failures += 1
                                 self.evidence_store.fail_case(
                                     case_id,
                                     attempt,
@@ -483,6 +505,21 @@ class CapabilityRunner:
                                     error=exc,
                                     metadata=case_metadata,
                                 )
+                                if (
+                                    config.max_consecutive_failures is not None
+                                    and consecutive_failures >= config.max_consecutive_failures
+                                ):
+                                    circuit_broken = True
+                                    self.evidence_store.record_stage_event(
+                                        "capability.aborted",
+                                        metadata={
+                                            **capability_metadata,
+                                            "reason": f"Circuit breaker tripped after {consecutive_failures} consecutive failures in request stage",
+                                            "consecutive_failures": consecutive_failures,
+                                        },
+                                        status="aborted",
+                                    )
+                                    break
                                 continue
 
                             inference_metadata = {
@@ -510,6 +547,7 @@ class CapabilityRunner:
                                 )
                             except Exception as exc:  # noqa: BLE001 - provider boundary
                                 failed_cases += 1
+                                consecutive_failures += 1
                                 self.evidence_store.fail_case(
                                     case_id,
                                     attempt,
@@ -517,6 +555,21 @@ class CapabilityRunner:
                                     error=exc,
                                     metadata=case_metadata,
                                 )
+                                if (
+                                    config.max_consecutive_failures is not None
+                                    and consecutive_failures >= config.max_consecutive_failures
+                                ):
+                                    circuit_broken = True
+                                    self.evidence_store.record_stage_event(
+                                        "capability.aborted",
+                                        metadata={
+                                            **capability_metadata,
+                                            "reason": f"Circuit breaker tripped after {consecutive_failures} consecutive failures in provider stage",
+                                            "consecutive_failures": consecutive_failures,
+                                        },
+                                        status="aborted",
+                                    )
+                                    break
                                 continue
 
                             inference_result_metadata = dict(inference.metadata)
@@ -595,6 +648,7 @@ class CapabilityRunner:
                                 )
                             except Exception as exc:  # noqa: BLE001 - evaluator boundary
                                 failed_cases += 1
+                                consecutive_failures += 1
                                 self.evidence_store.fail_case(
                                     case_id,
                                     attempt,
@@ -602,6 +656,21 @@ class CapabilityRunner:
                                     error=exc,
                                     metadata=case_metadata,
                                 )
+                                if (
+                                    config.max_consecutive_failures is not None
+                                    and consecutive_failures >= config.max_consecutive_failures
+                                ):
+                                    circuit_broken = True
+                                    self.evidence_store.record_stage_event(
+                                        "capability.aborted",
+                                        metadata={
+                                            **capability_metadata,
+                                            "reason": f"Circuit breaker tripped after {consecutive_failures} consecutive failures in evaluation stage",
+                                            "consecutive_failures": consecutive_failures,
+                                        },
+                                        status="aborted",
+                                    )
+                                    break
                                 continue
 
                             self.evidence_store.record_evaluation(
@@ -623,17 +692,43 @@ class CapabilityRunner:
                                     attempt=attempt,
                                 ),
                             )
+                            is_case_valid = bool(task_result.valid)
+                            if is_case_valid:
+                                consecutive_failures = 0
+                            else:
+                                consecutive_failures += 1
+
                             self.evidence_store.complete_case(
                                 case_id,
                                 attempt,
-                                metadata={**case_metadata, "valid": bool(task_result.valid)},
+                                metadata={
+                                    **case_metadata,
+                                    "valid": is_case_valid,
+                                },
                             )
                             completed_cases += 1
-                    self.evidence_store.record_stage_event(
-                        "capability.completed",
-                        metadata=capability_metadata,
-                        status="completed",
-                    )
+
+                            if (
+                                config.max_consecutive_failures is not None
+                                and consecutive_failures >= config.max_consecutive_failures
+                            ):
+                                circuit_broken = True
+                                self.evidence_store.record_stage_event(
+                                    "capability.aborted",
+                                    metadata={
+                                        **capability_metadata,
+                                        "reason": f"Circuit breaker tripped after {consecutive_failures} consecutive invalid cases",
+                                        "consecutive_failures": consecutive_failures,
+                                    },
+                                    status="aborted",
+                                )
+                                break
+                    if not circuit_broken:
+                        self.evidence_store.record_stage_event(
+                            "capability.completed",
+                            metadata=capability_metadata,
+                            status="completed",
+                        )
             finally:
                 self.evidence_store.record_stage_event(
                     "model.release.started",

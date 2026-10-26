@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from benchmark_core import (
     GenerationConfig,
     InferenceRequest,
@@ -40,6 +41,7 @@ def test_limite_violetto_registry_resolution() -> None:
     assert limite.model.metadata.get("output_format") == "boxed"
     assert limite.model.metadata.get("raw_input") is True
     assert limite.model.metadata.get("supports_response_format") is False
+    assert limite.model.metadata.get("default_max_output_tokens") == 2048
 
     # Preflight should pass without requiring extra environment variables
     preflight = preflight_models(registry, [limite], {})
@@ -49,18 +51,42 @@ def test_limite_violetto_registry_resolution() -> None:
     limite_vllm = registry.resolve("limite-1b-violetto-vllm")
     assert limite_vllm.runtime.runtime_key == "vllm-local"
     assert limite_vllm.provider.provider_key == "vllm"
+    assert limite_vllm.model.metadata.get("default_max_output_tokens") == 2048
 
-    # Korgis GGUF local configuration
+    # Korgis GGUF local configuration (Q4_K_M)
     korgis_limite = registry.resolve("limite-1b-violetto-q4km")
     assert korgis_limite.model.model_id == "paradigma-inc/limite-1b-violetto"
     assert korgis_limite.runtime.runtime_key == "korgis-local"
     assert korgis_limite.provider.provider_key == "korgis"
+    assert korgis_limite.model.metadata.get("default_max_output_tokens") == 2048
     assert korgis_limite.model.artifact is not None
     assert korgis_limite.model.artifact.format == "gguf"
     assert korgis_limite.model.artifact.quantization == "Q4_K_M"
     assert korgis_limite.model.artifact.metadata["source_repo"] == (
         "yamura4/limite-1b-violetto-GGUF"
     )
+
+    # Korgis GGUF local configuration (Q8_0)
+    korgis_limite_q80 = registry.resolve("limite-1b-violetto-q80")
+    assert korgis_limite_q80.model.model_id == "paradigma-inc/limite-1b-violetto"
+    assert korgis_limite_q80.runtime.runtime_key == "korgis-local"
+    assert korgis_limite_q80.provider.provider_key == "korgis"
+    assert korgis_limite_q80.model.artifact is not None
+    assert korgis_limite_q80.model.artifact.format == "gguf"
+    assert korgis_limite_q80.model.artifact.quantization == "Q8_0"
+    assert korgis_limite_q80.model.artifact.metadata["source_repo"] == (
+        "EmogheneAkpomedaye/Limite-1B-Violetto-GGUF"
+    )
+
+    # Korgis MLX local configuration
+    korgis_limite_mlx = registry.resolve("limite-1b-violetto-mlx")
+    assert korgis_limite_mlx.model.model_id == "gabe-rbo/limite-1b-violetto-mlx"
+    assert korgis_limite_mlx.runtime.runtime_key == "korgis-local"
+    assert korgis_limite_mlx.provider.provider_key == "korgis"
+    assert korgis_limite_mlx.model.artifact is not None
+    assert korgis_limite_mlx.model.artifact.format == "safetensors"
+    assert korgis_limite_mlx.model.artifact.metadata["backend"] == "mlx"
+    assert "apple-silicon" in korgis_limite_mlx.model.tags
 
 
 def test_boxed_answer_extraction() -> None:
@@ -86,6 +112,10 @@ def test_boxed_answer_extraction() -> None:
 
     # Text containing boxed without leading backslash
     assert extract_last_boxed_answer(r"Solution: boxed{42}") == "42"
+
+    # Truncated boxed tag recovery (cutoff right before or at closing brace)
+    assert extract_last_boxed_answer(r"Calculation gives \boxed{32.50") == "32.50"
+    assert extract_last_boxed_answer(r"Calculation gives \boxed{1210") == "1210"
 
     # None when no boxed pattern exists
     assert extract_last_boxed_answer("No answer enclosed.") is None
@@ -121,6 +151,14 @@ def test_parse_chat_response_content_with_schema() -> None:
     assert parse_chat_response_content('{"answer": "45"}', response_schema=schema) == {
         "answer": "45"
     }
+
+    # Boxed format should reject empty or arbitrary braces in reasoning that lack 'answer'
+    with pytest.raises(ValueError, match="No LaTeX \\\\boxed"):
+        parse_chat_response_content(
+            "Consider the empty set {} of solutions. No box at all.",
+            response_schema=schema,
+            output_format="boxed",
+        )
 
 
 def test_limite_violetto_transformers_local_provider() -> None:
@@ -180,10 +218,11 @@ def test_limite_violetto_transformers_local_provider() -> None:
     assert messages[0]["role"] == "user"
     assert messages[0]["content"] == "A box contains 28 red and 17 blue balls. How many balls total?"
 
-    # Verify sampling parameters: temperature=0.6, top_p=0.95
+    # Verify sampling parameters: temperature=0.6, top_p=0.95, max_new_tokens=2048
     _, gen_kwargs = next(c for c in calls if c[0] == "generate")
     assert gen_kwargs["temperature"] == 0.6
     assert gen_kwargs["top_p"] == 0.95
+    assert gen_kwargs["max_new_tokens"] == 2048
     assert gen_kwargs["do_sample"] is True
 
 
@@ -275,18 +314,44 @@ def test_limite_violetto_vllm_provider_call_and_generation(monkeypatch) -> None:
 def test_mathematics_capability_alias_resolution() -> None:
     assert resolve_capability_id("mathematics") == "mathematical-reasoning"
     assert resolve_capability_id("math") == "mathematical-reasoning"
+    assert resolve_capability_id("math-v3") == "mathematical-reasoning"
+    assert resolve_capability_id("mathematics-v3") == "mathematical-reasoning"
+    assert resolve_capability_id("math-v2") == "mathematical-reasoning-v2"
+    assert resolve_capability_id("mathematics-v2") == "mathematical-reasoning-v2"
     assert (
         resolve_capability_id("intent-classification")
         == "intent-classification"
     )
 
     bundle = load_capability_suite(ROOT)
-    # Planning with alias "mathematics"
-    arms = bundle.plan_matrix(
+    # Planning with alias "mathematics" (v3)
+    arms_v3 = bundle.plan_matrix(
         model_keys=["limite-1b-violetto"],
-        capability_ids=["mathematics"],
+        capability_ids=["mathematics-v3"],
     )
-    assert arms[0].dataset_id == "math-reasoning-controlled-v3"
+    assert len(arms_v3) == 1
+    assert arms_v3[0].capability_id == "mathematical-reasoning"
+    assert arms_v3[0].dataset_id == "math-reasoning-controlled-v3"
+
+    # Planning with alias "math-v2"
+    arms_v2 = bundle.plan_matrix(
+        model_keys=["limite-1b-violetto"],
+        capability_ids=["math-v2"],
+    )
+    assert len(arms_v2) == 1
+    assert arms_v2[0].capability_id == "mathematical-reasoning-v2"
+    assert arms_v2[0].dataset_id == "math-reasoning-controlled-v2"
+
+    # Planning both simultaneously
+    arms_both = bundle.plan_matrix(
+        model_keys=["limite-1b-violetto"],
+        capability_ids=["math-v2", "math-v3"],
+    )
+    assert len(arms_both) == 2
+    assert {arm.dataset_id for arm in arms_both} == {
+        "math-reasoning-controlled-v2",
+        "math-reasoning-controlled-v3",
+    }
 
 
 def test_transformers_local_memory_capping_and_release() -> None:

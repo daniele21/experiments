@@ -396,3 +396,88 @@ suite:
           source: inference
           reducer: sum
           field: estimated_cost_usd
+
+    mathematical-reasoning-v2:
+      task: mathematical-reasoning
+      datasets:
+        - math-reasoning-controlled-v2
+      description: >-
+        Final-answer-only reasoning across arithmetic, percentages, multi-step,
+        algebra, logic and constrained problems (v2 benchmark).
+      tags: [reasoning, math, math-v2, mathematics-v2]
+      benchmark:
+        smoke:
+          max_cases: 12
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: arithmetic}
+                count: 2
+              - match: {family: percentages}
+                count: 2
+              - match: {family: multi_step}
+                count: 2
+              - match: {family: algebra}
+                count: 2
+              - match: {family: logic}
+                count: 2
+              - match: {family: constraints}
+                count: 2
+          target_local_seconds: 180
+          hard_local_seconds: 300
+          target_api_cost_usd: 0.04
+          hard_api_cost_usd: 0.10
+        core:
+          max_cases: 40
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {family: arithmetic}
+                count: 7
+              - match: {family: percentages}
+                count: 7
+              - match: {family: multi_step}
+                count: 7
+              - match: {family: algebra}
+                count: 7
+              - match: {family: logic}
+                count: 6
+              - match: {family: constraints}
+                count: 6
+          target_local_seconds: 600
+          hard_local_seconds: 900
+          target_api_cost_usd: 0.12
+          hard_api_cost_usd: 0.25
+        extended:
+          max_cases: 40
+          selection:
+            strategy: fixed
+          hard_local_seconds: 900
+          hard_api_cost_usd: 0.25
+      comparison:
+        practical_delta: 0.05
+        metric: final_answer_accuracy
+      metrics:
+        - name: final_answer_accuracy
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: invalid_output_rate
+          source: inference
+          reducer: invalid_rate
+          field: valid
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+        - name: output_tokens_mean
+          source: inference
+          reducer: mean
+          field: usage.output_tokens
+        - name: estimated_cost_usd
+          source: inference
+          reducer: sum
+          field: estimated_cost_usd

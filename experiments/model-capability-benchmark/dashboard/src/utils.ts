@@ -1,4 +1,6 @@
 export function capabilityLabel(value: string): string {
+  if (value === 'mathematical-reasoning') return 'Math Reasoning · v3';
+  if (value === 'mathematical-reasoning-v2') return 'Math Reasoning · v2';
   return value
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))

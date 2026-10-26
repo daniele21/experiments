@@ -27,6 +27,15 @@
       "source": "OpenAI API standard pricing snapshot for Luna family.",
       "source_url": "https://developers.openai.com/api/docs/pricing"
     },
+    "gpt-6.1-sol": {
+      "match": "exact",
+      "input": 2.0,
+      "cached_input": 0.1,
+      "output": 10.0,
+      "as_of": "2026-10-22",
+      "source": "OpenAI API standard pricing for prompts up to 272K input tokens; verified 2026-10-22.",
+      "source_url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+    },
     "gemini-3.8-flash": {
       "match": "exact",
       "input": 0.075,

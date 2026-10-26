@@ -50,6 +50,19 @@ from model_capability_bench.suite import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _load_env_file(root: Path) -> None:
+    env_file = root / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+
+
+_load_env_file(ROOT)
+
+
 def _json(value: Any) -> None:
     print(json.dumps(to_jsonable(value), indent=2, sort_keys=True))
 
@@ -103,6 +116,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--retry-failures",
         action=argparse.BooleanOptionalAction,
         default=None,
+    )
+    run.add_argument(
+        "--max-consecutive-failures",
+        type=int,
+        default=10,
+        help="Circuit breaker: abort capability after N consecutive failures or invalid responses (default: 10, set 0 to disable).",
     )
 
     estimate = sub.add_parser(
@@ -165,7 +184,6 @@ def build_parser() -> argparse.ArgumentParser:
     project.add_argument("--run-dir", type=Path, action="append")
     project.add_argument("--rebuild", action="store_true")
     project.add_argument("--export-dashboard", action="store_true")
-
     project.add_argument("--result-view", choices=("latest", "standard"), default="latest")
 
     consolidate = sub.add_parser("consolidate", help="Create an immutable latest-attempt consolidated run.")
@@ -650,6 +668,12 @@ def main() -> int:
         if args.cache_dir is not None
         else defaults.cache_dir
     )
+
+    max_consecutive_failures = (
+        args.max_consecutive_failures
+        if getattr(args, "max_consecutive_failures", None) not in (0, None)
+        else None
+    )
     if args.max_output_tokens is not None and args.max_output_tokens < 1:
         raise ValueError("--max-output-tokens must be positive")
     inference_config = (
@@ -689,6 +713,7 @@ def main() -> int:
         seed=seed,
         resume=resume,
         retry_failures=retry_failures,
+        max_consecutive_failures=max_consecutive_failures,
         run_id=resolved_run_id,
         inference_config=inference_config,
         selected_cases=selected_cases,

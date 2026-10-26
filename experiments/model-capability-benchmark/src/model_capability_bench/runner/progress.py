@@ -49,6 +49,7 @@ class TerminalProgress:
         self.total: int | None = None
         self.completed = 0
         self.failed = 0
+        self.invalid = 0
         self.skipped = 0
         self.case_started: float | None = None
         self.case_seconds = 0.0
@@ -115,14 +116,14 @@ class TerminalProgress:
                 self.stage = phases[kind]
             if kind in {"model.prepare.started", "capability.loading.started"}:
                 self.total = None
-                self.completed = self.failed = self.skipped = 0
+                self.completed = self.failed = self.invalid = self.skipped = 0
                 self.sample = ""
                 self.case_started = None
                 if kind == "model.prepare.started":
                     self.capability = ""
             if kind == "capability.started":
                 self.total = int(event.metadata["planned_cases"])
-                self.completed = self.failed = self.skipped = 0
+                self.completed = self.failed = self.invalid = self.skipped = 0
                 self.case_seconds = 0.0
                 self.measured_cases = 0
                 self.case_started = None
@@ -137,9 +138,15 @@ class TerminalProgress:
                 self.case_started = None
                 if kind == "case.completed":
                     self.completed += 1
+                    if event.metadata.get("valid") is False:
+                        self.invalid += 1
+                    self.stage = "running"
                 else:
                     self.failed += 1
-                self.stage = "running" if kind == "case.completed" else "case failed"
+                    self.stage = "case failed"
+            elif kind == "capability.aborted":
+                self.had_failure = True
+                self.stage = "circuit breaker aborted"
             elif kind == "case.skipped":
                 self.skipped += 1
                 if event.metadata.get("previous_status") == "failed":
@@ -147,8 +154,8 @@ class TerminalProgress:
                 self.stage = "resuming"
             force = kind in {
                 "model.prepare.started", "capability.loading.started",
-                "capability.started", "capability.completed", "run.completed",
-            } or kind.endswith(".failed")
+                "capability.started", "capability.completed", "capability.aborted", "run.completed",
+            } or kind.endswith((".failed", ".aborted"))
             self.render(force=force)
 
     def line(self) -> str:
@@ -174,9 +181,10 @@ class TerminalProgress:
                 eta = "--"
             context = " / ".join(part for part in (self.model, self.capability) if part)
             sample = f" | case {self.sample}" if self.sample else ""
+            invalid_part = f" invalid {self.invalid}" if self.invalid else ""
             return (
                 f"{context + ' | ' if context else ''}{self.stage} | {progress}"
-                f" | ok {self.completed} failed {self.failed} resumed {self.skipped}"
+                f" | ok {self.completed} failed {self.failed}{invalid_part} resumed {self.skipped}"
                 f" | elapsed {_duration(now - self.started)} | ETA {eta}{sample}"
             )
 

@@ -313,13 +313,25 @@ export VLLM_BASE_URL="http://127.0.0.1:8001/v1"
 export MODEL="limite-1b-violetto-vllm"
 ~~~
 
-### Option C: Local Korgis / llama-server GGUF
+### Option C: Local Korgis (Apple Silicon MLX & GGUF)
 
-If running via a patched llama.cpp build with Limite architecture support:
+For native Apple Silicon Metal acceleration via Korgis using MLX:
+
+~~~bash
+# 1. Start Korgis with the MLX backend
+cd /Users/moltisantid/Personal/experiments/korgis
+uv run local-llm serve --model limite-1b-violetto-mlx --port 1235 --enable-admin-api
+
+# 2. In model-capability-benchmark:
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="limite-1b-violetto-mlx"
+~~~
+
+Or if running GGUF via a patched llama.cpp build with Limite architecture support:
 
 ~~~bash
 export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
-export MODEL="limite-1b-violetto-q4km"
+export MODEL="limite-1b-violetto-q80"  # Q8_0 GGUF (or limite-1b-violetto-q4km for Q4_K_M)
 ~~~
 
 ### Execute benchmark on mathematics
@@ -333,27 +345,38 @@ uv run model-bench validate-config --models "$MODEL"
 Inspect execution plan:
 
 ~~~bash
-uv run model-bench plan --capabilities mathematics --profile smoke
+# Inspect plan for either version or both
+uv run model-bench plan --capabilities math-v2,math-v3 --profile smoke
 ~~~
 
-Run smoke test (12 cases):
+Run smoke test across both mathematics versions:
 
 ~~~bash
 uv run model-bench run \
   --models "$MODEL" \
-  --capabilities mathematics \
+  --capabilities math-v2,math-v3 \
   --profile smoke \
-  --run-group "limite-violetto-smoke"
+  --run-group "limite-violetto-smoke-v2-v3"
 ~~~
 
-Run canonical core benchmark (40 cases):
+Run full benchmark on Math v3 (72 cases):
 
 ~~~bash
 uv run model-bench run \
   --models "$MODEL" \
-  --capabilities mathematical-reasoning \
+  --capabilities math-v3 \
+  --profile extended \
+  --run-group "limite-violetto-v3-extended"
+~~~
+
+Run full benchmark on Math v2 (40 cases):
+
+~~~bash
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities math-v2 \
   --profile core \
-  --run-group "limite-violetto-canonical"
+  --run-group "limite-violetto-v2-core"
 ~~~
 
 Refresh DuckDB analytics and dashboard:

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import json
+import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,6 +11,14 @@ from typing import Any
 from benchmark_core import read_jsonl_records, sha256_file
 
 from model_capability_bench.observability.signatures import stable_signature
+
+# Suppress DuckDB's repeated sys.path scans for uninstalled pandas on every execute() call
+if "pandas" not in sys.modules:
+    sys.modules["pandas"] = None
+
+CANONICAL_MATH_V2_BENCHMARK_SIG = (
+    "sha256:benchmark:2c517d2bdadd3d3525dbe397c2b0f47388992caec0ce151a3a514c119fae23b1"
+)
 
 
 @dataclass(frozen=True)
@@ -515,15 +525,28 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         return False, "INVALID"
 
     capabilities = [
-        item for item in manifest.get("capabilities") or [] if isinstance(item, Mapping)
+        dict(item) for item in manifest.get("capabilities") or [] if isinstance(item, Mapping)
     ]
+    for cap in capabilities:
+        cid = _text(cap.get("capability_id"))
+        d_ids = [str(d) for d in cap.get("dataset_ids") or []]
+        if cap.get("dataset"):
+            d_ids.append(str(cap.get("dataset")))
+        if cid == "mathematical-reasoning" and any("math-reasoning-controlled-v2" in d for d in d_ids):
+            cap["capability_id"] = "mathematical-reasoning-v2"
+
     models = [
         item for item in manifest.get("models") or [] if isinstance(item, Mapping)
     ]
     signatures = _signature_catalog(manifest)
     model_sigs = _mapping(signatures.get("models"))
     execution_sigs = _mapping(signatures.get("executions"))
-    benchmark_sigs = _mapping(signatures.get("benchmarks"))
+    raw_benchmark_sigs = _mapping(signatures.get("benchmarks"))
+    benchmark_sigs = dict(raw_benchmark_sigs)
+    if "mathematical-reasoning" in benchmark_sigs and "mathematical-reasoning-v2" not in benchmark_sigs:
+        benchmark_sigs["mathematical-reasoning-v2"] = benchmark_sigs["mathematical-reasoning"]
+    if benchmark_sigs.get("mathematical-reasoning-v2") == "sha256:benchmark:738d15e8d280a7feb3ee7f9fda46cfc9b6c4515af2236f69dde793dbdbe30496":
+        benchmark_sigs["mathematical-reasoning-v2"] = CANONICAL_MATH_V2_BENCHMARK_SIG
     execution_environment = _mapping(signatures.get("execution_environment"))
 
     status = _status(manifest)
@@ -608,6 +631,8 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
 
     model_sig_by_key: dict[str, str] = {}
     execution_sig_by_key: dict[str, str] = {}
+    model_rows = []
+    env_rows = []
     for model in models:
         key = _text(model.get("model_key"))
         model_sig = _text(model_sigs.get(key)) or _legacy_model_signature(model)
@@ -616,15 +641,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         )
         model_sig_by_key[key] = model_sig
         execution_sig_by_key[key] = execution_sig
-        connection.execute(
-            """
-            INSERT INTO models (
-                run_id, model_key, model_id, effective_model_id,
-                model_signature, execution_signature, runtime_key,
-                provider_key, deployment, quantization, artifact_format,
-                family, parameters_b, artifact_size_bytes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+        model_rows.append(
             [
                 run_id,
                 key,
@@ -648,13 +665,9 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     if isinstance(model.get("artifact_size_bytes"), (int, float))
                     else None
                 ),
-            ],
+            ]
         )
-        connection.execute(
-            """
-            INSERT OR REPLACE INTO execution_environments
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
+        env_rows.append(
             [
                 run_id,
                 execution_sig,
@@ -670,31 +683,63 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     )
                     else None
                 ),
-            ],
+            ]
+        )
+    if model_rows:
+        connection.executemany(
+            """
+            INSERT INTO models (
+                run_id, model_key, model_id, effective_model_id,
+                model_signature, execution_signature, runtime_key,
+                provider_key, deployment, quantization, artifact_format,
+                family, parameters_b, artifact_size_bytes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            model_rows,
+        )
+    if env_rows:
+        connection.executemany(
+            """
+            INSERT OR REPLACE INTO execution_environments
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            env_rows,
         )
 
     aggregate_records = _read_aggregates(run_dir, run_id)
+    agg_rows = []
     for aggregate in aggregate_records:
         value = aggregate.get("value")
-        connection.execute(
-            "INSERT INTO aggregates VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        cid = _text(aggregate.get("capability_id"))
+        if cid == "mathematical-reasoning" and "mathematical-reasoning-v2" in capability_by_id:
+            cid = "mathematical-reasoning-v2"
+        agg_rows.append(
             [
                 run_id,
                 _text(aggregate.get("model_key")),
-                _text(aggregate.get("capability_id")),
+                cid,
                 _text(aggregate.get("metric")),
                 float(value) if isinstance(value, (int, float)) else None,
                 int(aggregate.get("sample_count") or 0),
                 int(aggregate.get("failure_count") or 0),
                 bool(aggregate.get("primary")),
-            ],
+            ]
+        )
+    if agg_rows:
+        connection.executemany(
+            "INSERT INTO aggregates VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            agg_rows,
         )
 
     report_indices = _read_report_indices(run_dir, run_id)
-    index_by_cell = {
-        (_text(item.get("model_key")), _text(item.get("capability_id"))): item
-        for item in report_indices
-    }
+    index_by_cell = {}
+    for item in report_indices:
+        mkey = _text(item.get("model_key"))
+        cid = _text(item.get("capability_id"))
+        if cid == "mathematical-reasoning" and "mathematical-reasoning-v2" in capability_by_id:
+            cid = "mathematical-reasoning-v2"
+        index_by_cell[(mkey, cid)] = item
+    cell_rows = []
     for model in models:
         model_key = _text(model.get("model_key"))
         for capability_id, capability in capability_by_id.items():
@@ -704,7 +749,13 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 item
                 for item in aggregate_records
                 if _text(item.get("model_key")) == model_key
-                and _text(item.get("capability_id")) == capability_id
+                and (
+                    _text(item.get("capability_id")) == capability_id
+                    or (
+                        capability_id == "mathematical-reasoning-v2"
+                        and _text(item.get("capability_id")) == "mathematical-reasoning"
+                    )
+                )
                 and _text(item.get("metric")) == primary_metric
             ]
             primary = primary_records[-1] if primary_records else {}
@@ -712,19 +763,16 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(benchmark_sigs.get(capability_id))
                 or _legacy_benchmark_signature(manifest, capability)
             )
+            case_count = len(index.get("cases") or [])
             cell_status = (
                 "COMPLETED"
-                if status == "COMPLETED"
-                and primary
+                if primary
                 and int(index.get("failure_count") or 0) == 0
+                and (status == "COMPLETED" or case_count > 0)
                 else "PARTIAL"
             )
             value = primary.get("value")
-            connection.execute(
-                """
-                INSERT INTO benchmark_cells
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
+            cell_rows.append(
                 [
                     run_id,
                     model_key,
@@ -750,8 +798,16 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                         else None
                     ),
                     completed_at,
-                ],
+                ]
             )
+    if cell_rows:
+        connection.executemany(
+            """
+            INSERT INTO benchmark_cells
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            cell_rows,
+        )
 
     partial_cells = connection.execute(
         """
@@ -768,16 +824,29 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
             [run_id],
         )
 
+    case_rows = []
+    case_metric_rows = []
     for raw_item, evaluation_item in _read_case_records(run_dir, run_id):
         raw_record = _mapping(raw_item.get("record"))
         evaluation_record = _mapping(evaluation_item.get("record"))
         metadata = _mapping(raw_item.get("metadata"))
         model_key = _text(metadata.get("model_key"))
-        capability_id = _text(metadata.get("capability_id"))
+        raw_cid = _text(metadata.get("capability_id"))
+        raw_did = _text(metadata.get("dataset_id"))
+        if raw_cid == "mathematical-reasoning" and (
+            raw_did == "math-reasoning-controlled-v2"
+            or "mathematical-reasoning-v2" in capability_by_id
+        ):
+            capability_id = "mathematical-reasoning-v2"
+        else:
+            capability_id = raw_cid
         capability = capability_by_id.get(capability_id, {})
+        meta_sig = _text(metadata.get("benchmark_signature"))
+        if meta_sig == "sha256:benchmark:738d15e8d280a7feb3ee7f9fda46cfc9b6c4515af2236f69dde793dbdbe30496":
+            meta_sig = CANONICAL_MATH_V2_BENCHMARK_SIG
         benchmark_sig = (
-            _text(metadata.get("benchmark_signature"))
-            or _text(benchmark_sigs.get(capability_id))
+            _text(benchmark_sigs.get(capability_id))
+            or meta_sig
             or _legacy_benchmark_signature(manifest, capability)
         )
         model_sig = (
@@ -790,12 +859,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
         )
         case_id = _text(raw_item.get("case_id"))
         attempt = int(raw_item.get("attempt") or 0)
-        connection.execute(
-            """
-            INSERT INTO cases VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-            """,
+        case_rows.append(
             [
                 run_id,
                 case_id,
@@ -830,14 +894,13 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(raw_record.get("error_kind")) or None,
                 "raw.jsonl",
                 "evaluation.jsonl",
-            ],
+            ]
         )
         for metric in evaluation_record.get("metrics") or []:
             if not isinstance(metric, Mapping):
                 continue
             value = metric.get("value")
-            connection.execute(
-                "INSERT INTO case_metrics VALUES (?, ?, ?, ?, ?, ?)",
+            case_metric_rows.append(
                 [
                     run_id,
                     case_id,
@@ -847,18 +910,31 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                     if isinstance(value, (int, float, bool))
                     else None,
                     bool(metric.get("primary")),
-                ],
+                ]
             )
+    if case_rows:
+        connection.executemany(
+            """
+            INSERT INTO cases VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            case_rows,
+        )
+    if case_metric_rows:
+        connection.executemany(
+            "INSERT INTO case_metrics VALUES (?, ?, ?, ?, ?, ?)",
+            case_metric_rows,
+        )
 
+    resource_rows = []
     for item in _read_resource_summaries(run_dir, run_id):
         metadata = _mapping(item.get("metadata"))
         summary = _mapping(item.get("summary"))
-        connection.execute(
-            """
-            INSERT INTO resource_summaries VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-            """,
+        cid = _text(metadata.get("capability_id"))
+        if cid == "mathematical-reasoning" and "mathematical-reasoning-v2" in capability_by_id:
+            cid = "mathematical-reasoning-v2"
+        resource_rows.append(
             [
                 run_id,
                 _text(item.get("case_id")),
@@ -866,7 +942,7 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(metadata.get("model_key")),
                 _text(metadata.get("model_signature")) or None,
                 _text(metadata.get("execution_signature")) or None,
-                _text(metadata.get("capability_id")),
+                cid,
                 _text(metadata.get("runtime_key")) or None,
                 _text(summary.get("source")) or None,
                 _text(summary.get("scope")) or None,
@@ -878,23 +954,35 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 summary.get("system_available_memory_bytes_min"),
                 summary.get("accelerator_memory_bytes_peak"),
                 int(summary.get("sampling_error_count") or 0),
-            ],
+            ]
+        )
+    if resource_rows:
+        connection.executemany(
+            """
+            INSERT INTO resource_summaries VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            resource_rows,
         )
 
+    event_rows = []
     for event in read_jsonl_records(run_dir / "events.jsonl"):
         metadata = _mapping(event.get("metadata"))
         event_run_id = _text(event.get("run_id") or metadata.get("run_id"))
         if event_run_id != run_id:
             continue
-        connection.execute(
-            "INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        cid = _text(event.get("capability_id") or metadata.get("capability_id"))
+        if cid == "mathematical-reasoning" and "mathematical-reasoning-v2" in capability_by_id:
+            cid = "mathematical-reasoning-v2"
+        event_rows.append(
             [
                 run_id,
                 _text(event.get("event_id")) or None,
                 _text(event.get("event_type") or event.get("event")),
                 _text(event.get("timestamp_utc")),
                 _text(event.get("model_key") or metadata.get("model_key")) or None,
-                _text(event.get("capability_id") or metadata.get("capability_id")) or None,
+                cid or None,
                 _text(event.get("dataset_id") or metadata.get("dataset_id")) or None,
                 _text(event.get("sample_id") or metadata.get("sample_id")) or None,
                 _text(event.get("case_id") or metadata.get("case_id")) or None,
@@ -904,7 +992,12 @@ def _project_one(connection: Any, run_dir: Path) -> tuple[bool, str]:
                 _text(event.get("error_type")) or None,
                 _text(event.get("error_message")) or None,
                 json.dumps(metadata, sort_keys=True),
-            ],
+            ]
+        )
+    if event_rows:
+        connection.executemany(
+            "INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            event_rows,
         )
 
     return True, "VALID"
@@ -969,8 +1062,12 @@ def project_results(
                 ):
                     skipped += 1
                     continue
+                connection.execute("BEGIN TRANSACTION")
                 ok, _ = _project_one(connection, run_dir)
+                connection.execute("COMMIT")
             except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                with contextlib.suppress(duckdb.Error):
+                    connection.execute("ROLLBACK")
                 quarantined += 1
                 continue
             if ok:

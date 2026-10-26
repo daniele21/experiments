@@ -38,7 +38,7 @@ def test_real_suite_composes_five_capabilities_and_four_task_families() -> None:
 
     assert bundle.suite.suite_id == "capability-core"
     assert bundle.suite.version == "3"
-    assert len(bundle.resolved_capabilities) == 5
+    assert len(bundle.resolved_capabilities) == 6
     assert {
         capability.spec.capability_id
         for capability in bundle.resolved_capabilities
@@ -48,6 +48,7 @@ def test_real_suite_composes_five_capabilities_and_four_task_families() -> None:
         "structured-output",
         "qa-abstention",
         "mathematical-reasoning",
+        "mathematical-reasoning-v2",
     }
     assert {
         capability.spec.task_id
@@ -67,7 +68,7 @@ def test_suite_plans_multiple_models_and_capabilities_without_runner_branches() 
 
     arms = bundle.plan_matrix(model_keys=models)
 
-    assert len(arms) == 12
+    assert len(arms) == 14
     assert {arm.model_key for arm in arms} == set(models)
     assert {
         (arm.capability_id, arm.dataset_id)
@@ -79,6 +80,7 @@ def test_suite_plans_multiple_models_and_capabilities_without_runner_branches() 
         ("structured-output", "structured-output-controlled-v2"),
         ("qa-abstention", "qa-abstention-controlled-v2"),
         ("mathematical-reasoning", "math-reasoning-controlled-v3"),
+        ("mathematical-reasoning-v2", "math-reasoning-controlled-v2"),
     }
 
 

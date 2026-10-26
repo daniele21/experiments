@@ -429,3 +429,39 @@ def test_unified_runner_enriches_missing_api_cost_from_snapshot(
         item["record"]["metadata"]["pricing"]["as_of"] == "2026-09-20"
         for item in raw
     )
+
+
+def test_unified_runner_circuit_breaker_aborts_on_consecutive_invalid(
+    tmp_path: Path,
+) -> None:
+    class _FailingProvider(_FakeProvider):
+        def generate(self, request: InferenceRequest) -> InferenceResult:
+            return InferenceResult(
+                provider_id="fake",
+                model_id=self.model_id,
+                raw_output={"answer": None},
+                normalized_output=None,
+                latency_ms=1.0,
+                valid=False,
+                error=InferenceError(
+                    kind="invalid_response",
+                    message="invalid fixture response",
+                ),
+            )
+
+    class _FailingRuntime(_FakeRuntime):
+        def prepare(self, model: ResolvedModel) -> _FailingProvider:
+            return _FailingProvider(model.effective_model_id)
+
+    config = RunnerConfig(
+        run_group="circuit-breaker-run",
+        profile="smoke",
+        model_keys=("qwen3.5-2b-q4km",),
+        capability_ids=("mathematical-reasoning",),
+        max_consecutive_failures=3,
+    )
+    summary = _runner(tmp_path, runtime=_FailingRuntime()).run(config)
+    assert summary.completed_cases == 3
+    events = read_jsonl_records(tmp_path / "evidence" / "events.jsonl")
+    aborted_event = next(e for e in events if e["event_type"] == "capability.aborted")
+    assert aborted_event["metadata"]["consecutive_failures"] == 3

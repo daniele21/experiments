@@ -142,6 +142,9 @@ class TransformersLocalProvider(InferenceProvider):
 
     def generate(self, request: InferenceRequest) -> InferenceResult:
         started = time.perf_counter()
+        raw_text: str | None = None
+        prompt_tokens: int | None = None
+        completion_tokens: int | None = None
         try:
             model, tokenizer = self._ensure_loaded()
             import torch
@@ -164,16 +167,16 @@ class TransformersLocalProvider(InferenceProvider):
             prompt_tokens = inputs.input_ids.shape[1]
 
             # 2. Determine sampling parameters
-            model_default_max = self.resolved.model.metadata.get(
-                "default_max_output_tokens", 512
+            model_default_max = int(
+                self.resolved.model.metadata.get("default_max_output_tokens", 2048)
             )
             if (
                 request.generation.max_output_tokens
                 and request.generation.max_output_tokens > 256
             ):
-                max_new_tokens = request.generation.max_output_tokens
+                max_new_tokens = max(request.generation.max_output_tokens, model_default_max)
             else:
-                max_new_tokens = int(model_default_max)
+                max_new_tokens = model_default_max
 
             model_default_temp = self.resolved.model.metadata.get("default_temperature", 0.6)
             model_default_top_p = self.resolved.model.metadata.get("default_top_p", 0.95)
@@ -245,13 +248,20 @@ class TransformersLocalProvider(InferenceProvider):
             )
         except Exception as exc:  # noqa: BLE001 - provider boundary normalizes evidence
             latency_ms = (time.perf_counter() - started) * 1000
+            usage = None
+            if prompt_tokens is not None and completion_tokens is not None:
+                usage = TokenUsage(
+                    input_tokens=prompt_tokens,
+                    output_tokens=completion_tokens,
+                )
             return InferenceResult(
                 provider_id=self.provider_id,
                 model_id=self.model_id,
-                raw_output=None,
+                raw_output=raw_text,
                 latency_ms=latency_ms,
                 normalized_output=None,
                 valid=False,
+                usage=usage,
                 error=InferenceError(
                     kind="provider",
                     message=f"{exc.__class__.__name__}: {exc}",

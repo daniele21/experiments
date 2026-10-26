@@ -28,6 +28,7 @@ class RunnerConfig:
     seed: int = 42
     resume: bool = True
     retry_failures: bool = False
+    max_consecutive_failures: int | None = None
     run_id: str | None = None
     configuration_id: str = "default"
     inference_config: Mapping[str, object] = field(default_factory=dict)

@@ -126,10 +126,14 @@ interface QualityRankItem {
   score: number;
 }
 
-function overallQualityRanking(models: DecisionModelSummary[]): QualityRankItem[] {
+function overallQualityRanking(
+  models: DecisionModelSummary[],
+  includePartial = false,
+): QualityRankItem[] {
   const scored = models.filter((model) => model.overall_quality_score != null);
   const complete = scored.filter((model) => model.quality_coverage_complete);
-  return [...(complete.length ? complete : scored)]
+  const pool = includePartial || complete.length === 0 ? scored : complete;
+  return [...pool]
     .sort((a, b) => modelQuality(b) - modelQuality(a))
     .map((model) => ({ model, score: modelQuality(model) }));
 }
@@ -140,16 +144,18 @@ function datasetQualityRanking(
   datasetId: string,
 ): QualityRankItem[] {
   const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
+  const modelByKey = new Map(models.map((model) => [model.model_key, model]));
   const grouped = new Map<string, { model: DecisionModelSummary; weighted: number; weight: number }>();
   for (const row of rows) {
     if (row.dataset_id !== datasetId || row.normalized_quality_score == null) continue;
-    const model = modelBySignature.get(row.model_signature);
+    const model = modelBySignature.get(row.model_signature) ?? modelByKey.get(row.model_key);
     if (!model) continue;
     const weight = Math.max(1, row.observed_case_count || row.sample_count || 1);
-    const current = grouped.get(row.model_signature) ?? { model, weighted: 0, weight: 0 };
+    const key = model.model_key;
+    const current = grouped.get(key) ?? { model, weighted: 0, weight: 0 };
     current.weighted += Number(row.normalized_quality_score) * weight;
     current.weight += weight;
-    grouped.set(row.model_signature, current);
+    grouped.set(key, current);
   }
   return [...grouped.values()]
     .map((item) => ({ model: item.model, score: item.weighted / item.weight }))
@@ -159,6 +165,8 @@ function datasetQualityRanking(
 
 function scorecardCapabilityLabel(value: string | null | undefined): string {
   if (!value) return 'Benchmark dataset';
+  if (value === 'mathematical-reasoning') return 'Mathematical Reasoning · v3';
+  if (value === 'mathematical-reasoning-v2') return 'Mathematical Reasoning · v2';
   return value
     .replaceAll('_', ' ')
     .replaceAll('-', ' ')
@@ -425,6 +433,11 @@ function QualityBars({ items }: { items: QualityRankItem[] }) {
             <strong>{model.model_key}</strong>
             <span className="executive-rank-meta">
               <span>{model.deployment === 'local' ? 'Local' : 'API'}{model.family ? ` · ${model.family}` : ''}</span>
+              {!model.quality_coverage_complete && model.quality_total_capabilities ? (
+                <span title={`${model.quality_coverage_capabilities} of ${model.quality_total_capabilities} capabilities completed`}>
+                  · {model.quality_coverage_capabilities}/{model.quality_total_capabilities} caps
+                </span>
+              ) : null}
               <RuntimeBadge model={model} compact />
             </span>
           </div>
@@ -669,6 +682,7 @@ function CapabilityLeadership({
   models: DecisionModelSummary[];
 }) {
   const modelBySignature = new Map(models.map((model) => [model.model_signature, model]));
+  const modelByKey = new Map(models.map((model) => [model.model_key, model]));
   const byCapability = new Map<string, DecisionCapabilitySummary[]>();
   for (const row of capabilities) {
     const values = byCapability.get(row.capability_id) ?? [];
@@ -705,7 +719,7 @@ function CapabilityLeadership({
               <strong>{winner?.model_key}</strong>
               {winner ? (
                 <span className="executive-model-meta">
-                  <RuntimeBadge model={modelBySignature.get(winner.model_signature) ?? {
+                  <RuntimeBadge model={modelBySignature.get(winner.model_signature) ?? modelByKey.get(winner.model_key) ?? {
                     deployment: 'api',
                     runtime_key: '',
                     provider_key: '',
@@ -748,20 +762,33 @@ interface DatasetMatrixColumn {
 }
 
 function datasetLabel(value: string): string {
+  if (value === 'math-reasoning-controlled-v3' || value === 'mathematical-reasoning') {
+    return 'Math Reasoning · v3';
+  }
+  if (value === 'math-reasoning-controlled-v2' || value === 'mathematical-reasoning-v2') {
+    return 'Math Reasoning · v2';
+  }
+  if (value === 'math-reasoning-controlled-v1' || value === 'mathematical-reasoning-v1') {
+    return 'Math Reasoning · v1';
+  }
+  const versionMatch = value.match(/-(?:controlled-)?v(\d+)$/i);
+  const versionSuffix = versionMatch ? ` · v${versionMatch[1]}` : '';
   const compact = value
-    .replace(/-controlled-v\d+$/i, '')
+    .replace(/-(?:controlled-)?v\d+$/i, '')
     .replace(/-controlled$/i, '');
   const tokens = compact.replaceAll('_', '-').split('-').filter(Boolean);
-  return tokens
-    .map((token) => {
-      const lower = token.toLowerCase();
-      if (lower === 'oos') return 'OOS';
-      if (lower === 'qa') return 'QA';
-      if (lower === 'clinc150') return 'CLINC150';
-      if (lower === 'banking77') return 'Banking77';
-      return token.charAt(0).toUpperCase() + token.slice(1);
-    })
-    .join(' ');
+  return (
+    tokens
+      .map((token) => {
+        const lower = token.toLowerCase();
+        if (lower === 'oos') return 'OOS';
+        if (lower === 'qa') return 'QA';
+        if (lower === 'clinc150') return 'CLINC150';
+        if (lower === 'banking77') return 'Banking77';
+        return token.charAt(0).toUpperCase() + token.slice(1);
+      })
+      .join(' ') + versionSuffix
+  );
 }
 
 function aggregateDatasetCells(
@@ -781,8 +808,8 @@ function aggregateDatasetCells(
     if (row.normalized_quality_score == null || !Number.isFinite(row.normalized_quality_score)) continue;
     const model = modelBySignature.get(row.model_signature) ?? modelByKey.get(row.model_key);
     const family = model?.family ?? 'Unclassified';
-    const key = mode === 'models' ? row.model_signature : family;
-    const label = mode === 'models' ? row.model_key : family;
+    const key = mode === 'models' ? (model?.model_key ?? row.model_key) : family;
+    const label = mode === 'models' ? (model?.model_key ?? row.model_key) : family;
     const weight = Math.max(1, row.observed_case_count || row.sample_count || 1);
     const groupKey = `${row.dataset_id}::${key}`;
     const current = grouped.get(groupKey) ?? {
@@ -803,7 +830,7 @@ function aggregateDatasetCells(
     label: item.label,
     score: item.weighted / item.weight,
     observedCases: item.weight,
-    model: mode === 'models' ? (modelBySignature.get(item.key) ?? null) : null,
+    model: mode === 'models' ? (modelByKey.get(item.key) ?? modelBySignature.get(item.key) ?? null) : null,
   }));
   const datasets = [...new Set(cells.map((cell) => cell.dataset))].sort();
   const columns = [...new Map(
@@ -814,9 +841,9 @@ function aggregateDatasetCells(
         label: cell.label,
         family:
           mode === 'models'
-            ? (modelBySignature.get(cell.key)?.family ?? null)
+            ? (modelByKey.get(cell.key)?.family ?? modelBySignature.get(cell.key)?.family ?? null)
             : cell.label,
-        model: mode === 'models' ? (modelBySignature.get(cell.key) ?? null) : null,
+        model: mode === 'models' ? (modelByKey.get(cell.key) ?? modelBySignature.get(cell.key) ?? null) : null,
       },
     ]),
   ).values()].sort((a, b) => a.label.localeCompare(b.label));
@@ -1054,12 +1081,12 @@ function DatasetFitExecutivePage({
         : new Set(
             models
               .filter((model) => model.family === family)
-              .map((model) => model.model_signature),
+              .flatMap((model) => [model.model_signature, model.model_key]),
           );
     return datasetRows.filter(
       (row) =>
         (capability === 'all' || row.capability_id === capability) &&
-        (allowedModels == null || allowedModels.has(row.model_signature)),
+        (allowedModels == null || allowedModels.has(row.model_signature) || allowedModels.has(row.model_key)),
     );
   }, [datasetRows, capability, family, models]);
 
@@ -1244,6 +1271,7 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
   const capabilities = decision?.capability_summaries ?? [];
   const datasets = decision?.dataset_summaries ?? [];
   const [qualityDataset, setQualityDataset] = useState('overall');
+  const [includePartial, setIncludePartial] = useState(false);
   const [sizeMetric, setSizeMetric] = useState<'parameters' | 'artifact'>('parameters');
 
   const qualityDatasetIds = useMemo(
@@ -1253,9 +1281,9 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
   const qualityRanking = useMemo(
     () =>
       qualityDataset === 'overall'
-        ? overallQualityRanking(models)
+        ? overallQualityRanking(models, includePartial)
         : datasetQualityRanking(datasets, models, qualityDataset),
-    [qualityDataset, datasets, models],
+    [qualityDataset, datasets, models, includePartial],
   );
   const qualityLeader = qualityRanking[0]?.model;
   const qualityLeaderScore = qualityRanking[0]?.score ?? null;
@@ -1348,9 +1376,36 @@ export function ExecutivePage({ view }: { view: ExecutiveView }) {
           <div className="executive-visual-heading executive-quality-heading">
             <div>
               <span>{qualityDataset === 'overall' ? 'Overall quality ranking' : 'Dataset quality ranking'}</span>
-              <h3>{qualityDataset === 'overall' ? 'Comparable coverage · higher is better' : `${datasetLabel(qualityDataset)} · higher is better`}</h3>
+              <h3>
+                {qualityDataset === 'overall'
+                  ? includePartial
+                    ? 'All scored models · higher is better'
+                    : 'Comparable coverage · higher is better'
+                  : `${datasetLabel(qualityDataset)} · higher is better`}
+              </h3>
             </div>
             <div className="executive-quality-actions">
+              {qualityDataset === 'overall' ? (
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    color: 'var(--mcb-color-text-muted, #64748b)',
+                    userSelect: 'none',
+                  }}
+                  title="Toggle between complete coverage cohort and all scored models"
+                >
+                  <input
+                    type="checkbox"
+                    checked={includePartial}
+                    onChange={(e) => setIncludePartial(e.target.checked)}
+                  />
+                  <span>All models ({models.filter((m) => m.overall_quality_score != null).length})</span>
+                </label>
+              ) : null}
               <label>
                 <span>Dataset</span>
                 <select value={qualityDataset} onChange={(event) => setQualityDataset(event.target.value)}>
