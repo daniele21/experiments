@@ -321,6 +321,29 @@ models:
       - nemotron
       - medium
 
+  nemotron-3.5-bolt-e4b-ud-q4kxl:
+    model_id: nvidia/nemotron-3.5-bolt-e4b
+    runtime_model_id: nemotron-3.5-bolt-e4b-ud-q4kxl
+    runtime: korgis-local
+    family: nemotron-bolt
+    parameters_b: 4
+    artifact:
+      format: gguf
+      quantization: UD-Q4_K_XL
+      size_bytes: 5060482240
+      metadata:
+        sha256: 84ff34f5834b929043f5ae74799e8d562d4056998f6a5923ceb44831e8ad84d6
+        resolved_by: korgis-model-registry
+    tags:
+      - local
+      - open-weight
+      - nemotron
+      - bolt
+      - reasoning
+      - small
+      - 4b
+      - ud-q4-k-xl
+
   qwen3.5-9b-q4km:
     model_id: qwen/qwen3.5-9b
     runtime_model_id: qwen3.5-9b-q4km
