@@ -172,6 +172,32 @@ models:
         resolved_by: korgis-model-registry
     tags: [local, open-weight, moe]
 
+  lfm2.5-24b-a2b-ud-q4-k-xl:
+    model_id: unsloth/LFM2.5-24B-A2B-GGUF
+    runtime_model_id: lfm2.5-24b-a2b-ud-q4-k-xl
+    runtime: korgis-local
+    family: lfm2.5
+    parameters_b: 24
+    artifact:
+      format: gguf
+      quantization: UD-Q4_K_XL
+      metadata:
+        resolved_by: korgis-model-registry
+    tags: [local, open-weight, moe]
+
+  lfm3-1.7b-q8:
+    model_id: LiquidAI/LFM3-1.7B-GGUF
+    runtime_model_id: lfm3-1.7b-q8
+    runtime: korgis-local
+    family: lfm3
+    parameters_b: 1.7
+    artifact:
+      format: gguf
+      quantization: Q8_0
+      metadata:
+        resolved_by: korgis-model-registry
+    tags: [local, open-weight, small, 1.7b]
+
   qwen3.5-0.8b-q4km:
     model_id: unsloth/qwen3.5-0.8b
     runtime_model_id: qwen3.5-0.8b-q4km
@@ -386,6 +412,30 @@ models:
         resolved_by: korgis-model-registry
         source_revision: d313463f1ff7dc29db20193fddc4ad8386d16261
         required_runtime: llama.cpp>=b10828
+    tags:
+      - local
+      - open-weight
+      - spark
+      - reasoning
+      - coding
+      - agentic
+      - q4
+      - 4b
+
+  spark-x2.6-4b-q4km:
+    model_id: XHToken/Spark-X2.6-4B
+    runtime_model_id: spark-x2.6-4b-q4km
+    runtime: korgis-local
+    family: spark-x2.6
+    parameters_b: 4.4
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      size_bytes: 3543441312
+      metadata:
+        sha256: 91cb2811aebb47ac916aa619d27d4cdd7f4143106b7917accb8ead4cd7f5cbd9
+        resolved_by: korgis-model-registry
+        required_runtime: llama.cpp>=b11669
     tags:
       - local
       - open-weight

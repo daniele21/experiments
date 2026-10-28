@@ -95,6 +95,8 @@ qwen3.8-27b-q40
 nemotron-nano-4b
 spark-x2.5-4b-q4km
 ternary-bonsai2-27b-ptq1
+lfm2.5-24b-a2b-ud-q3-k-xl
+lfm2.5-24b-a2b-ud-q4-k-xl
 limite-1b-violetto
 gpt-5.6-luna
 minicpm-v-4.6-1b
@@ -238,6 +240,138 @@ experiments.
 
 For fair local efficiency comparisons, keep the same Mac, Korgis version, MCB commit and
 system conditions across models.
+
+## 4b. Liquid Foundation Models (LFM2.5 24B A2B)
+
+[LFM2.5-24B-A2B](https://huggingface.co/unsloth/LFM2.5-24B-A2B-GGUF) is an open-weight 24B Mixture-of-Experts model.
+
+Both `UD-Q3_K_XL` (`lfm2.5-24b-a2b-ud-q3-k-xl`) and `UD-Q4_K_XL` (`lfm2.5-24b-a2b-ud-q4-k-xl`) quantizations are supported via Korgis (`llama_server` backend) resolving automatically from `~/.lmstudio/models/unsloth/LFM2.5-24B-A2B-GGUF/`:
+
+~~~bash
+# 1. In korgis terminal, start the server:
+cd /Users/moltisantid/Personal/experiments/korgis
+uv run local-llm serve --model lfm2.5-24b-a2b-ud-q4-k-xl --port 1235 --enable-admin-api
+~~~
+
+~~~bash
+# 2. In model-capability-benchmark terminal:
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="lfm2.5-24b-a2b-ud-q4-k-xl"
+
+# Validate configuration
+uv run model-bench validate-config --models "$MODEL"
+
+# Plan benchmark across all capabilities
+uv run model-bench plan --capabilities all --profile smoke
+
+# Smoke test all capabilities (saved to scratch)
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile smoke \
+  --run-group "lfm25-q4-smoke" \
+  --output-dir results/scratch/lfm25-q4-smoke
+
+# Canonical core benchmark across all capabilities
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile core \
+  --run-group "lfm25-q4-core"
+
+# Refresh analytics and dashboard
+uv run model-bench project
+uv run model-bench dashboard-data
+uv run model-bench dashboard-build
+~~~
+
+## 4c. Liquid Foundation Models (LFM3 1.7B)
+
+[LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF) is Liquid AI's 1.7B model with native 256k context length.
+
+`Q8_0` (`lfm3-1.7b-q8`) quantization is supported via Korgis (`llama_server` backend) resolving automatically from `~/.lmstudio/models/LiquidAI/LFM3-1.7B-GGUF/LFM3-1.7B-Q8_0.gguf`:
+
+~~~bash
+# 1. In korgis terminal, start the server:
+cd /Users/moltisantid/Personal/experiments/korgis
+uv run local-llm serve --model lfm3-1.7b-q8 --port 1235 --enable-admin-api
+~~~
+
+~~~bash
+# 2. In model-capability-benchmark terminal:
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="lfm3-1.7b-q8"
+
+# Validate configuration
+uv run model-bench validate-config --models "$MODEL"
+
+# Plan benchmark across all capabilities
+uv run model-bench plan --models "$MODEL" --capabilities all --profile smoke
+
+# Smoke test all capabilities (saved to scratch)
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile smoke \
+  --run-group "lfm3-q8-smoke" \
+  --output-dir results/scratch/lfm3-q8-smoke
+
+# Canonical core benchmark across all capabilities
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile core \
+  --run-group "lfm3-q8-core"
+
+# Refresh analytics and dashboard
+uv run model-bench project
+uv run model-bench dashboard-data
+uv run model-bench dashboard-build
+~~~
+
+## 4d. Spark Models (Spark-X2.6 4B)
+
+[Spark-X2.6-4B](https://huggingface.co/XHToken/Spark-X2.6-4B-GGUF) is an agentic, reasoning and coding model with a 1M token context window.
+
+`Q4_K_M` (`spark-x2.6-4b-q4km`) is supported via Korgis (`llama_server` backend, requires modern `llama-server>=b11669`) resolving automatically from `~/.lmstudio/models/XHToken/Spark-X2.6-4B-GGUF/`:
+
+~~~bash
+# 1. In korgis terminal, start or activate the model:
+cd /Users/moltisantid/Personal/experiments/korgis
+uv run local-llm serve --model spark-x2.6-4b-q4km --port 1235 --enable-admin-api
+~~~
+
+~~~bash
+# 2. In model-capability-benchmark terminal:
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="spark-x2.6-4b-q4km"
+
+# Validate configuration
+uv run model-bench validate-config --models "$MODEL"
+
+# Plan benchmark across all capabilities
+uv run model-bench plan --models "$MODEL" --capabilities all --profile core
+
+# Smoke test (saved to scratch)
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile smoke \
+  --run-group "spark-x2.6-smoke" \
+  --output-dir results/scratch/spark-x2.6-smoke
+
+# Canonical core benchmark across all capabilities
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile core \
+  --run-group "spark-x2.6-core"
+
+# Refresh analytics and dashboard
+uv run model-bench project
+uv run model-bench dashboard-data
+uv run model-bench dashboard-build
+~~~
 
 ## 5. API models
 
