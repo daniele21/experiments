@@ -11,6 +11,7 @@ from benchmark_core import (
 from model_capability_bench.datasets.banking77 import Banking77Dataset
 from model_capability_bench.datasets.clinc150 import Clinc150OosDataset
 from model_capability_bench.datasets.controlled_yaml import ControlledYamlDataset
+from model_capability_bench.datasets.public_benchmarks import PublicParquetBenchmark
 from model_capability_bench.datasets.structured_output import (
     StructuredOutputControlledDataset,
 )
@@ -25,6 +26,7 @@ def build_dataset_plugins() -> DatasetPluginRegistry:
         StructuredOutputControlledDataset,
     )
     plugins.register("controlled-yaml", ControlledYamlDataset)
+    plugins.register("public-parquet", PublicParquetBenchmark)
     return plugins
 
 
