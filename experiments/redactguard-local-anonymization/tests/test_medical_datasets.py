@@ -40,6 +40,10 @@ def test_asq_import_preserves_gold_categories_and_uses_real_negatives(tmp_path: 
     cases = load_dataset(dest / "cases.jsonl")
     assert manifest["cases"] == 3
     assert manifest["gold_count"] == 3
+    first_version = load_dataset(dest / "cases.jsonl")[0].gold_version
+    assert all(case.gold_version == first_version for case in cases)
+    assert first_version.startswith("asq_phi_hipaa_13_v1-")
+    assert len(manifest["selection_sha256"]) == 64
     assert len([case for case in cases if not case.gold]) == 1
     assert {span.pii_type for case in cases for span in case.gold} == {
         "name", "medical_record_number", "date",
@@ -50,6 +54,9 @@ def test_asq_import_preserves_gold_categories_and_uses_real_negatives(tmp_path: 
         assert case.profile == "asq_phi" and case.gold_scope == "complete"
     neg = next(case for case in cases if not case.gold)
     assert "metformin" in neg.text and "diabetes" in neg.text
+    prepare_asq(source, dest, positives=1, negatives=1, strict_size=False)
+    reduced = load_dataset(dest / "cases.jsonl")
+    assert reduced[0].gold_version != first_version
 
 
 def test_asq_ambiguous_value_fail_closed():
