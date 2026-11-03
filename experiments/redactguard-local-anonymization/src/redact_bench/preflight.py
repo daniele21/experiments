@@ -144,7 +144,7 @@ def contract_failed_summary(preflight: dict, *, planned_cases: int) -> dict:
         "failure_analysis": [
             {
                 "case_id": "__preflight__",
-                "profile": "financial",
+                "profile": preflight.get("profile", "financial"),
                 "quality_available": False,
                 "inference_status": preflight.get("status"),
                 "error_type": preflight.get("error_type"),
