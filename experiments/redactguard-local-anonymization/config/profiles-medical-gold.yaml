@@ -51,6 +51,26 @@ profiles:
       description: Occupation or profession when annotated in the clinical case.
     med_other:
       description: Patient gender, family relationships, and other health-record-sensitive personal attributes according to MEDDOCAN guidelines.
+  spaccc_clinical_ner:
+    clinical_disease:
+      description: Identify every clinically annotated disease/disorder mention in Spanish clinical narratives, even without a patient name. Not an anonymization label.
+    clinical_symptom:
+      description: Identify every symptom, clinical sign, or finding in Spanish clinical narratives, including absent/negative findings where explicit.
+    clinical_procedure:
+      description: Identify every medical examination, diagnostic or therapeutic procedure described in the clinical text. This is a PROCEDURE label, not necessarily a medication.
+    clinical_chemical:
+      description: Identify chemical or pharmacological substance mentions under the SPACCC CHEMICAL taxonomy. Do NOT assume every chemical is a patient's medication.
+    clinical_protein:
+      description: Identify protein mentions under the SPACCC PROTEIN taxonomy.
+  e3c_clinical_ner:
+    e3c_clinical_entity:
+      description: Identify E3C/UMLS clinical disorders including pathologies and symptoms, even without identifiable patients. Do not infer a more granular diagnosis from the entity alone.
+    e3c_body_part:
+      description: Identify mentions of parts of the human body annotated by E3C BODYPART.
+    e3c_measurement:
+      description: Identify E3C numeric or textual RML results and measurements as written, without generating values.
+    e3c_actor:
+      description: Identify all E3C ACTOR mentions referring to a patient, clinical professional, another human or animal, including generic patient references. ACTOR is not an identity/PHI judgment.
   clinical_ner:
     clinical_drug:
       description: EVERY mention of a drug or medicinal product, including generic drug names in pharmaceutical leaflets. This is clinical NER, NOT a personal data test.
