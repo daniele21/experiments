@@ -32,18 +32,18 @@ def _spaccc_fixture(tmp_path: Path) -> tuple[Path, Path]:
         {"filename": "A", "ann_id": 1, "label": "DISEASE",
          "start_span": 13, "end_span": 21, "text": "diabetes"},
         {"filename": "A", "ann_id": 2, "label": "SYMPTOM",
-         "start_span": 24, "end_span": 29, "text": "fiebre"},
+         "start_span": 24, "end_span": 30, "text": "fiebre"},
         # Duplicate identical annotation should be deduplicated.
         {"filename": "A", "ann_id": 3, "label": "SYMPTOM",
-         "start_span": 24, "end_span": 29, "text": "fiebre"},
+         "start_span": 24, "end_span": 30, "text": "fiebre"},
         {"filename": "B", "ann_id": 4, "label": "PROCEDURE",
          "start_span": 15, "end_span": 22, "text": "biopsia"},
         {"filename": "B", "ann_id": 5, "label": "DISEASE",
-         "start_span": 38, "end_span": 41, "text": "VIH"},
+         "start_span": 36, "end_span": 39, "text": "VIH"},
         {"filename": "C", "ann_id": 6, "label": "CHEMICAL",
-         "start_span": 21, "end_span": 31, "text": "ibuprofeno"},
+         "start_span": 20, "end_span": 30, "text": "ibuprofeno"},
         {"filename": "D", "ann_id": 7, "label": "DISEASE",
-         "start_span": 4, "end_span": 17, "text": "enfermedades"},
+         "start_span": 4, "end_span": 16, "text": "enfermedades"},
     ]
     return _jsonl(tmp_path / "test-fixture.jsonl", labels), _jsonl(
         tmp_path / "train-fixture.jsonl", docs,
@@ -75,7 +75,7 @@ def test_spaccc_preserves_nested_cross_class_spans(tmp_path: Path):
     rows = [json.loads(line) for line in labels.read_text().splitlines()]
     # Same span with different source labels remains a valid multilabel gold.
     rows.append({"filename": "A", "ann_id": 12, "label": "DISEASE",
-                 "start_span": 24, "end_span": 29, "text": "fiebre"})
+                 "start_span": 24, "end_span": 30, "text": "fiebre"})
     _jsonl(labels, rows)
     report = prepare_spaccc(labels, documents, tmp_path / "out", limit=4)
     assert report["cases"] == 4
