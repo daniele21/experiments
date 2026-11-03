@@ -1,9 +1,10 @@
-// The UI may load canonical texts only from explicitly bundled, public,
-// synthetic benchmark files. Never resolve arbitrary paths from suite metadata.
+// Source lookup is a fixed allowlist: bundled synthetic data and the opt-in
+// local E3C cache. Never resolve arbitrary paths from suite metadata.
 const DATASET_TEXT_SOURCE = Object.freeze({
   "healthcare_synthetic_v0.1": "data/healthcare/cases.jsonl",
   "ambiguous_synthetic_v0.1": "data/ambiguous/cases.jsonl",
   "challenge_v0.1": "data/challenge/cases.jsonl",
+  "e3c_it_v2_injected_pii_v1": "data/cache/e3c-it-v2/synthetic_pii.jsonl",
 });
 
 export function bundledDatasetTextPath(datasetId) {
