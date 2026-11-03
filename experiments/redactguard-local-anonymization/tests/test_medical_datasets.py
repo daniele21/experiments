@@ -59,6 +59,39 @@ def test_asq_import_preserves_gold_categories_and_uses_real_negatives(tmp_path: 
     assert reduced[0].gold_version != first_version
 
 
+def test_default_asq_200_sample_is_balanced_and_reproducible(tmp_path: Path):
+    source = tmp_path / "asq-200.txt"
+    blocks = []
+    for index in range(160):
+        name = f"Patient{index:03d}"
+        blocks.append(
+            "===QUERY===\n"
+            + f"Case {index}: {name} attended a check-up.\n"
+            + "===PHI_TAGS===\n"
+            + json.dumps({"identifier_type": "NAME", "value": name}) + "\n"
+        )
+    for index in range(40):
+        blocks.append(
+            "===QUERY===\n"
+            + f"Case {index}: what is the recommended drug dosage?\n"
+            + "===PHI_TAGS===\n"
+        )
+    source.write_text("\n".join(blocks), encoding="utf-8")
+    output = tmp_path / "prepared"
+    manifest = prepare_asq(source, output, strict_size=False)
+    cases = load_dataset(output / "cases.jsonl")
+    assert len(cases) == 200
+    assert sum(bool(case.gold) for case in cases) == 160
+    assert sum(not case.gold for case in cases) == 40
+    assert manifest["gold_count"] == 160
+    assert manifest["selected_positives"] == 160
+    assert manifest["selected_negatives"] == 40
+    assert len({case.case_id for case in cases}) == 200
+    version = cases[0].gold_version
+    prepare_asq(source, output, strict_size=False)
+    assert version == load_dataset(output / "cases.jsonl")[0].gold_version
+
+
 def test_asq_ambiguous_value_fail_closed():
     with pytest.raises(ValueError, match="unique/complete"):
         _asq_entities("Anna saw Anna yesterday", [{"identifier_type": "NAME", "value": "Anna"}])
