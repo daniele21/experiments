@@ -179,8 +179,16 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     temporary.replace(path)
 
 
-def prepare_e3c(source: Path, output_dir: Path) -> dict:
+def prepare_e3c(
+    source: Path, output_dir: Path, *, verify_checkout: bool = True,
+) -> dict:
     """Create two separate provenance-pinned tracks; no upstream text is committed."""
+    if verify_checkout:
+        if not (source / ".git").exists():
+            raise ValueError("E3C source must be a verifiable Git checkout")
+        actual = _run_git("rev-parse", "HEAD", cwd=source)
+        if actual != SOURCE_SHA:
+            raise ValueError(f"Expected E3C {SOURCE_VERSION}@{SOURCE_SHA}; found {actual}")
     context, injected, provenance = _rows(source)
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_jsonl(output_dir / "clinical_context.jsonl", context)
@@ -188,6 +196,7 @@ def prepare_e3c(source: Path, output_dir: Path) -> dict:
     manifest = {
         "dataset": "E3C Italian Layer 1", "source_repository": SOURCE_REPOSITORY,
         "source_tag": SOURCE_VERSION, "source_sha": SOURCE_SHA,
+        "source_checkout_verified": verify_checkout,
         "source_license": "CC BY-NC", "official_train_documents": TRAIN_DOCUMENTS,
         "official_test_documents": TEST_DOCUMENTS, "split": "test",
         "clinical_context": {
