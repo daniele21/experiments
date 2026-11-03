@@ -122,8 +122,8 @@ def prepare_medical_command(
     download: bool = typer.Option(
         False, "--download", help="Fetch pinned ASQ-PHI ONLY (no other automatic downloads)."
     ),
-    positives: int = typer.Option(96, "--positives", min=0),
-    negatives: int = typer.Option(24, "--negatives", min=0),
+    positives: int = typer.Option(160, "--positives", min=0),
+    negatives: int = typer.Option(40, "--negatives", min=0),
     limit: int = typer.Option(40, "--limit", min=1),
 ) -> None:
     """Prepare locally scored medical benchmark subsets with strict gold offsets."""
