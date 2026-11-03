@@ -1,0 +1,62 @@
+# Benchmark-specific label contracts, intentionally separate from production profiles.
+# Scores from these adapted prompt profiles are NOT production RedactGuard scores.
+source:
+  repository: daniele21/redact-guard
+  ref: ab8855a3d644c479b00a4dc3e5d7b5f949f4f5b1
+  contract_version: redactguard-detection-v2
+  output_schema: minimal-pii-type-value-v1
+  benchmark_profile_version: medical-gold-v1
+profiles:
+  asq_phi:
+    name:
+      description: Person's full or abbreviated name in clinical search requests.
+    geographic_location:
+      description: Named location, clinic, hospital, healthcare facility or geographically identifying information in a patient query, matching ASQ-PHI HIPAA location labeling.
+    date:
+      description: Specific event/encounter/admission/birth date linked to a patient or their record; not generic years without identifying context.
+    medical_record_number:
+      description: Specific patient medical record number (MRN).
+    health_plan_beneficiary_number:
+      description: Patient's health insurance or plan beneficiary number.
+    phone_number:
+      description: Patient or provider phone number.
+    social_security_number:
+      description: Social security number identifying a person.
+    email_address:
+      description: Email identifying a person or their healthcare contact.
+    unique_identifier:
+      description: Unique identifier of a patient or health record.
+    account_number:
+      description: Account number linked to the patient's record.
+    fax_number:
+      description: Fax number in the clinical request.
+    certificate_license_number:
+      description: Professional certificate or licence number that can identify a person.
+    ip_address:
+      description: Identifying IP address in the clinical request.
+  meddocan_phi:
+    med_name:
+      description: Names of patients or healthcare staff, including abbreviated names.
+    med_date:
+      description: Exact patient-related dates.
+    med_age:
+      description: Explicitly annotated patient age, even under 90, under MEDDOCAN policy.
+    med_location:
+      description: Hospital, clinic, street, city, institution, country or specific location named in a clinical case.
+    med_contact:
+      description: Phone, fax, email, URL or network contact detail.
+    med_id:
+      description: Patient and provider IDs, healthcare episode identifiers, insurance, licence, device or other record identifiers.
+    med_profession:
+      description: Occupation or profession when annotated in the clinical case.
+    med_other:
+      description: Patient gender, family relationships, and other health-record-sensitive personal attributes according to MEDDOCAN guidelines.
+  clinical_ner:
+    clinical_drug:
+      description: EVERY mention of a drug or medicinal product, including generic drug names in pharmaceutical leaflets. This is clinical NER, NOT a personal data test.
+    clinical_disease:
+      description: EVERY mention of a disease or diagnosed medical condition, whether patient-linked or generic. Clinical NER only.
+    clinical_symptom:
+      description: EVERY mention of a symptom or clinical sign, including generic descriptions. Clinical NER only.
+    clinical_anatomical_part:
+      description: EVERY mention of a human anatomical part. Clinical NER only.
