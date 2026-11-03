@@ -11,6 +11,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import random
+import subprocess
 import xml.etree.ElementTree as ET
 
 from redact_bench.e3c import SOURCE_SHA as E3C_SOURCE_SHA, _rows as e3c_rows
@@ -242,8 +243,19 @@ def e3c_clinical_entities(xml_path: Path, text: str) -> list[dict]:
     ))
 
 
-def prepare_e3c_clinical(source_dir: Path, output_dir: Path) -> dict:
-    """Use E3C test split already verified by the E3C importer, no injections."""
+def prepare_e3c_clinical(
+    source_dir: Path, output_dir: Path, *, verify_checkout: bool = True,
+) -> dict:
+    """Use pinned E3C official test split and real XMI clinical gold."""
+    if verify_checkout:
+        if not (source_dir / ".git").is_dir():
+            raise ValueError("E3C clinical source must be a Git checkout")
+        actual = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=source_dir, text=True,
+            capture_output=True, check=True,
+        ).stdout.strip()
+        if actual != E3C_SOURCE_SHA:
+            raise ValueError(f"Expected pinned E3C commit {E3C_SOURCE_SHA}, got {actual}")
     # e3c_rows verifies all 86 Italian narratives, their paired XML files,
     # the official 36/50 split, and returns originals without synthetic PII.
     original, _, _ = e3c_rows(source_dir)
