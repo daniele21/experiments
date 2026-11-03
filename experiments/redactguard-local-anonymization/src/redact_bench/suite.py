@@ -48,6 +48,7 @@ class SuiteConfig:
     adaptive_subdivision: bool = True
     inference_cache_max_entries: int = 0
     quality_only: bool = False
+    cases_limit: int | None = None
 
 
 def _resolve_path(value: str, root: Path) -> Path:
@@ -101,6 +102,7 @@ def load_suite_config(path: str | Path, *, root: Path) -> SuiteConfig:
         adaptive_subdivision=bool(suite.get("adaptive_subdivision", True)),
         inference_cache_max_entries=int(suite.get("inference_cache_max_entries", 0)),
         quality_only=quality_only,
+        cases_limit=int(suite["cases_limit"]) if suite.get("cases_limit") is not None else None,
     )
 
 
@@ -176,6 +178,7 @@ def run_managed_suite(
     korgis_repo: str | Path | None = None,
     model_override: list[str] | None = None,
     ensure_models_override: bool | None = None,
+    cases_limit_override: int | None = None,
 ) -> Path:
     config = load_suite_config(config_path, root=experiment_root)
     models = tuple(model_override) if model_override else config.models
@@ -187,6 +190,11 @@ def run_managed_suite(
         config.ensure_models
         if ensure_models_override is None
         else ensure_models_override
+    )
+    cases_limit = (
+        cases_limit_override
+        if cases_limit_override is not None
+        else config.cases_limit
     )
 
     dataset_id = _resolve_suite_dataset(config.dataset)
@@ -222,6 +230,9 @@ def run_managed_suite(
     # The progress denominator counts actual document evaluations and latency
     # samples, not inference-time startup or warmup work (shown separately).
     all_cases = load_dataset(config.dataset)
+    if cases_limit is not None and cases_limit > 0:
+        all_cases = all_cases[:cases_limit]
+    active_case_ids = [case.case_id for case in all_cases] if cases_limit else None
     case_ids_present = {case.case_id for case in all_cases}
     latency_cases = sum(
         case_id in case_ids_present for case_id in config.latency_case_ids
@@ -282,6 +293,7 @@ def run_managed_suite(
                             results_dir=str(work_dir / "quality"),
                             warmups=config.quality_warmups,
                             progress=progress,
+                            case_ids=active_case_ids,
                         )
                     )
                     if not config.quality_only:

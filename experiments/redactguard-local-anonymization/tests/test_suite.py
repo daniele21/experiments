@@ -53,6 +53,15 @@ suite:
     assert loaded.dataset == (tmp_path / "data/realistic").resolve()
     assert loaded.latency_repeats == 3
     assert loaded.korgis_base_url == "http://127.0.0.1:12435/v1"
+    assert loaded.cases_limit is None
+
+    config_with_limit = tmp_path / "suite_limit.yaml"
+    config_with_limit.write_text(
+        config.read_text(encoding="utf-8") + "  cases_limit: 50\n",
+        encoding="utf-8",
+    )
+    loaded_limit = load_suite_config(config_with_limit, root=tmp_path)
+    assert loaded_limit.cases_limit == 50
 
 
 def test_history_is_append_only_and_dashboard_uses_latest(tmp_path: Path):

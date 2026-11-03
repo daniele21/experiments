@@ -509,6 +509,11 @@ def suite(
         "--ensure-models/--no-ensure-models",
         help="Override whether Korgis should ensure model artifacts before the run.",
     ),
+    cases_limit: int | None = typer.Option(
+        None,
+        "--cases-limit",
+        help="Optional limit on the number of documents to evaluate.",
+    ),
 ) -> None:
     """Run the managed Korgis -> quality -> latency -> history -> dashboard workflow."""
     selected = None
@@ -521,6 +526,7 @@ def suite(
             korgis_repo=korgis_repo,
             model_override=selected,
             ensure_models_override=ensure_models,
+            cases_limit_override=cases_limit,
         )
     except (ValueError, RuntimeError, TimeoutError, FileNotFoundError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
