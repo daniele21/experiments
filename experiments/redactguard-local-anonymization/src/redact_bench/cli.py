@@ -11,6 +11,7 @@ from redact_bench.cloud_suite import prepare_cloud_reference, run_cloud_referenc
 from redact_bench.dataset_audit import audit_cases
 from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
+from redact_bench.e3c import download_e3c, prepare_e3c
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.progress import TerminalProgress
@@ -68,6 +69,47 @@ def check_korgis() -> None:
     typer.echo(f"health: {health}")
     typer.echo(f"registry: {registry}")
     typer.echo(f"identity: {identity}")
+
+
+@app.command("prepare-e3c")
+def prepare_e3c_command(
+    source_dir: Path = typer.Option(
+        ROOT / "data/cache/e3c-source",
+        "--source-dir",
+        help="Local E3C v2.0.0 checkout; used as-is unless --download is set.",
+    ),
+    output_dir: Path = typer.Option(
+        ROOT / "data/cache/e3c-it-v2",
+        "--output-dir",
+        help="Local ignored cache for both generated E3C benchmark tracks.",
+    ),
+    download: bool = typer.Option(
+        False,
+        "--download",
+        help="Download the upstream E3C tag using a shallow sparse Git checkout.",
+    ),
+) -> None:
+    """Prepare the 50 official Italian test cases without publishing upstream text."""
+    try:
+        if download:
+            download_e3c(source_dir)
+        if not source_dir.is_dir():
+            raise FileNotFoundError(
+                f"No E3C checkout at {source_dir}; pass --download or --source-dir."
+            )
+        manifest = prepare_e3c(source_dir, output_dir)
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+        typer.echo(f"ERROR: E3C preparation failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        f"E3C {manifest['source_tag']}: {manifest['official_test_documents']} test "
+        f"documents, {manifest['synthetic_pii']['entities_per_document']} "
+        f"injected PII types per case"
+    )
+    typer.echo(f"Clinical context (unscored): {output_dir / 'clinical_context.jsonl'}")
+    typer.echo(f"Targeted PII recall/leakage: {output_dir / 'synthetic_pii.jsonl'}")
+    typer.echo(f"Provenance: {output_dir / 'manifest.json'}")
+    typer.echo("Run: uv run redact-bench suite --config config/suite-e3c.yaml")
 
 
 @app.command("check-data")
