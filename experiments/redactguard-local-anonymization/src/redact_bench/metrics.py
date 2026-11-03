@@ -113,7 +113,7 @@ def score_case(case: Case, result: InferenceResult) -> dict:
 
     exact_tp, overlap_tp, unmatched_gold, unmatched_pred = _match_spans(gold, pred)
     tp = exact_tp + overlap_tp
-    # Unresolved model values are explicit false-positive evidence instead of vanishing.
+    # With complete PII gold, unresolved values contribute false positives.
     # With incomplete original-document PII gold, unmatched predictions are
     # UNLABELED, not verified false positives.
     unscored_predictions = len(unmatched_pred) + (
