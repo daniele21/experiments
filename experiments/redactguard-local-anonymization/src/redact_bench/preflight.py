@@ -38,6 +38,8 @@ def _benchmark_probe(profile: str | None) -> Case:
         "asq_phi": ("Anna Rossi attended Westside Clinic.", "Anna Rossi", "name"),
         "meddocan_phi": ("La paciente Ana fue examinada.", "Ana", "med_name"),
         "clinical_ner": ("Metformina contro il diabete.", "Metformina", "clinical_drug"),
+        "spaccc_clinical_ner": ("Paciente con diabetes mellitus.", "diabetes mellitus", "clinical_disease"),
+        "e3c_clinical_ner": ("Paziente con ipertensione.", "ipertensione", "e3c_clinical_entity"),
     }
     if profile not in samples:
         return PREFLIGHT_CASE
