@@ -34,7 +34,7 @@ uv run redact-bench suite --config config/suite-asq-phi.yaml
 
 Downloads official ASQ-PHI (MIT), pinned to GitHub revision
 `fdb371ce7e3908a945d82f20411546b9876f862e`.
-Default 120 test cases: 96 positives and 24 hard negatives. Change quotas
+Default 200 test cases: 160 positives and 40 hard negatives. Change quotas
 with `--positives` and `--negatives`. Original 13 PHI categories are kept;
 repeated ambiguous values and overlaps are excluded with reasons in manifest.
 The source is validated against 1,051 cases and 832 positives.
