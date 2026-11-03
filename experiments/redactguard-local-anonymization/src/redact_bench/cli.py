@@ -12,6 +12,7 @@ from redact_bench.dataset_audit import audit_cases
 from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.e3c import download_e3c, prepare_e3c
+from redact_bench.medical_datasets import fetch_asq, prepare_asq, prepare_meddocan, prepare_pharmaer
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.progress import TerminalProgress
@@ -110,6 +111,57 @@ def prepare_e3c_command(
     typer.echo(f"Targeted PII recall/leakage: {output_dir / 'synthetic_pii.jsonl'}")
     typer.echo(f"Provenance: {output_dir / 'manifest.json'}")
     typer.echo("Run: uv run redact-bench suite --config config/suite-e3c.yaml")
+
+
+@app.command("prepare-medical")
+def prepare_medical_command(
+    dataset: str = typer.Option(..., "--dataset", help="asq-phi | meddocan | pharmaer"),
+    source: Path | None = typer.Option(
+        None, "--source", help="ASQ .txt, extracted MEDDOCAN root or PharmaER Gold test parquet/JSONL."
+    ),
+    download: bool = typer.Option(
+        False, "--download", help="Fetch pinned ASQ-PHI ONLY (no other automatic downloads)."
+    ),
+    positives: int = typer.Option(96, "--positives", min=0),
+    negatives: int = typer.Option(24, "--negatives", min=0),
+    limit: int = typer.Option(40, "--limit", min=1),
+) -> None:
+    """Prepare locally scored medical benchmark subsets with strict gold offsets."""
+    directory = {
+        "asq-phi": "asq-phi-v1",
+        "meddocan": "meddocan-test-v1",
+        "pharmaer": "pharmaer-it-gold-test-v03",
+    }.get(dataset)
+    if directory is None:
+        typer.echo("ERROR: expected --dataset asq-phi, meddocan or pharmaer", err=True)
+        raise typer.Exit(code=2)
+    output = ROOT / "data/cache" / directory
+    if download and dataset != "asq-phi":
+        typer.echo("ERROR: --download supported only for ASQ-PHI", err=True)
+        raise typer.Exit(code=2)
+    try:
+        if dataset == "asq-phi":
+            source_path = source or ROOT / "data/cache/medical-sources/asq-phi.txt"
+            if download:
+                fetch_asq(source_path)
+            manifest = prepare_asq(source_path, output, positives=positives, negatives=negatives)
+        elif dataset == "meddocan":
+            source_path = source or ROOT / "data/cache/medical-sources/meddocan"
+            manifest = prepare_meddocan(source_path, output, limit=limit)
+        else:
+            if source is None:
+                raise ValueError("PharmaER requires --source pointing to GOLD test .parquet or .jsonl")
+            manifest = prepare_pharmaer(source, output)
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(f"ERROR: medical preparation failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        f"{manifest['dataset']} ({manifest['task']}): "
+        f"{manifest['cases']} cases / {manifest['gold_count']} gold spans"
+    )
+    typer.echo(f"Dataset: {output / 'cases.jsonl'}")
+    typer.echo(f"Provenance and limitations: {output / 'manifest.json'}")
+    typer.echo(f"Run: uv run redact-bench suite --config config/suite-{dataset}.yaml")
 
 
 @app.command("check-data")
