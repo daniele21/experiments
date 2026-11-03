@@ -105,26 +105,37 @@ def _quality_from_counts(
 
 
 def score_case(case: Case, result: InferenceResult) -> dict:
+    targeted = case.gold_scope == "injected_only"
+    if case.gold_scope not in {"complete", "injected_only"}:
+        raise ValueError(f"Cannot score gold_scope={case.gold_scope!r}")
     gold = list(case.gold)
     pred = _predicted_spans(result) if result.valid else []
 
     exact_tp, overlap_tp, unmatched_gold, unmatched_pred = _match_spans(gold, pred)
     tp = exact_tp + overlap_tp
     # Unresolved model values are explicit false-positive evidence instead of vanishing.
-    fp = len(unmatched_pred) + (result.unresolved_item_count if result.valid else 0)
+    # With incomplete original-document PII gold, unmatched predictions are
+    # UNLABELED, not verified false positives.
+    unscored_predictions = len(unmatched_pred) + (
+        result.unresolved_item_count if result.valid else 0
+    )
+    fp = 0 if targeted else unscored_predictions
     fn = len(gold) - tp
 
     gold_chars = _char_positions(gold)
     pred_chars = _char_positions(pred)
     leaked_chars = len(gold_chars - pred_chars)
-    overredacted_chars = len(pred_chars - gold_chars)
-    non_pii_chars = max(1, len(case.text) - len(gold_chars))
+    overredacted_chars = 0 if targeted else len(pred_chars - gold_chars)
+    non_pii_chars = 0 if targeted else max(1, len(case.text) - len(gold_chars))
 
     quality = _quality_from_counts(tp=tp, fp=fp, fn=fn) if result.valid else {
         "pii_recall": None,
         "precision": None,
         "span_f1": None,
     }
+    if targeted:
+        quality["precision"] = None
+        quality["span_f1"] = None
     leakage_rate = (
         _ratio(leaked_chars, len(gold_chars))
         if result.valid
@@ -132,7 +143,7 @@ def score_case(case: Case, result: InferenceResult) -> dict:
     )
     over_redaction_rate = (
         _ratio(overredacted_chars, non_pii_chars)
-        if result.valid
+        if result.valid and not targeted
         else None
     )
 
@@ -180,7 +191,11 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         }
 
     by_type: dict[str, dict] = {}
-    pii_types = sorted({span.pii_type for span in gold} | {span.pii_type for span in pred})
+    pii_types = sorted(
+        {span.pii_type for span in gold}
+        if targeted
+        else {span.pii_type for span in gold} | {span.pii_type for span in pred}
+    )
     for pii_type in pii_types:
         type_gold = [span for span in gold if span.pii_type == pii_type]
         type_pred = [span for span in pred if span.pii_type == pii_type]
@@ -190,7 +205,7 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         )
         type_tp = type_exact + type_overlap
         type_fn = len(type_unmatched_gold)
-        type_fp = len(type_unmatched_pred)
+        type_fp = 0 if targeted else len(type_unmatched_pred)
         type_gold_chars = _char_positions(type_gold)
         type_pred_chars = _char_positions(type_pred)
         type_leaked_chars = len(type_gold_chars - type_pred_chars)
@@ -199,6 +214,9 @@ def score_case(case: Case, result: InferenceResult) -> dict:
             if result.valid
             else {"pii_recall": None, "precision": None, "span_f1": None}
         )
+        if targeted:
+            type_quality["precision"] = None
+            type_quality["span_f1"] = None
         by_type[pii_type] = {
             "gold_count": len(type_gold),
             "predicted_count": len(type_pred) if result.valid else 0,
@@ -234,6 +252,8 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         "content_family_id": case.content_family_id or case.case_id,
         "variant_id": case.variant_id,
         "gold_version": case.gold_version,
+        "gold_scope": case.gold_scope,
+        "unscored_prediction_count": unscored_predictions if targeted else 0,
         "human_reviewed": case.human_reviewed,
         "model": result.model,
         "valid": result.valid,
@@ -287,7 +307,7 @@ def score_case(case: Case, result: InferenceResult) -> dict:
         ),
         "false_positives": (
             [_span_payload(pred[index]) for index in sorted(unmatched_pred)]
-            if result.valid
+            if result.valid and not targeted
             else []
         ),
         "input_tokens": result.input_tokens,
@@ -309,6 +329,11 @@ def _percentile(values: list[float], q: float) -> float | None:
 
 def aggregate(rows: Iterable[dict]) -> dict:
     rows = list(rows)
+    scopes = {row.get("gold_scope", "complete") for row in rows}
+    if len(scopes) > 1:
+        raise ValueError("Cannot aggregate complete and injected-only gold in one benchmark")
+    scope = next(iter(scopes), "complete")
+    targeted = scope == "injected_only"
     valid_rows = [row for row in rows if row["valid"]]
 
     tp = sum(row["tp"] for row in valid_rows)
@@ -329,6 +354,10 @@ def aggregate(rows: Iterable[dict]) -> dict:
         else {"pii_recall": None, "precision": None, "span_f1": None}
     )
 
+    if targeted:
+        quality["precision"] = None
+        quality["span_f1"] = None
+
     system_tp = sum(row["system_tp"] for row in rows)
     system_fp = sum(row["system_fp"] for row in rows)
     system_fn = sum(row["system_fn"] for row in rows)
@@ -346,6 +375,8 @@ def aggregate(rows: Iterable[dict]) -> dict:
     statuses = Counter(row.get("inference_status") or "unknown" for row in rows)
 
     return {
+        "gold_scope": scope,
+        "false_positive_scoring_available": not targeted,
         "status": "ok" if valid_rows else "no_valid_inference",
         "quality_available": bool(valid_rows),
         "cases": len(rows),
@@ -392,7 +423,7 @@ def aggregate(rows: Iterable[dict]) -> dict:
         ),
         "over_redaction_rate": (
             _ratio(over_chars, non_pii_chars)
-            if valid_rows
+            if valid_rows and not targeted
             else None
         ),
         "leaked_chars": leaked_chars,
@@ -668,6 +699,10 @@ def aggregate_detailed(rows: Iterable[dict]) -> dict:
         for profile, profile_rows in sorted(grouped_profiles.items())
     }
     by_type = _aggregate_type_rows(rows)
+    if micro["gold_scope"] == "injected_only":
+        for type_summary in by_type.values():
+            type_summary["precision"] = None
+            type_summary["span_f1"] = None
     by_subtype = _aggregate_subtype_rows(rows)
     by_family = {
         family_id: aggregate(family_rows)
