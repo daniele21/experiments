@@ -373,6 +373,55 @@ uv run model-bench dashboard-data
 uv run model-bench dashboard-build
 ~~~
 
+## 4e. Google Gemma 4 Models (Gemma 4 12B & 26B-A4B)
+
+Google Gemma 4 features 262K context window, native `<|channel>thought` reasoning channels with template-switchable thinking control, and both dense and mixture-of-experts architectures:
+
+- **Gemma 4 12B Instruct** (`gemma-4-12b-it-q4km`): Dense 12B parameter model quantized with `Q4_K_M` (~6.87 GB).
+- **Gemma 4 26B-A4B IT QAT** (`gemma-4-26b-a4b-it-qat-q40`): 26B total parameter MoE model (128 experts, 8 active = ~4B active parameters per token) quantized via Google's official Quantization-Aware Training (QAT) in `Q4_0` (~13.45 GB).
+
+Both models resolve automatically via Korgis (`llama_server` backend, requiring `llama-server>=b11960`) from their respective LM Studio directories:
+- `~/.lmstudio/models/lmstudio-community/gemma-4-12B-it-GGUF/gemma-4-12B-it-Q4_K_M.gguf`
+- `~/.lmstudio/models/lmstudio-community/gemma-4-26B-A4B-it-QAT-GGUF/gemma-4-26B-A4B-it-QAT-Q4_0.gguf`
+
+~~~bash
+# 1. Start Korgis with the desired model (or activate via POST /api/v1/models/activate):
+cd korgis
+uv run local-llm serve --model gemma-4-12b-it-q4km --port 1235 --enable-admin-api
+# Or for the 26B-A4B MoE model:
+# uv run local-llm serve --model gemma-4-26b-a4b-it-qat-q40 --port 1235 --enable-admin-api
+~~~
+
+~~~bash
+# 2. In model-capability-benchmark:
+export KORGIS_BASE_URL="http://127.0.0.1:1235/v1"
+export MODEL="gemma-4-12b-it-q4km"
+# Or: export MODEL="gemma-4-26b-a4b-it-qat-q40"
+
+# Validate configuration
+uv run model-bench validate-config --models "$MODEL"
+
+# Smoke test
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile smoke \
+  --run-group "${MODEL}-smoke" \
+  --output-dir "results/scratch/${MODEL}-smoke"
+
+# Canonical core benchmark across all capabilities
+uv run model-bench run \
+  --models "$MODEL" \
+  --capabilities all \
+  --profile core \
+  --run-group "${MODEL}-core"
+
+# Refresh analytics and dashboard
+uv run model-bench project
+uv run model-bench dashboard-data
+uv run model-bench dashboard-build
+~~~
+
 ## 5. API models
 
 OpenAI:

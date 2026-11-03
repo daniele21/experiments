@@ -160,6 +160,7 @@ def run_compare(
                                 "variant_id": case.variant_id,
                                 "gold_version": case.gold_version,
                                 "human_reviewed": case.human_reviewed,
+                                "gold_scope": case.gold_scope,
                                 "gold": [asdict(span) for span in case.gold],
                             },
                             "result": result.to_dict(),
@@ -195,6 +196,7 @@ def run_compare(
         "created_at": datetime.now(timezone.utc).isoformat(),
         "benchmark_commit": _git_sha(),
         "dataset": str(Path(dataset_path)),
+        "gold_scope": cases[0].gold_scope if cases else "complete",
         "cases": len(cases),
         "models": models,
         "korgis": {

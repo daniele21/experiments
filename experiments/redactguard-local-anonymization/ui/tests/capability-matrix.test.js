@@ -17,7 +17,7 @@ const latest={
 
 test("matrix is union of models from different suites, columns in benchmark order",()=>{
  const matrix=buildModelDatasetMatrix(latest);
- assert.deepEqual(matrix.datasets.map(d=>d.id),["realistic","challenge","healthcare","ambiguous"]);
+ assert.deepEqual(matrix.datasets.map(d=>d.id),["realistic","challenge","healthcare","ambiguous","e3c"]);
  assert.deepEqual(matrix.rows.map(r=>r.modelId),["nemotron-4","qwen-4"]);
  assert.equal(matrix.measured,3);
  assert.equal(matrix.rows[0].cells.healthcare.runKey,"nemotron-run");

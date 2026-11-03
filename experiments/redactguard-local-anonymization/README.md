@@ -133,6 +133,29 @@ the CLI calculates an indicative observed-token cost. It is **not**
 a live quote, budget cap or invoice (preflight, retries outside this
 client, discounts, cached rates and provider processing may change bills).
 
+## E3C Italian clinical cases (new experimental track)
+
+Use the 50 official E3C Layer 1 Italian **test** narratives as local clinical
+context, then inject six deterministic synthetic identity fields in each case.
+This creates a new 50-case, 300-label benchmark for **targeted PII recall and
+leakage**, separate from the existing synthetic Healthcare/Challenge suites.
+
+Original E3C narratives have no complete PII gold. Their unlabeled variant is
+**never scored as an all-negative dataset**; precision, F1 and over-redaction
+on the injected variant are also unavailable rather than invented. All content
+is held in the local git-ignored cache (upstream CC BY-NC), not committed or
+sent to an API provider.
+
+```bash
+uv run redact-bench prepare-e3c --download
+uv run redact-bench suite --config config/suite-e3c.yaml
+uv run redact-bench ui
+```
+
+The E3C result is a distinct dataset in the model × dataset matrix, with an
+explicit synthetic-gold warning. Details and correct interpretation:
+[E3C_BENCHMARK.md](E3C_BENCHMARK.md).
+
 ## Managed benchmark suite
 
 For normal use, **do not start `local-llm` from this experiment environment**. The `local-llm` executable belongs to the Korgis project, which has its own Python environment.

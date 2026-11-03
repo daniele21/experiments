@@ -11,6 +11,22 @@ def _resolve_entities(text: str, entities: list[dict]) -> tuple[Span, ...]:
     for entity in entities:
         value = str(entity["value"])
         pii_type = str(entity["pii_type"])
+        explicit_start = entity.get("start")
+        explicit_end = entity.get("end")
+        if explicit_start is not None or explicit_end is not None:
+            if (
+                type(explicit_start) is not int or type(explicit_end) is not int
+                or explicit_start < 0 or explicit_end > len(text)
+                or explicit_start >= explicit_end
+                or text[explicit_start:explicit_end] != value
+            ):
+                raise ValueError(f"Gold entity has invalid exact offsets: {value!r}")
+            if entity.get("all_occurrences"):
+                raise ValueError("Exact-offset gold cannot also request all_occurrences")
+            spans.append(
+                Span(explicit_start, explicit_end, pii_type, value, entity.get("pii_subtype"))
+            )
+            continue
         start = 0
         found = 0
         while True:
@@ -44,6 +60,14 @@ def load_jsonl(path: str | Path) -> list[Case]:
                 continue
             row = json.loads(line)
             text = str(row["text"])
+            gold_scope = str(row.get("gold_scope", "complete"))
+            if gold_scope not in {"complete", "injected_only"}:
+                raise ValueError(
+                    f"Dataset case {row['id']} has unscorable gold_scope={gold_scope!r}; "
+                    "E3C clinical_context has no PII gold and must not be ranked."
+                )
+            if gold_scope == "injected_only" and not row.get("entities"):
+                raise ValueError("Injected-only gold requires at least one labelled entity")
             cases.append(
                 Case(
                     case_id=str(row["id"]),
@@ -63,6 +87,7 @@ def load_jsonl(path: str | Path) -> list[Case]:
                         str(row["gold_version"]) if row.get("gold_version") else None
                     ),
                     human_reviewed=row.get("human_reviewed"),
+                    gold_scope=gold_scope,
                 )
             )
     ids = [case.case_id for case in cases]

@@ -100,6 +100,9 @@ function percentile(values, q) {
 function aggregatePartial(rows) {
   if (!rows.length) return null;
 
+  const scopes = new Set(rows.map(row => row?.gold_scope ?? "complete"));
+  if (scopes.size > 1) return null;
+  const targeted = scopes.has("injected_only");
   const isV3 = rows.some(
     (row) =>
       Object.prototype.hasOwnProperty.call(row, "inference_status") ||
@@ -123,7 +126,7 @@ function aggregatePartial(rows) {
   const nonPiiChars = sum(qualityRows, "non_pii_chars");
   const qualityAvailable = !isV3 || validRows.length > 0;
   const recall = qualityAvailable ? ratio(tp, tp + fn, 1) : null;
-  const precision = qualityAvailable
+  const precision = qualityAvailable && !targeted
     ? ratio(tp, tp + fp, isV3 ? null : 1)
     : null;
   const spanF1 =
@@ -165,7 +168,7 @@ function aggregatePartial(rows) {
   const byType = {};
   for (const [piiType, counts] of [...byTypeCounters.entries()].sort()) {
     const typeRecall = ratio(counts.tp, counts.tp + counts.fn, 1);
-    const typePrecision = ratio(
+    const typePrecision = targeted ? null : ratio(
       counts.tp,
       counts.tp + counts.fp,
       isV3 ? null : 1,
@@ -231,6 +234,8 @@ function aggregatePartial(rows) {
   }
 
   const micro = {
+    gold_scope: targeted ? "injected_only" : "complete",
+    false_positive_scoring_available: !targeted,
     status: isV3 && !validRows.length ? "no_valid_inference" : "ok",
     quality_available: qualityAvailable,
     cases: rows.length,
@@ -268,7 +273,7 @@ function aggregatePartial(rows) {
           qualityRows.length,
         )
       : null,
-    over_redaction_rate: qualityAvailable
+    over_redaction_rate: qualityAvailable && !targeted
       ? ratio(overredactedChars, nonPiiChars)
       : null,
     leaked_chars: leakedChars,
@@ -308,17 +313,18 @@ function aggregatePartial(rows) {
       fp: row.fp ?? 0,
       fn: row.fn ?? 0,
       pii_recall: row.pii_recall ?? ratio(row.tp, (row.tp ?? 0) + (row.fn ?? 0), 1),
-      precision: row.precision ?? ratio(row.tp, (row.tp ?? 0) + (row.fp ?? 0), 1),
-      span_f1: row.span_f1 ?? 0,
+      precision: targeted ? null : (row.precision ?? ratio(row.tp, (row.tp ?? 0) + (row.fp ?? 0), 1)),
+      span_f1: targeted ? null : (row.span_f1 ?? 0),
       exact_match_recall: row.exact_match_recall ?? 0,
       leakage_rate: row.leakage_rate ?? ratio(row.leaked_chars, row.gold_chars),
       zero_leak_document_rate: row.zero_leak ? 1 : 0,
-      over_redaction_rate: row.over_redaction_rate ?? 0,
+      over_redaction_rate: targeted ? null : (row.over_redaction_rate ?? 0),
       leaked_chars: row.leaked_chars ?? 0,
       gold_chars: row.gold_chars ?? 0,
       overredacted_chars: row.overredacted_chars ?? 0,
       latency_p50_ms: row.latency_ms ?? null,
       latency_p95_ms: row.latency_ms ?? null,
+      gold_scope: targeted ? "injected_only" : "complete",
       profile: row.profile ?? null,
       tags: row.tags ?? [],
       false_negatives: row.false_negatives ?? [],

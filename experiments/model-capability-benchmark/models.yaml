@@ -492,6 +492,56 @@ models:
       - q1
       - 27b
 
+  gemma-4-12b-it-q4km:
+    model_id: google/gemma-4-12b-it
+    runtime_model_id: gemma-4-12b-it-q4km
+    runtime: korgis-local
+    family: gemma-4
+    parameters_b: 12
+    artifact:
+      format: gguf
+      quantization: Q4_K_M
+      size_bytes: 7381382944
+      metadata:
+        sha256: 95d83ba36642b1f385fb906b5962a71763361be3bac930a709945f72d97473f8
+        resolved_by: korgis-model-registry
+        source_repo: lmstudio-community/gemma-4-12B-it-GGUF
+        required_runtime: llama.cpp>=b11960
+    tags:
+      - local
+      - open-weight
+      - gemma
+      - gemma-4
+      - reasoning
+      - dense
+      - q4
+      - 12b
+
+  gemma-4-26b-a4b-it-qat-q40:
+    model_id: google/gemma-4-26b-a4b-it
+    runtime_model_id: gemma-4-26b-a4b-it-qat-q40
+    runtime: korgis-local
+    family: gemma-4
+    parameters_b: 26
+    artifact:
+      format: gguf
+      quantization: Q4_0
+      size_bytes: 14439363264
+      metadata:
+        sha256: a586dac572e606b1f2ad0011f7465aa1dffdb0f6516c5b5809fab35857865389
+        resolved_by: korgis-model-registry
+        source_repo: lmstudio-community/gemma-4-26B-A4B-it-QAT-GGUF
+        required_runtime: llama.cpp>=b11960
+    tags:
+      - local
+      - open-weight
+      - gemma
+      - gemma-4
+      - reasoning
+      - moe
+      - q4
+      - 26b
+
   gpt-5.6-luna:
     model_id: gpt-5.6-luna
     runtime: openai-api

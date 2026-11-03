@@ -6,6 +6,7 @@ test("only known bundled synthetic datasets expose text previews", () => {
  assert.equal(bundledDatasetTextPath("healthcare_synthetic_v0.1"), "data/healthcare/cases.jsonl");
  assert.equal(bundledDatasetTextPath("ambiguous_synthetic_v0.1"), "data/ambiguous/cases.jsonl");
  assert.equal(bundledDatasetTextPath("challenge_v0.1"), "data/challenge/cases.jsonl");
+ assert.equal(bundledDatasetTextPath("e3c_it_v2_injected_pii_v1"), "data/cache/e3c-it-v2/synthetic_pii.jsonl");
  assert.equal(bundledDatasetTextPath("../../private/records.jsonl"), null);
  assert.equal(bundledDatasetTextPath("unknown"), null);
  assert.equal(bundledDatasetTextPath("__proto__"), null);
