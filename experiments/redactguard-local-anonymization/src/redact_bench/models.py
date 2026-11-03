@@ -27,6 +27,7 @@ class Case:
     variant_id: str | None = None
     gold_version: str | None = None
     human_reviewed: bool | None = None
+    gold_scope: str = "complete"
 
 
 @dataclass(frozen=True)
