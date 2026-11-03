@@ -42,6 +42,15 @@ def build_system_prompt(profile: str, profiles_path: str | Path) -> str:
     if profile not in profiles:
         raise KeyError(f"Unknown RedactGuard profile: {profile}")
     definitions = profiles[profile]
+    snapshot = load_profile_snapshot(profiles_path)
+    meta = snapshot.get("profiles_meta", {}).get(profile, {})
+    task_type = meta.get("task_type")
+    if not task_type:
+        if profile.endswith("_clinical_ner") or profile == "clinical_ner":
+            task_type = "clinical_ner"
+        else:
+            task_type = "pii_redaction"
+
     lines: list[str] = []
     for name, spec in definitions.items():
         line = f"- **{name}**: {spec.get('description', '')}"
@@ -50,6 +59,40 @@ def build_system_prompt(profile: str, profiles_path: str | Path) -> str:
             line += "  (examples: " + ", ".join(f'"{example}"' for example in examples) + ")"
         lines.append(line)
     allowed = ", ".join(f'"{name}"' for name in definitions)
+
+    if task_type == "clinical_ner":
+        return f"""You are an expert Clinical and Biomedical Named Entity Recognition (NER) assistant.
+
+Detection contract: {DETECTION_CONTRACT_VERSION}
+
+Analyze the provided clinical text and identify ALL instances of medical entities,
+findings, diagnoses, clinical procedures, chemical substances, and proteins that match
+the active type definitions below.
+
+## Clinical entity types to detect
+
+{chr(10).join(lines)}
+
+## Output format
+
+Return a JSON object with a single key "pii_fields" containing an array.
+Each element must contain:
+- "pii_type": one of [{allowed}]
+- "value": the exact text span as it appears in the document
+
+Example:
+{{"pii_fields":[{{"pii_type":"clinical_disease","value":"diabetes mellitus"}}]}}
+
+## Rules
+
+1. Extract the EXACT text span — do not paraphrase, normalize, or summarize it.
+2. Follow the active type definitions. Do not invent new types.
+3. Extract EVERY medical entity comprehensively, even when describing generic medical concepts,
+   symptoms, treatments, or laboratory findings without an identifiable patient.
+4. If no clinical entities matching the active types are found, return {{"pii_fields":[]}}.
+5. Return ONLY valid JSON — no explanations and no markdown code blocks.
+"""
+
     return f"""You are a PII (Personally Identifiable Information) detection assistant.
 
 Detection contract: {DETECTION_CONTRACT_VERSION}

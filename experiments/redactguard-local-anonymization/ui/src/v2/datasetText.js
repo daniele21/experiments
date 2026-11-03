@@ -1,15 +1,26 @@
-// Source lookup is a fixed allowlist: bundled synthetic data and the opt-in
-// local E3C cache. Never resolve arbitrary paths from suite metadata.
+// Source lookup is a fixed allowlist: bundled synthetic data and opt-in
+// local caches (E3C, ASQ-PHI, MEDDOCAN, PharmaER, SPACCC). Never resolve arbitrary paths from suite metadata.
 const DATASET_TEXT_SOURCE = Object.freeze({
   "healthcare_synthetic_v0.1": "data/healthcare/cases.jsonl",
   "ambiguous_synthetic_v0.1": "data/ambiguous/cases.jsonl",
   "challenge_v0.1": "data/challenge/cases.jsonl",
   "e3c_it_v2_injected_pii_v1": "data/cache/e3c-it-v2/synthetic_pii.jsonl",
+  "asq_phi_hipaa_13_v1": "data/cache/asq-phi-v1/cases.jsonl",
+  "meddocan_test_brat_coarse_v1": "data/cache/meddocan-test-v1/cases.jsonl",
+  "pharmaer_it_gold_test_v03": "data/cache/pharmaer-it-gold-test-v03/cases.jsonl",
+  "spaccc_es_clinical_gold_v1": "data/cache/spaccc-clinical-gold-v1/cases.jsonl",
+  "e3c_it_clinical_gold_v1": "data/cache/e3c-it-clinical-gold-v1/cases.jsonl",
 });
 
 export function bundledDatasetTextPath(datasetId) {
-  return Object.prototype.hasOwnProperty.call(DATASET_TEXT_SOURCE, datasetId)
-    ? DATASET_TEXT_SOURCE[datasetId] : null;
+  if (typeof datasetId !== "string") return null;
+  if (Object.prototype.hasOwnProperty.call(DATASET_TEXT_SOURCE, datasetId)) {
+    return DATASET_TEXT_SOURCE[datasetId];
+  }
+  for (const [key, source] of Object.entries(DATASET_TEXT_SOURCE)) {
+    if (datasetId.startsWith(key + "-")) return source;
+  }
+  return null;
 }
 
 export function indexBenchmarkTexts(rows) {

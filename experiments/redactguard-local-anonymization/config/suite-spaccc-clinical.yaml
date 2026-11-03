@@ -14,7 +14,7 @@ suite:
   quality_only: true
   quality_warmups: 0
   benchmark_timeout_seconds: 360
-  chunk_max_chars: 3200
-  chunk_overlap_chars: 256
+  chunk_max_chars: 1200
+  chunk_overlap_chars: 180
   max_output_tokens: 4096
   adaptive_subdivision: true

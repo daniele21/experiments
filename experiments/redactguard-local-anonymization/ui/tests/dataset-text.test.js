@@ -7,6 +7,11 @@ test("only known bundled synthetic datasets expose text previews", () => {
  assert.equal(bundledDatasetTextPath("ambiguous_synthetic_v0.1"), "data/ambiguous/cases.jsonl");
  assert.equal(bundledDatasetTextPath("challenge_v0.1"), "data/challenge/cases.jsonl");
  assert.equal(bundledDatasetTextPath("e3c_it_v2_injected_pii_v1"), "data/cache/e3c-it-v2/synthetic_pii.jsonl");
+ assert.equal(bundledDatasetTextPath("asq_phi_hipaa_13_v1-c88c746f89bd"), "data/cache/asq-phi-v1/cases.jsonl");
+ assert.equal(bundledDatasetTextPath("meddocan_test_brat_coarse_v1"), "data/cache/meddocan-test-v1/cases.jsonl");
+ assert.equal(bundledDatasetTextPath("pharmaer_it_gold_test_v03"), "data/cache/pharmaer-it-gold-test-v03/cases.jsonl");
+ assert.equal(bundledDatasetTextPath("spaccc_es_clinical_gold_v1-5303072e3dee"), "data/cache/spaccc-clinical-gold-v1/cases.jsonl");
+ assert.equal(bundledDatasetTextPath("e3c_it_clinical_gold_v1"), "data/cache/e3c-it-clinical-gold-v1/cases.jsonl");
  assert.equal(bundledDatasetTextPath("../../private/records.jsonl"), null);
  assert.equal(bundledDatasetTextPath("unknown"), null);
  assert.equal(bundledDatasetTextPath("__proto__"), null);

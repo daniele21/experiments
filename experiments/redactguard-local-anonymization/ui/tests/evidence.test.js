@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   modelEvidence, documentEvidence, spansForModel, latencyVerified,
-  compareInsight, spanMatchesText,
+  compareInsight, spanMatchesText, piiTypeLabel, docPiiSummary,
 } from "../src/v2/evidence.js";
 
 const qwenRun = {
@@ -57,4 +57,34 @@ test("failed inference is unavailable, not zero recall",()=>{
  const broken=structuredClone(qwenRun);
  broken.docSpans["lettera.txt"].models.four.valid=false;
  assert.equal(documentEvidence(broken,"lettera.txt",["four"]).metrics[0].recall,null);
+});
+test("piiTypeLabel maps standard and custom PII types to Italian labels",()=>{
+ assert.equal(piiTypeLabel("name"), "Nome");
+ assert.equal(piiTypeLabel("date"), "Data");
+ assert.equal(piiTypeLabel("medical_record_number"), "Cartella clinica");
+ assert.equal(piiTypeLabel("geographic_location"), "Luogo geografico");
+ assert.equal(piiTypeLabel("custom_entity"), "Custom Entity");
+ assert.equal(piiTypeLabel(null), "PII");
+});
+test("docPiiSummary accurately extracts recognized types and search tokens",()=>{
+ const doc = documentEvidence(qwenRun, "lettera.txt", ["four", "nine"]);
+ const summaryBoth = docPiiSummary(doc, ["four", "nine"]);
+ assert.deepEqual(summaryBoth.recognizedTypes.sort(), ["private_address", "private_person"]);
+ assert.deepEqual(summaryBoth.missedTypes, ["private_address"]);
+ assert.equal(summaryBoth.recognizedByType.get("private_person").has("four"), true);
+ assert.equal(summaryBoth.recognizedByType.get("private_person").has("nine"), true);
+ assert.equal(summaryBoth.recognizedByType.get("private_address").has("nine"), true);
+ assert.equal(summaryBoth.recognizedByType.get("private_address").has("four"), false);
+ assert.equal(summaryBoth.missedByType.get("private_address").has("four"), true);
+ assert.equal(summaryBoth.hasRecognized, true);
+ assert.equal(summaryBoth.hasMissed, true);
+ assert.equal(summaryBoth.isAllRecognized, false);
+ assert.match(summaryBoth.searchString, /mario/);
+ assert.match(summaryBoth.searchString, /roma/);
+ assert.match(summaryBoth.searchString, /nome/);
+ assert.match(summaryBoth.searchString, /indirizzo/);
+
+ const summaryNineOnly = docPiiSummary(doc, ["nine"]);
+ assert.equal(summaryNineOnly.isAllRecognized, true);
+ assert.equal(summaryNineOnly.hasMissed, false);
 });

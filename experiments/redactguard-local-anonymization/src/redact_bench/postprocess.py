@@ -14,8 +14,24 @@ class ResolutionResult:
     unresolved_items: int
 
 
+_APOSTROPHE_CHARS = {"'", "\u2019", "\u2018", "`"}
+_DASH_CHARS = {"-", "\u2013", "\u2014"}
+
+
+def _regex_part(part: str) -> str:
+    tokens: list[str] = []
+    for ch in part:
+        if ch in _APOSTROPHE_CHARS:
+            tokens.append(r"['\u2019\u2018`]")
+        elif ch in _DASH_CHARS:
+            tokens.append(r"[-\u2013\u2014]")
+        else:
+            tokens.append(re.escape(ch))
+    return "".join(tokens)
+
+
 def _normalized_pattern(value: str) -> re.Pattern[str]:
-    parts = [re.escape(part) for part in value.split() if part]
+    parts = [_regex_part(part) for part in value.split() if part]
     if not parts:
         return re.compile(r"(?!x)x")
     return re.compile(r"\s+".join(parts))
