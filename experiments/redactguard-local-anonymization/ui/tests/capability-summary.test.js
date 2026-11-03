@@ -21,6 +21,9 @@ test("categorizes datasets by suite identity without invented scores",()=>{
  assert.equal(capabilityFromDataset("redactguard-realistic-documents-v0.2"),"realistic");
  assert.equal(capabilityFromDataset("challenge_v0.1"),"challenge");
  assert.equal(capabilityFromDataset("e3c_it_v2_injected_pii_v1"),"e3c");
+ assert.equal(capabilityFromDataset("asq_phi_hipaa_13_v1"),"asq_phi");
+ assert.equal(capabilityFromDataset("meddocan_test_brat_coarse_v1"),"meddocan");
+ assert.equal(capabilityFromDataset("pharmaer_it_gold_test_v03"),"pharmaer");
  assert.equal(capabilityFromDataset("unknown"),null);
 });
 test("separates positive recall from error rate on valid gold-empty negatives",()=>{
