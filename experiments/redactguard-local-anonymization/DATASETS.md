@@ -68,6 +68,32 @@ The current gold is deterministic and machine-validated but is explicitly **not 
 
 For exact acquisition paths, local structure, originals and validation behavior, use [REALISTIC_DATASET.md](REALISTIC_DATASET.md).
 
+## E3C Italian Layer 1 — clinical context + injected identity PII
+
+E3C `v2.0.0` provides 86 Italian Layer 1 narratives and clinical XML
+annotations; its official split contains 36 training and 50 test documents.
+The RedactGuard E3C importer uses **only the 50 test cases** for the two
+generated local tracks:
+
+- `clinical_context.jsonl`: original context, without PII gold; **unscored**;
+- `synthetic_pii.jsonl`: the same clinical narratives, plus six synthetic
+  PII fields/case with exact offsets; scored for **targeted recall/leakage**
+  only, never as full-document precision or clinical preservation.
+
+The generated dataset is stored in git-ignored `data/cache/e3c-it-v2/`.
+Clinical XML labels are **not** assumed to be PII labels. E3C is upstream
+CC BY-NC and is never bundled in this repository; GPT-6 Luna cloud-reference
+does not accept this source.
+
+```bash
+uv run redact-bench prepare-e3c --download
+uv run redact-bench check-data --dataset data/cache/e3c-it-v2/synthetic_pii.jsonl
+uv run redact-bench suite --config config/suite-e3c.yaml
+```
+
+See [E3C_BENCHMARK.md](E3C_BENCHMARK.md) for pinned source, metrics,
+restrictions, reproducibility and local UI behavior.
+
 ## Next quality tier
 
 
