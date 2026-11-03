@@ -13,6 +13,7 @@ from redact_bench.datasets import load_dataset
 from redact_bench.document_fixtures import generate_pdf_fixtures
 from redact_bench.e3c import download_e3c, prepare_e3c
 from redact_bench.medical_datasets import fetch_asq, prepare_asq, prepare_meddocan, prepare_pharmaer
+from redact_bench.clinical_gold import prepare_spaccc, prepare_e3c_clinical
 from redact_bench.document_runner import run_document_compare
 from redact_bench.documents import load_document_manifest
 from redact_bench.progress import TerminalProgress
@@ -111,6 +112,49 @@ def prepare_e3c_command(
     typer.echo(f"Targeted PII recall/leakage: {output_dir / 'synthetic_pii.jsonl'}")
     typer.echo(f"Provenance: {output_dir / 'manifest.json'}")
     typer.echo("Run: uv run redact-bench suite --config config/suite-e3c.yaml")
+
+
+@app.command("prepare-spaccc")
+def prepare_spaccc_command(
+    annotations: Path = typer.Option(
+        ROOT / "data/cache/medical-sources/spaccc/annotations/test-00000-of-00001.parquet",
+        "--annotations", help="Official IEETA SPACCC-Spanish-NER TEST-only Parquet.",
+    ),
+    documents: Path = typer.Option(
+        ROOT / "data/cache/medical-sources/spaccc/documents/train-00000-of-00001.parquet",
+        "--documents", help="IEETA SPACCC-documents all original texts (train-named repository split).",
+    ),
+    limit: int = typer.Option(200, "--limit", min=1),
+) -> None:
+    """Join public clinical gold spans to original texts with strict exact offsets."""
+    output = ROOT / "data/cache/spaccc-clinical-gold-v1"
+    try:
+        summary = prepare_spaccc(annotations, documents, output, limit=limit)
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(f"ERROR: SPACCC preparation failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"SPACCC clinical gold: {summary['cases']} documents / {summary['gold_spans']} spans")
+    typer.echo(f"Manifest: {output / 'manifest.json'}")
+    typer.echo("Run: uv run redact-bench suite --config config/suite-spaccc-clinical.yaml")
+
+
+@app.command("prepare-e3c-clinical")
+def prepare_e3c_clinical_command(
+    source_dir: Path = typer.Option(
+        ROOT / "data/cache/e3c-source", "--source-dir",
+        help="Existing pinned E3C v2.0.0 checkout from prepare-e3c --download.",
+    ),
+) -> None:
+    """Import independently annotated Italian E3C clinical entities (no PII gold)."""
+    output = ROOT / "data/cache/e3c-it-clinical-gold-v1"
+    try:
+        summary = prepare_e3c_clinical(source_dir, output)
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(f"ERROR: E3C clinical preparation failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"E3C clinical gold: {summary['cases']} documents / {summary['gold_spans']} spans")
+    typer.echo(f"Manifest: {output / 'manifest.json'}")
+    typer.echo("Run: uv run redact-bench suite --config config/suite-e3c-clinical.yaml")
 
 
 @app.command("prepare-medical")
