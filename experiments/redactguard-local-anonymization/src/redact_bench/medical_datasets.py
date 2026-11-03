@@ -67,6 +67,16 @@ def _digest(blob: bytes) -> str:
 def _write(output: Path, rows: list[dict], manifest: dict) -> dict:
     if not rows:
         raise ValueError("No valid benchmark cases; refusing to create an empty dataset")
+    # Dataset identity includes selected case IDs, content AND gold annotations.
+    # A 10-case smoke run must never merge with a 120-case quality benchmark.
+    selection = json.dumps(
+        [(row["id"], _digest(row["text"].encode("utf-8")), row["entities"]) for row in rows],
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")
+    selection_sha = _digest(selection)
+    for row in rows:
+        row["gold_version"] += "-" + selection_sha[:12]
+    manifest = {**manifest, "selection_sha256": selection_sha}
     output.mkdir(parents=True, exist_ok=True)
     dest = output / "cases.jsonl"
     with dest.open("w", encoding="utf-8") as f:
