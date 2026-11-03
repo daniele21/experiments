@@ -6,28 +6,70 @@ source:
   contract_version: redactguard-detection-v2
   output_schema: minimal-pii-type-value-v1
   benchmark_profile_version: medical-gold-v1
+profiles_meta:
+  asq_phi:
+    task_type: pii_redaction
+  meddocan_phi:
+    task_type: pii_redaction
+  spaccc_clinical_ner:
+    task_type: clinical_ner
+  e3c_clinical_ner:
+    task_type: clinical_ner
+  clinical_ner:
+    task_type: clinical_ner
 profiles:
   asq_phi:
     name:
-      description: Person's full or abbreviated name in clinical search requests.
+      description: Person's full or abbreviated name in clinical search requests (patients, doctors, relatives). Include professional titles when attached (e.g. Dr.).
+      examples:
+        - Bob Williams
+        - Dr. Smith
+        - Julie M.
     geographic_location:
       description: Named location, clinic, hospital, healthcare facility or geographically identifying information in a patient query, matching ASQ-PHI HIPAA location labeling.
+      examples:
+        - St. Luke's Hospital
+        - Houston
+        - UCLA
     date:
-      description: Specific event/encounter/admission/birth date linked to a patient or their record; not generic years without identifying context.
+      description: Specific event/encounter/admission/birth date or relative temporal reference linked to a patient or their record (e.g., exact dates, 'last year').
+      examples:
+        - Jan 8th 2023
+        - 09/12/2022
+        - September 12, 2022
     medical_record_number:
-      description: Specific patient medical record number (MRN).
+      description: Specific patient medical record number or hospital chart ID (MRN). DO NOT classify as health_plan_beneficiary_number.
+      examples:
+        - MRN-10293
+        - VC-1029384
+        - SPH-12345
     health_plan_beneficiary_number:
-      description: Patient's health insurance or plan beneficiary number.
+      description: Patient's health insurance, medical coverage, or plan beneficiary code (e.g., policy numbers, HPN-, BC-, Medicare IDs). DO NOT classify as generic account_number or unique_identifier.
+      examples:
+        - HPN-456789
+        - BC-654321
+        - TX-456789
     phone_number:
       description: Patient or provider phone number.
+      examples:
+        - (555) 123-4567
     social_security_number:
       description: Social security number identifying a person.
+      examples:
+        - 000-12-3456
     email_address:
       description: Email identifying a person or their healthcare contact.
+      examples:
+        - patient@example.com
     unique_identifier:
-      description: Unique identifier of a patient or health record.
+      description: Unique identifier of a patient or health record when not an explicit MRN or health plan policy.
+      examples:
+        - ID-908123
+        - UID-44512
     account_number:
-      description: Account number linked to the patient's record.
+      description: Financial, billing, or hospital account number linked to billing/payment. DO NOT classify health insurance policy or MRN numbers here.
+      examples:
+        - ACC-987654
     fax_number:
       description: Fax number in the clinical request.
     certificate_license_number:
@@ -51,12 +93,76 @@ profiles:
       description: Occupation or profession when annotated in the clinical case.
     med_other:
       description: Patient gender, family relationships, and other health-record-sensitive personal attributes according to MEDDOCAN guidelines.
+  spaccc_clinical_ner:
+    clinical_disease:
+      description: Identify every clinically annotated disease/disorder mention in Spanish clinical narratives (pathologies, diagnoses, syndromes, malformations).
+      examples:
+        - diabetes mellitus
+        - adenocarcinoma gástrico
+        - hidronefrosis
+    clinical_symptom:
+      description: Identify every symptom, clinical sign, physical complaint, or finding in Spanish clinical narratives (e.g. dolor, fiebre, astenia, masa).
+      examples:
+        - dolor lumbar
+        - fiebre
+        - astenia
+    clinical_procedure:
+      description: Identify every medical examination, diagnostic, surgical, or therapeutic procedure described in the clinical text.
+      examples:
+        - exploración física
+        - TAC helicoidal
+        - adrenalectomía
+    clinical_chemical:
+      description: Identify chemical or pharmacological substance mentions under the SPACCC CHEMICAL taxonomy (drugs, active substances, metabolites).
+      examples:
+        - paracetamol
+        - amoxicilina
+        - cortisol
+    clinical_protein:
+      description: Identify protein mentions under the SPACCC PROTEIN taxonomy (proteins, enzymes, antibodies, markers).
+      examples:
+        - hemoglobina
+        - albúmina
+        - vimentina
+  e3c_clinical_ner:
+    e3c_clinical_entity:
+      description: Identify E3C/UMLS clinical disorders including pathologies and symptoms, even without identifiable patients. Do not infer a more granular diagnosis from the entity alone.
+      examples:
+        - diabete mellito
+        - cefalea
+    e3c_body_part:
+      description: Identify mentions of parts of the human body annotated by E3C BODYPART.
+      examples:
+        - rene
+        - polmone
+    e3c_measurement:
+      description: Identify E3C numeric or textual RML results and measurements as written, without generating values.
+      examples:
+        - 120/80 mmHg
+        - 38 °C
+    e3c_actor:
+      description: Identify all E3C ACTOR mentions referring to a patient, clinical professional, another human or animal, including generic patient references. ACTOR is not an identity/PHI judgment.
+      examples:
+        - paziente
+        - medico
   clinical_ner:
     clinical_drug:
       description: EVERY mention of a drug or medicinal product, including generic drug names in pharmaceutical leaflets. This is clinical NER, NOT a personal data test.
+      examples:
+        - amoxicillina
+        - ibuprofene
     clinical_disease:
       description: EVERY mention of a disease or diagnosed medical condition, whether patient-linked or generic. Clinical NER only.
+      examples:
+        - polmonite
+        - asma
     clinical_symptom:
       description: EVERY mention of a symptom or clinical sign, including generic descriptions. Clinical NER only.
+      examples:
+        - tosse
+        - dispnea
     clinical_anatomical_part:
       description: EVERY mention of a human anatomical part. Clinical NER only.
+      examples:
+        - fegato
+        - cuore

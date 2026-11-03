@@ -79,6 +79,7 @@ export default function CapabilityBenchmark({onOpenRun}){
      {selected==="e3c"&&<p><strong>E3C Italian – Clinical Context</strong>: i 50 testi originali non hanno gold PII completo e restano solo contesto diagnostico, senza punteggi. <strong>E3C Italian – Synthetic PII</strong>: recall e leakage sulle sole 300 entità inserite. Precision, F1 e over-redaction non sono misurabili senza revisione delle altre entità cliniche/personali.</p>}
      {(selected==="asq_phi"||selected==="meddocan")&&<p>Benchmark esterno con gold PHI e <strong>profilo di estrazione specifico per la tassonomia del dataset</strong>. Non equivale alle prestazioni del profilo Healthcare di produzione. I punteggi non sono confrontabili direttamente con altri dataset.</p>}
      {selected==="pharmaer"&&<p><strong>Clinical NER, NON anonimizzazione:</strong> le label indicano farmaci, patologie, sintomi e anatomia anche in foglietti illustrativi generici. Recall, precision e F1 riguardano il riconoscimento di termini clinici, non la protezione di dati personali. Non confrontare o aggregare con PHI.</p>}
+     {(selected==="spaccc_clinical"||selected==="e3c_clinical")&&<p><strong>Clinical NER — gold standard pubblico.</strong> Etichette di entità mediche, non decisioni di anonimizzazione. SPACCC contiene sovrapposizioni multicategoria; E3C distingue ACTOR da identità personale e non interpreta EVENT come terapia. Lo scoring standard accetta span sovrapposti e non equivale alle leaderboard ufficiali exact-span.</p>}
    </div>
    {active&&<button className="rb2-cap-open" type="button" onClick={()=>onOpenRun(active.runKey)}>Apri ultima suite →</button>}
   </div>
@@ -99,7 +100,7 @@ export default function CapabilityBenchmark({onOpenRun}){
         title="Confronto tra run: versione dataset, schema, configurazione e fingerprint dei casi">
         {confidenceLabel(m.comparability)}
       </span>
-      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>{selected==="pharmaer"?"Recall entità cliniche":m.goldScope==="injected_only"?"Recall PII inseriti":"Recall sui casi positivi"}</span></div>
+      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>{["pharmaer","spaccc_clinical","e3c_clinical"].includes(selected)?"Recall entità cliniche":m.goldScope==="injected_only"?"Recall PII inseriti":"Recall sui casi positivi"}</span></div>
       <div className="rb2-cap-meter" role="progressbar" aria-label={`Recall positivo ${m.modelId}`} aria-valuenow={positiveBar(m.positiveRecall)} aria-valuemin={0} aria-valuemax={100}><span style={{width:`${positiveBar(m.positiveRecall)}%`}}/></div>
       {m.goldScope==="injected_only"?
        <StatLine label="Precision / falsi positivi" value="Non valutabili"/>:
@@ -113,7 +114,7 @@ export default function CapabilityBenchmark({onOpenRun}){
         onClick={()=>onOpenRun(m.runKey,m.modelId)} aria-label={`Apri evidenze di ${shortModel(m.modelId)}`}>Esplora i risultati →</button>
      </article>)}
    </div>
-   <div className="rb2-cap-breakdowns"><div className="rb2-cap-breakdowns__heading"><h3>Quali PII risultano difficili?</h3><span>Recall per categoria · tipi con gold positivo</span></div>
+   <div className="rb2-cap-breakdowns"><div className="rb2-cap-breakdowns__heading"><h3>{["pharmaer","spaccc_clinical","e3c_clinical"].includes(selected)?"Quali entità cliniche risultano difficili?":"Quali PII risultano difficili?"}</h3><span>Recall per categoria · tipi con gold positivo</span></div>
      <div className="rb2-cap-breakdown-grid">
      {active.models.map(m=><div key={m.modelId} className="rb2-cap-breakdown"><strong>{shortModel(m.modelId)}</strong>
       {m.types.length? m.types.map(t=><div key={t.type} className="rb2-cap-type"><div><span>{t.type.replaceAll("_"," ")}</span><span>{fmt(t.recall)} · {t.gold} gold</span></div><div className="rb2-cap-meter"><span style={{width:`${positiveBar(t.recall)}%`}}/></div></div>):

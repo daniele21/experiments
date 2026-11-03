@@ -78,6 +78,7 @@ export function documentEvidence(detail, caseId, models = modelsIn(detail)) {
       fp: status === "ok" && doc?.gold_scope !== "injected_only" ? choose(doc?.system_fp, doc?.fp, modelRaw?.overRedactedCount) : null,
       error: modelRaw?.error ?? doc?.representative_error ?? null,
       raw: modelRaw,
+      docMetrics: doc,
     };
   });
   const primary = models.map(x => detail?.metrics?.[x]?.by_document?.[caseId]).find(Boolean);
@@ -159,4 +160,185 @@ export function compareInsight(a, b, focus) {
   if(a.zeroRate===b.zeroRate) return "Stesso numero di documenti senza leakage.";
   const best = a.zeroRate > b.zeroRate ? a : b;
   return `${shortModel(best.model)} lascia meno documenti con PII esposte.`;
+}
+
+export const TYPE_NAMES = {
+  account_number: "Numero conto",
+  address: "Indirizzo",
+  age: "Età",
+  chemical: "Sostanza / Farmaco",
+  clinical_chemical: "Sostanza / Farmaco",
+  clinical_disease: "Patologia / Malattia",
+  clinical_procedure: "Procedura",
+  clinical_protein: "Proteina",
+  clinical_symptom: "Sintomo",
+  contact: "Contatto",
+  credit_card: "Carta di credito",
+  date: "Data",
+  disease: "Patologia",
+  doctor: "Medico",
+  driver_license: "Patente",
+  email: "Email",
+  email_address: "Email",
+  fax_number: "Fax",
+  fiscal_code: "Codice fiscale",
+  geographic_location: "Luogo geografico",
+  health_plan_beneficiary_number: "Tessera / Polizza",
+  hospital: "Ospedale",
+  iban: "IBAN",
+  id_number: "Documento ID",
+  ip_address: "Indirizzo IP",
+  location: "Luogo",
+  medical_record_number: "Cartella clinica",
+  name: "Nome",
+  organization: "Organizzazione",
+  passport: "Passaporto",
+  patient: "Paziente",
+  person: "Nome",
+  phone: "Telefono",
+  phone_number: "Telefono",
+  private_address: "Indirizzo",
+  private_date: "Data",
+  private_email: "Email",
+  private_person: "Nome",
+  private_phone: "Telefono",
+  procedure: "Procedura",
+  protein: "Proteina",
+  social_security_number: "Codice fiscale / SSN",
+  symptom: "Sintomo",
+  unique_identifier: "Identificativo univoco",
+  vat_number: "Partita IVA",
+};
+
+export function piiTypeLabel(type) {
+  if (!type) return "PII";
+  const key = String(type).trim().toLowerCase();
+  if (TYPE_NAMES[key]) return TYPE_NAMES[key];
+  return String(type)
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+export function docPiiSummary(doc, models = []) {
+  const activeModels = (models.length ? models : (doc?.metrics ?? []).map(m => m.model));
+  const recognizedByType = new Map();
+  const missedByType = new Map();
+  const allGoldTypes = new Set();
+  const searchTokens = new Set();
+
+  if (doc?.caseId) searchTokens.add(String(doc.caseId).toLowerCase());
+  if (doc?.family) searchTokens.add(String(doc.family).toLowerCase());
+
+  for (const g of (doc?.gold ?? [])) {
+    if (g.pii_type) {
+      allGoldTypes.add(g.pii_type);
+      searchTokens.add(String(g.pii_type).toLowerCase());
+      searchTokens.add(piiTypeLabel(g.pii_type).toLowerCase());
+    }
+    if (g.value && typeof g.value === "string") {
+      searchTokens.add(g.value.toLowerCase());
+    }
+  }
+
+  const modelMetrics = activeModels.map(name =>
+    (doc?.metrics ?? []).find(m => m.model === name) ?? null
+  ).filter(Boolean);
+
+  for (const m of modelMetrics) {
+    if (m.status !== "ok") continue;
+
+    let identified = m.raw?.identified;
+    let missed = m.raw?.missed;
+
+    if (!identified && doc?.gold?.length && missed) {
+      const missedKeys = new Set(missed.map(spanKey));
+      identified = doc.gold.filter(g => !missedKeys.has(spanKey(g)));
+    }
+
+    if (identified) {
+      for (const s of identified) {
+        if (!s.pii_type) continue;
+        if (!recognizedByType.has(s.pii_type)) recognizedByType.set(s.pii_type, new Set());
+        recognizedByType.get(s.pii_type).add(m.model);
+        searchTokens.add(String(s.pii_type).toLowerCase());
+        searchTokens.add(piiTypeLabel(s.pii_type).toLowerCase());
+        if (s.value && typeof s.value === "string") searchTokens.add(s.value.toLowerCase());
+      }
+    }
+
+    if (missed) {
+      for (const s of missed) {
+        if (!s.pii_type) continue;
+        if (!missedByType.has(s.pii_type)) missedByType.set(s.pii_type, new Set());
+        missedByType.get(s.pii_type).add(m.model);
+        searchTokens.add(String(s.pii_type).toLowerCase());
+        searchTokens.add(piiTypeLabel(s.pii_type).toLowerCase());
+        if (s.value && typeof s.value === "string") searchTokens.add(s.value.toLowerCase());
+      }
+    }
+
+    const byType = m.docMetrics?.by_type ?? {};
+    for (const [t, stats] of Object.entries(byType)) {
+      allGoldTypes.add(t);
+      searchTokens.add(String(t).toLowerCase());
+      searchTokens.add(piiTypeLabel(t).toLowerCase());
+      if ((stats?.tp ?? 0) > 0) {
+        if (!recognizedByType.has(t)) recognizedByType.set(t, new Set());
+        recognizedByType.get(t).add(m.model);
+      }
+      if ((stats?.fn ?? 0) > 0) {
+        if (!missedByType.has(t)) missedByType.set(t, new Set());
+        missedByType.get(t).add(m.model);
+      }
+    }
+
+    if (recognizedByType.size === 0 && (m.tp ?? 0) > 0 && (m.fn ?? 0) === 0 && doc?.gold?.length) {
+      for (const g of doc.gold) {
+        if (!g.pii_type) continue;
+        if (!recognizedByType.has(g.pii_type)) recognizedByType.set(g.pii_type, new Set());
+        recognizedByType.get(g.pii_type).add(m.model);
+      }
+    }
+  }
+
+  const validModels = modelMetrics.filter(m => m.status === "ok");
+  const isModel100 = (m) => {
+    if (m.status !== "ok") return false;
+    if (isNumber(m.fn) && m.fn > 0) return false;
+    if (isNumber(m.leakage) && m.leakage > 0) return false;
+    if (isNumber(m.recall) && m.recall < 1) return false;
+    if (m.raw?.missed?.length > 0) return false;
+    return (m.recall === 1 || (m.tp ?? 0) > 0 || (isNumber(m.fn) && m.fn === 0) || (m.raw?.missed && m.raw.missed.length === 0));
+  };
+  const hasGold = (doc?.goldCount ?? 0) > 0 || (doc?.gold?.length ?? 0) > 0 || allGoldTypes.size > 0;
+  const isAllRecognized = hasGold && validModels.length > 0 && validModels.every(isModel100);
+  const anyTp = modelMetrics.some(m =>
+    (m.tp ?? 0) > 0 ||
+    (m.raw?.identifiedCount ?? 0) > 0 ||
+    (isNumber(m.recall) && m.recall > 0)
+  );
+  const anyFn = modelMetrics.some(m =>
+    (m.fn ?? 0) > 0 ||
+    (m.raw?.missedCount ?? 0) > 0 ||
+    (m.raw?.missed?.length ?? 0) > 0 ||
+    (isNumber(m.leakage) && m.leakage > 0) ||
+    (isNumber(m.recall) && m.recall < 1)
+  );
+  const isZeroGold = !hasGold;
+  const hasRecognized = recognizedByType.size > 0 || anyTp;
+  const hasMissed = missedByType.size > 0 || anyFn;
+
+  return {
+    recognizedTypes: [...recognizedByType.keys()],
+    recognizedByType,
+    missedTypes: [...missedByType.keys()],
+    missedByType,
+    allGoldTypes: [...allGoldTypes],
+    hasRecognized,
+    hasMissed,
+    isAllRecognized,
+    isZeroGold,
+    searchString: [...searchTokens].join(" "),
+  };
 }

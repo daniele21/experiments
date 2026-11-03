@@ -2,7 +2,7 @@ from redact_bench.preflight import PREFLIGHT_CASE, _benchmark_probe
 
 
 def test_medical_preflight_uses_a_valid_profile_and_gold():
-    for profile in ("asq_phi", "meddocan_phi", "clinical_ner"):
+    for profile in ("asq_phi", "meddocan_phi", "clinical_ner", "spaccc_clinical_ner", "e3c_clinical_ner"):
         probe = _benchmark_probe(profile)
         assert probe.profile == profile
         assert probe.case_id == "__preflight__"

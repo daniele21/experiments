@@ -1,0 +1,21 @@
+# Public CLINICAL NER only. No gold identifying patient privacy/redaction decisions.
+suite:
+  dataset: data/cache/spaccc-clinical-gold-v1/cases.jsonl
+  profiles: config/profiles-medical-gold.yaml
+  results_dir: results
+  korgis_base_url: http://127.0.0.1:12435/v1
+  models:
+    - qwen3.5-4b-q4km
+    - qwen3.5-9b-q4km
+  ensure_models: false
+  runtime_strategy: restart_per_model
+  korgis_startup_timeout_seconds: 600
+  inference_cache_max_entries: 0
+  quality_only: true
+  quality_warmups: 0
+  benchmark_timeout_seconds: 360
+  chunk_max_chars: 2000
+  chunk_overlap_chars: 200
+  max_output_tokens: 4096
+  adaptive_subdivision: true
+  cases_limit: 50

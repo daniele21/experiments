@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { documentEvidence, modelsIn, shortModel, spansForModel, spanKey, spanMatchesText, ratioText } from "./evidence";
+import { documentEvidence, modelsIn, shortModel, spansForModel, spanKey, spanMatchesText, ratioText, piiTypeLabel } from "./evidence";
 import "./workspace.css";
 import StructuredDocument from "./StructuredDocument";
 import { emptyRevealState, isRevealed, setAllRevealed, toggleSpanReveal } from "./revealState";
 
 const WINDOW = 4800;
-const TYPE_NAMES = {private_person:"Nome",private_email:"Email",private_phone:"Telefono",private_address:"Indirizzo",private_date:"Data",account_number:"Identificativo"};
-const TYPE_LABEL = x => TYPE_NAMES[x] ?? String(x??"PII").replaceAll("_"," ");
+const TYPE_LABEL = piiTypeLabel;
 function clipped(v){return Math.max(0,v);}
 function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,windowStart,scrollRef,onScroll}){
  const result=useMemo(()=>spansForModel(doc,model),[doc,model]);

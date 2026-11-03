@@ -8,6 +8,8 @@ export const CAPABILITY_DEFS = [
   { id:"asq_phi", title:"ASQ-PHI · Clinical queries", subtitle:"PHI HIPAA · gold completo · negativi difficili · EN", rank:5 },
   { id:"meddocan", title:"MEDDOCAN · Spanish PHI", subtitle:"PHI su documenti clinici · gold BRAT · ES", rank:6 },
   { id:"pharmaer", title:"PharmaER.IT · Clinical NER", subtitle:"Entità mediche, NON PII · gold test · IT", rank:7 },
+  { id:"spaccc_clinical", title:"SPACCC · Clinical NER", subtitle:"200 documenti spagnoli · malattie, sintomi, procedure, proteine, sostanze chimiche · gold", rank:8 },
+  { id:"e3c_clinical", title:"E3C · Clinical NER IT", subtitle:"50 casi italiani · entità cliniche, attori, anatomia, misurazioni · gold", rank:9 },
 ];
 
 export function capabilityFromDataset(datasetId) {
@@ -16,6 +18,8 @@ export function capabilityFromDataset(datasetId) {
   if(id.includes("asq_phi_hipaa_13")) return "asq_phi";
   if(id.includes("meddocan_test_brat")) return "meddocan";
   if(id.includes("pharmaer_it_gold_test")) return "pharmaer";
+  if(id.includes("spaccc_es_clinical_gold")) return "spaccc_clinical";
+  if(id.includes("e3c_it_clinical_gold")) return "e3c_clinical";
   if(id.includes("healthcare_synthetic") || id.includes("hc-synthetic")) return "healthcare";
   if(id.includes("ambiguous_synthetic") || id.includes("amb-synthetic")) return "ambiguous";
   if(id.includes("challenge")) return "challenge";

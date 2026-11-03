@@ -156,6 +156,18 @@ The E3C result is a distinct dataset in the model × dataset matrix, with an
 explicit synthetic-gold warning. Details and correct interpretation:
 [E3C_BENCHMARK.md](E3C_BENCHMARK.md).
 
+## Public clinical-entity gold benchmark (200 ES + 50 IT)
+
+Use **already annotated** medical entities without inventing personal-health
+redaction labels. SPACCC-Spanish-NER contributes 200 test documents (five
+clinical classes); E3C Layer 1 contributes 50 Italian test narratives with
+XML clinical entities, actors, anatomy and measurements. Test data stays
+ignored locally and uses isolated Korgis profiles. **This is clinical NER,
+not an anonymization or patient-linked privacy gold benchmark.**
+
+See [PUBLIC_CLINICAL_GOLD.md](PUBLIC_CLINICAL_GOLD.md) for source downloads,
+local commands, offset validation, split restrictions and scoring caveats.
+
 ## Public medical gold-standard benchmarks (opt-in)
 
 ASQ-PHI (English PHI), MEDDOCAN (Spanish PHI) and PharmaER.IT (Italian

@@ -38,3 +38,18 @@ def test_unresolved_model_value_remains_in_resolution_diagnostics():
     assert len(result.findings) == 1
     assert result.resolved_items == 1
     assert result.unresolved_items == 1
+
+
+def test_matching_normalizes_apostrophes_and_dashes():
+    text = "Trattamento presso l’Ospedale San-Raffaele con St. Peter’s protocol."
+    payload = {
+        "pii_fields": [
+            {"pii_type": "organization", "value": "l'Ospedale San-Raffaele"},
+            {"pii_type": "organization", "value": "St. Peter's protocol"},
+        ]
+    }
+    findings = findings_from_model_payload(text, payload)
+    assert len(findings) == 2
+    assert findings[0].value == "l’Ospedale San-Raffaele"
+    assert findings[1].value == "St. Peter’s protocol"
+
