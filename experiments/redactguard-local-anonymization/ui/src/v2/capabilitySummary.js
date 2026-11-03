@@ -5,11 +5,17 @@ export const CAPABILITY_DEFS = [
   { id:"healthcare", title:"Healthcare", subtitle:"Diagnosi, trattamenti, esami e dati clinici", rank:2 },
   { id:"ambiguous", title:"PII ambigue", subtitle:"Dipendenza dal contesto in quattro settori", rank:3 },
   { id:"e3c", title:"E3C · Synthetic PII", subtitle:"50 casi clinici italiani · 300 PII inseriti · recall e leakage mirati", rank:4 },
+  { id:"asq_phi", title:"ASQ-PHI · Clinical queries", subtitle:"PHI HIPAA · gold completo · negativi difficili · EN", rank:5 },
+  { id:"meddocan", title:"MEDDOCAN · Spanish PHI", subtitle:"PHI su documenti clinici · gold BRAT · ES", rank:6 },
+  { id:"pharmaer", title:"PharmaER.IT · Clinical NER", subtitle:"Entità mediche, NON PII · gold test · IT", rank:7 },
 ];
 
 export function capabilityFromDataset(datasetId) {
   const id=String(datasetId??"").toLowerCase();
   if(id.includes("e3c_it_v2_injected_pii")) return "e3c";
+  if(id.includes("asq_phi_hipaa_13")) return "asq_phi";
+  if(id.includes("meddocan_test_brat")) return "meddocan";
+  if(id.includes("pharmaer_it_gold_test")) return "pharmaer";
   if(id.includes("healthcare_synthetic") || id.includes("hc-synthetic")) return "healthcare";
   if(id.includes("ambiguous_synthetic") || id.includes("amb-synthetic")) return "ambiguous";
   if(id.includes("challenge")) return "challenge";

@@ -156,6 +156,26 @@ The E3C result is a distinct dataset in the model × dataset matrix, with an
 explicit synthetic-gold warning. Details and correct interpretation:
 [E3C_BENCHMARK.md](E3C_BENCHMARK.md).
 
+## Public medical gold-standard benchmarks (opt-in)
+
+ASQ-PHI (English PHI), MEDDOCAN (Spanish PHI) and PharmaER.IT (Italian
+clinical NER, **not** PII) now have strict offline importers, Korgis suite
+presets and separate model × dataset categories. These experiments use
+**dataset-specific prompt contracts** rather than the unchanged production
+Healthcare profile. Corpora remain under ignored local `data/cache`.
+
+Quick start:
+
+```bash
+uv run redact-bench prepare-medical --dataset asq-phi --download
+uv run redact-bench suite --config config/suite-asq-phi.yaml
+uv run redact-bench ui
+```
+
+For medical dataset sources, license restrictions, PHI vs clinical taxonomy,
+valid scoring, MEDDOCAN and PharmaER test commands, see
+[MEDICAL_GOLD_BENCHMARKS.md](MEDICAL_GOLD_BENCHMARKS.md).
+
 ## Managed benchmark suite
 
 For normal use, **do not start `local-llm` from this experiment environment**. The `local-llm` executable belongs to the Korgis project, which has its own Python environment.

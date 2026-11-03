@@ -77,6 +77,8 @@ export default function CapabilityBenchmark({onOpenRun}){
   <div className="rb2-cap-context">
    <div><span className="rb2-kicker">CAPACITÀ SELEZIONATA</span><h2>{definition?.title}</h2><p>{definition?.subtitle}</p>
      {selected==="e3c"&&<p><strong>E3C Italian – Clinical Context</strong>: i 50 testi originali non hanno gold PII completo e restano solo contesto diagnostico, senza punteggi. <strong>E3C Italian – Synthetic PII</strong>: recall e leakage sulle sole 300 entità inserite. Precision, F1 e over-redaction non sono misurabili senza revisione delle altre entità cliniche/personali.</p>}
+     {(selected==="asq_phi"||selected==="meddocan")&&<p>Benchmark esterno con gold PHI e <strong>profilo di estrazione specifico per la tassonomia del dataset</strong>. Non equivale alle prestazioni del profilo Healthcare di produzione. I punteggi non sono confrontabili direttamente con altri dataset.</p>}
+     {selected==="pharmaer"&&<p><strong>Clinical NER, NON anonimizzazione:</strong> le label indicano farmaci, patologie, sintomi e anatomia anche in foglietti illustrativi generici. Recall, precision e F1 riguardano il riconoscimento di termini clinici, non la protezione di dati personali. Non confrontare o aggregare con PHI.</p>}
    </div>
    {active&&<button className="rb2-cap-open" type="button" onClick={()=>onOpenRun(active.runKey)}>Apri ultima suite →</button>}
   </div>
@@ -97,7 +99,7 @@ export default function CapabilityBenchmark({onOpenRun}){
         title="Confronto tra run: versione dataset, schema, configurazione e fingerprint dei casi">
         {confidenceLabel(m.comparability)}
       </span>
-      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>{m.goldScope==="injected_only"?"Recall PII inseriti":"Recall sui casi positivi"}</span></div>
+      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>{selected==="pharmaer"?"Recall entità cliniche":m.goldScope==="injected_only"?"Recall PII inseriti":"Recall sui casi positivi"}</span></div>
       <div className="rb2-cap-meter" role="progressbar" aria-label={`Recall positivo ${m.modelId}`} aria-valuenow={positiveBar(m.positiveRecall)} aria-valuemin={0} aria-valuemax={100}><span style={{width:`${positiveBar(m.positiveRecall)}%`}}/></div>
       {m.goldScope==="injected_only"?
        <StatLine label="Precision / falsi positivi" value="Non valutabili"/>:

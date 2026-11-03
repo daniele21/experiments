@@ -1,0 +1,20 @@
+# pharmaer is a separate benchmark and MUST NOT be averaged with other label spaces.
+suite:
+  dataset: data/cache/pharmaer-it-gold-test-v03/cases.jsonl
+  profiles: config/profiles-medical-gold.yaml
+  results_dir: results
+  korgis_base_url: http://127.0.0.1:12435/v1
+  models:
+    - qwen3.5-4b-q4km
+    - qwen3.5-9b-q4km
+  ensure_models: false
+  runtime_strategy: restart_per_model
+  korgis_startup_timeout_seconds: 600
+  inference_cache_max_entries: 0
+  quality_only: true
+  quality_warmups: 0
+  benchmark_timeout_seconds: 360
+  chunk_max_chars: 1800
+  chunk_overlap_chars: 256
+  max_output_tokens: 4096
+  adaptive_subdivision: true

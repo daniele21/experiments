@@ -102,7 +102,7 @@ def run_compare(
         inference_settings[model] = dict(provider.execution_settings)
 
         if preflight:
-            model_preflight = run_model_preflight(provider)
+            model_preflight = run_model_preflight(provider, profile=cases[0].profile if cases else None)
             preflights[model] = model_preflight
             if not model_preflight["passed"]:
                 summaries[model] = contract_failed_summary(
