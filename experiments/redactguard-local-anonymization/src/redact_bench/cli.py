@@ -117,11 +117,11 @@ def prepare_e3c_command(
 @app.command("prepare-spaccc")
 def prepare_spaccc_command(
     annotations: Path = typer.Option(
-        ROOT / "data/cache/medical-sources/spaccc/annotations/test-00000-of-00001.parquet",
+        ROOT / "data/cache/medical-sources/spaccc/annotations/data/test-00000-of-00001.parquet",
         "--annotations", help="Official IEETA SPACCC-Spanish-NER TEST-only Parquet.",
     ),
     documents: Path = typer.Option(
-        ROOT / "data/cache/medical-sources/spaccc/documents/train-00000-of-00001.parquet",
+        ROOT / "data/cache/medical-sources/spaccc/documents/data/train-00000-of-00001.parquet",
         "--documents", help="IEETA SPACCC-documents all original texts (train-named repository split).",
     ),
     limit: int = typer.Option(200, "--limit", min=1),
