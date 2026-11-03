@@ -32,11 +32,31 @@ PREFLIGHT_CASE = Case(
 )
 
 
-def run_model_preflight(provider: KorgisRedactProvider) -> dict:
+def _benchmark_probe(profile: str | None) -> Case:
+    """Tiny synthetic smoke cases using the selected dataset label contract."""
+    samples = {
+        "asq_phi": ("Anna Rossi attended Westside Clinic.", "Anna Rossi", "name"),
+        "meddocan_phi": ("La paciente Ana fue examinada.", "Ana", "med_name"),
+        "clinical_ner": ("Metformina contro il diabete.", "Metformina", "clinical_drug"),
+    }
+    if profile not in samples:
+        return PREFLIGHT_CASE
+    text, value, kind = samples[profile]
+    start = text.index(value)
+    return Case(
+        case_id="__preflight__", profile=profile, text=text,
+        gold=(Span(start, start + len(value), kind, value),), tags=("preflight",),
+    )
+
+
+def run_model_preflight(
+    provider: KorgisRedactProvider, *, profile: str | None = None,
+) -> dict:
     """Verify the model/runtime can satisfy the inference contract before scoring."""
-    result = provider.evaluate(PREFLIGHT_CASE)
+    probe = _benchmark_probe(profile)
+    result = provider.evaluate(probe)
     resolved_values = {finding.value for finding in result.findings}
-    expected_values = {span.value for span in PREFLIGHT_CASE.gold}
+    expected_values = {span.value for span in probe.gold}
     return {
         "model": provider.model,
         "passed": result.valid,
@@ -52,7 +72,8 @@ def run_model_preflight(provider: KorgisRedactProvider) -> dict:
         "resolved_item_count": result.resolved_item_count,
         "unresolved_item_count": result.unresolved_item_count,
         "smoke_detection_pass": bool(resolved_values & expected_values),
-        "expected": [asdict(span) for span in PREFLIGHT_CASE.gold],
+        "profile": probe.profile,
+        "expected": [asdict(span) for span in probe.gold],
     }
 
 
