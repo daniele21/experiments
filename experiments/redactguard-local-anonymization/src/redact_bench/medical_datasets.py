@@ -152,8 +152,8 @@ def _asq_entities(query: str, tags: list[dict]) -> list[dict]:
     return ordered
 
 
-def prepare_asq(source: Path, output: Path, *, positives: int = 96,
-                negatives: int = 24, strict_size: bool = True) -> dict:
+def prepare_asq(source: Path, output: Path, *, positives: int = 160,
+                negatives: int = 40, strict_size: bool = True) -> dict:
     if positives < 0 or negatives < 0 or positives + negatives == 0:
         raise ValueError("Select at least one case and nonnegative quotas")
     blob = source.read_bytes()
