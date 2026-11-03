@@ -75,7 +75,9 @@ export default function CapabilityBenchmark({onOpenRun}){
    })}
   </div>
   <div className="rb2-cap-context">
-   <div><span className="rb2-kicker">CAPACITÀ SELEZIONATA</span><h2>{definition?.title}</h2><p>{definition?.subtitle}</p></div>
+   <div><span className="rb2-kicker">CAPACITÀ SELEZIONATA</span><h2>{definition?.title}</h2><p>{definition?.subtitle}</p>
+     {selected==="e3c"&&<p><strong>E3C Italian – Clinical Context</strong>: i 50 testi originali non hanno gold PII completo e restano solo contesto diagnostico, senza punteggi. <strong>E3C Italian – Synthetic PII</strong>: recall e leakage sulle sole 300 entità inserite. Precision, F1 e over-redaction non sono misurabili senza revisione delle altre entità cliniche/personali.</p>}
+   </div>
    {active&&<button className="rb2-cap-open" type="button" onClick={()=>onOpenRun(active.runKey)}>Apri ultima suite →</button>}
   </div>
   {!active ? <div className="rb2-cap-empty"><h3>Ancora nessun benchmark completato</h3>
@@ -95,12 +97,16 @@ export default function CapabilityBenchmark({onOpenRun}){
         title="Confronto tra run: versione dataset, schema, configurazione e fingerprint dei casi">
         {confidenceLabel(m.comparability)}
       </span>
-      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>Recall sui casi positivi</span></div>
+      <div className="rb2-cap-hero"><strong>{fmt(m.positiveRecall)}</strong><span>{m.goldScope==="injected_only"?"Recall PII inseriti":"Recall sui casi positivi"}</span></div>
       <div className="rb2-cap-meter" role="progressbar" aria-label={`Recall positivo ${m.modelId}`} aria-valuenow={positiveBar(m.positiveRecall)} aria-valuemin={0} aria-valuemax={100}><span style={{width:`${positiveBar(m.positiveRecall)}%`}}/></div>
-      <StatLine label="Negativi con falsi positivi" value={fmt(m.negativeFalsePositiveRate)}/>
+      {m.goldScope==="injected_only"?
+       <StatLine label="Precision / falsi positivi" value="Non valutabili"/>:
+       <StatLine label="Negativi con falsi positivi" value={fmt(m.negativeFalsePositiveRate)}/>}
       <StatLine label="Negativi validi" value={`${m.negativeValidated} / ${m.negativeCases}`}/>
       <StatLine label="Documenti validi" value={`${m.validDocuments} / ${m.documents}`}/>
-      <p className="rb2-cap-model-note">Per i negativi, più basso è meglio. I casi falliti non sono conteggiati come verifiche riuscite.</p>
+      <p className="rb2-cap-model-note">{m.goldScope==="injected_only"?
+       "Punteggio riferito soltanto ai PII sintetici. Gli altri rilevamenti non sono falsi positivi verificati.":
+       "Per i negativi, più basso è meglio. I casi falliti non sono conteggiati come verifiche riuscite."}</p>
       <button type="button" className="rb2-cap-open rb2-cap-card-action"
         onClick={()=>onOpenRun(m.runKey,m.modelId)} aria-label={`Apri evidenze di ${shortModel(m.modelId)}`}>Esplora i risultati →</button>
      </article>)}
@@ -113,7 +119,7 @@ export default function CapabilityBenchmark({onOpenRun}){
      </div>)}
      </div>
    </div>
-   <p className="rb2-cap-note">I risultati sono selezionati singolarmente per modello all'interno della stessa versione del dataset. Se la configurazione o gli input differiscono, i punteggi non costituiscono un confronto controllato. Gold non necessariamente revisionato; nessuna certificazione privacy. Le quattro capacità rimangono benchmark separati.</p>
+   <p className="rb2-cap-note">I risultati sono selezionati singolarmente per modello all'interno della stessa versione del dataset. Se la configurazione o gli input differiscono, i punteggi non costituiscono un confronto controllato. Gold non necessariamente revisionato; nessuna certificazione privacy. I dataset rimangono benchmark separati; E3C ha gold limitato ai PII sintetici.</p>
   </>}
   </>}
  </section>;
