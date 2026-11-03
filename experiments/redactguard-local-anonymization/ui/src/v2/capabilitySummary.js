@@ -4,10 +4,12 @@ export const CAPABILITY_DEFS = [
   { id:"challenge", title:"Semantic challenge", subtitle:"Categorie PII e casi contrastivi", rank:1 },
   { id:"healthcare", title:"Healthcare", subtitle:"Diagnosi, trattamenti, esami e dati clinici", rank:2 },
   { id:"ambiguous", title:"PII ambigue", subtitle:"Dipendenza dal contesto in quattro settori", rank:3 },
+  { id:"e3c", title:"E3C · Synthetic PII", subtitle:"50 casi clinici italiani · 300 PII inseriti · recall e leakage mirati", rank:4 },
 ];
 
 export function capabilityFromDataset(datasetId) {
   const id=String(datasetId??"").toLowerCase();
+  if(id.includes("e3c_it_v2_injected_pii")) return "e3c";
   if(id.includes("healthcare_synthetic") || id.includes("hc-synthetic")) return "healthcare";
   if(id.includes("ambiguous_synthetic") || id.includes("amb-synthetic")) return "ambiguous";
   if(id.includes("challenge")) return "challenge";
@@ -19,6 +21,7 @@ function scalar(...v){return v.find(x=>numeric(x)!==null)??null;}
 const safeRatio=(a,b)=>b>0 ? a/b : null;
 
 export function summarizeModelCapability(id,aggregate) {
+ const targeted=aggregate?.gold_scope==="injected_only";
  const byDoc=Object.values(aggregate?.by_document??{});
  const positive=byDoc.filter(d=>(d.gold_count??0)>0);
  const negative=byDoc.filter(d=>d.gold_count===0);
@@ -34,12 +37,12 @@ export function summarizeModelCapability(id,aggregate) {
    .sort((a,b)=>a.recall===null?1:b.recall===null?-1:a.recall-b.recall || a.type.localeCompare(b.type));
  const macro=aggregate?.macro_family??aggregate?.macro??{};
  return {
-  modelId:id, documents:byDoc.length,
+  modelId:id, goldScope:targeted?"injected_only":"complete", documents:byDoc.length,
   validDocuments:byDoc.filter(d=>d.quality_available!==false && (d.inference_failures??0)===0).length,
   positiveCases:positive.length, negativeCases:negative.length,
   positiveRecall:safeRatio(tp,totalGold),
   balancedRecall:scalar(macro.system_pii_recall,macro.pii_recall),
-  negativeFalsePositiveRate:safeRatio(negativeFpCases,validNeg.length),
+  negativeFalsePositiveRate:targeted?null:safeRatio(negativeFpCases,validNeg.length),
   negativeValidated:validNeg.length,
   negativeFalsePositiveCases:negativeFpCases,
   incompleteNegatives:negative.length-validNeg.length,
