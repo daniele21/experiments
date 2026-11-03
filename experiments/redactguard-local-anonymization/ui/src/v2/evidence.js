@@ -43,6 +43,7 @@ export function modelEvidence(detail, model) {
   const verified = latencyVerified(detail, model);
   return {
     model, qualityBase, total, valid,
+    goldScope: score.gold_scope ?? "complete",
     recall: choose(weighted.system_pii_recall, weighted.pii_recall),
     microRecall: choose(score.system_pii_recall, score.pii_recall),
     precision: choose(score.precision),
@@ -51,7 +52,7 @@ export function modelEvidence(detail, model) {
     zeroRate,
     zeroCount: isNumber(zeroRate) && total ? Math.round(zeroRate * total) : null,
     falseNegatives: choose(score.system_fn, score.fn),
-    falsePositives: choose(score.system_fp, score.fp),
+    falsePositives: score.gold_scope === "injected_only" ? null : choose(score.system_fp, score.fp),
     success: choose(score.inference_success_rate, score.valid_output_rate),
     cacheVerified: verified,
     p50: verified ? choose(latencyStats.latency_p50_ms) : null,
@@ -74,7 +75,7 @@ export function documentEvidence(detail, caseId, models = modelsIn(detail)) {
       leakage: status === "ok" ? choose(doc?.system_leakage_rate, doc?.leakage_rate, modelRaw?.leakage) : null,
       tp: status === "ok" ? choose(doc?.system_tp, doc?.tp, modelRaw?.identifiedCount) : null,
       fn: status === "ok" ? choose(doc?.system_fn, doc?.fn, modelRaw?.missedCount) : null,
-      fp: status === "ok" ? choose(doc?.system_fp, doc?.fp, modelRaw?.overRedactedCount) : null,
+      fp: status === "ok" && doc?.gold_scope !== "injected_only" ? choose(doc?.system_fp, doc?.fp, modelRaw?.overRedactedCount) : null,
       error: modelRaw?.error ?? doc?.representative_error ?? null,
       raw: modelRaw,
     };
