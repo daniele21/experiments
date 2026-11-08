@@ -125,12 +125,12 @@ export default function Playground() {
               {!models.length ? <option value="">No engines loaded</option> : null}
               <optgroup label="Local / Korgis">
                 {models.filter((model) => model.kind === "local").map((model) => (
-                  <option value={model.key} key={model.key}>{model.key}</option>
+                  <option value={model.key} key={model.key}>{model.name}</option>
                 ))}
               </optgroup>
               <optgroup label="Cloud / API">
                 {models.filter((model) => model.kind === "cloud").map((model) => (
-                  <option value={model.key} key={model.key}>{model.key}</option>
+                  <option value={model.key} key={model.key}>{model.name}</option>
                 ))}
               </optgroup>
             </select>
@@ -259,7 +259,7 @@ export default function Playground() {
           {result ? (
             <div className="pg-result">
               <div className="pg-result-details">
-                <span><strong>Engine</strong>{result.model_key}</span>
+                <span><strong>Engine</strong>{models.find((model) => model.key === result.model_key)?.name || result.model_key}</span>
                 <span><strong>Duration</strong>{timeLabel(result.latency_ms)}</span>
                 <span><strong>Seed</strong>{result.seed_effective ?? result.seed_requested ?? "—"}</span>
                 <span><strong>Output</strong>{result.generation?.size || "Default"}</span>
