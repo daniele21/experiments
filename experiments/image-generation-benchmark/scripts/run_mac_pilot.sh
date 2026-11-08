@@ -101,12 +101,12 @@ PY
 ) | tee "$OUTPUT/admission-probe.json"
 
 if [[ "${BENCHMARK_MODE:-preflight}" == preflight ]]; then
-  echo "PILOT_PREFLIGHT_OK: four-category run plan resolved; no image inference performed"
-  printf '{"status":"preflight_passed","profile":"pilot","expected_images":4,"inference_calls":0,"korgis_sha":"%s","experiments_sha":"%s"}\n' \
-    "$KORGIS_SOURCE_SHA" "$EXPERIMENTS_SOURCE_SHA" > "$OUTPUT/summary.json"
+  echo "IMAGEGEN_PREFLIGHT_OK profile=$BENCHMARK_PROFILE cases=$EXPECTED_IMAGES; no inference"
+  printf '{"status":"preflight_passed","profile":"%s","expected_images":%s,"inference_calls":0,"korgis_sha":"%s","experiments_sha":"%s"}\n' \
+    "$BENCHMARK_PROFILE" "$EXPECTED_IMAGES" "$KORGIS_SOURCE_SHA" "$EXPERIMENTS_SOURCE_SHA" > "$OUTPUT/summary.json"
   exit 0
 fi
-[[ "${BENCHMARK_MODE:-}" == pilot ]] || { echo "::error::Unsupported mode"; exit 2; }
+[[ "${BENCHMARK_MODE:-}" == canary || "${BENCHMARK_MODE:-}" == pilot ]] || { echo "::error::Unsupported mode"; exit 2; }
 
 # Fail closed if a port is already occupied; never terminate another server.
 python3 - <<'PY'
