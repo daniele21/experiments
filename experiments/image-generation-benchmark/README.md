@@ -14,7 +14,7 @@ Foundation implemented:
 - machine-readable expectations and negative constraints;
 - deterministic blind A/B assignment;
 - OCR-result text metrics;
-- smoke/budget profiles;
+- smoke/pilot/budget/robust profiles;
 - dedicated unit CI.
 
 The first real-model vertical slice compares GPT image and Gemini image on text rendering and
@@ -170,3 +170,32 @@ seed; seeds across providers are not claimed equivalent. The run manifest is
 written before inference and images use unique per-sample IDs. Resume/dedup
 across interrupted runs is **not yet implemented**, so each CLI invocation is
 a new immutable run; do not portray this as resumable.
+
+## First local Turbo benchmark on Apple Silicon
+
+Use `pilot` for an initial broad coverage check before the `robust` run.
+It deterministically samples one existing prompt from each category:
+text rendering, compositional adherence, photorealism and design. It makes
+**4 images for one model** at 1024×1024, 8 Turbo steps, CFG 1, seed 42.
+
+```bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile pilot --output-dir results --dry-run
+
+# Run only after Korgis itself responds to /v1/models:
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile pilot --output-dir results
+```
+
+The Mac self-hosted workflow in `daniele21/local-runner-infra` owns runtime
+startup, execution, cleanup and the bounded artifact archive. Do not treat
+the earlier native `sd-server` smoke as evidence that Korgis' public endpoint
+and Experiments' transport work end to end: that path needs its own test.
+`pilot` and `smoke` are **not** statistically solid quality comparisons.
+The profile `robust` generates 60 images/model and currently has no cross-run
+resume or deduplication; avoid launching it automatically on CI until local
+pilot validation and human review are complete. Preserve the full run directory
+(`manifest.json`, `evidence.csv`, artifacts) for downstream gallery/scoring.
