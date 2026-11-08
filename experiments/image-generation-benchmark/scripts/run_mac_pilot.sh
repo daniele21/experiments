@@ -12,6 +12,16 @@ EXPERIMENTS_REPO="$(cd "$EXPERIMENTS_ROOT/../.." && pwd)"
 KORGIS_ROOT="${KORGIS_ROOT:-$(cd "$EXPERIMENTS_REPO/.." && pwd)/korgis}"
 OUTPUT="${BENCHMARK_OUTPUT_DIR:-$EXPERIMENTS_ROOT/outputs/mac-pilot}"
 export BENCHMARK_OUTPUT_DIR="$OUTPUT"
+BENCHMARK_PROFILE="${BENCHMARK_PROFILE:-pilot}"
+case "$BENCHMARK_PROFILE" in
+  canary) EXPECTED_IMAGES=1 ;;
+  pilot) EXPECTED_IMAGES=4 ;;
+  *) echo "::error::Unsupported benchmark profile"; exit 2 ;;
+esac
+export BENCHMARK_PROFILE EXPECTED_IMAGES
+if [[ "${BENCHMARK_MODE:-preflight}" != preflight && "${BENCHMARK_MODE:-}" != "$BENCHMARK_PROFILE" ]]; then
+  echo "::error::Benchmark mode must match profile"; exit 2
+fi
 BIN="$HOME/.local-llm/tools/sdcpp-b43af40461cc64c89cac3b621019f8914f50dd9c/build/bin/sd-server"
 MODEL_ROOT="$HOME/.local-llm/models/qwen-image-2.1-turbo-gguf-q4km"
 PORT=18735
@@ -45,7 +55,7 @@ fi
   cd "$EXPERIMENTS_ROOT"
   uv run --frozen python scripts/run_benchmark.py \
     --models qwen-image-2.1-turbo-gguf-q4km \
-    --profile pilot --output-dir "$OUTPUT/results" --dry-run
+    --profile "$BENCHMARK_PROFILE" --output-dir "$OUTPUT/results" --dry-run
 ) | tee "$OUTPUT/dry-run.txt"
 
 # Real admission, without loading a model or accessing any cloud provider.
@@ -163,7 +173,7 @@ start_epoch="$(date +%s)"
   cd "$EXPERIMENTS_ROOT"
   uv run --frozen python scripts/run_benchmark.py \
     --models qwen-image-2.1-turbo-gguf-q4km \
-    --profile pilot --output-dir "$OUTPUT/results"
+    --profile "$BENCHMARK_PROFILE" --output-dir "$OUTPUT/results"
 )
 end_epoch="$(date +%s)"
 export BENCHMARK_ELAPSED_SECONDS="$((end_epoch-start_epoch))"
