@@ -253,3 +253,26 @@ an error; the browser does not start models or download weights.
 and do not publish it to the internet. The prototype does not implement
 remote authentication, multi-user isolation, cancellation or billing
 controls. It is a developer tool to try one prompt at a time.
+
+### Local Mac residency and swap telemetry
+
+The Experiments-owned `scripts/run_mac_pilot.sh` now runs a **read-only
+admission preflight** against the actual Korgis host-memory guard before any
+local generation. It saves `admission-probe.json` with the resident estimate,
+measured reclaimable RAM, swap already in use and the admission decision.
+A rejection prevents the pilot from loading the model.
+
+During the bounded pilot, `scripts/mac_resource_probe.py` periodically
+samples `sd-server` process RSS, macOS `vm_stat` free/inactive/speculative
+pages, `Swapins`/`Swapouts` cumulative pages and `vm.swapusage` used bytes.
+The raw `mac_resource_samples.jsonl` and derived
+`summary.json → mac_resource_telemetry` capture peak native RSS, minimum
+reclaimable RAM, swap-use changes and paging-in/out deltas. Readings that are
+missing stay `null`. **Swap already used never increases RAM available**,
+and process RSS is not equivalent to total Metal or unified-memory use.
+
+These diagnostics measure the specific Mac run; they must not be treated
+as model-agnostic memory requirements. The first native proof alone is not
+a statistically valid working-set calibration. Do not turn off Korgis'
+default memory guard or blindly decrease resource estimates if admission
+fails.
