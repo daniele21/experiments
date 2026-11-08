@@ -162,11 +162,17 @@ echo "KORGIS_API_READY at $KORGIS_BASE_URL"
 
 # Sample native process RSS and macOS host reclaimable/swap counters.
 # RAM is never increased by the amount of swap used.
-python3 scripts/mac_resource_probe.py \
+python3 "$EXPERIMENTS_ROOT/scripts/mac_resource_probe.py" \
   --port "$SD_PORT" \
   --output "$OUTPUT/mac_resource_samples.jsonl" \
   --interval 3 > "$OUTPUT/resource-probe.log" 2>&1 &
 SAMPLER_PID=$!
+sleep 1
+if ! kill -0 "$SAMPLER_PID" 2>/dev/null; then
+  echo "::error::Mac telemetry sampler did not start"
+  cat "$OUTPUT/resource-probe.log"
+  exit 1
+fi
 
 start_epoch="$(date +%s)"
 (
@@ -230,6 +236,10 @@ summary = {
 }
 memory = read_mac_resource_summary(out / "mac_resource_samples.jsonl")
 summary["mac_resource_telemetry"] = memory
+assert memory.get("samples", 0) >= 2, "Mac paging telemetry unavailable"
+assert memory.get("sd_server_rss_peak_bytes") is not None, "Missing native sd-server RSS"
+assert memory.get("swap_used_peak_bytes") is not None, "Missing macOS swap telemetry"
+assert memory.get("host_reclaimable_min_bytes") is not None, "Missing reclaimable memory"
 if memory.get("sd_server_rss_peak_bytes") is not None:
     summary["max_sd_server_rss_gib"] = round(
         memory["sd_server_rss_peak_bytes"] / 1024**3, 2
