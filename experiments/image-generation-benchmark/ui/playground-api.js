@@ -22,7 +22,7 @@ export function validateGeneration(body) {
     throw new Error("Unexpected generation parameter");
   }
   if (typeof body.model_key !== "string" ||
-      !/^[a-z0-9][a-z0-9-]{0,99}$/.test(body.model_key)) {
+      !/^[a-z0-9][a-z0-9._-]{0,99}$/.test(body.model_key)) {
     throw new Error("Choose a valid engine");
   }
   if (typeof body.prompt !== "string" ||
