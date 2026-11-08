@@ -204,6 +204,7 @@ function OutputCard({ row }) {
         </div>
         <div className="badge-row">
           <span className="badge">{formatMs(row.latency_ms)}</span>
+          {row.sample_index != null ? <span className="badge">Sample {Number(row.sample_index) + 1}</span> : null}
           {badges.map((badge) => <span className="badge" key={badge}>{badge}</span>)}
         </div>
         {artifacts.length ? (
@@ -298,7 +299,7 @@ function ComparisonView({ run }) {
               style={{ "--columns": Math.min(group.rows.length, 3) }}
             >
               {group.rows.map((row) => (
-                <OutputCard key={`${row.model_key}-${row.prompt_id}`} row={row} />
+                <OutputCard key={`${row.model_key}-${row.prompt_id}-${row.sample_index ?? 0}`} row={row} />
               ))}
             </div>
           </section>
@@ -374,7 +375,7 @@ function BlindReview({ runId }) {
             <div className="prompt-head">
               <div>
                 <span className="eyebrow">{pair.category}</span>
-                <h2>{pair.prompt_id}</h2>
+                <h2>{pair.prompt_id} · Sample {Number(pair.sample_index ?? 0) + 1}</h2>
               </div>
               <span className="pill">blind</span>
             </div>
