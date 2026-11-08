@@ -234,3 +234,46 @@ button { cursor: pointer; }
   .criteria { grid-template-columns: 1fr; }
   .sidebar { padding: 11px 15px; }
 }
+
+
+/* Run-specific hardware telemetry. Distinct from model quality scores. */
+.memory-telemetry {
+  margin: 20px 28px;
+  padding: 17px 19px;
+  border: 1px solid #dce3ed;
+  border-radius: 14px;
+  background: #fff;
+}
+.memory-telemetry-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+.memory-telemetry-top h2 { margin: 3px 0 0; font-size: 17px; }
+.memory-sample-note { color: #667085; font-size: 11px; }
+.memory-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+.memory-stat {
+  border: 1px solid #e4e9f0;
+  border-radius: 10px;
+  background: #f9fafc;
+  padding: 12px;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.memory-stat > span { font-size: 11px; color: #64748b; }
+.memory-stat > strong { font-size: clamp(13px, 1.5vw, 19px); color: #1c2d45; overflow-wrap: anywhere; }
+.memory-stat > small { color: #8b95a6; font-size: 10px; }
+.memory-telemetry > p { color: #718098; font-size: 11px; margin: 13px 1px 0; line-height: 1.5; }
+@media (max-width: 1100px) {
+  .memory-telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 740px) {
+  .memory-telemetry { margin: 15px; padding: 14px; }
+}
