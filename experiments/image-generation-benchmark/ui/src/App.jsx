@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Playground from "./Playground.jsx";
 
 const REFRESH_MS = 4000;
 const CRITERIA = ["prompt_adherence", "visual_preference", "text_quality"];
@@ -112,13 +113,21 @@ function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
     <header className="topbar">
       <div>
         <span className="eyebrow">Image generation benchmark</span>
-        <h1>{run?.manifest?.parameters?.profile || run?.manifest?.suite || "Run explorer"}</h1>
+        <h1>{activeTab === "playground" ? "Create & experiment" : run?.manifest?.parameters?.profile || run?.manifest?.suite || "Run explorer"}</h1>
         <p>
-          {run?.runId ? `${run.runId} · ` : ""}
-          refreshed {lastRefresh ? lastRefresh.toLocaleTimeString() : "—"}
+          {activeTab === "playground" ? "Generate an image using any configured model engine" : <>{run?.runId ? `${run.runId} · ` : ""}refreshed {lastRefresh ? lastRefresh.toLocaleTimeString() : "—"}</>}
         </p>
       </div>
       <div className="tab-switcher" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "playground"}
+          className={activeTab === "playground" ? "active" : ""}
+          onClick={() => setActiveTab("playground")}
+        >
+          Playground
+        </button>
         <button
           type="button"
           className={activeTab === "comparison" ? "active" : ""}
@@ -135,8 +144,11 @@ function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
         </button>
       </div>
       <div className="header-stat">
-        <strong>{summary.valid}/{summary.total}</strong>
-        <span>valid outputs</span>
+        {activeTab === "playground" ? (
+          <><strong>1 at a time</strong><span>prompt → image</span></>
+        ) : (
+          <><strong>{summary.valid}/{summary.total}</strong><span>valid outputs</span></>
+        )}
       </div>
     </header>
   );
@@ -428,7 +440,7 @@ export default function App() {
   const [runs, setRuns] = useState([]);
   const [selectedRun, setSelectedRun] = useState(null);
   const [run, setRun] = useState(null);
-  const [activeTab, setActiveTab] = useState("comparison");
+  const [activeTab, setActiveTab] = useState("playground");
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
@@ -501,8 +513,10 @@ export default function App() {
           setActiveTab={setActiveTab}
           lastRefresh={lastRefresh}
         />
-        {error ? <div className="error-banner">{error}</div> : null}
-        {!run ? (
+        {error && activeTab !== "playground" ? <div className="error-banner">{error}</div> : null}
+        {activeTab === "playground" ? (
+          <Playground />
+        ) : !run ? (
           <div className="empty">
             <strong>No benchmark run selected</strong>
             <span>Run the benchmark; this React UI refreshes automatically.</span>
