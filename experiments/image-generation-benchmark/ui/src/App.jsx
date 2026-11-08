@@ -436,6 +436,50 @@ function BlindReview({ runId }) {
   );
 }
 
+function formatMemoryBytes(value) {
+  const numeric = Number(value);
+  if (value == null || !Number.isFinite(numeric)) return "—";
+  return `${(numeric / 1024 ** 3).toFixed(2)} GiB`;
+}
+
+function MacMemoryTelemetry({ telemetry }) {
+  const rss = telemetry.sd_server_rss_peak_bytes;
+  const available = telemetry.host_reclaimable_min_bytes;
+  const swapIn = telemetry.swapin_delta_bytes;
+  const swapOut = telemetry.swapout_delta_bytes;
+  const startSwap = telemetry.swap_used_bytes_start;
+  const endSwap = telemetry.swap_used_bytes_end;
+  const swapDelta = startSwap != null && endSwap != null ? endSwap - startSwap : null;
+  const stats = [
+    ["Native peak RSS", formatMemoryBytes(rss), "sd-server process"],
+    ["Min. reclaimable RAM", formatMemoryBytes(available), "macOS physical memory"],
+    ["Swap used change", swapDelta == null ? "—" : `${swapDelta > 0 ? "+" : ""}${formatMemoryBytes(swapDelta)}`, "SSD swap footprint"],
+    ["Paging in / out", `${formatMemoryBytes(swapIn)} / ${formatMemoryBytes(swapOut)}`, "During sampled window"],
+  ];
+
+  return (
+    <section className="memory-telemetry" aria-label="Mac resource metrics">
+      <div className="memory-telemetry-top">
+        <div>
+          <span className="eyebrow">Device evidence</span>
+          <h2>Memory & swap</h2>
+        </div>
+        <span className="memory-sample-note">{telemetry.samples ?? 0} samples</span>
+      </div>
+      <div className="memory-telemetry-grid">
+        {stats.map(([label, value, context]) => (
+          <div className="memory-stat" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <small>{context}</small>
+          </div>
+        ))}
+      </div>
+      <p>Native process RSS is not total unified GPU/CPU memory. Used swap is not additional free RAM; missing measurements remain unknown.</p>
+    </section>
+  );
+}
+
 export default function App() {
   const [runs, setRuns] = useState([]);
   const [selectedRun, setSelectedRun] = useState(null);
@@ -514,6 +558,9 @@ export default function App() {
           lastRefresh={lastRefresh}
         />
         {error && activeTab !== "playground" ? <div className="error-banner">{error}</div> : null}
+        {activeTab !== "playground" && run?.runtimeMetrics?.mac_resource_telemetry ? (
+          <MacMemoryTelemetry telemetry={run.runtimeMetrics.mac_resource_telemetry} />
+        ) : null}
         {activeTab === "playground" ? (
           <Playground />
         ) : !run ? (
