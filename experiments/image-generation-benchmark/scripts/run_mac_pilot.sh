@@ -170,12 +170,15 @@ export BENCHMARK_ELAPSED_SECONDS="$((end_epoch-start_epoch))"
 kill "$SAMPLER_PID" 2>/dev/null || true
 wait "$SAMPLER_PID" 2>/dev/null || true
 
-python3 - <<'PY'
+(
+cd "$EXPERIMENTS_ROOT"
+uv run --frozen python - <<'PY'
 import csv
 import json
 import os
 from pathlib import Path
 from statistics import mean, median
+
 from imagegen_bench.mac_resource_metrics import read_mac_resource_summary
 out = Path(os.environ["BENCHMARK_OUTPUT_DIR"])
 files = list((out / "results").glob("*/evidence.csv"))
@@ -220,3 +223,4 @@ if memory.get("sd_server_rss_peak_bytes") is not None:
 (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
 print("KORGIS_EXPERIMENTS_PILOT_PASS", json.dumps(summary), flush=True)
 PY
+)
