@@ -87,3 +87,35 @@ using the existing Experiments UI / blind-review flow.
 5. **Cloud model comparison**: GPT image/Gemini adapters already exist in
    Experiments but currently call provider APIs directly; require explicit
    key configuration and spend controls before enabling paid arms.
+
+## Verified Korgis E2E canary with Mac telemetry (2026-11-08)
+
+- [GitHub Action PASS](https://github.com/daniele21/local-runner-infra/actions/runs/42497813504);
+  archive `qwen-turbo-experiments-canary-42497813504` contains one valid PNG,
+  model manifest, evidence CSV, `runtime_metrics.json`, host sampler JSONL,
+  admission probe, and Korgis log.
+- Single `canary` photorealism case at 1024×1024, 8 Euler steps, CFG 1,
+  seed 42. Valid image **1/1**, API-inference latency **165.84 s**,
+  whole benchmark generation wall time **166 s**.
+- Host: `local-mac-mini-2`, Apple Silicon 32 GiB. Read-only admission:
+  **admitted** with measured host reclaimable RAM 14,775,828,480 bytes,
+  swap already used 13,995,406,786 bytes and the provisional 8 GiB estimate.
+  Derived host pressure was normal *before* model loading.
+- **56 host telemetry samples** (166-second span):
+  `sd-server` process peak RSS **6,219,481,088 bytes** (5.79 GiB),
+  minimum reclaimable host RAM **5,525,028,864 bytes** (5.15 GiB),
+  swap-used change **−8,388,608 bytes** (−8 MiB),
+  host swap-ins **19,169,280 bytes** (18.28 MiB),
+  host swap-outs **0 bytes** during the sampled window.
+- No strong swap-thrashing evidence in this one run. The swap counter is
+  host-wide and cannot be attributed exclusively to Qwen. Existing swap
+  does not increase the free RAM budget. Process RSS does **not** measure
+  all Metal/unified allocations. The minimum reclaimable memory was lower
+  than the normal 20% derived-pressure threshold at one point; admission
+  of a new model at that moment would be a separate decision.
+- The result validates **native startup, host admission, API transport,
+  one image and metrics reporting**. It does **not** validate image aesthetic
+  quality, sustained multi-image load or peak unified-memory consumption.
+  Keep the reduced disk-backed footprint estimate provisional until
+  repeated, quality-reviewed hardware benchmarks complete.
+
