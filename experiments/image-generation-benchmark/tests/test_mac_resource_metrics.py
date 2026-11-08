@@ -5,7 +5,8 @@ import json
 from pathlib import Path
 
 from imagegen_bench.mac_resource_metrics import (
-    read_mac_resource_summary, summarize_mac_samples,
+    read_mac_resource_summary,
+    summarize_mac_samples,
 )
 
 SCRIPTS = Path(__file__).parents[1] / "scripts"
