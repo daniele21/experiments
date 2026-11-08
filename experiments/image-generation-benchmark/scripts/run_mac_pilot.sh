@@ -162,7 +162,7 @@ echo "KORGIS_API_READY at $KORGIS_BASE_URL"
 
 # Sample native process RSS and macOS host reclaimable/swap counters.
 # RAM is never increased by the amount of swap used.
-python3 "$EXPERIMENTS_ROOT/scripts/mac_resource_probe.py" \
+"$EXPERIMENTS_ROOT/.venv/bin/python" "$EXPERIMENTS_ROOT/scripts/mac_resource_probe.py" \
   --port "$SD_PORT" \
   --output "$OUTPUT/mac_resource_samples.jsonl" \
   --interval 3 > "$OUTPUT/resource-probe.log" 2>&1 &
