@@ -45,7 +45,7 @@ def available_models(environ: Mapping[str, str]) -> list[dict[str, Any]]:
             configured = bool(environ.get(model.api_key_env or "", "").strip())
         options.append({
             "key": model.model_key,
-            "name": model.model_key.replace("-", " "),
+            "name": str(configs[model.model_key].get("display_name") or model.model_key),
             "model_id": model.model_id,
             "runtime": model.runtime_key,
             "kind": "local" if is_local else "cloud",
