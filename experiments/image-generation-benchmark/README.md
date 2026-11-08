@@ -138,3 +138,35 @@ arm keeps its own 40-step Q8 configuration.
 Profile overrides are persisted as the effective generation configuration in the run manifest and
 evidence, so a 512×512 smoke result cannot be mistaken for a 1K quality comparison. The React UI
 shows `stable_diffusion_cpp_image`, `Q4_K_M`, and Korgis runtime provenance.
+
+
+## Qwen Image 2.1 Turbo via Korgis (integration candidate)
+
+Korgis owns the local `qwen-image-2.1-turbo-gguf-q4km` model, three pinned
+artifacts, exact eight-step sigma preset, resident `sd-server` and local
+`/v1/images/generations` API. Experiments must never launch `sd-server` itself.
+This arm requires Korgis [integration PR #259](https://github.com/daniele21/korgis/pull/259)
+and a resident compatible native backend. Real device-quality evidence is pending.
+
+```bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+To run inference, remove `--dry-run` once the model is resident in Korgis.
+The Turbo smoke keeps 1024×1024 resolution and does **not** inherit the 512×512
+hardware smoke override for standard Qwen GGUF.
+
+The `robust` profile runs all 20 prompts with 3 independent outputs each
+(60 local images for a one-model run). Each Korgis request receives an explicit
+sample seed (profile seed + zero-based sample index). The evidence CSV records
+the requested seed and, if reported by Korgis, the effective seed. API models
+that do not expose seed control remain marked as having no requested/effective
+seed; seeds across providers are not claimed equivalent. The run manifest is
+written before inference and images use unique per-sample IDs. Resume/dedup
+across interrupted runs is **not yet implemented**, so each CLI invocation is
+a new immutable run; do not portray this as resumable.
