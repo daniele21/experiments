@@ -5,6 +5,7 @@ suite:
   profiles:
     - smoke
     - pilot
+    - canary
     - budget
     - robust
 
