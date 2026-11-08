@@ -24,3 +24,9 @@ experiments/*/data/documents/generated/
 experiments/*/data/realistic/originals/
 experiments/*/results/history.jsonl
 experiments/*/ui/public/pii-taxonomy.json
+
+# Image generation benchmark playground: exploratory outputs and frontend builds.
+experiments/image-generation-benchmark/playground-results/
+experiments/image-generation-benchmark/outputs/
+experiments/image-generation-benchmark/ui/node_modules/
+experiments/image-generation-benchmark/ui/dist/
