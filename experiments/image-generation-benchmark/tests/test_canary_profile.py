@@ -30,3 +30,5 @@ def test_bounded_mac_pilot_runner_owns_canary_and_telemetry():
     assert "mac_resource_samples.jsonl" in source
     assert "runtime_metrics.json" in source
     assert "admission-probe.json" in source
+    assert "== expected" in source
+    assert "runtime_metrics.json" in source
