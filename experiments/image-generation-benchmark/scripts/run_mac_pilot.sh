@@ -108,23 +108,12 @@ if [[ "$ready" -ne 1 ]]; then
 fi
 echo "KORGIS_API_READY at $KORGIS_BASE_URL"
 
-# Process RSS is an observation of the owned native sd-server process.
-# It is NOT overall Apple unified memory, Metal allocation, or peak GPU usage.
-(
-  set +e
-  max_rss_kib=0
-  while kill -0 "$KORGIS_PID" 2>/dev/null; do
-    pid="$(lsof -nP -t -iTCP:$SD_PORT -sTCP:LISTEN 2>/dev/null | head -n 1)"
-    if [[ "$pid" =~ ^[0-9]+$ ]]; then
-      rss_kib="$(ps -o rss= -p "$pid" 2>/dev/null | tr -d '[:space:]')"
-      if [[ "$rss_kib" =~ ^[0-9]+$ && "$rss_kib" -gt "$max_rss_kib" ]]; then
-        max_rss_kib="$rss_kib"
-        printf '%s\n' "$max_rss_kib" > "$OUTPUT/max_sd_server_rss_kib.txt"
-      fi
-    fi
-    sleep 2
-  done
-) &
+# Sample native process RSS and macOS host reclaimable/swap counters.
+# RAM is never increased by the amount of swap used.
+python3 scripts/mac_resource_probe.py \
+  --port "$SD_PORT" \
+  --output "$OUTPUT/mac_resource_samples.jsonl" \
+  --interval 3 > "$OUTPUT/resource-probe.log" 2>&1 &
 SAMPLER_PID=$!
 
 start_epoch="$(date +%s)"
@@ -145,6 +134,7 @@ import json
 import os
 from pathlib import Path
 from statistics import mean, median
+from imagegen_bench.mac_resource_metrics import read_mac_resource_summary
 out = Path(os.environ["BENCHMARK_OUTPUT_DIR"])
 files = list((out / "results").glob("*/evidence.csv"))
 assert len(files) == 1, f"Expected one run, found {len(files)}"
@@ -179,10 +169,11 @@ summary = {
     "physical_ram_bytes": int(__import__("subprocess").check_output(
         ["sysctl", "-n", "hw.memsize"], text=True).strip()),
 }
-rss_path = out / "max_sd_server_rss_kib.txt"
-if rss_path.is_file():
+memory = read_mac_resource_summary(out / "mac_resource_samples.jsonl")
+summary["mac_resource_telemetry"] = memory
+if memory.get("sd_server_rss_peak_bytes") is not None:
     summary["max_sd_server_rss_gib"] = round(
-        int(rss_path.read_text().strip()) / 1024 / 1024, 2
+        memory["sd_server_rss_peak_bytes"] / 1024**3, 2
     )
 (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
 print("KORGIS_EXPERIMENTS_PILOT_PASS", json.dumps(summary), flush=True)
