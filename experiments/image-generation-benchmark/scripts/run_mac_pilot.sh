@@ -206,7 +206,7 @@ assert {r["category"] for r in rows} == expected_categories
 assert {r["seed_requested"] for r in rows} == {"42"}
 assert all(r["valid"] == "True" for r in rows), "At least one image result is invalid"
 assert all(int(r["sample_index"]) == 0 for r in rows)
-assert len({r["artifact_sha256"] for r in rows}) == 4, "Not four unique images"
+assert len({r["artifact_sha256"] for r in rows}) == expected, f"Not {expected} unique images"
 for row in rows:
     path = files[0].parent / row["artifact_path"]
     assert path.is_file(), f"Missing image: {path.name}"
