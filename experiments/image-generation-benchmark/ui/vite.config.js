@@ -105,12 +105,13 @@ function rowView(runId, row) {
 
 async function loadRun(runId) {
   const dir = safeRunDir(runId);
-  const [manifest, csv] = await Promise.all([
+  const [manifest, csv, runtimeMetrics] = await Promise.all([
     readJson(path.join(dir, "manifest.json"), {}),
     fs.readFile(path.join(dir, "evidence.csv"), "utf8"),
+    readJson(path.join(dir, "runtime_metrics.json"), null),
   ]);
   const rows = parseCsv(csv).map((row) => rowView(runId, row));
-  return { runId, manifest, rows };
+  return { runId, manifest, rows, runtimeMetrics };
 }
 
 async function discoverRuns() {
