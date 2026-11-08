@@ -27,7 +27,9 @@ def test_mac_benchmark_logic_lives_in_experiments() -> None:
     source = SCRIPT.read_text()
     assert 'EXPERIMENTS_ROOT="$(cd "$(dirname' in source
     assert 'uv run --frozen python scripts/run_benchmark.py' in source
-    assert '--profile pilot' in source
+    assert '--profile "$BENCHMARK_PROFILE"' in source
+    assert 'canary) EXPECTED_IMAGES=1' in source
+    assert 'pilot) EXPECTED_IMAGES=4' in source
     assert 'BENCHMARK_MODE:-preflight' in source
     assert '--no-download' in source
     assert 'BENCHMARK_OUTPUT_DIR' in source
