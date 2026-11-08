@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
+import { playgroundApi } from "./playground-api.js";
 import { defineConfig } from "vite";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -279,6 +280,7 @@ async function apiMiddleware(request, response, next) {
 }
 
 export default defineConfig({
-  plugins: [react(), resultsApi()],
+  plugins: [react(), playgroundApi(), resultsApi()],
   server: { host: "127.0.0.1", port: 5173 },
+  preview: { host: "127.0.0.1" },
 });
