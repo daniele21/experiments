@@ -195,10 +195,14 @@ files = list((out / "results").glob("*/evidence.csv"))
 assert len(files) == 1, f"Expected one run, found {len(files)}"
 with files[0].open(newline="") as f:
     rows = list(csv.DictReader(f))
-assert len(rows) == 4, f"Expected four pilot samples, found {len(rows)}"
-assert {r["category"] for r in rows} == {
-    "text_rendering", "compositional", "photorealism", "design"
-}
+profile = os.environ["BENCHMARK_PROFILE"]
+expected = int(os.environ["EXPECTED_IMAGES"])
+assert len(rows) == expected, f"Expected {expected} samples, found {len(rows)}"
+expected_categories = (
+    {"photorealism"} if profile == "canary"
+    else {"text_rendering", "compositional", "photorealism", "design"}
+)
+assert {r["category"] for r in rows} == expected_categories
 assert {r["seed_requested"] for r in rows} == {"42"}
 assert all(r["valid"] == "True" for r in rows), "At least one image result is invalid"
 assert all(int(r["sample_index"]) == 0 for r in rows)
@@ -209,7 +213,7 @@ for row in rows:
     assert path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n", "Invalid PNG data"
 latencies = [float(r["latency_ms"])/1000 for r in rows]
 summary = {
-    "status": "pilot_passed", "profile": "pilot",
+    "status": f"{profile}_passed", "profile": profile,
     "images": len(rows), "valid_images": len(rows),
     "categories": sorted({r["category"] for r in rows}),
     "seeds": sorted({int(r["seed_requested"]) for r in rows}),
@@ -231,6 +235,9 @@ if memory.get("sd_server_rss_peak_bytes") is not None:
         memory["sd_server_rss_peak_bytes"] / 1024**3, 2
     )
 (out/"summary.json").write_text(json.dumps(summary, indent=2)+"\n")
-print("KORGIS_EXPERIMENTS_PILOT_PASS", json.dumps(summary), flush=True)
+(files[0].parent / "runtime_metrics.json").write_text(
+    json.dumps({"mac_resource_telemetry": memory, "model_key": rows[0]["model_key"]}, indent=2) + "\n"
+)
+print("KORGIS_EXPERIMENTS_IMAGEGEN_PASS", json.dumps(summary), flush=True)
 PY
 )
