@@ -14,7 +14,7 @@ Foundation implemented:
 - machine-readable expectations and negative constraints;
 - deterministic blind A/B assignment;
 - OCR-result text metrics;
-- smoke/budget profiles;
+- smoke/pilot/budget/robust profiles;
 - dedicated unit CI.
 
 The first real-model vertical slice compares GPT image and Gemini image on text rendering and
@@ -138,3 +138,141 @@ arm keeps its own 40-step Q8 configuration.
 Profile overrides are persisted as the effective generation configuration in the run manifest and
 evidence, so a 512×512 smoke result cannot be mistaken for a 1K quality comparison. The React UI
 shows `stable_diffusion_cpp_image`, `Q4_K_M`, and Korgis runtime provenance.
+
+
+## Qwen Image 2.1 Turbo via Korgis (integration candidate)
+
+Korgis owns the local `qwen-image-2.1-turbo-gguf-q4km` model, three pinned
+artifacts, exact eight-step sigma preset, resident `sd-server` and local
+`/v1/images/generations` API. Experiments must never launch `sd-server` itself.
+This arm requires Korgis [integration PR #259](https://github.com/daniele21/korgis/pull/259)
+and a resident compatible native backend. Real device-quality evidence is pending.
+
+```bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile smoke \
+  --output-dir results \
+  --dry-run
+```
+
+To run inference, remove `--dry-run` once the model is resident in Korgis.
+The Turbo smoke keeps 1024×1024 resolution and does **not** inherit the 512×512
+hardware smoke override for standard Qwen GGUF.
+
+The `robust` profile runs all 20 prompts with 3 independent outputs each
+(60 local images for a one-model run). Each Korgis request receives an explicit
+sample seed (profile seed + zero-based sample index). The evidence CSV records
+the requested seed and, if reported by Korgis, the effective seed. API models
+that do not expose seed control remain marked as having no requested/effective
+seed; seeds across providers are not claimed equivalent. The run manifest is
+written before inference and images use unique per-sample IDs. Resume/dedup
+across interrupted runs is **not yet implemented**, so each CLI invocation is
+a new immutable run; do not portray this as resumable.
+
+## First local Turbo benchmark on Apple Silicon
+
+Use `pilot` for an initial broad coverage check before the `robust` run.
+It deterministically samples one existing prompt from each category:
+text rendering, compositional adherence, photorealism and design. It makes
+**4 images for one model** at 1024×1024, 8 Turbo steps, CFG 1, seed 42.
+
+```bash
+export KORGIS_BASE_URL=http://127.0.0.1:1235
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile pilot --output-dir results --dry-run
+
+# Run only after Korgis itself responds to /v1/models:
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km \
+  --profile pilot --output-dir results
+```
+
+The Mac benchmark runner itself is source-owned by Experiments at
+`scripts/run_mac_pilot.sh`. The central self-hosted Action in
+`daniele21/local-runner-infra` only checks out the pinned source and calls
+that script. Korgis remains solely the inference/model-serving provider. Do not treat
+the earlier native `sd-server` smoke as evidence that Korgis' public endpoint
+and Experiments' transport work end to end: that path needs its own test.
+`pilot` and `smoke` are **not** statistically solid quality comparisons.
+The profile `robust` generates 60 images/model and currently has no cross-run
+resume or deduplication; avoid launching it automatically on CI until local
+pilot validation and human review are complete. Preserve the full run directory
+(`manifest.json`, `evidence.csv`, artifacts) for downstream gallery/scoring.
+
+## Playground — prompt to image (UI)
+
+The **Playground** tab is the default landing screen of the existing Vite
+dashboard. It supports a single prompt, selecting any image-generation
+engine from `models.yaml`, generating one real image, preview and download.
+The engine selector groups local Korgis models separately from paid cloud
+APIs. The generation defaults (resolution, steps and guidance) come from
+the selected model configuration; an optional seed is forwarded only to
+the local provider. While generating, a loading state and elapsed time
+are shown. No placeholder image is passed off as a generated result.
+
+1. Start Korgis separately for the specific local model you intend to try,
+   or configure the chosen cloud API key as a server-side environment
+   variable. The UI never receives credentials.
+2. Launch the dashboard, binding the Vite backend only on loopback:
+
+```bash
+cd experiments/image-generation-benchmark
+export KORGIS_BASE_URL=http://127.0.0.1:1235   # local models only
+cd ui
+npm install
+npm run dev
+# Open http://127.0.0.1:5173 and select Playground.
+```
+
+3. Select `qwen-image-2.1-turbo-gguf-q4km`, edit the prompt, optionally
+   change the seed, then click **Generate image**. A single output is
+   generated via the existing Experiments Python provider factory, which
+   calls Korgis' `/v1/images/generations` on loopback. The preview displays
+   only the resulting image, never a fabricated image.
+
+The Vite server handles `GET /api/playground/models`,
+`POST /api/playground/generate`, and
+`GET /api/playground/image?id=...` with a local, single-flight Python
+process, input validation and a same-origin guard. Each result is stored
+under `experiments/image-generation-benchmark/playground-results/<id>/`
+with the image and a JSON manifest documenting prompt, engine,
+parameters, latency and SHA-256. It is deliberately **not** a benchmark
+run; it does not appear in the scored comparison list.
+
+Cloud models appear only when their corresponding server-side
+`OPENAI_API_KEY` or `GEMINI_API_KEY` is configured; using them may incur
+charges. The UI shows a warning before generation but does not silently
+make provider calls. Model availability reflects configuration only, not
+an active health check. If Korgis is not running, the generation reports
+an error; the browser does not start models or download weights.
+
+**Security/deployment:** use the local Vite dev or preview server only
+and do not publish it to the internet. The prototype does not implement
+remote authentication, multi-user isolation, cancellation or billing
+controls. It is a developer tool to try one prompt at a time.
+
+### Local Mac residency and swap telemetry
+
+The Experiments-owned `scripts/run_mac_pilot.sh` now runs a **read-only
+admission preflight** against the actual Korgis host-memory guard before any
+local generation. It saves `admission-probe.json` with the resident estimate,
+measured reclaimable RAM, swap already in use and the admission decision.
+A rejection prevents the pilot from loading the model.
+
+During the bounded pilot, `scripts/mac_resource_probe.py` periodically
+samples `sd-server` process RSS, macOS `vm_stat` free/inactive/speculative
+pages, `Swapins`/`Swapouts` cumulative pages and `vm.swapusage` used bytes.
+The raw `mac_resource_samples.jsonl` and derived
+`summary.json → mac_resource_telemetry` capture peak native RSS, minimum
+reclaimable RAM, swap-use changes and paging-in/out deltas. Readings that are
+missing stay `null`. **Swap already used never increases RAM available**,
+and process RSS is not equivalent to total Metal or unified-memory use.
+
+These diagnostics measure the specific Mac run; they must not be treated
+as model-agnostic memory requirements. The first native proof alone is not
+a statistically valid working-set calibration. Do not turn off Korgis'
+default memory guard or blindly decrease resource estimates if admission
+fails.

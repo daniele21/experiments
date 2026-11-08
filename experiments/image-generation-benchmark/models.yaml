@@ -1,5 +1,6 @@
 models:
   openai-sunburst:
+    display_name: "GPT Image · Sunburst"
     model_id: gpt-image-2.5-sunburst
     runtime: openai-image-api
     capabilities:
@@ -16,6 +17,7 @@ models:
       intent: quality
 
   gemini-pro-image:
+    display_name: "Gemini 3 Pro Image"
     model_id: gemini-3-pro-image
     runtime: gemini-image-api
     capabilities:
@@ -35,6 +37,7 @@ models:
       intent: quality
 
   qwen-image-2.1-local:
+    display_name: "Qwen Image 2.1 · MLX Q8"
     model_id: qwen-image-2.1-mflux-q8
     runtime: korgis-image-local
     capabilities:
@@ -53,6 +56,7 @@ models:
       quantization: Q8
 
   qwen-image-2.1-local-gguf-q4km:
+    display_name: "Qwen Image 2.1 · GGUF Q4_K_M"
     model_id: qwen-image-2.1-gguf-q4km
     runtime: korgis-image-local
     capabilities:
@@ -71,3 +75,28 @@ models:
       intent: local-open-weight-q4
       runtime: stable-diffusion.cpp
       quantization: Q4_K_M
+
+  qwen-image-2.1-turbo-gguf-q4km:
+    display_name: "Qwen Image 2.1 Turbo · GGUF Q4_K_M"
+    model_id: qwen-image-2.1-turbo-gguf-q4km
+    runtime: korgis-image-local
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: false
+    generation:
+      output_format: png
+      size: 1024x1024
+      num_inference_steps: 8
+      guidance_scale: 1.0
+      sampling_method: euler
+    benchmark_mapping:
+      family: qwen-image-2.1-turbo
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: quality
+      runtime: stable-diffusion.cpp
+      quantization: Q4_K_M
+      sigma_preset: qwen-image-2.1-turbo-v1
+      execution: korgis-local
+

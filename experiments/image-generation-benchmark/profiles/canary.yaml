@@ -1,0 +1,6 @@
+profile:
+  id: canary
+  seed: 42
+  categories:
+    photorealism: 1
+  outputs_per_prompt: 1
