@@ -5,6 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from benchmark_core import ArtifactStore, InferenceRequest, InferenceResult
+
 from imagegen_bench.config import ResolvedImageModel
 from imagegen_bench.planning import build_run_plan
 from imagegen_bench.runner import execute_run_plan
@@ -60,9 +61,9 @@ def test_repeat_samples_are_unique_and_seeds_reach_korgis(tmp_path):
     assert len({row["artifact_id"] for row in rows}) == 12
     assert len({row["artifact_sha256"] for row in rows}) == 12
     assert all(row["valid"] for row in rows)
-    assert sorted(set(row["sample_index"] for row in rows)) == [0, 1, 2]
-    assert sorted(set(row["seed_requested"] for row in rows)) == [42, 43, 44]
-    assert sorted(set(row["seed_effective"] for row in rows)) == [42, 43, 44]
+    assert sorted({row["sample_index"] for row in rows}) == [0, 1, 2]
+    assert sorted({row["seed_requested"] for row in rows}) == [42, 43, 44]
+    assert sorted({row["seed_effective"] for row in rows}) == [42, 43, 44]
     assert [r.generation.seed for r in observed[:3]] == [42, 43, 44]
 
     run_dir = next(path for path in tmp_path.iterdir() if path.is_dir())
