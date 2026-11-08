@@ -29,6 +29,9 @@ def test_bounded_mac_pilot_runner_owns_canary_and_telemetry():
     assert 'BENCHMARK_PROFILE' in source
     assert "mac_resource_samples.jsonl" in source
     assert "runtime_metrics.json" in source
+    assert '$EXPERIMENTS_ROOT/scripts/mac_resource_probe.py' in source
+    assert '$EXPERIMENTS_ROOT/.venv/bin/python' in source
+    assert 'Mac paging telemetry unavailable' in source
     assert "admission-probe.json" in source
     assert "== expected" in source
     assert "runtime_metrics.json" in source
