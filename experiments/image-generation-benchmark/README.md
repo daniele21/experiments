@@ -190,8 +190,10 @@ uv run python scripts/run_benchmark.py \
   --profile pilot --output-dir results
 ```
 
-The Mac self-hosted workflow in `daniele21/local-runner-infra` owns runtime
-startup, execution, cleanup and the bounded artifact archive. Do not treat
+The Mac benchmark runner itself is source-owned by Experiments at
+`scripts/run_mac_pilot.sh`. The central self-hosted Action in
+`daniele21/local-runner-infra` only checks out the pinned source and calls
+that script. Korgis remains solely the inference/model-serving provider. Do not treat
 the earlier native `sd-server` smoke as evidence that Korgis' public endpoint
 and Experiments' transport work end to end: that path needs its own test.
 `pilot` and `smoke` are **not** statistically solid quality comparisons.
@@ -199,3 +201,55 @@ The profile `robust` generates 60 images/model and currently has no cross-run
 resume or deduplication; avoid launching it automatically on CI until local
 pilot validation and human review are complete. Preserve the full run directory
 (`manifest.json`, `evidence.csv`, artifacts) for downstream gallery/scoring.
+
+## Playground — prompt to image (UI)
+
+The **Playground** tab is the default landing screen of the existing Vite
+dashboard. It supports a single prompt, selecting any image-generation
+engine from `models.yaml`, generating one real image, preview and download.
+The engine selector groups local Korgis models separately from paid cloud
+APIs. The generation defaults (resolution, steps and guidance) come from
+the selected model configuration; an optional seed is forwarded only to
+the local provider. While generating, a loading state and elapsed time
+are shown. No placeholder image is passed off as a generated result.
+
+1. Start Korgis separately for the specific local model you intend to try,
+   or configure the chosen cloud API key as a server-side environment
+   variable. The UI never receives credentials.
+2. Launch the dashboard, binding the Vite backend only on loopback:
+
+```bash
+cd experiments/image-generation-benchmark
+export KORGIS_BASE_URL=http://127.0.0.1:1235   # local models only
+cd ui
+npm install
+npm run dev
+# Open http://127.0.0.1:5173 and select Playground.
+```
+
+3. Select `qwen-image-2.1-turbo-gguf-q4km`, edit the prompt, optionally
+   change the seed, then click **Generate image**. A single output is
+   generated via the existing Experiments Python provider factory, which
+   calls Korgis' `/v1/images/generations` on loopback. The preview displays
+   only the resulting image, never a fabricated image.
+
+The Vite server handles `GET /api/playground/models`,
+`POST /api/playground/generate`, and
+`GET /api/playground/image?id=...` with a local, single-flight Python
+process, input validation and a same-origin guard. Each result is stored
+under `experiments/image-generation-benchmark/playground-results/<id>/`
+with the image and a JSON manifest documenting prompt, engine,
+parameters, latency and SHA-256. It is deliberately **not** a benchmark
+run; it does not appear in the scored comparison list.
+
+Cloud models appear only when their corresponding server-side
+`OPENAI_API_KEY` or `GEMINI_API_KEY` is configured; using them may incur
+charges. The UI shows a warning before generation but does not silently
+make provider calls. Model availability reflects configuration only, not
+an active health check. If Korgis is not running, the generation reports
+an error; the browser does not start models or download weights.
+
+**Security/deployment:** use the local Vite dev or preview server only
+and do not publish it to the internet. The prototype does not implement
+remote authentication, multi-user isolation, cancellation or billing
+controls. It is a developer tool to try one prompt at a time.
