@@ -1,0 +1,39 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { validateGeneration } from "./playground-api.js";
+
+test("a local model, prompt and seed form a safe generation request", () => {
+  assert.deepEqual(
+    validateGeneration({
+      model_key: "qwen-image-2.1-turbo-gguf-q4km",
+      prompt: "  A morning cafe  ",
+      seed: 42,
+    }),
+    { model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "A morning cafe", seed: 42 },
+  );
+});
+
+test("arbitrary server paths and unknown options are rejected", () => {
+  assert.throws(
+    () => validateGeneration({ model_key: "../../etc/passwd", prompt: "foo" }),
+    /valid engine/,
+  );
+  assert.throws(
+    () => validateGeneration({ model_key: "foo", prompt: "bar", binary_path: "/usr/bin/sh" }),
+    /Unexpected generation/,
+  );
+});
+
+test("reject invalid seeds and empty prompts before provider execution", () => {
+  for (const seed of [-1, 1.5, "42", 2147483648, true]) {
+    assert.throws(
+      () => validateGeneration({ model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "Foo", seed }),
+      /Seed/,
+    );
+  }
+  assert.throws(
+    () => validateGeneration({ model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "  " }),
+    /prompt/,
+  );
+});
