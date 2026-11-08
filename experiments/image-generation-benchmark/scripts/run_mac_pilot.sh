@@ -48,6 +48,48 @@ fi
     --profile pilot --output-dir "$OUTPUT/results" --dry-run
 ) | tee "$OUTPUT/dry-run.txt"
 
+# Real admission, without loading a model or accessing any cloud provider.
+# Uses Korgis' actual macOS guard and working-set estimate. A refused load
+# stops the benchmark before it consumes further RAM.
+(
+  cd "$KORGIS_ROOT"
+  uv run --frozen python - <<'PY'
+import json
+from local_llm_server.config import build_config
+from local_llm_server.product_runtime import ResourcePolicySettings, build_resource_manager
+from local_llm_server.runtime import ModelRuntimeManager, ResourceAdmissionError
+
+cfg = build_config("qwen-image-2.1-turbo-gguf-q4km")
+resources = build_resource_manager(ResourcePolicySettings.from_environment())
+assert resources is not None and resources.host_protection_enabled, (
+    "Mac admission guard must be enabled for a local GPU benchmark"
+)
+runtime_manager = ModelRuntimeManager(resource_manager=resources)
+status = resources.host_memory_status()
+reservation = None
+decision = "rejected"
+reason = "unknown"
+try:
+    reservation = runtime_manager._reserve_runtime_load(cfg["model"], cfg)
+    decision = "admitted"
+    reason = cfg.get("resource_admission", {}).get("reason") or "host admission passed"
+except ResourceAdmissionError as exc:
+    reason = exc.result.reason
+finally:
+    if reservation is not None:
+        resources.release(reservation)
+print(json.dumps({
+    "decision": decision, "reason": reason,
+    "model_key": cfg["model"],
+    "estimate_bytes": cfg.get("resource_estimate_bytes"),
+    "profile": cfg.get("resource_admission_profile"),
+    "host_memory": status,
+}), flush=True)
+if decision != "admitted":
+    raise SystemExit(2)
+PY
+) | tee "$OUTPUT/admission-probe.json"
+
 if [[ "${BENCHMARK_MODE:-preflight}" == preflight ]]; then
   echo "PILOT_PREFLIGHT_OK: four-category run plan resolved; no image inference performed"
   printf '{"status":"preflight_passed","profile":"pilot","expected_images":4,"inference_calls":0,"korgis_sha":"%s","experiments_sha":"%s"}\n' \
