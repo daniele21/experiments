@@ -5,6 +5,7 @@ suite:
   profiles:
     - smoke
     - budget
+    - robust
 
 task_requirements:
   text_to_image:
