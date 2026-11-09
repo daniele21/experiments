@@ -203,7 +203,73 @@ export default function Playground() {
               {!selected.configured ? <p>{selected.setup_hint}</p> : null}
             </div>
           ) : null}
+          <div className="pg-mode-wrapper">
+            <div className="pg-mode-header">
+              <span>Generation mode</span>
+              <button type="button" className="pg-refresh" disabled={working || loadingModels}
+                onClick={async () => {
+                  try {
+                    setLoadingModels(true);
+                    const response = await fetch("/api/playground/models", { cache: "no-store" });
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.error || "Engine refresh failed");
+                    setModels(payload.models || []);
+                    setError("");
+                  } catch (reason) {
+                    setError(reason?.message || String(reason));
+                  } finally {
+                    setLoadingModels(false);
+                  }
+                }}>↻ Refresh engines</button>
+            </div>
+            <div className="pg-modes" role="group" aria-label="Image operation">
+              <button type="button" className={!editing ? "selected" : ""}
+                aria-pressed={!editing} disabled={working}
+                onClick={() => changeMode("generate")}>Text to Image</button>
+              <button type="button" className={editing ? "selected" : ""}
+                aria-pressed={editing} disabled={working || !editAvailable}
+                title={!editAvailable ? "Requires Qwen Turbo running with image editing enabled" : "Edit an existing image"}
+                onClick={() => changeMode("edit")}>Image to Image</button>
+            </div>
+            {!editAvailable ? <small className="pg-mode-hint">Image editing requires Qwen Turbo running with the vision projector enabled in Korgis.</small> : null}
+          </div>
           <div className="pg-divider" />
+          {editing ? (
+            <section className="pg-source-section" aria-label="Reference image">
+              <div className="pg-section-title">
+                <span className="pg-step">02</span>
+                <div><h3>Reference image</h3><p>One PNG, max 8 MiB / 1 megapixel. It stays on your Mac.</p></div>
+              </div>
+              <div className={isDragging ? "pg-dropzone drag" : "pg-dropzone"}
+                onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
+                onDragLeave={(event) => { event.preventDefault(); setDragging(false); }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  if (!working) chooseSource(event.dataTransfer.files?.[0]);
+                }}>
+                {sourcePreview ? <img src={sourcePreview} alt="Source image selected for editing" /> : (
+                  <span className="pg-dropzone-icon" aria-hidden="true">＋</span>
+                )}
+                <label htmlFor="pg-image-upload" className="pg-upload-action">
+                  {sourceImage ? "Replace image" : "Choose a PNG or drop it here"}
+                </label>
+                <input id="pg-image-upload" type="file" accept="image/png" disabled={working}
+                  onChange={(event) => {
+                    chooseSource(event.target.files?.[0]);
+                    event.target.value = "";
+                  }} />
+                {sourceImage ? <small>{sourceImage.name} · {(sourceImage.size / 1024 / 1024).toFixed(2)} MiB</small> : <small>Local upload · no cloud processing</small>}
+              </div>
+              <label className="pg-field" htmlFor="pg-resolution">
+                <span>Output resolution</span>
+                <select id="pg-resolution" value={resolution} disabled={working}
+                  onChange={(event) => setResolution(event.target.value)}>
+                  {EDIT_RESOLUTIONS.map((value) => <option value={value} key={value}>{value.replace("x", " × ")}</option>)}
+                </select>
+              </label>
+            </section>
+          ) : null}
           <div className="pg-section-title">
             <span className="pg-step">02</span>
             <div>
