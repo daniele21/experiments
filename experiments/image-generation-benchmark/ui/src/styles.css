@@ -320,3 +320,15 @@ button { cursor: pointer; }
 @media (max-width: 440px) {
   .pg-before-after { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Local reference normalization: make the actual model input explicit. */
+.pg-resize-note {
+  display: grid; gap: 5px; padding: 12px 13px;
+  border: 1px solid #d4e4e0; border-radius: 10px;
+  background: #f3faf7; color: #245c4e;
+  font-size: 12px; line-height: 1.5;
+}
+.pg-resize-note.resized { background: #f2f6fd; border-color: #cadaed; color: #2d527e; }
+.pg-resize-note > strong { font-size: 12px; }
+.pg-resize-note > span { font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pg-resize-note > small { color: #6b7d95; line-height: 1.5; }
