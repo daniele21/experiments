@@ -106,10 +106,10 @@ test("multipart parsing accepts one PNG and rejects arbitrary fields and sizes",
   assert.equal(result.steps, 8);
   assert.equal(result.size, "768x768");
   assert.equal(result.dimensions.width, 512);
-  await assert.rejects(() => readMultipartEdit(await formRequest({ server_url: "http://evil" })), /Unexpected/);
-  await assert.rejects(() => readMultipartEdit(await formRequest({ seed: "-1" })), /Seed/);
-  await assert.rejects(() => readMultipartEdit(await formRequest({ size: "4096x4096" })), /resolution/);
-  await assert.rejects(() => readMultipartEdit(await formRequest({ num_inference_steps: "9" })), /eight|8 inference/);
+  await assert.rejects(async () => readMultipartEdit(await formRequest({ server_url: "http://evil" })), /Unexpected/);
+  await assert.rejects(async () => readMultipartEdit(await formRequest({ seed: "-1" })), /Seed/);
+  await assert.rejects(async () => readMultipartEdit(await formRequest({ size: "4096x4096" })), /resolution/);
+  await assert.rejects(async () => readMultipartEdit(await formRequest({ num_inference_steps: "9" })), /eight|8 inference/);
 });
 
 test("unavailable or unconfigured Korgis does not falsely enable editing", async () => {
