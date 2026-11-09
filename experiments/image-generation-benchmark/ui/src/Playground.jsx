@@ -313,7 +313,7 @@ export default function Playground() {
               ))}
             </div>
           </div>
-          </div> : null}
+          ) : null}
           <div className="pg-settings">
             <div>
               <span>Generation settings</span>
