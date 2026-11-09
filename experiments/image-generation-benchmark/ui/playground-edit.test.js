@@ -112,6 +112,28 @@ test("multipart parsing accepts one PNG and rejects arbitrary fields and sizes",
   await assert.rejects(async () => readMultipartEdit(await formRequest({ num_inference_steps: "9" })), /eight|8 inference/);
 });
 
+test("output can match a prepared portrait image at any safe 32px-aligned size", async () => {
+  const result = await readMultipartEdit(await formRequest({
+    size: "768x1344",
+    source_original_width: "1200",
+    source_original_height: "1800",
+    resize_policy: "fit-1mp-grid32-canvas-high-v1",
+  }));
+  assert.equal(result.size, "768x1344");
+  assert.equal(result.resize_policy, "fit-1mp-grid32-canvas-high-v1");
+  assert.deepEqual(result.original, { width: 1200, height: 1800 });
+  await assert.rejects(() => readMultipartEdit(await formRequest({
+    size: "768x1376",
+  })), /within 1 megapixel/);
+  await assert.rejects(() => readMultipartEdit(await formRequest({
+    resize_policy: "untrusted-code",
+  })), /Unknown reference resizing policy/);
+  await assert.rejects(() => readMultipartEdit(await formRequest({
+    source_original_width: "1200", source_original_height: "1800",
+    resize_policy: "original",
+  })), /do not match PNG/);
+});
+
 test("unavailable or unconfigured Korgis does not falsely enable editing", async () => {
   assert.equal(await getEditingAvailability(MODEL, "http://localhost:1235", async () => notReady()), false);
   assert.equal(await getEditingAvailability(MODEL, "http://localhost:1235", async () => ready()), true);
