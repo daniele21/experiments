@@ -272,7 +272,7 @@ export default function Playground() {
             <section className="pg-source-section" aria-label="Reference image">
               <div className="pg-section-title">
                 <span className="pg-step">02</span>
-                <div><h3>Reference image</h3><p>One PNG, max 8 MiB / 1 megapixel. It stays on your Mac.</p></div>
+                <div><h3>Reference image</h3><p>PNG up to 8 MiB / 24 MP. Large images are fitted locally to 1 MP, without cropping.</p></div>
               </div>
               <div className={isDragging ? "pg-dropzone drag" : "pg-dropzone"}
                 onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
@@ -280,7 +280,7 @@ export default function Playground() {
                 onDrop={(event) => {
                   event.preventDefault();
                   setDragging(false);
-                  if (!working) chooseSource(event.dataTransfer.files?.[0]);
+                  if (!working && !preparingImage) chooseSource(event.dataTransfer.files?.[0]);
                 }}>
                 {sourcePreview ? <img src={sourcePreview} alt="Source image selected for editing" /> : (
                   <span className="pg-dropzone-icon" aria-hidden="true">＋</span>
@@ -288,17 +288,29 @@ export default function Playground() {
                 <label htmlFor="pg-image-upload" className="pg-upload-action">
                   {sourceImage ? "Replace image" : "Choose a PNG or drop it here"}
                 </label>
-                <input id="pg-image-upload" type="file" accept="image/png" disabled={working}
+                <input id="pg-image-upload" type="file" accept="image/png" disabled={working || preparingImage}
                   onChange={(event) => {
                     chooseSource(event.target.files?.[0]);
                     event.target.value = "";
                   }} />
-                {sourceImage ? <small>{sourceImage.name} · {(sourceImage.size / 1024 / 1024).toFixed(2)} MiB</small> : <small>Local upload · no cloud processing</small>}
+                {preparingImage ? <small>Preparing the image locally…</small> : sourceImage
+                  ? <small>{sourceImage.name} · {(sourceImage.size / 1024 / 1024).toFixed(2)} MiB</small>
+                  : <small>Local upload · no cloud processing</small>}
               </div>
+              {prepared ? (
+                <div className={prepared.resized ? "pg-resize-note resized" : "pg-resize-note"} role="status">
+                  <strong>{prepared.resized ? "Automatically resized · no cropping" : "Original dimensions preserved"}</strong>
+                  <span>{prepared.original.width} × {prepared.original.height} → {prepared.processed.width} × {prepared.processed.height} px sent to Qwen</span>
+                  {prepared.resized ? <small>Image text can become less sharp. The before preview shows exactly what the model receives.</small> : null}
+                </div>
+              ) : null}
               <label className="pg-field" htmlFor="pg-resolution">
                 <span>Output resolution</span>
                 <select id="pg-resolution" value={resolution} disabled={working}
                   onChange={(event) => setResolution(event.target.value)}>
+                  {prepared ? (
+                    <option value="match">Match source proportions ({matchedOutputSize(prepared.processed.width, prepared.processed.height).replace("x", " × ")})</option>
+                  ) : <option value="match">Match source proportions</option>}
                   {EDIT_RESOLUTIONS.map((value) => <option value={value} key={value}>{value.replace("x", " × ")}</option>)}
                 </select>
               </label>
@@ -347,7 +359,10 @@ export default function Playground() {
               <small>{editing ? "Editing uses eight Turbo steps" : "Using the selected engine defaults"}</small>
             </div>
             <div className="pg-setting-chips">
-              <span>{editing ? resolution : selected?.generation?.size || "Engine default"}</span>
+              <span>{editing ? (resolution === "match" && prepared
+                ? matchedOutputSize(prepared.processed.width, prepared.processed.height)
+                : resolution === "match" ? "Match source" : resolution)
+                : selected?.generation?.size || "Engine default"}</span>
               {selected?.generation?.num_inference_steps != null ? (
                 <span>{selected.generation.num_inference_steps} steps</span>
               ) : null}
@@ -392,12 +407,12 @@ export default function Playground() {
               {result ? "Complete" : working ? "Generating" : "Ready"}
             </span>
           </div>
-          {editing && sourcePreview ? (
+          {editing && preparedPreview ? (
             <div className="pg-before-after" aria-label="Before and after comparison">
               <div className="pg-before-after-item">
-                <span>Before · Original</span>
+                <span>Before · Sent to Qwen</span>
                 <div className="pg-before-after-image">
-                  <img src={sourcePreview} alt="Original uploaded image" />
+                  <img src={preparedPreview} alt="Prepared reference image sent to Qwen" />
                 </div>
               </div>
               <div className="pg-before-after-item">
