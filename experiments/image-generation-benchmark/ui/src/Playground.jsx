@@ -7,6 +7,9 @@ const EXAMPLES = [
 ];
 
 const INITIAL_PROMPT = EXAMPLES[0].prompt;
+const EDIT_PROMPT = "Change the color of the main object, preserving the composition, lighting and everything else.";
+const EDIT_RESOLUTIONS = ["512x512", "768x768", "1024x1024", "1024x768", "768x1024"];
+const MAX_PNG_BYTES = 8 * 1024 * 1024;
 
 function timeLabel(ms) {
   if (!Number.isFinite(Number(ms))) return "—";
@@ -20,6 +23,11 @@ export default function Playground() {
   const [models, setModels] = useState([]);
   const [modelKey, setModelKey] = useState("");
   const [prompt, setPrompt] = useState(INITIAL_PROMPT);
+  const [mode, setMode] = useState("generate");
+  const [sourceImage, setSourceImage] = useState(null);
+  const [sourcePreview, setSourcePreview] = useState("");
+  const [resolution, setResolution] = useState("512x512");
+  const [isDragging, setDragging] = useState(false);
   const [seed, setSeed] = useState("42");
   const [loadingModels, setLoadingModels] = useState(true);
   const [working, setWorking] = useState(false);
@@ -48,6 +56,16 @@ export default function Playground() {
   }, []);
 
   useEffect(() => {
+    if (!sourceImage) {
+      setSourcePreview("");
+      return;
+    }
+    const url = URL.createObjectURL(sourceImage);
+    setSourcePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [sourceImage]);
+
+  useEffect(() => {
     if (!working) return;
     const started = Date.now();
     const timer = window.setInterval(() => {
@@ -60,9 +78,34 @@ export default function Playground() {
     () => models.find((model) => model.key === modelKey),
     [models, modelKey],
   );
-  const canSubmit = selected?.configured && prompt.trim().length > 0 &&
-    prompt.length <= 4000 && !working;
   const local = selected?.kind === "local";
+  const editAvailable = Boolean(selected?.image_editing_available && local);
+  const editing = mode === "edit";
+  const canSubmit = selected?.configured && prompt.trim().length > 0 &&
+    prompt.length <= 4000 && !working && (!editing || (editAvailable && sourceImage));
+
+  function chooseSource(file) {
+    if (!file) return;
+    if (file.type !== "image/png" || !file.name.toLowerCase().endsWith(".png")) {
+      setError("Choose a PNG image. JPEG and WebP are not supported yet.");
+      return;
+    }
+    if (file.size > MAX_PNG_BYTES) {
+      setError("The reference PNG must be smaller than 8 MiB.");
+      return;
+    }
+    setSourceImage(file);
+    setResult(null);
+    setError("");
+  }
+
+  function changeMode(nextMode) {
+    if (nextMode === "edit" && !editAvailable) return;
+    setMode(nextMode);
+    setResult(null);
+    setError("");
+    if (nextMode === "edit" && prompt === INITIAL_PROMPT) setPrompt(EDIT_PROMPT);
+  }
 
   async function generate(event) {
     event.preventDefault();
