@@ -83,7 +83,8 @@ models:
     capabilities:
       text_input: true
       image_output: true
-      image_editing: false
+      # Actual editing availability is checked against the live Korgis runtime.
+      image_editing: true
     generation:
       output_format: png
       size: 1024x1024
