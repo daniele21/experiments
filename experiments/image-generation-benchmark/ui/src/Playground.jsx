@@ -298,7 +298,8 @@ export default function Playground() {
             />
             <span className="pg-char-count">{prompt.length} / 4000 characters</span>
           </label>
-          {!editing ? <div className="pg-examples">
+          {!editing ? (
+          <div className="pg-examples">
             <span>Try an example</span>
             <div>
               {EXAMPLES.map((example) => (
