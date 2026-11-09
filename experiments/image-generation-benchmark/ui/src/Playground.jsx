@@ -103,6 +103,9 @@ export default function Playground() {
   async function chooseSource(file) {
     if (!file) return;
     const ticket = ++sourceSelection.current;
+    setSourceImage(null);
+    setPrepared(null);
+    setResult(null);
     setPreparingImage(true);
     setError("");
     try {
