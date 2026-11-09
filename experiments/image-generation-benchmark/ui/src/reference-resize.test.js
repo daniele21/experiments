@@ -57,7 +57,7 @@ test("small compatible sources remain pixel-identical, never upscaled or re-enco
 });
 
 test("malicious or ultra-narrow images fail before decode", () => {
-  for (const dims of [[0, 1024], [25, 512], [5000, 5000], [100000, 12], [32, 16384]]) {
+  for (const dims of [[0, 1024], [25, 512], [6000, 6000], [100000, 12], [32, 16384]]) {
     assert.throws(() => chooseReferenceSize(...dims), /unsupported|too narrow/);
   }
   assert(MAX_ORIGINAL_PIXELS > MAX_PREPARED_PIXELS);
@@ -70,7 +70,7 @@ test("input header checks PNG format, size and source dimensions", async () => {
     new File([Buffer.from("not png")], "graphic.png", { type: "image/png" }),
   ), /not a valid PNG/);
   await assert.rejects(() => readReferenceHeader(
-    new File([pngHeader(5000, 5000)], "huge.png", { type: "image/png" }),
+    new File([pngHeader(6000, 6000)], "huge.png", { type: "image/png" }),
   ), /unsupported/);
 });
 
