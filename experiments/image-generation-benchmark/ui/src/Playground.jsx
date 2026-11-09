@@ -158,9 +158,9 @@ export default function Playground() {
         <div>
           <span className="eyebrow">Experiment / Generate</span>
           <h2>Image Playground</h2>
-          <p>One prompt, one engine, one output. Try an idea before building a benchmark.</p>
+          <p>Generate a new image or edit a reference photo with a local model.</p>
         </div>
-        <span className="playground-intro-tag">Single generation</span>
+        <span className="playground-intro-tag">One image at a time</span>
       </div>
       <div className="playground-layout">
         <form className="playground-panel" onSubmit={generate}>
@@ -176,7 +176,12 @@ export default function Playground() {
             <select
               id="pg-engine"
               value={modelKey}
-              onChange={(event) => { setModelKey(event.target.value); setError(""); }}
+              onChange={(event) => {
+                setModelKey(event.target.value);
+                setMode("generate");
+                setResult(null);
+                setError("");
+              }}
               disabled={working || loadingModels}
             >
               {!models.length ? <option value="">No engines loaded</option> : null}
@@ -201,6 +206,9 @@ export default function Playground() {
               <span>{local ? "On-device via Korgis" : "Cloud API · may incur charges"}</span>
               <small>{selected.model_id}</small>
               {!selected.configured ? <p>{selected.setup_hint}</p> : null}
+              {selected.image_editing_supported && !editAvailable ? (
+                <p>Editing unavailable. Start Korgis with <code>--image-editing-enabled</code> and refresh engines.</p>
+              ) : null}
             </div>
           ) : null}
           <div className="pg-mode-wrapper">
@@ -271,10 +279,10 @@ export default function Playground() {
             </section>
           ) : null}
           <div className="pg-section-title">
-            <span className="pg-step">02</span>
+            <span className="pg-step">{editing ? "03" : "02"}</span>
             <div>
-              <h3>Write your prompt</h3>
-              <p>Describe the image you want to generate.</p>
+              <h3>{editing ? "Describe the changes" : "Write your prompt"}</h3>
+              <p>{editing ? "Specify what to modify and what should remain unchanged." : "Describe the image you want to generate."}</p>
             </div>
           </div>
           <label className="pg-field" htmlFor="pg-prompt">
@@ -286,11 +294,11 @@ export default function Playground() {
               disabled={working}
               maxLength={4000}
               rows={6}
-              placeholder="A photorealistic scene of..."
+              placeholder={editing ? "Change the wall to sage green, preserving the furniture and lighting..." : "A photorealistic scene of..."}
             />
             <span className="pg-char-count">{prompt.length} / 4000 characters</span>
           </label>
-          <div className="pg-examples">
+          {!editing ? <div className="pg-examples">
             <span>Try an example</span>
             <div>
               {EXAMPLES.map((example) => (
@@ -305,13 +313,14 @@ export default function Playground() {
               ))}
             </div>
           </div>
+          </div> : null}
           <div className="pg-settings">
             <div>
               <span>Generation settings</span>
-              <small>Using the selected engine defaults</small>
+              <small>{editing ? "Editing uses eight Turbo steps" : "Using the selected engine defaults"}</small>
             </div>
             <div className="pg-setting-chips">
-              <span>{selected?.generation?.size || "Engine default"}</span>
+              <span>{editing ? resolution : selected?.generation?.size || "Engine default"}</span>
               {selected?.generation?.num_inference_steps != null ? (
                 <span>{selected.generation.num_inference_steps} steps</span>
               ) : null}
@@ -337,11 +346,11 @@ export default function Playground() {
           </div>
           <button className="pg-generate" type="submit" disabled={!canSubmit}>
             <span aria-hidden="true">{working ? "◌" : "✦"}</span>
-            {working ? "Generating image…" : "Generate image"}
+            {working ? (editing ? "Editing image…" : "Generating image…") : (editing ? "Generate edited image" : "Generate image")}
           </button>
           <p className="pg-submit-note">
             {local
-              ? "The selected local model must be running in Korgis. No cloud generation charges."
+              ? (editing ? "Source image sent only to local Korgis. One operation at a time." : "The selected local model must be running in Korgis. No cloud generation charges.")
               : "Cloud generation requires server-side API credentials and may incur provider charges."}
           </p>
         </form>
