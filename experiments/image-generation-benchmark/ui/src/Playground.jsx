@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { matchedOutputSize, prepareReferenceImage } from "./reference-resize.js";
 
 const EXAMPLES = [
   { label: "Photorealism", prompt: "Photorealistic editorial photograph of a small Italian café at sunrise, soft window light, a ceramic espresso cup, believable materials and natural reflections." },
@@ -9,7 +10,7 @@ const EXAMPLES = [
 const INITIAL_PROMPT = EXAMPLES[0].prompt;
 const EDIT_PROMPT = "Change the color of the main object, preserving the composition, lighting and everything else.";
 const EDIT_RESOLUTIONS = ["512x512", "768x768", "1024x1024", "1024x768", "768x1024"];
-const MAX_PNG_BYTES = 8 * 1024 * 1024;
+
 
 function timeLabel(ms) {
   if (!Number.isFinite(Number(ms))) return "—";
@@ -26,7 +27,11 @@ export default function Playground() {
   const [mode, setMode] = useState("generate");
   const [sourceImage, setSourceImage] = useState(null);
   const [sourcePreview, setSourcePreview] = useState("");
-  const [resolution, setResolution] = useState("512x512");
+  const [prepared, setPrepared] = useState(null);
+  const [preparedPreview, setPreparedPreview] = useState("");
+  const [preparingImage, setPreparingImage] = useState(false);
+  const sourceSelection = useRef(0);
+  const [resolution, setResolution] = useState("match");
   const [isDragging, setDragging] = useState(false);
   const [seed, setSeed] = useState("42");
   const [loadingModels, setLoadingModels] = useState(true);
@@ -66,6 +71,16 @@ export default function Playground() {
   }, [sourceImage]);
 
   useEffect(() => {
+    if (!prepared?.file) {
+      setPreparedPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(prepared.file);
+    setPreparedPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [prepared]);
+
+  useEffect(() => {
     if (!working) return;
     const started = Date.now();
     const timer = window.setInterval(() => {
@@ -82,21 +97,27 @@ export default function Playground() {
   const editAvailable = Boolean(selected?.image_editing_available && local);
   const editing = mode === "edit";
   const canSubmit = selected?.configured && prompt.trim().length > 0 &&
-    prompt.length <= 4000 && !working && (!editing || (editAvailable && sourceImage));
+    prompt.length <= 4000 && !working && !preparingImage &&
+    (!editing || (editAvailable && prepared?.file));
 
-  function chooseSource(file) {
+  async function chooseSource(file) {
     if (!file) return;
-    if (file.type !== "image/png" || !file.name.toLowerCase().endsWith(".png")) {
-      setError("Choose a PNG image. JPEG and WebP are not supported yet.");
-      return;
-    }
-    if (file.size > MAX_PNG_BYTES) {
-      setError("The reference PNG must be smaller than 8 MiB.");
-      return;
-    }
-    setSourceImage(file);
-    setResult(null);
+    const ticket = ++sourceSelection.current;
+    setPreparingImage(true);
     setError("");
+    try {
+      const converted = await prepareReferenceImage(file);
+      if (ticket !== sourceSelection.current) return;
+      setSourceImage(file);
+      setPrepared(converted);
+      setResolution("match");
+      setResult(null);
+    } catch (reason) {
+      if (ticket !== sourceSelection.current) return;
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      if (ticket === sourceSelection.current) setPreparingImage(false);
+    }
   }
 
   function changeMode(nextMode) {
@@ -128,8 +149,13 @@ export default function Playground() {
         const form = new FormData();
         form.set("model_key", payload.model_key);
         form.set("prompt", payload.prompt);
-        form.set("image", sourceImage, sourceImage.name);
-        form.set("size", resolution);
+        form.set("image", prepared.file, prepared.file.name);
+        form.set("source_original_width", String(prepared.original.width));
+        form.set("source_original_height", String(prepared.original.height));
+        form.set("resize_policy", prepared.policy);
+        form.set("size", resolution === "match"
+          ? matchedOutputSize(prepared.processed.width, prepared.processed.height)
+          : resolution);
         form.set("num_inference_steps", "8");
         if (payload.seed != null) form.set("seed", String(payload.seed));
         response = await fetch("/api/playground/edit", {
