@@ -123,11 +123,25 @@ export default function Playground() {
         }
         payload.seed = parsed;
       }
-      const response = await fetch("/api/playground/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let response;
+      if (editing) {
+        const form = new FormData();
+        form.set("model_key", payload.model_key);
+        form.set("prompt", payload.prompt);
+        form.set("image", sourceImage, sourceImage.name);
+        form.set("size", resolution);
+        form.set("num_inference_steps", "8");
+        if (payload.seed != null) form.set("seed", String(payload.seed));
+        response = await fetch("/api/playground/edit", {
+          method: "POST", body: form,
+        });
+      } else {
+        response = await fetch("/api/playground/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || `Generation failed (${response.status})`);
       setResult(body);
