@@ -11,8 +11,23 @@ export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export const MAX_EDIT_BODY_BYTES = MAX_IMAGE_BYTES + 64 * 1024;
 const MAX_KORGIS_RESPONSE_BYTES = 32 * 1024 * 1024;
 const PNG_HEADER = Buffer.from("89504e470d0a1a0a", "hex");
-const SAFE_FIELDS = new Set(["image", "model_key", "prompt", "size", "seed", "num_inference_steps"]);
-const EDIT_SIZES = new Set(["512x512", "768x768", "1024x1024", "1024x768", "768x1024"]);
+const SAFE_FIELDS = new Set([
+  "image", "model_key", "prompt", "size", "seed", "num_inference_steps",
+  "source_original_width", "source_original_height", "resize_policy",
+]);
+const RESIZE_POLICY = "fit-1mp-grid32-canvas-high-v1";
+export function validateEditSize(size) {
+  if (typeof size !== "string" || !/^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$/.test(size)) {
+    throw clientError("Choose a supported editing resolution");
+  }
+  const [width, height] = size.split("x").map(Number);
+  if (width < 32 || height < 32 || width > 2048 || height > 2048 ||
+      width % 32 !== 0 || height % 32 !== 0 ||
+      width * height > 1024 * 1024) {
+    throw clientError("Editing output must be aligned to 32px and within 1 megapixel");
+  }
+  return size;
+}
 
 export function korgisOrigin(value) {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -131,9 +146,30 @@ export async function readMultipartEdit(request) {
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000) {
     throw clientError("Prompt must contain 1–4000 characters");
   }
-  const size = form.get("size") || "512x512";
-  if (typeof size !== "string" || !EDIT_SIZES.has(size)) {
-    throw clientError("Choose a supported editing resolution");
+  const size = validateEditSize(form.get("size") || "512x512");
+  const originalWidth = form.get("source_original_width");
+  const originalHeight = form.get("source_original_height");
+  const hasOriginal = originalWidth !== null || originalHeight !== null;
+  let original = null;
+  const policy = form.get("resize_policy") || "original";
+  if (!["original", RESIZE_POLICY].includes(policy)) {
+    throw clientError("Unknown reference resizing policy");
+  }
+  if (hasOriginal) {
+    const width = Number(originalWidth);
+    const height = Number(originalHeight);
+    if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) ||
+        width < 32 || height < 32 || width > 16384 || height > 16384 ||
+        width * height > 24 * 1024 * 1024 ||
+        width < dimensions.width || height < dimensions.height) {
+      throw clientError("Invalid original reference dimensions");
+    }
+    if (policy === "original" && (width !== dimensions.width || height !== dimensions.height)) {
+      throw clientError("Original reference dimensions do not match PNG");
+    }
+    original = { width, height };
+  } else if (policy !== "original") {
+    throw clientError("Resized references require original dimensions");
   }
   const seedText = form.get("seed");
   const seed = seedText === null || seedText === "" ? null : Number(seedText);
@@ -145,7 +181,10 @@ export async function readMultipartEdit(request) {
   if (!Number.isSafeInteger(steps) || steps !== 8) {
     throw clientError("Qwen Turbo editing currently requires 8 inference steps");
   }
-  return { model_key: modelKey, prompt: prompt.trim(), size, seed, steps, bytes, dimensions };
+  return {
+    model_key: modelKey, prompt: prompt.trim(), size, seed, steps,
+    bytes, dimensions, original, resize_policy: policy,
+  };
 }
 
 async function readLimited(response) {
@@ -262,6 +301,16 @@ export async function editWithKorgis(input, {
       sha256: crypto.createHash("sha256").update(image).digest("hex"),
       source_sha256: crypto.createHash("sha256").update(input.bytes).digest("hex"),
       source_width: input.dimensions.width, source_height: input.dimensions.height,
+      preprocessing: {
+        policy: input.resize_policy || "original",
+        model_input_width: input.dimensions.width,
+        model_input_height: input.dimensions.height,
+        client_reported_original_width: input.original?.width ?? input.dimensions.width,
+        client_reported_original_height: input.original?.height ?? input.dimensions.height,
+        original_dimensions_verified: !input.original ||
+          (input.original.width === input.dimensions.width &&
+           input.original.height === input.dimensions.height),
+      },
       width: output.width, height: output.height,
       latency_ms: Number.isFinite(meta.latency_ms) ? meta.latency_ms : null,
     };
