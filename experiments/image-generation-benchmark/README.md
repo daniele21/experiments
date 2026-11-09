@@ -202,6 +202,73 @@ resume or deduplication; avoid launching it automatically on CI until local
 pilot validation and human review are complete. Preserve the full run directory
 (`manifest.json`, `evidence.csv`, artifacts) for downstream gallery/scoring.
 
+## Local Image-to-Image in the Playground (draft PR #132)
+
+The existing Playground supports both `Text to Image` and a **local-only**
+`Image to Image` mode. It requires the [Korgis image-edit PR #260](https://github.com/daniele21/korgis/pull/260)
+running with `--image-editing-enabled`, its pinned Qwen3-VL projector present
+and checked, and sufficient Mac memory headroom. The feature is deliberately
+limited to Qwen Image 2.1 Turbo GGUF; the edit toggle stays disabled for other
+models or when the live Korgis `/v1/models` response does not confirm
+`image_editing_enabled: true`.
+
+Start Korgis in one terminal (from its edit branch):
+
+```bash
+cd ~/Projects/experiments/korgis
+git fetch origin
+git switch feat/qwen-image-21-turbo-edit-foundation-20261108
+git pull --ff-only
+
+uv run --frozen local-llm serve \
+  --model qwen-image-2.1-turbo-gguf-q4km \
+  --image-editing-enabled \
+  --host 127.0.0.1 --port 1235 \
+  --sd-server-bin "$HOME/.local-llm/tools/sdcpp-b43af40461cc64c89cac3b621019f8914f50dd9c/build/bin/sd-server" \
+  --no-download
+```
+
+Then start Experiments from its UI feature branch:
+
+```bash
+cd ~/Projects/experiments
+git fetch origin
+git switch feat/imagegen-playground-image-edit-20261109
+git pull --ff-only
+cd experiments/image-generation-benchmark/ui
+npm ci
+KORGIS_BASE_URL=http://127.0.0.1:1235 npm run dev -- --host 127.0.0.1
+```
+
+Open `http://127.0.0.1:5173`, choose **Qwen Image 2.1 Turbo**, refresh
+engines if you started Korgis later, select **Image to Image**, upload one
+PNG, write an edit instruction, choose output size and generate. Results
+show original/edited comparison and downloadable PNG. Only the generated
+PNG and the source image SHA-256 are persisted by Experiments, in
+`playground-results/`; your original upload stays in browser memory
+until you leave the page.
+
+First release limits: one PNG (max 8 MiB, up to 1 megapixel), one output,
+8 Turbo steps, fixed 512/768/1024 presets with 1MP output cap. No masks,
+multi-reference, remote media URL or cloud editing. Only the loopback
+Korgis server is contacted by the same-origin Node/Vite proxy.
+The host RAM protection remains owned by Korgis; if it refuses startup,
+release memory instead of bypassing the admission guard. The 10 GiB
+effective editing resident estimate is **provisional** (roughly 15.5 GiB
+reclaimable Mac memory required at startup).
+
+To verify UI behavior without loading Qwen:
+
+```bash
+cd experiments/image-generation-benchmark/ui
+npm test
+npm run build
+```
+
+A successful UI build and mocked proxy test **do not prove image editing
+quality or memory safety on the Mac**. Compare before/after manually in a
+real native E2E test before merging these draft PRs.
+
 ## Playground — prompt to image (UI)
 
 The **Playground** tab is the default landing screen of the existing Vite
