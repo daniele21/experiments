@@ -122,13 +122,13 @@ test("output can match a prepared portrait image at any safe 32px-aligned size",
   assert.equal(result.size, "768x1344");
   assert.equal(result.resize_policy, "fit-1mp-grid32-canvas-high-v1");
   assert.deepEqual(result.original, { width: 1200, height: 1800 });
-  await assert.rejects(() => readMultipartEdit(await formRequest({
+  await assert.rejects(async () => readMultipartEdit(await formRequest({
     size: "768x1376",
   })), /within 1 megapixel/);
-  await assert.rejects(() => readMultipartEdit(await formRequest({
+  await assert.rejects(async () => readMultipartEdit(await formRequest({
     resize_policy: "untrusted-code",
   })), /Unknown reference resizing policy/);
-  await assert.rejects(() => readMultipartEdit(await formRequest({
+  await assert.rejects(async () => readMultipartEdit(await formRequest({
     source_original_width: "1200", source_original_height: "1800",
     resize_policy: "original",
   })), /do not match PNG/);
