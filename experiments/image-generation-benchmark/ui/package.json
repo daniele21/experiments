@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/blind.test.js playground-api.test.js playground-edit.test.js"
+    "test": "node --test src/blind.test.js playground-api.test.js playground-edit.test.js src/reference-resize.test.js"
   },
   "dependencies": {
     "react": "19.0.0",
