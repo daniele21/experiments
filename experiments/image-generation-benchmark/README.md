@@ -248,8 +248,25 @@ PNG and the source image SHA-256 are persisted by Experiments, in
 `playground-results/`; your original upload stays in browser memory
 until you leave the page.
 
-First release limits: one PNG (max 8 MiB, up to 1 megapixel), one output,
-8 Turbo steps, fixed 512/768/1024 presets with 1MP output cap. No masks,
+First release limits: one original PNG (max 8 MiB, up to 24 megapixels),
+one output and 8 Turbo steps. The browser reads source dimensions first and,
+when the image is over 1 megapixel or 2048 px on either side, fits it into
+1 megapixel without cropping, without upscaling and on a 32px grid. It uses
+high-quality canvas interpolation and encodes a new PNG locally. The image
+sent to Qwen and used in the Before/After view is this prepared input; the
+original file is retained only in the browser for the upload preview.
+A versioned `fit-1mp-grid32-canvas-high-v1` resize policy and the
+client-reported original dimensions are stored alongside the SHA-256 of the
+actual prepared PNG. Dimension selection is deterministic; exact resampled
+pixel bytes may vary across browser engines and OS versions. Official
+reproducible benchmarks should use a pinned server-side resampler and retain
+the prepared input artifact.
+
+Output resolution defaults to **Match source proportions**, using the
+prepared image's dimensions rounded to multiples of 32. Users may select
+512/768/1024 presets; every output stays within 1MP. Infographics with small
+text can lose sharpness when reduced, so the UI displays the before/after
+dimensions and the actual model-input preview. No masks,
 multi-reference, remote media URL or cloud editing. Only the loopback
 Korgis server is contacted by the same-origin Node/Vite proxy.
 The host RAM protection remains owned by Korgis; if it refuses startup,
