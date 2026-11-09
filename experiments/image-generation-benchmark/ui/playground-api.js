@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { editWithKorgis, getEditingAvailability, readMultipartEdit } from "./playground-edit.js";
 
 const UI_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = path.resolve(UI_DIR, "..");
@@ -152,7 +153,14 @@ export function playgroundApi() {
 
     try {
       if (pathname === "/api/playground/models" && request.method === "GET") {
-        send(response, 200, await runPython("models"));
+        const catalog = await runPython("models");
+        const models = await Promise.all((catalog.models || []).map(async (model) => ({
+          ...model,
+          image_editing_available: await getEditingAvailability(
+            model, process.env.KORGIS_BASE_URL,
+          ),
+        })));
+        send(response, 200, { models });
         return;
       }
       if (pathname === "/api/playground/image" && request.method === "GET") {
@@ -188,6 +196,30 @@ export function playgroundApi() {
         generating = true;
         try {
           send(response, 200, await runPython("generate", body));
+        } finally {
+          generating = false;
+        }
+        return;
+      }
+      if (pathname === "/api/playground/edit" && request.method === "POST") {
+        if (!sameOrigin(request)) {
+          send(response, 403, { error: "Cross-origin editing is not allowed" });
+          return;
+        }
+        if (generating) {
+          send(response, 409, { error: "An image operation is already running" });
+          return;
+        }
+        generating = true;
+        try {
+          const input = await readMultipartEdit(request);
+          const catalog = await runPython("models");
+          const result = await editWithKorgis(input, {
+            models: catalog.models || [],
+            baseUrl: process.env.KORGIS_BASE_URL,
+            outputRoot: OUTPUT_ROOT,
+          });
+          send(response, 200, result);
         } finally {
           generating = false;
         }
