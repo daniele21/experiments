@@ -52,6 +52,7 @@ def available_models(environ: Mapping[str, str]) -> list[dict[str, Any]]:
             "provider": model.provider_type,
             "generation": dict(model.generation),
             "seed_supported": is_local,
+            "image_editing_supported": bool(is_local and (configs[model.model_key].get("capabilities") or {}).get("image_editing", False)),
             "configured": configured,
             "setup_hint": (
                 f"Set {model.base_url_env} and start Korgis locally"
