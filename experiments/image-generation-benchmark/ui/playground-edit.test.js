@@ -108,7 +108,7 @@ test("multipart parsing accepts one PNG and rejects arbitrary fields and sizes",
   assert.equal(result.dimensions.width, 512);
   await assert.rejects(async () => readMultipartEdit(await formRequest({ server_url: "http://evil" })), /Unexpected/);
   await assert.rejects(async () => readMultipartEdit(await formRequest({ seed: "-1" })), /Seed/);
-  await assert.rejects(async () => readMultipartEdit(await formRequest({ size: "4096x4096" })), /resolution/);
+  await assert.rejects(async () => readMultipartEdit(await formRequest({ size: "4096x4096" })), /resolution|within 1 megapixel/);
   await assert.rejects(async () => readMultipartEdit(await formRequest({ num_inference_steps: "9" })), /eight|8 inference/);
 });
 
