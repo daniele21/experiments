@@ -52,6 +52,10 @@ def test_playground_catalog_uses_existing_model_configuration():
     assert turbo["kind"] == "local"
     assert turbo["generation"]["num_inference_steps"] == 8
     assert turbo["configured"] is False
+    assert turbo["playground"]["sizes"] == [
+        "512x512", "768x768", "1024x1024", "1024x768", "768x1024",
+    ]
+    assert turbo["playground"]["output_formats"] == ["png", "jpeg", "webp"]
     cloud = next(entry for entry in models if entry["key"] == "openai-sunburst")
     assert cloud["kind"] == "cloud"
     assert not cloud["configured"]
@@ -106,3 +110,66 @@ def test_playground_refuses_cloud_seed_and_blank_prompt():
         playground.validate(" ", None, local)
     with pytest.raises(ValueError, match="Seed"):
         playground.validate("A nice image", -1, local)
+
+
+def test_playground_rejects_output_options_not_allowed_for_model():
+    validate = playground.resolve_playground_options
+    assert validate(
+        "qwen-image-2.1-turbo-gguf-q4km", size="768x1024",
+        output_format="webp",
+    ) == {"size": "768x1024", "output_format": "webp"}
+    with pytest.raises(ValueError, match="output size"):
+        validate("qwen-image-2.1-turbo-gguf-q4km", size="2048x2048", output_format="png")
+    with pytest.raises(ValueError, match="file format"):
+        validate("qwen-image-2.1-turbo-gguf-q4km", size="512x512", output_format="svg")
+    with pytest.raises(ValueError, match="output size"):
+        validate("gemini-pro-image", size="768x1024", output_format=None)
+    # Cloud formats not yet verified: a displayed fixed setting must not become
+    # an arbitrary provider override.
+    assert validate("openai-sunburst", size="1024x1024", output_format="png") == {}
+
+
+def test_playground_t2i_per_request_options_are_forwarded_and_recorded(tmp_path):
+    seen = []
+    class PreviewProvider:
+        def __init__(self, store):
+            self.store = store
+
+        def generate(self, request):
+            overrides = dict(request.generation.extra["provider_options"])
+            seen.append(overrides)
+            assert overrides == {"size": "768x1024", "output_format": "webp"}
+            artifact = self.store.persist_bytes(
+                artifact_id=request.request_id,
+                media_type="image",
+                data=b"RIFF" + b"0" * 20 + b"WEBP",
+                mime_type="image/webp",
+            )
+            return InferenceResult(
+                provider_id="korgis-image",
+                model_id="qwen-image-2.1-turbo-gguf-q4km",
+                raw_output={"created": 1},
+                normalized_output={"artifact_id": artifact.artifact_id},
+                output_artifacts=(artifact,),
+                latency_ms=120.0,
+                metadata={"korgis": {"seed": request.generation.seed}},
+            )
+
+    result = playground.generate(
+        model_key="qwen-image-2.1-turbo-gguf-q4km",
+        prompt="Portrait with a mountain in the background",
+        seed=19345,
+        size="768x1024",
+        output_format="webp",
+        output_root=tmp_path,
+        environ={"KORGIS_BASE_URL": "http://127.0.0.1:1235"},
+        provider_builder=lambda model, *, artifact_store, environ: PreviewProvider(artifact_store),
+    )
+    assert seen == [{"size": "768x1024", "output_format": "webp"}]
+    assert result["seed_requested"] == 19345
+    assert result["seed_effective"] == 19345
+    assert result["mime_type"] == "image/webp"
+    assert result["generation"]["size"] == "768x1024"
+    assert result["generation"]["output_format"] == "webp"
+    assert result["filename"] == "image.webp"
+    assert (tmp_path / result["id"] / "image.webp").exists()
