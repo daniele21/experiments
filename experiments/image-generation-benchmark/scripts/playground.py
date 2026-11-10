@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -32,6 +33,52 @@ SUPPORTED_MIMES = {
 }
 
 
+def playground_choices(entry: Mapping[str, Any]) -> dict[str, list[str]]:
+    """Explicit UI allowlist; fixed benchmark generation remains unchanged."""
+    gen = entry.get("generation") or {}
+    ui = entry.get("playground") or {}
+    if not isinstance(gen, Mapping) or not isinstance(ui, Mapping):
+        raise ValueError("Playground configuration must be mappings")
+    default_size = gen.get("size")
+    default_format = gen.get("output_format")
+    resp = gen.get("response_format") or {}
+    if not default_format and isinstance(resp, Mapping):
+        mime = resp.get("mime_type")
+        default_format = str(mime).removeprefix("image/") if mime else None
+    sizes = ui.get("sizes", [default_size] if default_size else [])
+    formats = ui.get("output_formats", [default_format] if default_format else [])
+    if not isinstance(sizes, list) or not isinstance(formats, list):
+        raise ValueError("Playground options must be lists")
+    choices = {
+        "sizes": [str(value) for value in sizes if value],
+        "output_formats": [str(value).lower() for value in formats if value],
+    }
+    if any(not re.fullmatch(r"[1-9][0-9]{1,3}x[1-9][0-9]{1,3}", v)
+           for v in choices["sizes"]):
+        raise ValueError("Invalid Playground size option")
+    if any(v not in {"png", "jpeg", "webp"} for v in choices["output_formats"]):
+        raise ValueError("Invalid Playground encoding option")
+    return choices
+
+
+def resolve_playground_options(
+    model_key: str, *, size: str | None, output_format: str | None,
+) -> dict[str, Any]:
+    entries = load_yaml_section(ROOT / "models.yaml", "models", required=True)
+    entry = entries[model_key]
+    choices = playground_choices(entry)
+    if size is not None and size not in choices["sizes"]:
+        raise ValueError("Requested output size is not supported by this model")
+    if output_format is not None and output_format not in choices["output_formats"]:
+        raise ValueError("Requested file format is not supported by this model")
+    if entry.get("runtime") != "korgis-image-local":
+        return {}  # Unverified cloud alternatives are never forwarded.
+    return {
+        key: value for key, value in {"size": size, "output_format": output_format}.items()
+        if value is not None
+    }
+
+
 def available_models(environ: Mapping[str, str]) -> list[dict[str, Any]]:
     """Generate select options from the existing benchmark model configuration."""
     configs = load_yaml_section(ROOT / "models.yaml", "models", required=True)
@@ -51,6 +98,7 @@ def available_models(environ: Mapping[str, str]) -> list[dict[str, Any]]:
             "kind": "local" if is_local else "cloud",
             "provider": model.provider_type,
             "generation": dict(model.generation),
+            "playground": playground_choices(configs[model.model_key]),
             "seed_supported": is_local,
             "image_editing_supported": bool(is_local and (configs[model.model_key].get("capabilities") or {}).get("image_editing", False)),
             "configured": configured,
@@ -90,9 +138,14 @@ def generate(
     output_root: Path,
     environ: Mapping[str, str],
     provider_builder: Any = create_image_provider,
+    size: str | None = None,
+    output_format: str | None = None,
 ) -> dict[str, Any]:
     model = require_model(model_key, environ)
     validate(prompt, seed, model)
+    overrides = resolve_playground_options(
+        model_key, size=size, output_format=output_format,
+    )
     run_id = uuid.uuid4().hex
     folder = output_root / run_id
     folder.mkdir(parents=True, exist_ok=False)
@@ -103,7 +156,9 @@ def generate(
         request = InferenceRequest(
             request_id=f"playground-{run_id}",
             input=prompt.strip(),
-            generation=GenerationConfig(seed=seed),
+            generation=GenerationConfig(
+                seed=seed, extra={"provider_options": overrides},
+            ),
         )
         result = provider.generate(request)
         if not result.valid or not result.output_artifacts:
@@ -135,7 +190,7 @@ def generate(
             "seed_requested": seed,
             "seed_effective": (result.metadata.get("korgis") or {}).get("seed")
                 if isinstance(result.metadata, Mapping) else None,
-            "generation": dict(model.generation),
+            "generation": {**dict(model.generation), **overrides},
             "mime_type": mime,
             "filename": image_name,
             "sha256": digest,
@@ -160,6 +215,8 @@ def main() -> int:
     parser.add_argument("action", choices=["models", "generate"])
     parser.add_argument("--model", default="")
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--size", default=None)
+    parser.add_argument("--output-format", default=None)
     parser.add_argument("--output-root", type=Path, default=ROOT / "playground-results")
     arguments = parser.parse_args()
 
@@ -174,6 +231,8 @@ def main() -> int:
             model_key=arguments.model,
             prompt=payload.get("prompt"),
             seed=arguments.seed,
+            size=arguments.size,
+            output_format=arguments.output_format,
             output_root=arguments.output_root,
             environ=os.environ,
         )
