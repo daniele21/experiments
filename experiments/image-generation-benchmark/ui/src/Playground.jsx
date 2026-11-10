@@ -33,7 +33,10 @@ export default function Playground() {
   const sourceSelection = useRef(0);
   const [resolution, setResolution] = useState("match");
   const [isDragging, setDragging] = useState(false);
-  const [seed, setSeed] = useState("42");
+  // Use distinct seed defaults: a fixed T2I seed is useful for comparison,
+  // but replaying the reference's original noise can oversharpen Qwen edits.
+  const [textSeed, setTextSeed] = useState("42");
+  const [editSeed, setEditSeed] = useState("");
   const [loadingModels, setLoadingModels] = useState(true);
   const [working, setWorking] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -96,6 +99,8 @@ export default function Playground() {
   const local = selected?.kind === "local";
   const editAvailable = Boolean(selected?.image_editing_available && local);
   const editing = mode === "edit";
+  const seed = editing ? editSeed : textSeed;
+  const setSeed = editing ? setEditSeed : setTextSeed;
   const canSubmit = selected?.configured && prompt.trim().length > 0 &&
     prompt.length <= 4000 && !working && !preparingImage &&
     (!editing || (editAvailable && prepared?.file));
@@ -375,7 +380,7 @@ export default function Playground() {
             </div>
             {local ? (
               <label className="pg-field pg-seed" htmlFor="pg-seed">
-                <span>Seed <small>(optional)</small></span>
+                <span>Seed <small>{editing ? "(blank = new random seed)" : "(fixed for repeatability)"}</small></span>
                 <input
                   id="pg-seed"
                   type="number"
@@ -384,8 +389,10 @@ export default function Playground() {
                   step={1}
                   disabled={working}
                   value={seed}
+                  placeholder={editing ? "Auto · fresh seed" : "42"}
                   onChange={(event) => setSeed(event.target.value)}
                 />
+                {editing ? <small className="pg-seed-hint">Recommended: leave blank. Reusing the source image's generation seed can cause Qwen 2.1 noise-replay artifacts (excessive contrast, grain and sharpening).</small> : null}
               </label>
             ) : null}
           </div>
