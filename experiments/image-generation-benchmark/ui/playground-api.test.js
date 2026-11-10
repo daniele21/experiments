@@ -10,7 +10,7 @@ test("a local model, prompt and seed form a safe generation request", () => {
       prompt: "  A morning cafe  ",
       seed: 42,
     }),
-    { model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "A morning cafe", seed: 42 },
+    { model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "A morning cafe", seed: 42, size: null, output_format: null },
   );
 });
 
@@ -36,4 +36,28 @@ test("reject invalid seeds and empty prompts before provider execution", () => {
     () => validateGeneration({ model_key: "qwen-image-2.1-turbo-gguf-q4km", prompt: "  " }),
     /prompt/,
   );
+});
+
+test("explicit image size and file format are validated in the proxy", () => {
+  const value = validateGeneration({
+    model_key: "qwen-image-2.1-turbo-gguf-q4km",
+    prompt: "Generate a portrait",
+    seed: 912,
+    size: "768x1024",
+    output_format: "webp",
+  });
+  assert.equal(value.size, "768x1024");
+  assert.equal(value.output_format, "webp");
+  for (const extras of [
+    { size: "../../etc/passwd" },
+    { size: 768 },
+    { output_format: "image/png" },
+    { output_format: "svg<script>" },
+    { output_format: 123 },
+  ]) {
+    assert.throws(() => validateGeneration({
+      model_key: "qwen-image-2.1-turbo-gguf-q4km",
+      prompt: "Test", ...extras,
+    }), /Invalid image size or output file format/);
+  }
 });
