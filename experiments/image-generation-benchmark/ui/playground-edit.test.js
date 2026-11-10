@@ -8,8 +8,8 @@ import { deflateSync } from "node:zlib";
 import test from "node:test";
 
 import {
-  editWithKorgis, getEditingAvailability, inspectPng, korgisOrigin,
-  readMultipartEdit,
+  classifyEditTransportFailure, editWithKorgis, getEditingAvailability,
+  inspectPng, korgisOrigin, readMultipartEdit,
 } from "./playground-edit.js";
 
 function chunk(type, contents) {
@@ -147,9 +147,12 @@ test("one local image edit calls Korgis and persists output without original", a
   const calls = [];
   const mockFetch = async (url, options) => {
     calls.push([url, options]);
-    if (url.endsWith("/v1/models")) return ready();
-    assert.match(url, /127.0.0.1:1235\/v1\/images\/edits$/);
-    const form = options.body;
+    assert.match(url, /127.0.0.1:1235\/v1\/models$/);
+    return ready();
+  };
+  const mockSubmit = async (origin, form) => {
+    calls.push([origin, form]);
+    assert.equal(origin, "http://127.0.0.1:1235");
     assert.equal(form.get("model"), MODEL.model_id);
     assert.equal(form.get("prompt"), input.prompt);
     assert.equal(form.get("size"), "512x512");
@@ -163,7 +166,7 @@ test("one local image edit calls Korgis and persists output without original", a
   try {
     const result = await editWithKorgis(input, {
       models: [MODEL], baseUrl: "http://127.0.0.1:1235",
-      outputRoot, fetchImpl: mockFetch,
+      outputRoot, fetchImpl: mockFetch, submitImpl: mockSubmit,
     });
     assert.equal(calls.length, 2);
     assert.equal(result.mode, "edit");
@@ -193,9 +196,38 @@ test("memory rejection is explained without exposing raw provider payload", asyn
   await assert.rejects(() => editWithKorgis(input, {
     models: [MODEL], baseUrl: "http://127.0.0.1:1235",
     outputRoot: "/tmp/not-used",
-    fetchImpl: async (url) => url.endsWith("/v1/models") ? ready() :
-      new Response(JSON.stringify({ detail: {
-        code: "resource_exhausted", message: "secret local details",
-      } }), { status: 503 }),
+    fetchImpl: async () => ready(),
+    submitImpl: async () => new Response(JSON.stringify({ detail: {
+      code: "resource_exhausted", message: "secret local details",
+    } }), { status: 503 }),
   }), /memory pressure/);
+});
+
+test("transport error distinguishes timeouts from crashes and never leaks raw error text", () => {
+  for (const [code, expected] of [
+    ["UND_ERR_HEADERS_TIMEOUT", /response headers/],
+    ["ECONNRESET", /closed during image editing/],
+    ["ECONNREFUSED", /no longer listening/],
+    ["ABORT_ERR", /20-minute deadline/],
+  ]) {
+    assert.match(classifyEditTransportFailure({ cause: { code } }), expected);
+  }
+  assert.doesNotMatch(
+    classifyEditTransportFailure({ code: "unknown", message: "sensitive prompt contents" }),
+    /sensitive prompt contents/,
+  );
+});
+
+test("post-submit connection reset surfaces actionable message", async () => {
+  const input = await readMultipartEdit(await formRequest());
+  await assert.rejects(() => editWithKorgis(input, {
+    models: [MODEL], baseUrl: "http://127.0.0.1:1235",
+    outputRoot: "/tmp/not-used",
+    fetchImpl: async () => ready(),
+    submitImpl: async () => {
+      const error = new Error("socket hang up");
+      error.code = "ECONNRESET";
+      throw error;
+    },
+  }), /Connection to Korgis closed during image editing/);
 });
