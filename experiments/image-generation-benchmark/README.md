@@ -282,16 +282,19 @@ npm test
 npm run build
 ```
 
-**Qwen 2.1 noise replay guard:** image editing defaults to a blank seed
-while text-to-image retains a fixed 42 seed for comparative tests. When the
-editing seed is blank, Korgis chooses a new random seed for the request and
-records the effective seed in the output metadata. Reusing the same RNG/seed
+**Qwen 2.1 noise replay guard:** both editing and text-to-image now
+offer explicit **Random each time** and **Fixed seed** modes in the Playground.
+Random is the default: the browser chooses a new cryptographically random
+31-bit integer for each request, sends it to Korgis and preserves the seed
+in the result metadata. Fixed mode permits exact reproductions (default text
+seed 42 and edit seed 43). Reusing the same RNG/seed
 and latent shape that generated the input reference can cause unexpectedly
 oversharpened, contrasty and noisy Qwen 2.1 edits. This was reproduced in
 [stable-diffusion.cpp issue #2131](https://github.com/leejet/stable-diffusion.cpp/issues/2131)
 and [ComfyUI issue #16607](https://github.com/Comfy-Org/ComfyUI/issues/16607).
-To troubleshoot, repeat the same input and prompt with seed 43 or a blank seed
-instead of 42. The mechanism depends on matching initial noise, not the number
+To troubleshoot, repeat the same input and prompt with the Random
+mode or a different fixed seed rather than reusing the seed that generated the
+reference. The mechanism depends on matching initial noise, not the number
 42 specifically, and it is not proof that all visual quality problems share
 this cause. Avoid changing CFG or the Turbo eight-step sigma schedule as an
 unvalidated sharpening fix.
@@ -299,6 +302,38 @@ unvalidated sharpening fix.
 A successful UI build and mocked proxy test **do not prove image editing
 quality or memory safety on the Mac**. Compare before/after manually in a
 real native E2E test before merging these draft PRs.
+
+### Session history and per-model Text-to-Image formats
+
+Every completed Playground generation is added to a **12-entry temporary
+history gallery**, newest first. Select a thumbnail to inspect its output,
+timestamp, model, effective seed, output size/format, latency, and the source
+prompt; editing entries also retain the original uploaded image and the
+downsampled image actually sent to Qwen for Before/After comparison.
+
+This history is held **only in React memory**, including uploaded reference
+image object URLs. Switching between Playground / Comparison / Blind Review
+preserves the session because Playground stays mounted. Clearing history or
+closing/reloading the page discards the gallery and releases source image
+object URLs. No browser storage is used. The existing completed image
+artifacts and manifest files remain in the local `playground-results/`
+directory: clearing the temporary UI gallery does *not* delete these files.
+
+**Text-to-Image choices:** sizes (square, portrait, landscape) and output
+encoding are derived from each model's explicit `models.yaml → playground`
+allowlist, not a global or invented format list. Qwen Image 2.1 GGUF models
+offer 512×512, 768×768, 1024×1024, 1024×768 and 768×1024, with PNG/JPEG/WebP
+encoding supported by their native Korgis engine. For unverified cloud models,
+only the configured default encoding/size is displayed; unsupported options
+are not forwarded. The UI proxy and Python provider both validate requested
+options against the current catalog. Fixed benchmark profiles and their
+resolutions remain unchanged.
+
+Random/fixed seed selection applies to local Korgis engines. Every random
+seed is generated in-browser and sent as an explicit request argument;
+the selected seed and format are preserved in the result manifest for
+reproducibility. Cloud providers do not expose a seed setting until the
+selected provider explicitly supports it.
 
 ## Playground — prompt to image (UI)
 
