@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const appRoutes = {
+  clientExperiments: "/client/experiments",
   clientModels: "/client/models",
   clientExecutive: "/client/executive",
   clientDocuments: "/client/documents",
@@ -25,7 +26,16 @@ function safeDecode(value) {
 export function parseAppRoute(pathname) {
   const path = pathname.replace(/\/+$/, "") || "/";
 
-  if (path === "/" || path === "/client" || path === "/client/models") {
+  if (path === "/" || path === "/client" || path === "/client/experiments") {
+    return {
+      area: "client",
+      page: "experiments",
+      params: {},
+      canonicalPath: appRoutes.clientExperiments,
+    };
+  }
+
+  if (path === "/client/models") {
     return {
       area: "client",
       page: "models",
@@ -104,9 +114,9 @@ export function parseAppRoute(pathname) {
 
   return {
     area: "client",
-    page: "models",
+    page: "experiments",
     params: {},
-    canonicalPath: appRoutes.clientModels,
+    canonicalPath: appRoutes.clientExperiments,
     notFound: true,
   };
 }

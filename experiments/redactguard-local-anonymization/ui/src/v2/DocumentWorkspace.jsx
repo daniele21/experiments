@@ -48,12 +48,12 @@ function Canvas({doc,model,selected,onSelect,showDifferences,revealed,onReveal,w
    <span className={current?.status==="ok"?"rb2-pane-good":"rb2-pane-fail"}>{current?.status==="ok" ? `${ratioText(current.recall)} recall` : "Inferenza non valida"}</span>
   </header>
   {current?.status!=="ok" && <div role="status" className="rb2-canvas-warning">Output non valido o non disponibile: il testo è mostrato come riferimento, non come protezione riuscita.</div>}
-  {!text && <div className="rb2-canvas-warning" role="alert">Testo del benchmark non disponibile o non verificabile ({doc.textStatus}). Nessuna conclusione sugli offset gold.</div>}
+  {!text && <div className="rb2-canvas-warning" role="alert">Il testo originale non è disponibile o verificabile per questa esecuzione. Puoi consultare metriche e annotazioni nell’analisi a destra.</div>}
   {text && result.invalidGoldOffsets>0 && <div className="rb2-canvas-warning" role="alert">{result.invalidGoldOffsets} annotazioni gold non allineate: anteprima protetta.</div>}
   {text && result.invalidExtraOffsets>0 && <div className="rb2-canvas-warning" role="status">{result.invalidExtraOffsets} rilevazioni extra del modello non posizionabili nel testo. Le PII gold restano visibili e mascherate; controlla “Extra” nell’Inspector.</div>}
   <div className="rb2-pane-scroll" ref={scrollRef} onScroll={onScroll}>
    {current?.status!=="ok" ? <div className="rb2-workspace-empty">Non è disponibile un'anonimizzazione valida di questo documento. Il testo grezzo resta nascosto in questa vista.</div> :
-    !text ? <div className="rb2-workspace-empty">Non è possibile verificare il testo del run. Apri la suite originale dal selettore Run; se il dataset è cambiato, la UI non mostrerà annotazioni potenzialmente sbagliate.</div> :
+    !text ? <div className="rb2-workspace-empty">Anteprima non disponibile. I risultati restano consultabili, ma le annotazioni non vengono sovrapposte a un testo che non può essere verificato.</div> :
     result.invalidGoldOffsets>0 ? <div className="rb2-workspace-empty">Gli offset delle PII gold non coincidono con il testo canonico. Anteprima oscurata per non esporre dati non correttamente mascherati.</div> :
     <div className="rb2-paper" aria-label={`Testo canonico di ${doc.caseId}, modello ${model}`}>
      {windowStart>0 && <p className="rb2-paper-info">… estratto dal carattere {windowStart.toLocaleString("it-IT")}</p>}
