@@ -23,6 +23,9 @@ korgis
 experiments/*/data/documents/generated/
 experiments/*/data/realistic/originals/
 experiments/*/results/history.jsonl
+# Local migration archives and generated explorer payloads are not reviewed publications.
+experiments/*/results/*.zip
+experiments/model-capability-benchmark/results/published/dashboard-data.json
 experiments/*/ui/public/pii-taxonomy.json
 
 # Image generation benchmark playground: exploratory outputs and frontend builds.
