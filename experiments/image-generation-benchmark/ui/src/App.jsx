@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Playground from "./Playground.jsx";
 
 const REFRESH_MS = 4000;
 const CRITERIA = ["prompt_adherence", "visual_preference", "text_quality"];
@@ -112,13 +113,21 @@ function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
     <header className="topbar">
       <div>
         <span className="eyebrow">Image generation benchmark</span>
-        <h1>{run?.manifest?.parameters?.profile || run?.manifest?.suite || "Run explorer"}</h1>
+        <h1>{activeTab === "playground" ? "Create & experiment" : run?.manifest?.parameters?.profile || run?.manifest?.suite || "Run explorer"}</h1>
         <p>
-          {run?.runId ? `${run.runId} · ` : ""}
-          refreshed {lastRefresh ? lastRefresh.toLocaleTimeString() : "—"}
+          {activeTab === "playground" ? "Generate an image using any configured model engine" : <>{run?.runId ? `${run.runId} · ` : ""}refreshed {lastRefresh ? lastRefresh.toLocaleTimeString() : "—"}</>}
         </p>
       </div>
       <div className="tab-switcher" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "playground"}
+          className={activeTab === "playground" ? "active" : ""}
+          onClick={() => setActiveTab("playground")}
+        >
+          Playground
+        </button>
         <button
           type="button"
           className={activeTab === "comparison" ? "active" : ""}
@@ -135,8 +144,11 @@ function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
         </button>
       </div>
       <div className="header-stat">
-        <strong>{summary.valid}/{summary.total}</strong>
-        <span>valid outputs</span>
+        {activeTab === "playground" ? (
+          <><strong>1 at a time</strong><span>prompt → image</span></>
+        ) : (
+          <><strong>{summary.valid}/{summary.total}</strong><span>valid outputs</span></>
+        )}
       </div>
     </header>
   );
@@ -204,6 +216,7 @@ function OutputCard({ row }) {
         </div>
         <div className="badge-row">
           <span className="badge">{formatMs(row.latency_ms)}</span>
+          {row.sample_index != null ? <span className="badge">Sample {Number(row.sample_index) + 1}</span> : null}
           {badges.map((badge) => <span className="badge" key={badge}>{badge}</span>)}
         </div>
         {artifacts.length ? (
@@ -298,7 +311,7 @@ function ComparisonView({ run }) {
               style={{ "--columns": Math.min(group.rows.length, 3) }}
             >
               {group.rows.map((row) => (
-                <OutputCard key={`${row.model_key}-${row.prompt_id}`} row={row} />
+                <OutputCard key={`${row.model_key}-${row.prompt_id}-${row.sample_index ?? 0}`} row={row} />
               ))}
             </div>
           </section>
@@ -374,7 +387,7 @@ function BlindReview({ runId }) {
             <div className="prompt-head">
               <div>
                 <span className="eyebrow">{pair.category}</span>
-                <h2>{pair.prompt_id}</h2>
+                <h2>{pair.prompt_id} · Sample {Number(pair.sample_index ?? 0) + 1}</h2>
               </div>
               <span className="pill">blind</span>
             </div>
@@ -423,11 +436,55 @@ function BlindReview({ runId }) {
   );
 }
 
+function formatMemoryBytes(value) {
+  const numeric = Number(value);
+  if (value == null || !Number.isFinite(numeric)) return "—";
+  return `${(numeric / 1024 ** 3).toFixed(2)} GiB`;
+}
+
+function MacMemoryTelemetry({ telemetry }) {
+  const rss = telemetry.sd_server_rss_peak_bytes;
+  const available = telemetry.host_reclaimable_min_bytes;
+  const swapIn = telemetry.swapin_delta_bytes;
+  const swapOut = telemetry.swapout_delta_bytes;
+  const startSwap = telemetry.swap_used_bytes_start;
+  const endSwap = telemetry.swap_used_bytes_end;
+  const swapDelta = startSwap != null && endSwap != null ? endSwap - startSwap : null;
+  const stats = [
+    ["Native peak RSS", formatMemoryBytes(rss), "sd-server process"],
+    ["Min. reclaimable RAM", formatMemoryBytes(available), "macOS physical memory"],
+    ["Swap used change", swapDelta == null ? "—" : `${swapDelta > 0 ? "+" : ""}${formatMemoryBytes(swapDelta)}`, "SSD swap footprint"],
+    ["Paging in / out", `${formatMemoryBytes(swapIn)} / ${formatMemoryBytes(swapOut)}`, "During sampled window"],
+  ];
+
+  return (
+    <section className="memory-telemetry" aria-label="Mac resource metrics">
+      <div className="memory-telemetry-top">
+        <div>
+          <span className="eyebrow">Device evidence</span>
+          <h2>Memory & swap</h2>
+        </div>
+        <span className="memory-sample-note">{telemetry.samples ?? 0} samples</span>
+      </div>
+      <div className="memory-telemetry-grid">
+        {stats.map(([label, value, context]) => (
+          <div className="memory-stat" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <small>{context}</small>
+          </div>
+        ))}
+      </div>
+      <p>Native process RSS is not total unified GPU/CPU memory. Used swap is not additional free RAM; missing measurements remain unknown.</p>
+    </section>
+  );
+}
+
 export default function App() {
   const [runs, setRuns] = useState([]);
   const [selectedRun, setSelectedRun] = useState(null);
   const [run, setRun] = useState(null);
-  const [activeTab, setActiveTab] = useState("comparison");
+  const [activeTab, setActiveTab] = useState("playground");
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
@@ -500,8 +557,16 @@ export default function App() {
           setActiveTab={setActiveTab}
           lastRefresh={lastRefresh}
         />
-        {error ? <div className="error-banner">{error}</div> : null}
-        {!run ? (
+        {error && activeTab !== "playground" ? <div className="error-banner">{error}</div> : null}
+        {activeTab !== "playground" && run?.runtimeMetrics?.mac_resource_telemetry ? (
+          <MacMemoryTelemetry telemetry={run.runtimeMetrics.mac_resource_telemetry} />
+        ) : null}
+        {/* Keep Playground mounted while switching sections so its temporary
+            image history and in-progress generations are not lost. */}
+        <div hidden={activeTab !== "playground"}>
+          <Playground />
+        </div>
+        {activeTab === "playground" ? null : !run ? (
           <div className="empty">
             <strong>No benchmark run selected</strong>
             <span>Run the benchmark; this React UI refreshes automatically.</span>

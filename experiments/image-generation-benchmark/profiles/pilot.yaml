@@ -1,0 +1,9 @@
+profile:
+  id: pilot
+  seed: 42
+  categories:
+    text_rendering: 1
+    compositional: 1
+    photorealism: 1
+    design: 1
+  outputs_per_prompt: 1

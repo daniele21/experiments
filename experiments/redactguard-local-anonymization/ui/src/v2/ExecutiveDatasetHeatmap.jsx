@@ -18,7 +18,7 @@ export default function ExecutiveDatasetHeatmap({latest,modelFilter,onOpenRun}) 
  const arrow=column=>sort.column!==column?"↕":sort.direction==="asc"?"↑":"↓";
  return <section className="rb3-panel rb3-heatmap">
  <div className="rb3-section-head">
-  <div><span className="rb2-kicker">QUATTRO CAPACITÀ, UN CONFRONTO</span><h2>Performance per dataset</h2>
+  <div><span className="rb2-kicker">CAPACITÀ A CONFRONTO</span><h2>Performance per dataset</h2>
     <p>La stessa metrica per tutti i modelli, senza medie tra dataset diversi.</p></div>
   <label>Metrica
    <select aria-label="Metrica della heatmap" value={metric} onChange={e=>{setMetric(e.target.value);setSort({column:"model",direction:"asc"});}}>

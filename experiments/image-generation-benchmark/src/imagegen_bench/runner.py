@@ -8,6 +8,7 @@ from typing import Any
 from benchmark_core import (
     ArtifactStore,
     BenchmarkArm,
+    GenerationConfig,
     InferenceRequest,
     append_csv_records,
     create_run_identity,
@@ -56,88 +57,15 @@ def execute_run_plan(
         runner_location="experiments/image-generation-benchmark",
     )
     run_dir = output_dir / identity.run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
     evidence_path = run_dir / "evidence.csv"
     rows: list[dict[str, Any]] = []
 
     resolved_models: dict[str, list[str]] = {}
     for model in plan.models:
-        store = ArtifactStore(run_dir / "artifacts" / model.model_key)
-        provider = provider_factory(model, store, environ)
         resolved_models.setdefault(model.provider_key, []).append(model.model_id)
 
-        for prompt in plan.prompts:
-            arm = BenchmarkArm(
-                model_key=model.model_key,
-                task_id=prompt.category,
-                metadata={"prompt_id": prompt.prompt_id},
-            )
-            execution = execute_arm(
-                arm,
-                lambda prompt=prompt, provider=provider, model_key=model.model_key: provider.generate(
-                    InferenceRequest(
-                        request_id=f"{model_key}-{prompt.prompt_id}",
-                        input=prompt.prompt,
-                    )
-                ),
-            )
-
-            if execution.succeeded and execution.value is not None:
-                result = execution.value
-                artifact = result.output_artifacts[0] if result.output_artifacts else None
-                row = {
-                    "run_id": identity.run_id,
-                    "model_key": model.model_key,
-                    "model_id": result.model_id,
-                    "provider_id": result.provider_id,
-                    "prompt_id": prompt.prompt_id,
-                    "category": prompt.category,
-                    "prompt": prompt.prompt,
-                    "valid": result.valid,
-                    "latency_ms": result.latency_ms,
-                    "artifact_id": artifact.artifact_id if artifact else "",
-                    "artifact_path": (
-                        _relative_artifact_path(run_dir, artifact.path)
-                        if artifact
-                        else ""
-                    ),
-                    "artifact_sha256": artifact.sha256 if artifact else "",
-                    "error_kind": result.error.kind if result.error else "",
-                    "error_message": result.error.message if result.error else "",
-                    "generation_config": json.dumps(
-                        dict(model.generation),
-                        sort_keys=True,
-                    ),
-                    "provider_metadata": json.dumps(
-                        dict(result.metadata),
-                        sort_keys=True,
-                        default=str,
-                    ),
-                }
-            else:
-                row = {
-                    "run_id": identity.run_id,
-                    "model_key": model.model_key,
-                    "model_id": model.model_id,
-                    "provider_id": model.provider_key,
-                    "prompt_id": prompt.prompt_id,
-                    "category": prompt.category,
-                    "prompt": prompt.prompt,
-                    "valid": False,
-                    "latency_ms": execution.elapsed_s * 1000,
-                    "artifact_id": "",
-                    "artifact_path": "",
-                    "artifact_sha256": "",
-                    "error_kind": execution.error_type or "runner",
-                    "error_message": execution.error_message or "",
-                    "generation_config": json.dumps(
-                        dict(model.generation),
-                        sort_keys=True,
-                    ),
-                    "provider_metadata": "{}",
-                }
-            rows.append(row)
-            append_csv_records([row], evidence_path)
-
+    # Materialize provenance before provider startup or any paid/long inference.
     write_environment_manifest(
         run_dir / "manifest.json",
         run_group=identity.run_group,
@@ -148,6 +76,7 @@ def execute_run_plan(
         parameters={
             "profile": plan.profile_id,
             "seed": plan.seed,
+            "outputs_per_prompt": plan.outputs_per_prompt,
             "prompt_ids": [prompt.prompt_id for prompt in plan.prompts],
             "model_generation": {
                 model.model_key: dict(model.generation)
@@ -161,4 +90,89 @@ def execute_run_plan(
         pricing={},
         packages=("openai", "google-genai"),
     )
+
+    for model in plan.models:
+        store = ArtifactStore(run_dir / "artifacts" / model.model_key)
+        provider = provider_factory(model, store, environ)
+
+        for prompt in plan.prompts:
+            for sample_index in range(plan.outputs_per_prompt):
+                # Local Korgis supports deterministic seed input; cloud
+                # providers do not promise equivalent seed semantics.
+                requested_seed = (
+                    plan.seed + sample_index
+                    if model.provider_type == "korgis-image"
+                    else None
+                )
+                request_id = f"{model.model_key}-{prompt.prompt_id}-r{sample_index}"
+                arm = BenchmarkArm(
+                    model_key=model.model_key,
+                    task_id=prompt.category,
+                    metadata={
+                        "prompt_id": prompt.prompt_id,
+                        "sample_index": sample_index,
+                    },
+                )
+                request = InferenceRequest(
+                    request_id=request_id,
+                    input=prompt.prompt,
+                    generation=GenerationConfig(seed=requested_seed),
+                )
+                execution = execute_arm(
+                    arm,
+                    lambda provider=provider, request=request: provider.generate(request),
+                )
+
+                row: dict[str, Any] = {
+                    "run_id": identity.run_id,
+                    "model_key": model.model_key,
+                    "model_id": model.model_id,
+                    "provider_id": model.provider_key,
+                    "prompt_id": prompt.prompt_id,
+                    "category": prompt.category,
+                    "prompt": prompt.prompt,
+                    "sample_index": sample_index,
+                    "seed_requested": requested_seed,
+                    "seed_effective": None,
+                    "valid": False,
+                    "latency_ms": execution.elapsed_s * 1000,
+                    "artifact_id": "",
+                    "artifact_path": "",
+                    "artifact_sha256": "",
+                    "error_kind": execution.error_type or "runner",
+                    "error_message": execution.error_message or "",
+                    "generation_config": json.dumps(
+                        dict(model.generation), sort_keys=True
+                    ),
+                    "provider_metadata": "{}",
+                }
+
+                if execution.succeeded and execution.value is not None:
+                    result = execution.value
+                    artifact = result.output_artifacts[0] if result.output_artifacts else None
+                    metadata = dict(result.metadata)
+                    korgis = metadata.get("korgis")
+                    if isinstance(korgis, Mapping):
+                        row["seed_effective"] = korgis.get("seed")
+                    row.update({
+                        "model_id": result.model_id,
+                        "provider_id": result.provider_id,
+                        "valid": result.valid,
+                        "latency_ms": result.latency_ms,
+                        "artifact_id": artifact.artifact_id if artifact else "",
+                        "artifact_path": (
+                            _relative_artifact_path(run_dir, artifact.path)
+                            if artifact else ""
+                        ),
+                        "artifact_sha256": artifact.sha256 if artifact else "",
+                        "error_kind": result.error.kind if result.error else "",
+                        "error_message": result.error.message if result.error else "",
+                        "provider_metadata": json.dumps(
+                            metadata, sort_keys=True, default=str
+                        ),
+                    })
+
+                rows.append(row)
+                append_csv_records([row], evidence_path)
+
     return rows
