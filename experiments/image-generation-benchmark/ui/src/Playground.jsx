@@ -13,6 +13,12 @@ const EDIT_PROMPT = "Change the color of the main object, preserving the composi
 const EDIT_RESOLUTIONS = ["512x512", "768x768", "1024x1024", "1024x768", "768x1024"];
 
 
+function sizeLabel(size) {
+  const [w, h] = String(size).split("x").map(Number);
+  const orientation = w === h ? "Square" : w > h ? "Landscape" : "Portrait";
+  return `${orientation} · ${w} × ${h}`;
+}
+
 function timeLabel(ms) {
   if (!Number.isFinite(Number(ms))) return "—";
   const seconds = Number(ms) / 1000;
@@ -434,13 +440,13 @@ export default function Playground() {
           <div className="pg-settings">
             <div>
               <span>Generation settings</span>
-              <small>{editing ? "Editing uses eight Turbo steps" : "Using the selected engine defaults"}</small>
+              <small>{editing ? "Editing uses eight Turbo steps" : "Choose supported model formats; benchmark defaults stay unchanged"}</small>
             </div>
             <div className="pg-setting-chips">
               <span>{editing ? (resolution === "match" && prepared
                 ? matchedOutputSize(prepared.processed.width, prepared.processed.height)
                 : resolution === "match" ? "Match source" : resolution)
-                : selected?.generation?.size || "Engine default"}</span>
+                : selectedOutputSize || "Engine default"}</span>
               {selected?.generation?.num_inference_steps != null ? (
                 <span>{selected.generation.num_inference_steps} steps</span>
               ) : null}
@@ -448,22 +454,51 @@ export default function Playground() {
                 <span>CFG {selected.generation.guidance_scale}</span>
               ) : null}
             </div>
-            {local ? (
-              <label className="pg-field pg-seed" htmlFor="pg-seed">
-                <span>Seed <small>{editing ? "(blank = new random seed)" : "(fixed for repeatability)"}</small></span>
-                <input
-                  id="pg-seed"
-                  type="number"
-                  min={0}
-                  max={2147483647}
-                  step={1}
-                  disabled={working}
-                  value={seed}
-                  placeholder={editing ? "Auto · fresh seed" : "42"}
-                  onChange={(event) => setSeed(event.target.value)}
-                />
-                {editing ? <small className="pg-seed-hint">Recommended: leave blank. Reusing the source image's generation seed can cause Qwen 2.1 noise-replay artifacts (excessive contrast, grain and sharpening).</small> : null}
+            {!editing && choices.sizes.length > 0 ? (
+              <label className="pg-field" htmlFor="pg-t2i-size">
+                <span>Image shape & resolution</span>
+                <select id="pg-t2i-size" value={selectedOutputSize}
+                  disabled={working} onChange={(event) => setOutputSize(event.target.value)}>
+                  {choices.sizes.map((size) => (
+                    <option value={size} key={size}>{sizeLabel(size)}</option>
+                  ))}
+                </select>
               </label>
+            ) : null}
+            {!editing && choices.formats.length > 0 ? (
+              <label className="pg-field" htmlFor="pg-t2i-format">
+                <span>Output file format</span>
+                <select id="pg-t2i-format" value={selectedOutputEncoding}
+                  disabled={working || choices.formats.length === 1}
+                  onChange={(event) => setOutputEncoding(event.target.value)}>
+                  {choices.formats.map((format) => (
+                    <option value={format} key={format}>{format.toUpperCase()}</option>
+                  ))}
+                </select>
+                {choices.formats.length === 1 ? <small>Only this encoding is configured for the selected engine.</small> : null}
+              </label>
+            ) : null}
+            {local ? (
+              <div className="pg-field pg-seed">
+                <span>Seed</span>
+                <div className="pg-seed-mode" role="group" aria-label="Seed mode">
+                  <button type="button" className={seedMode === "random" ? "selected" : ""}
+                    aria-pressed={seedMode === "random"} disabled={working}
+                    onClick={() => setSeedMode("random")}>Random each time</button>
+                  <button type="button" className={seedMode === "fixed" ? "selected" : ""}
+                    aria-pressed={seedMode === "fixed"} disabled={working}
+                    onClick={() => setSeedMode("fixed")}>Fixed seed</button>
+                </div>
+                {seedMode === "fixed" ? (
+                  <label htmlFor="pg-seed">
+                    <span className="pg-seed-field-label">Seed value</span>
+                    <input id="pg-seed" type="number" min={0} max={2147483647} step={1}
+                      disabled={working} value={seed}
+                      onChange={(event) => setSeed(event.target.value)} />
+                  </label>
+                ) : <small className="pg-seed-hint">A new random seed is generated on your device and saved with the result.</small>}
+                {editing ? <small className="pg-seed-hint">For Qwen 2.1, reusing the reference generation's noise/seed can amplify grain and sharpening.</small> : null}
+              </div>
             ) : null}
           </div>
           <button className="pg-generate" type="submit" disabled={!canSubmit}>
