@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { matchedOutputSize, prepareReferenceImage } from "./reference-resize.js";
+import { appendHistory, makeHistoryEntry, outputChoices, resolveSeed } from "./playground-session.js";
 
 const EXAMPLES = [
   { label: "Photorealism", prompt: "Photorealistic editorial photograph of a small Italian café at sunrise, soft window light, a ceramic espresso cup, believable materials and natural reflections." },
@@ -36,7 +37,14 @@ export default function Playground() {
   // Use distinct seed defaults: a fixed T2I seed is useful for comparison,
   // but replaying the reference's original noise can oversharpen Qwen edits.
   const [textSeed, setTextSeed] = useState("42");
-  const [editSeed, setEditSeed] = useState("");
+  const [editSeed, setEditSeed] = useState("43");
+  const [textSeedMode, setTextSeedMode] = useState("random");
+  const [editSeedMode, setEditSeedMode] = useState("random");
+  const [outputSize, setOutputSize] = useState("");
+  const [outputEncoding, setOutputEncoding] = useState("");
+  const [history, setHistory] = useState([]);
+  const [historySelectionId, setHistorySelectionId] = useState(null);
+  const historyRef = useRef([]);
   const [loadingModels, setLoadingModels] = useState(true);
   const [working, setWorking] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -101,9 +109,67 @@ export default function Playground() {
   const editing = mode === "edit";
   const seed = editing ? editSeed : textSeed;
   const setSeed = editing ? setEditSeed : setTextSeed;
+  const seedMode = editing ? editSeedMode : textSeedMode;
+  const setSeedMode = editing ? setEditSeedMode : setTextSeedMode;
+  const choices = outputChoices(selected);
+  const selectedOutputSize = choices.sizes.includes(outputSize) ? outputSize
+    : choices.sizes.includes(selected?.generation?.size) ? selected.generation.size
+      : (choices.sizes[0] || "");
+  const defaultEncoding = selected?.generation?.output_format
+    || selected?.generation?.response_format?.mime_type?.replace("image/", "") || "";
+  const selectedOutputEncoding = choices.formats.includes(outputEncoding) ? outputEncoding
+    : choices.formats.includes(defaultEncoding) ? defaultEncoding
+      : (choices.formats[0] || "");
+  const selectedHistory = history.find((entry) => entry.id === historySelectionId);
+  const displayedResult = selectedHistory?.result || result;
+  const displayedMode = selectedHistory?.mode || mode;
+  const displayedSource = selectedHistory
+    ? selectedHistory.sourceUrl : preparedPreview;
   const canSubmit = selected?.configured && prompt.trim().length > 0 &&
     prompt.length <= 4000 && !working && !preparingImage &&
     (!editing || (editAvailable && prepared?.file));
+
+  // Retain reference image object URLs only while this Playground tab is open.
+  // These are not written to the server or any browser storage.
+  useEffect(() => () => {
+    for (const entry of historyRef.current) {
+      if (entry.sourceUrl) URL.revokeObjectURL(entry.sourceUrl);
+      if (entry.originalUrl) URL.revokeObjectURL(entry.originalUrl);
+    }
+  }, []);
+
+  function clearHistory() {
+    for (const entry of historyRef.current) {
+      if (entry.sourceUrl) URL.revokeObjectURL(entry.sourceUrl);
+      if (entry.originalUrl) URL.revokeObjectURL(entry.originalUrl);
+    }
+    historyRef.current = [];
+    setHistory([]);
+    setHistorySelectionId(null);
+    setResult(null);
+  }
+
+  function recordHistory(body, generationMode) {
+    const sourceUrl = generationMode === "edit" && prepared?.file
+      ? URL.createObjectURL(prepared.file) : null;
+    const originalUrl = generationMode === "edit" && sourceImage
+      ? URL.createObjectURL(sourceImage) : null;
+    const item = makeHistoryEntry(body, {
+      mode: generationMode,
+      modelName: models.find((item) => item.key === body.model_key)?.name || body.model_key,
+      sourceUrl,
+      originalUrl,
+      sourceName: generationMode === "edit" ? sourceImage?.name : null,
+    });
+    const updated = appendHistory(historyRef.current, item);
+    for (const entry of updated.evicted) {
+      if (entry.sourceUrl) URL.revokeObjectURL(entry.sourceUrl);
+      if (entry.originalUrl) URL.revokeObjectURL(entry.originalUrl);
+    }
+    historyRef.current = updated.entries;
+    setHistory(updated.entries);
+    setHistorySelectionId(item.id);
+  }
 
   async function chooseSource(file) {
     if (!file) return;
