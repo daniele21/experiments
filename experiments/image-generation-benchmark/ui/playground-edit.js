@@ -6,6 +6,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { submitLocalEdit } from "./local-edit-transport.js";
 
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export const MAX_EDIT_BODY_BYTES = MAX_IMAGE_BYTES + 64 * 1024;
@@ -221,6 +222,28 @@ function errorMessage(payload, code) {
     : `Korgis image editing failed (HTTP ${code})`;
 }
 
+export function classifyEditTransportFailure(error) {
+  const code = String(error?.cause?.code || error?.code || "");
+  const name = String(error?.name || "");
+  if (code === "UND_ERR_HEADERS_TIMEOUT") {
+    return "Korgis did not send response headers before the HTTP client timed out. The edit may still be running; check the Korgis terminal.";
+  }
+  if (code === "ABORT_ERR" || code === "ETIMEDOUT" ||
+      name === "TimeoutError" || name === "AbortError") {
+    return "Image editing exceeded the configured 20-minute deadline. Check Korgis logs before retrying.";
+  }
+  if (code === "ECONNRESET" || code === "EPIPE") {
+    return "Connection to Korgis closed during image editing. Check whether Korgis or sd-server stopped (including possible memory pressure).";
+  }
+  if (code === "ECONNREFUSED") {
+    return "Korgis is no longer listening on the configured localhost port. Restart it and check its terminal logs.";
+  }
+  if (code === "KORGIS_RESPONSE_TOO_LARGE") {
+    return "Korgis returned more than 32 MiB of data. The edit response was rejected.";
+  }
+  return "Korgis edit transport failed before a complete HTTP response. Check the Korgis terminal and local server health.";
+}
+
 export async function getEditingAvailability(model, baseUrl, fetchImpl = fetch) {
   if (!model?.image_editing_supported || model.kind !== "local") return false;
   const origin = korgisOrigin(baseUrl);
@@ -239,7 +262,7 @@ export async function getEditingAvailability(model, baseUrl, fetchImpl = fetch) 
 }
 
 export async function editWithKorgis(input, {
-  models, baseUrl, outputRoot, fetchImpl = fetch,
+  models, baseUrl, outputRoot, fetchImpl = fetch, submitImpl = submitLocalEdit,
 }) {
   const model = models.find((row) => row.key === input.model_key);
   if (!model || !model.image_editing_supported || model.kind !== "local") {
@@ -261,13 +284,11 @@ export async function editWithKorgis(input, {
 
   let upstream;
   try {
-    upstream = await fetchImpl(`${origin}/v1/images/edits`, {
-      method: "POST", body: form, signal: AbortSignal.timeout(20 * 60 * 1000),
-    });
+    upstream = await submitImpl(origin, form);
   } catch (error) {
-    throw clientError(error?.name === "TimeoutError"
-      ? "Korgis editing exceeded the 20-minute limit"
-      : "Cannot connect to Korgis image editing API", 502);
+    // Do not turn all transport failures into a misleading "can't connect"
+    // message: Korgis might have been reachable and died mid-inference.
+    throw clientError(classifyEditTransportFailure(error), 502);
   }
   const payload = await readLimited(upstream);
   if (!upstream.ok) throw clientError(
