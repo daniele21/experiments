@@ -282,6 +282,20 @@ npm test
 npm run build
 ```
 
+**Qwen 2.1 noise replay guard:** image editing defaults to a blank seed
+while text-to-image retains a fixed 42 seed for comparative tests. When the
+editing seed is blank, Korgis chooses a new random seed for the request and
+records the effective seed in the output metadata. Reusing the same RNG/seed
+and latent shape that generated the input reference can cause unexpectedly
+oversharpened, contrasty and noisy Qwen 2.1 edits. This was reproduced in
+[stable-diffusion.cpp issue #2131](https://github.com/leejet/stable-diffusion.cpp/issues/2131)
+and [ComfyUI issue #16607](https://github.com/Comfy-Org/ComfyUI/issues/16607).
+To troubleshoot, repeat the same input and prompt with seed 43 or a blank seed
+instead of 42. The mechanism depends on matching initial noise, not the number
+42 specifically, and it is not proof that all visual quality problems share
+this cause. Avoid changing CFG or the Turbo eight-step sigma schedule as an
+unvalidated sharpening fix.
+
 A successful UI build and mocked proxy test **do not prove image editing
 quality or memory safety on the Mac**. Compare before/after manually in a
 real native E2E test before merging these draft PRs.
