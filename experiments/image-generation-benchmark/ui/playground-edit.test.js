@@ -157,6 +157,7 @@ test("one local image edit calls Korgis and persists output without original", a
     assert.equal(form.get("prompt"), input.prompt);
     assert.equal(form.get("size"), "512x512");
     assert.equal(form.get("num_inference_steps"), "8");
+    assert.equal(form.has("seed"), false, "automatic editing seed must be selected by Korgis");
     assert.equal(form.get("image").type, "image/png");
     return new Response(JSON.stringify({
       data: [{ b64_json: generated.toString("base64") }],
@@ -170,6 +171,8 @@ test("one local image edit calls Korgis and persists output without original", a
     });
     assert.equal(calls.length, 2);
     assert.equal(result.mode, "edit");
+    assert.equal(result.seed_requested, null);
+    assert.equal(result.seed_effective, 42);
     assert.equal(result.source_sha256, crypto.createHash("sha256").update(input.bytes).digest("hex"));
     assert.equal(result.image_url, "/api/playground/image?id=" + result.id);
     const files = await fs.readdir(path.join(outputRoot, result.id));
