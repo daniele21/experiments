@@ -19,7 +19,7 @@ export function validateGeneration(body) {
     throw new Error("Expected a generation request");
   }
   const keys = Object.keys(body);
-  if (keys.some((key) => !["model_key", "prompt", "seed"].includes(key))) {
+  if (keys.some((key) => !["model_key", "prompt", "seed", "size", "output_format"].includes(key))) {
     throw new Error("Unexpected generation parameter");
   }
   if (typeof body.model_key !== "string" ||
@@ -34,10 +34,19 @@ export function validateGeneration(body) {
       (!Number.isSafeInteger(body.seed) || body.seed < 0 || body.seed > 2147483647)) {
     throw new Error("Seed must be an integer from 0 to 2147483647");
   }
+  for (const key of ["size", "output_format"]) {
+    if (body[key] !== undefined && body[key] !== null &&
+        (typeof body[key] !== "string" || body[key].length > 32 ||
+         !/^[a-z0-9]+(?:x[a-z0-9]+)?$/.test(body[key]))) {
+      throw new Error("Invalid image size or output file format");
+    }
+  }
   return {
     model_key: body.model_key,
     prompt: body.prompt.trim(),
     seed: body.seed ?? null,
+    size: body.size ?? null,
+    output_format: body.output_format ?? null,
   };
 }
 
@@ -83,11 +92,13 @@ function sameOrigin(request) {
   }
 }
 
-function runPython(action, { model_key, prompt, seed } = {}) {
+function runPython(action, { model_key, prompt, seed, size, output_format } = {}) {
   const args = ["run", "--frozen", "python", PYTHON_SCRIPT, action];
   if (action === "generate") {
     args.push("--model", model_key, "--output-root", OUTPUT_ROOT);
     if (seed !== null && seed !== undefined) args.push("--seed", String(seed));
+    if (size) args.push("--size", size);
+    if (output_format) args.push("--output-format", output_format);
   }
   return new Promise((resolve, reject) => {
     const child = spawn("uv", args, {
