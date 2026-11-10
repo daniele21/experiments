@@ -197,6 +197,7 @@ export default function Playground() {
   function changeMode(nextMode) {
     if (nextMode === "edit" && !editAvailable) return;
     setMode(nextMode);
+    setHistorySelectionId(null);
     setResult(null);
     setError("");
     if (nextMode === "edit" && prompt === INITIAL_PROMPT) setPrompt(EDIT_PROMPT);
@@ -209,14 +210,13 @@ export default function Playground() {
     setSeconds(0);
     setError("");
     setResult(null);
+    setHistorySelectionId(null);
     try {
       const payload = { model_key: modelKey, prompt: prompt.trim() };
-      if (local && seed.trim() !== "") {
-        const parsed = Number(seed);
-        if (!Number.isInteger(parsed) || parsed < 0 || parsed > 2147483647) {
-          throw new Error("Seed must be a positive integer up to 2147483647");
-        }
-        payload.seed = parsed;
+      if (local) payload.seed = resolveSeed(seedMode, seed);
+      if (!editing) {
+        if (selectedOutputSize) payload.size = selectedOutputSize;
+        if (selectedOutputEncoding) payload.output_format = selectedOutputEncoding;
       }
       let response;
       if (editing) {
@@ -245,6 +245,7 @@ export default function Playground() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || `Generation failed (${response.status})`);
       setResult(body);
+      recordHistory(body, editing ? "edit" : "generate");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -278,6 +279,9 @@ export default function Playground() {
               value={modelKey}
               onChange={(event) => {
                 setModelKey(event.target.value);
+                setOutputSize("");
+                setOutputEncoding("");
+                setHistorySelectionId(null);
                 setMode("generate");
                 setResult(null);
                 setError("");
