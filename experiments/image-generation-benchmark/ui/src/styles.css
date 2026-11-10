@@ -332,3 +332,12 @@ button { cursor: pointer; }
 .pg-resize-note > strong { font-size: 12px; }
 .pg-resize-note > span { font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .pg-resize-note > small { color: #6b7d95; line-height: 1.5; }
+
+/* Explain Qwen 2.1 noise replay without forcing a reproducible seed on edits. */
+.pg-seed-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #78889c;
+}
