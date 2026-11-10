@@ -561,9 +561,12 @@ export default function App() {
         {activeTab !== "playground" && run?.runtimeMetrics?.mac_resource_telemetry ? (
           <MacMemoryTelemetry telemetry={run.runtimeMetrics.mac_resource_telemetry} />
         ) : null}
-        {activeTab === "playground" ? (
+        {/* Keep Playground mounted while switching sections so its temporary
+            image history and in-progress generations are not lost. */}
+        <div hidden={activeTab !== "playground"}>
           <Playground />
-        ) : !run ? (
+        </div>
+        {activeTab === "playground" ? null : !run ? (
           <div className="empty">
             <strong>No benchmark run selected</strong>
             <span>Run the benchmark; this React UI refreshes automatically.</span>
