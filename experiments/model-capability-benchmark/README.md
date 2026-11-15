@@ -8,6 +8,10 @@ capabilities, datasets and evaluators.
 The suite is being built on top of the shared `benchmark-core` package extracted from
 `jev-vs-llm`.
 
+For controlled Korgis llama.cpp v0.3/v1 **external endpoint** release regression,
+see [Korgis llama v1 comparison protocol](KORGIS_LLAMA_V1_ENDPOINT_REGRESSION.md).
+This protocol is not a completed measurement or a hardware-safety attestation.
+
 ## Current status
 
 - MCB-0 baseline: complete;
