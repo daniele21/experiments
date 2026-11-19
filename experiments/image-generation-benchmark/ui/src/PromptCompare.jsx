@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_COMPARE_PROMPT, REVIEW_CRITERIA, MAX_COMPARE_ARMS,
-  comparisonPlan, defaultCompareModels, emptyArm,
+  comparisonPlan, defaultCompareModels, emptyArm, isModelReady,
   exampleBenchmarkCommand, makeComparisonReceipt, shuffleForBlind,
 } from "./prompt-compare.js";
 import { resolveSeed } from "./playground-session.js";
@@ -29,7 +29,7 @@ function downloadJson(filename, data) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function PromptCompare({ models, onGeneration, singlePrompt = "" }) {
+export default function PromptCompare({ models, onGeneration, onRefresh, singlePrompt = "" }) {
   const [selectedKeys, setSelectedKeys] = useState([]);
   const initialized = useRef(false);
   const [prompt, setPrompt] = useState(DEFAULT_COMPARE_PROMPT);
@@ -68,7 +68,7 @@ export default function PromptCompare({ models, onGeneration, singlePrompt = "" 
     : arms);
   const canSubmit = !running && selectedKeys.length >= 2 &&
     selectedKeys.length <= MAX_COMPARE_ARMS && prompt.trim().length > 0 &&
-    prompt.length <= 4000 && picked.every((model) => model.configured);
+    prompt.length <= 4000 && picked.every(isModelReady);
 
   function toggleModel(key, checked) {
     if (running) return;
@@ -182,21 +182,26 @@ export default function PromptCompare({ models, onGeneration, singlePrompt = "" 
         </label>
         <div className="pg-compare-model-head">
           <strong>Select models ({selectedKeys.length}/{MAX_COMPARE_ARMS})</strong>
-          <span>2 or more · checked engines only</span>
+          <button type="button" className="pg-compare-reuse-prompt" disabled={running}
+            onClick={async () => {
+              try { await onRefresh?.(); setError(""); }
+              catch (reason) { setError(reason.message || String(reason)); }
+            }}>↻ Refresh loaded models</button>
         </div>
         <div className="pg-compare-models">
           {models.map((model) => (
             <label key={model.key}
               className={selectedKeys.includes(model.key) ? "pg-compare-model selected" : "pg-compare-model"}>
               <input type="checkbox" checked={selectedKeys.includes(model.key)}
-                disabled={running || !model.configured ||
+                disabled={running || !isModelReady(model) ||
                   (!selectedKeys.includes(model.key) && selectedKeys.length >= MAX_COMPARE_ARMS)}
                 onChange={(event) => toggleModel(model.key, event.target.checked)} />
               <span>
                 <strong>{model.name}</strong>
                 <small>{model.kind === "local" ? "Local · Korgis" : "Cloud API"}
-                  {model.configured ? " · Configured" : " · Setup needed"}</small>
-                {!model.configured ? <small>{model.setup_hint}</small> : null}
+                  {isModelReady(model) ? " · Ready" : " · Setup needed"}</small>
+                {!isModelReady(model) ? <small>{model.model_status_message || model.setup_hint
+                  || "Model is not available for inference"}</small> : null}
               </span>
             </label>
           ))}
