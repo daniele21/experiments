@@ -529,3 +529,11 @@ button { cursor: pointer; }
   .pg-workspace-tabs { width: 100%; }
   .pg-workspace-tabs button { flex: 1; }
 }
+
+.pg-compare-reuse-prompt {
+  justify-self: start; background: transparent; color: #a3c8e7;
+  border: 1px solid #446780; border-radius: 9px; padding: 8px 11px;
+  font-size: 11px; font-weight: 650;
+}
+.pg-compare-reuse-prompt:hover:not(:disabled) { background: #263a47; }
+.pg-compare-reuse-prompt:disabled { opacity: .55; cursor: not-allowed; }
