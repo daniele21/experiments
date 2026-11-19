@@ -98,6 +98,7 @@ def available_models(environ: Mapping[str, str]) -> list[dict[str, Any]]:
             "kind": "local" if is_local else "cloud",
             "provider": model.provider_type,
             "generation": dict(model.generation),
+            "benchmark_mapping": dict(model.benchmark_mapping),
             "playground": playground_choices(configs[model.model_key]),
             "seed_supported": is_local,
             "image_editing_supported": bool(is_local and (configs[model.model_key].get("capabilities") or {}).get("image_editing", False)),
