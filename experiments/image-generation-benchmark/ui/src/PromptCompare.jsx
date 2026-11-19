@@ -29,7 +29,7 @@ function downloadJson(filename, data) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function PromptCompare({ models }) {
+export default function PromptCompare({ models, onGeneration }) {
   const [selectedKeys, setSelectedKeys] = useState([]);
   const initialized = useRef(false);
   const [prompt, setPrompt] = useState(DEFAULT_COMPARE_PROMPT);
@@ -120,6 +120,9 @@ export default function PromptCompare({ models }) {
         if (!payload?.image_url || !payload?.id) throw new Error("Provider did not return an image");
         setArms((previous) => previous.map((arm) =>
           arm.key === model.key ? { ...arm, status: "success", result: payload } : arm));
+        // Reuse the existing 12-image session gallery as well as the compare grid.
+        // History is best-effort; it must not discard a successful provider output.
+        try { onGeneration?.(payload); } catch { /* comparison evidence remains available */ }
       } catch (reason) {
         setArms((previous) => previous.map((arm) =>
           arm.key === model.key
