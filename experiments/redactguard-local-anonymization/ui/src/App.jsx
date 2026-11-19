@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import RedactBenchV2 from "./v2/RedactBenchV2";
+import BenchmarkWorkspace from "./workspace/BenchmarkWorkspace";
 import DocumentComparisonView from "./components/DocumentComparisonView";
 import ExecutiveBriefingView from "./components/ExecutiveBriefingView";
 import FailureExplorer from "./components/FailureExplorer";
@@ -46,6 +46,7 @@ export default function App() {
   const selectedKey = route.searchParams.get("run") ?? "__overview__";
   const activeView = route.area;
   const advancedView = route.area === "advanced" ? route.page : "executive";
+  const catalogOnly = activeView === "client" && ["experiments", "executive", "capabilities"].includes(route.page);
 
   const handleSelectRun = useCallback(
     (runKey) => {
@@ -74,14 +75,13 @@ export default function App() {
 
   // AbortController ref to cancel obsolete in-flight fetches
   const abortControllerRef = useRef(null);
-  const initialRunChosen = useRef(false);
 
   /**
    * Fetches data for the given run key and updates runs list.
    * If isBackground is true, avoids blanking the UI with a full-screen loading spinner.
    */
   const fetchData = useCallback(
-    async (targetKey, isBackground = false) => {
+    async (targetKey, isBackground = false, indexOnly = false) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -103,20 +103,20 @@ export default function App() {
         // Parallelize runs list refresh and target detail fetching
         const [runsRes, detailRes] = await Promise.all([
           fetch("/api/runs", { cache: "no-store", signal: controller.signal }),
-          fetch(endpoint, { cache: "no-store", signal: controller.signal }),
+          indexOnly ? Promise.resolve(null) : fetch(endpoint, { cache: "no-store", signal: controller.signal }),
         ]);
 
         if (!runsRes.ok) throw new Error(`Runs request failed: ${runsRes.status}`);
-        if (!detailRes.ok) throw new Error(`Run detail failed: ${detailRes.status}`);
+        if (detailRes && !detailRes.ok) throw new Error(`Run detail failed: ${detailRes.status}`);
 
         const runsPayload = await runsRes.json();
-        const detailPayload = await detailRes.json();
+        const detailPayload = detailRes ? await detailRes.json() : null;
 
         setRuns(runsPayload.runs ?? []);
-        setDetail(detailPayload);
+        if (detailPayload) setDetail(detailPayload);
 
         // Preserve current model selection if still available, else default to first
-        setSelectedModel((current) => {
+        if (detailPayload) setSelectedModel((current) => {
           const availableModels = detailPayload?.summary?.models ?? [];
           if (current && availableModels.includes(current)) return current;
           return availableModels[0] ?? null;
@@ -161,31 +161,29 @@ export default function App() {
 
   // Fetch when selectedKey changes (user navigates to a new run)
   useEffect(() => {
-    fetchData(selectedKey, false);
-  }, [selectedKey, fetchData]);
+    fetchData(selectedKey, false, catalogOnly);
+  }, [selectedKey, fetchData, catalogOnly]);
 
-  // Prefer a single completed, paired suite rather than a mixed cross-run
-  // leaderboard on initial page load. Explicit run selections are preserved.
+  // Deep links without a run open the latest complete execution. The catalog
+  // never selects an execution implicitly; explicit run links are preserved.
   useEffect(() => {
-    if (initialRunChosen.current || route.searchParams.has("run") ||
+    if (catalogOnly || route.searchParams.has("run") ||
         activeView !== "client" || !runs.length) return;
-    initialRunChosen.current = true;
-    const latest = runs.find((r) =>
-      r.source === "suite" && r.status === "complete" && r.pairedLatencyKey
-    ) ?? runs.find((r) => r.source === "suite" && r.status === "complete");
+    const latest = runs.find((r) => r.source === "suite" && r.status === "complete")
+      ?? runs.find((r) => r.kind !== "latency");
     if (latest) route.setQueryParam("run", latest.key, { replace: true });
-  }, [runs, activeView, route]);
+  }, [runs, activeView, route, catalogOnly]);
 
   // Set up background polling interval
   useEffect(() => {
     if (refreshInterval <= 0) return undefined;
 
     const timer = window.setInterval(() => {
-      fetchData(selectedKey, true);
+      fetchData(selectedKey, true, catalogOnly);
     }, refreshInterval);
 
     return () => window.clearInterval(timer);
-  }, [selectedKey, refreshInterval, fetchData]);
+  }, [selectedKey, refreshInterval, fetchData, catalogOnly]);
 
   // Total unique documents across all models in this run
   const documentCount = useMemo(() => {
@@ -228,8 +226,16 @@ export default function App() {
 
   const latencyP95 = currentLatency.latency_p95_ms ?? currentMicro.latency_p95_ms;
 
+  if (activeView === "client") {
+    return <BenchmarkWorkspace route={route} runs={runs} detail={detail}
+      selectedKey={selectedKey} selectedModel={selectedModel} onSelectModel={setSelectedModel}
+      loading={loadingInitial || loadingDetail} refreshing={isRefreshing}
+      lastRefresh={lastRefresh} error={error}
+      onRefresh={() => fetchData(selectedKey, false, catalogOnly)}/>;
+  }
+
   return (
-    <div className={`app-shell ${activeView === "client" ? "rb2-app-shell" : ""}`}>
+    <div className="app-shell">
       {/* Sidebar navigation */}
       <aside className="sidebar">
         <div className="brand">
@@ -240,20 +246,8 @@ export default function App() {
           </div>
         </div>
 
-        {activeView === "client" && (
-          <nav className="rb2-shell-nav" aria-label="Navigazione principale">
-            <button type="button" className={route.page === "executive" ? "active" : ""}
-              onClick={() => route.navigate(appRoutes.clientExecutive)}><span aria-hidden="true">✦</span>Executive</button>
-            <button type="button" className={route.page === "models" ? "active" : ""}
-              onClick={() => route.navigate(appRoutes.clientModels)}><span aria-hidden="true">◈</span>Modelli</button>
-            <button type="button" className={route.page === "documents" || route.page === "detail" ? "active" : ""}
-              onClick={() => route.navigate(appRoutes.clientDocuments)}><span aria-hidden="true">▤</span>Documenti</button>
-            <button type="button" className={route.page === "capabilities" ? "active" : ""}
-              onClick={() => route.navigate(appRoutes.clientCapabilities)}><span aria-hidden="true">◉</span>Capacità</button>
-            <button type="button" onClick={() => route.navigate(appRoutes.advancedModels)}
-              title="Workbench tecnico"><span aria-hidden="true">⚙</span>Avanzate</button>
-          </nav>
-        )}
+        <button type="button" className="rg-button" onClick={() => route.navigate(appRoutes.clientExperiments, { preserveSearch: false })}>← Torna agli esperimenti</button>
+
         <div className="sidebar-heading">
           <span>Runs</span>
           <span
@@ -385,26 +379,6 @@ export default function App() {
             </section>
             ) : null}
 
-            {/* Primary client/advanced navigation */}
-            <nav className="view-navigation-tabs view-tabs client-primary-tabs" aria-label="Dashboard mode">
-              <button
-                type="button"
-                className={`view-tab ${activeView === "client" ? "active" : ""}`}
-                onClick={() => route.navigate(appRoutes.clientModels)}
-              >
-                <span className="view-tab__icon">🛡️</span>
-                <span>Client Evaluation</span>
-              </button>
-              <button
-                type="button"
-                className={`view-tab ${activeView === "advanced" ? "active" : ""}`}
-                onClick={() => route.navigate(appRoutes.advancedExecutive)}
-              >
-                <span className="view-tab__icon">⚙️</span>
-                <span>Advanced analysis</span>
-              </button>
-            </nav>
-
             {activeView === "advanced" ? (
               <nav className="advanced-view-tabs" aria-label="Advanced analysis section">
                 <button
@@ -432,19 +406,7 @@ export default function App() {
               </nav>
             ) : null}
 
-            {/* Primary progressive-disclosure client journey */}
-            {activeView === "client" ? (
-              <RedactBenchV2
-                detail={detail}
-                route={route}
-                runs={runs}
-                selectedKey={selectedKey}
-                onSelectRun={handleSelectRun}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                onRefresh={() => fetchData(selectedKey, false)}
-              />
-            ) : advancedView === "executive" ? (
+            {advancedView === "executive" ? (
               <ExecutiveBriefingView
                 detail={detail}
                 selectedRun={selectedRun}

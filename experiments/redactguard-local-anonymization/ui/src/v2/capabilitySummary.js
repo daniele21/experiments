@@ -4,10 +4,16 @@ export const CAPABILITY_DEFS = [
   { id:"challenge", title:"Semantic challenge", subtitle:"Categorie PII e casi contrastivi", rank:1 },
   { id:"healthcare", title:"Healthcare", subtitle:"Diagnosi, trattamenti, esami e dati clinici", rank:2 },
   { id:"ambiguous", title:"PII ambigue", subtitle:"Dipendenza dal contesto in quattro settori", rank:3 },
+  { id:"spaccc", title:"Casi clinici spagnoli", subtitle:"SPACCC · annotazioni cliniche gold", rank:4 },
+  { id:"asq", title:"Dati clinici · ASQ", subtitle:"ASQ-PHI · informazioni sanitarie", rank:5 },
+  { id:"e3c", title:"Casi clinici italiani", subtitle:"E3C · valutazione delle PII inserite nel corpus", rank:6 },
 ];
 
 export function capabilityFromDataset(datasetId) {
   const id=String(datasetId??"").toLowerCase();
+  if(id.startsWith("spaccc_es_clinical_gold_v")) return "spaccc";
+  if(id.startsWith("asq_phi_") || id.startsWith("asq-phi")) return "asq";
+  if(id.startsWith("e3c_it_") || id.startsWith("e3c-it")) return "e3c";
   if(id.includes("healthcare_synthetic") || id.includes("hc-synthetic")) return "healthcare";
   if(id.includes("ambiguous_synthetic") || id.includes("amb-synthetic")) return "ambiguous";
   if(id.includes("challenge")) return "challenge";

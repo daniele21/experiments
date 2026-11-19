@@ -20,6 +20,8 @@ test("categorizes datasets by suite identity without invented scores",()=>{
  assert.equal(capabilityFromDataset("ambiguous_synthetic_v0.1"),"ambiguous");
  assert.equal(capabilityFromDataset("redactguard-realistic-documents-v0.2"),"realistic");
  assert.equal(capabilityFromDataset("challenge_v0.1"),"challenge");
+ assert.equal(capabilityFromDataset("asq_phi_hipaa_13_v1-ba7aad7e20cb"),"asq");
+ assert.equal(capabilityFromDataset("e3c_it_v2_injected_pii_v1"),"e3c");
  assert.equal(capabilityFromDataset("unknown"),null);
 });
 test("separates positive recall from error rate on valid gold-empty negatives",()=>{
@@ -34,6 +36,16 @@ test("separates positive recall from error rate on valid gold-empty negatives",(
  assert.equal(x.reviewedCases,0);
  assert.equal(x.types.length,2);
  assert.equal(x.types[0].type,"health_condition");
+});
+test("Spanish clinical suites remain visible separately from synthetic healthcare",()=>{
+ const clinical=summarizeCapabilitySuite({key:"suites/clinical/quality",
+  datasetId:"spaccc_es_clinical_gold_v1-5303072e3dee"},sample);
+ const synthetic=summarizeCapabilitySuite({key:"suites/synthetic/quality",
+  datasetId:"healthcare_synthetic_v0.1"},sample);
+ assert.ok(clinical);
+ const latest=selectLatestCapabilityRuns([clinical,synthetic]);
+ assert.equal(latest.spaccc.models[0].runKey,"suites/clinical/quality");
+ assert.equal(latest.healthcare.models[0].runKey,"suites/synthetic/quality");
 });
 test("no-negative-data or all failed negatives yield null, not zero FP rate",()=>{
  const s=summarizeCapabilitySuite({key:"k",datasetId:"challenge_v0.1"},{
