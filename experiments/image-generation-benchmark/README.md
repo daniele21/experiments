@@ -303,6 +303,59 @@ A successful UI build and mocked proxy test **do not prove image editing
 quality or memory safety on the Mac**. Compare before/after manually in a
 real native E2E test before merging these draft PRs.
 
+### Add FLUX.3 Image Klein GGUF Q5_K_M as a fourth local comparison arm
+
+The Image Generation catalog includes **FLUX.3 Image Klein Q5_K_M** under
+`flux-3-image-klein-gguf-q5km`, backed by the existing Korgis provider and
+its separately registered FLUX.3 native model. It is the 16-step **distilled**
+checkpoint (Euler/CFG 1), **not** FLUX.2 or the 20-step Klein Base version.
+
+The user's existing transformer is used directly from
+`$HOME/.lmstudio/models/unsloth/flux-3-image-klein-GGUF/flux-3-image-klein-Q5_K_M.gguf`;
+Korgis #289 intentionally does not duplicate or download it. However,
+FLUX.3 also needs a separate **Qwen3-VL-4B** text encoder and **FLUX.2 VAE**.
+See [Korgis FLUX.3 setup guide](https://github.com/daniele21/korgis/blob/feat/flux3-klein-q5km-lmstudio-20261119/docs/flux3-image-klein-q5km.md).
+Do not assume the user can generate images from the transformer file alone.
+
+To test **FLUX + Gemini + GPT Image** from one prompt, start Korgis with
+`--model flux-3-image-klein-gguf-q5km`, point the UI server at
+`KORGIS_BASE_URL=http://127.0.0.1:1235`, and configure the paid provider
+keys on the server. In **Compare models** select FLUX, Gemini, GPT Image.
+Qwen and FLUX are separate local runtimes. To include both in the same
+comparison, they must both be resident (or the run must be split into
+separate sessions); `serve --model` does not load them both. Korgis can
+load multiple runtimes with `--models`, but the host memory policy can
+refuse simultaneous loading on 32 GiB machines.
+
+Benchmark CLI examples:
+
+```bash
+cd experiments/image-generation-benchmark
+
+# 3-model smoke: FLUX, Gemini, GPT Image = 12 generation attempts.
+uv run python scripts/run_benchmark.py \
+  --models flux-3-image-klein-gguf-q5km,gemini-pro-image,openai-sunburst \
+  --profile smoke --output-dir results --dry-run
+
+# 4-model smoke: Qwen, FLUX, Gemini, GPT Image = 16 attempts.
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km,flux-3-image-klein-gguf-q5km,gemini-pro-image,openai-sunburst \
+  --profile smoke --output-dir results --dry-run
+```
+
+The `budget` profile makes **80 generations** for four arms, and the
+`robust` profile makes **240**. These are counts, not price estimates.
+For fair comparisons, record not only the shared prompt but the actual
+sampler, steps, model file quantization, backend, image size, seed
+(only where supported), latency, failures and license constraints.
+FLUX.3's BFL reference setup uses an optional separate prompt upsampler;
+the current Korgis runtime does **not** invoke that additional 9B model.
+This is an important methodological difference versus BFL API output.
+
+The FLUX Kommunity License is not equivalent to Qwen's license; verify
+commercial terms before deploying. The Korgis native 512px E2E, unified
+memory peak and quality have **not** been measured on the user's Mac.
+
 ### Compare Qwen, Gemini and GPT Image from one prompt
 
 The Playground now has a **Compare models** workspace alongside **Single image**.
