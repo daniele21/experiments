@@ -2,7 +2,8 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { editWithKorgis, getEditingAvailability, readMultipartEdit } from "./playground-edit.js";
+import { editWithKorgis, readMultipartEdit } from "./playground-edit.js";
+import { enrichLiveLocalModels } from "./live-models.js";
 
 const UI_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = path.resolve(UI_DIR, "..");
@@ -165,12 +166,9 @@ export function playgroundApi() {
     try {
       if (pathname === "/api/playground/models" && request.method === "GET") {
         const catalog = await runPython("models");
-        const models = await Promise.all((catalog.models || []).map(async (model) => ({
-          ...model,
-          image_editing_available: await getEditingAvailability(
-            model, process.env.KORGIS_BASE_URL,
-          ),
-        })));
+        const models = await enrichLiveLocalModels(
+          catalog.models || [], process.env.KORGIS_BASE_URL,
+        );
         send(response, 200, { models });
         return;
       }
