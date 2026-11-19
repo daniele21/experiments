@@ -47,6 +47,18 @@ def test_playground_catalog_uses_existing_model_configuration():
     models = playground.available_models({})
     keys = {entry["key"] for entry in models}
     assert "qwen-image-2.1-turbo-gguf-q4km" in keys
+    assert "flux-3-image-klein-gguf-q5km" in keys
+    flux = next(entry for entry in models if entry["key"] == "flux-3-image-klein-gguf-q5km")
+    assert flux["kind"] == "local"
+    assert flux["model_id"] == "flux-3-image-klein-gguf-q5km"
+    assert flux["generation"]["num_inference_steps"] == 16
+    assert flux["generation"]["guidance_scale"] == 1.0
+    assert flux["playground"]["output_formats"] == ["png", "jpeg", "webp"]
+    assert flux["playground"]["sizes"] == [
+        "512x512", "768x768", "1024x1024", "1024x768", "768x1024",
+    ]
+    assert flux["image_editing_supported"] is False
+    assert flux["benchmark_mapping"]["quantization"] == "Q5_K_M"
     assert "openai-sunburst" in keys
     turbo = next(entry for entry in models if entry["key"] == "qwen-image-2.1-turbo-gguf-q4km")
     assert turbo["kind"] == "local"
@@ -173,3 +185,14 @@ def test_playground_t2i_per_request_options_are_forwarded_and_recorded(tmp_path)
     assert result["generation"]["output_format"] == "webp"
     assert result["filename"] == "image.webp"
     assert (tmp_path / result["id"] / "image.webp").exists()
+
+
+def test_flux3_q5_playground_override_is_model_scoped():
+    values = playground.resolve_playground_options(
+        "flux-3-image-klein-gguf-q5km", size="1024x768", output_format="webp",
+    )
+    assert values == {"size": "1024x768", "output_format": "webp"}
+    with pytest.raises(ValueError, match="output size"):
+        playground.resolve_playground_options(
+            "flux-3-image-klein-gguf-q5km", size="2048x2048", output_format="png",
+        )
