@@ -656,7 +656,7 @@ export default function Playground() {
         </section>
       </div>
       <div hidden={workspaceMode !== "compare"}>
-        <PromptCompare models={models} onGeneration={(output) => recordHistory(output, "generate")} />
+        <PromptCompare models={models} singlePrompt={prompt} onGeneration={(output) => recordHistory(output, "generate")} />
       </div>
     </div>
   );
