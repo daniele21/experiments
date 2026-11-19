@@ -315,9 +315,11 @@ The Playground now has a **Compare models** workspace alongside **Single image**
    model checklist defaults to configured **Qwen Image 2.1 Turbo GGUF**,
    **Gemini 3 Pro Image**, and **GPT Image Sunburst**. You may choose
    any 2–5 configured engines from the existing model catalog.
-3. Enter a **single identical text prompt**. The example asks for exactly
-   three colored objects with left/right spatial relationships, a
-   legible slogan, and photorealistic materials.
+3. Enter a **single identical text prompt**, or click **Use prompt from
+   Single image** to reuse a prompt already written in the Playground.
+   The prefilled example asks for exactly three colored objects with
+   left/right spatial relationships, a legible slogan, and photorealistic
+   materials.
 4. Optionally keep **Blind review** enabled. The images will be displayed
    in a randomized order with model names hidden until **Reveal models**;
    you can rate prompt adherence, visual quality, and text fidelity
