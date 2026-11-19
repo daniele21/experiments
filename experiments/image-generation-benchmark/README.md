@@ -303,6 +303,74 @@ A successful UI build and mocked proxy test **do not prove image editing
 quality or memory safety on the Mac**. Compare before/after manually in a
 real native E2E test before merging these draft PRs.
 
+### Compare Qwen, Gemini and GPT Image from one prompt
+
+The Playground now has a **Compare models** workspace alongside **Single image**.
+
+1. Configure a local Korgis image runtime (`KORGIS_BASE_URL`) and the
+   server-side `GEMINI_API_KEY` and `OPENAI_API_KEY` if you want to
+   include cloud models. These environment variables are never sent to
+   the browser.
+2. Start the existing Vite Playground, choose **Compare models**. The
+   model checklist defaults to configured **Qwen Image 2.1 Turbo GGUF**,
+   **Gemini 3 Pro Image**, and **GPT Image Sunburst**. You may choose
+   any 2–5 configured engines from the existing model catalog.
+3. Enter a **single identical text prompt**. The example asks for exactly
+   three colored objects with left/right spatial relationships, a
+   legible slogan, and photorealistic materials.
+4. Optionally keep **Blind review** enabled. The images will be displayed
+   in a randomized order with model names hidden until **Reveal models**;
+   you can rate prompt adherence, visual quality, and text fidelity
+   on separate 1–5 scales.
+5. Click **Generate comparison**. Arms run sequentially through the
+   existing `POST /api/playground/generate`; no new provider client
+   is introduced. Each image becomes available as soon as its model
+   completes, and one failed provider does not discard previous images.
+   The local engine receives its own fresh random seed, and cloud
+   providers receive no seed parameter because they do not promise
+   equivalent seed semantics.
+6. **Export JSON evidence** to save the exact prompt, resolved model
+   IDs, per-model defaults, generated image identifiers and hashes,
+   latency, failures, source seeds (where supported), randomized
+   presentation order, and any manual scores. The PNG/JPEG/WebP
+   outputs and per-image manifests continue to reside in
+   `playground-results/`. The export is a local receipt with references
+   to these outputs, not a portable copy of all image bytes.
+
+**Methodological limit:** this is a quick qualitative demo with one
+generation per model, not a defensible overall ranking. The model configs
+aim for a 1K square output but each engine retains its own native quality,
+sampler and step settings. Report the configuration for each arm rather
+than equating a local 8-step diffusion with a cloud quality preset. No
+automatic visual score or estimated API cost is invented.
+
+For a reproducible *multi-prompt* comparison, use the existing benchmark
+runner and its Comparison / Blind review dashboard:
+
+```bash
+cd experiments/image-generation-benchmark
+uv run python scripts/run_benchmark.py \
+  --models qwen-image-2.1-turbo-gguf-q4km,gemini-pro-image,openai-sunburst \
+  --profile smoke --output-dir results --dry-run
+# Remove --dry-run only after verifying provider credentials and costs.
+```
+
+The `smoke` profile uses **4 prompts × 3 models = 12 images** (two
+typography and two compositional tasks). The `budget` profile covers
+**20 prompts × 3 models = 60 images** across typography, composition,
+photorealism and design. The `robust` profile runs **20 prompts ×
+3 model samples × 3 models = 180 images**. Report all failures and
+generation latency; preserve the fixed prompt suite and artifact
+checksums; use blind pairwise human ratings and task-specific OCR/text
+and compositional checks. If statistical uncertainty matters, use a
+larger independent prompt sample and bootstrap *by prompt*, not by
+image (three samples of the same prompt are not independent tasks).
+
+Source methodology references: [T2I-CompBench++](https://github.com/Karine-Huang/T2I-CompBench)
+for attributes, counting and relations; [GenEval](https://arxiv.org/abs/2310.11513)
+for object/attribute alignment; the existing Experiments `core_v1`
+prompt suite for a small operational starting point.
+
 ### Session history and per-model Text-to-Image formats
 
 Every completed Playground generation is added to a **12-entry temporary
