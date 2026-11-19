@@ -3,6 +3,9 @@ profiles:
     max_cases: 20
     datasets:
       banking77: 77
+      gsm8k-main-test: 12
+      squad-v2-validation: 12
+      jsonschemabench-github-easy-test: 12
       clinc150-oos: 50
       structured-output-controlled-v1: null
       qa-abstention-controlled-v1: null
@@ -16,6 +19,9 @@ profiles:
     max_cases: 100
     datasets:
       banking77: 154
+      gsm8k-main-test: 40
+      squad-v2-validation: 60
+      jsonschemabench-github-easy-test: 40
       clinc150-oos: 100
       structured-output-controlled-v2: 60
       qa-abstention-controlled-v2: 60
@@ -26,6 +32,9 @@ profiles:
     max_cases: 500
     datasets:
       banking77: 770
+      gsm8k-main-test: 200
+      squad-v2-validation: 200
+      jsonschemabench-github-easy-test: 150
       clinc150-oos: 500
       structured-output-controlled-v2: 60
       qa-abstention-controlled-v2: 60

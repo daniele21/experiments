@@ -30,12 +30,14 @@ CONFIG_FILES = (
 )
 
 
-def _config_checksums(root: Path) -> dict[str, str]:
+def _config_checksums(root: Path, *, suite_filename: str = "suite.yaml") -> dict[str, str]:
     checksums: dict[str, str] = {}
     for name in CONFIG_FILES:
         path = root / name
         if path.is_file():
             checksums[name] = sha256_file(path)
+    if suite_filename not in checksums:
+        checksums[suite_filename] = sha256_file(root / suite_filename)
     return checksums
 
 
@@ -182,6 +184,7 @@ def write_run_artifacts(
         "suite": {
             "suite_id": suite.suite.suite_id,
             "version": suite.suite.version,
+            "suite_file": suite.suite_filename,
             "profile": config.profile,
             "seed": config.seed,
         },
@@ -200,7 +203,9 @@ def write_run_artifacts(
         },
         "capabilities": selected_capabilities,
         "signatures": signatures,
-        "config_checksums": _config_checksums(suite.root),
+        "config_checksums": _config_checksums(
+            suite.root, suite_filename=suite.suite_filename
+        ),
         "evidence": {
             "state": "state.jsonl",
             "raw": "raw.jsonl",

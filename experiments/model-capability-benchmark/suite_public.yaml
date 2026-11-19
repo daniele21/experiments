@@ -1,0 +1,140 @@
+suite:
+  id: capability-public-benchmarks
+  version: "1"
+  description: >-
+    Opt-in pinned public test/validation subsets. These MCB-specific protocols
+    are not official full-benchmark leaderboard scores.
+  default_profile: smoke
+  generation:
+    temperature: 0.0
+    max_output_tokens: 2048
+    seed: 42
+
+  capabilities:
+    public-mathematical-reasoning:
+      task: mathematical-reasoning
+      datasets: [gsm8k-main-test]
+      description: GSM8K main/test numeric final-answer accuracy, MCB 0-shot JSON protocol.
+      tags: [math, gsm8k, public, subset]
+      benchmark:
+        smoke:
+          max_cases: 12
+          target_local_seconds: 180
+          hard_local_seconds: 300
+        core:
+          max_cases: 40
+          target_local_seconds: 600
+          hard_local_seconds: 900
+        extended:
+          max_cases: 200
+          hard_local_seconds: 3600
+      comparison:
+        practical_delta: 0.05
+        metric: final_answer_accuracy
+      metrics:
+        - name: final_answer_accuracy
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+
+    public-qa-abstention:
+      task: qa-abstention
+      datasets: [squad-v2-validation]
+      description: SQuAD 2.0 validation; MCB JSON answer/abstain protocol, alias-aware exact match.
+      tags: [qa, abstention, squad-v2, public, subset]
+      benchmark:
+        smoke:
+          max_cases: 12
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {answerable: true}
+                count: 6
+              - match: {answerable: false}
+                count: 6
+          target_local_seconds: 180
+          hard_local_seconds: 300
+        core:
+          max_cases: 60
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {answerable: true}
+                count: 30
+              - match: {answerable: false}
+                count: 30
+          target_local_seconds: 600
+          hard_local_seconds: 900
+        extended:
+          max_cases: 200
+          selection:
+            strategy: stratified
+            quotas:
+              - match: {answerable: true}
+                count: 100
+              - match: {answerable: false}
+                count: 100
+          hard_local_seconds: 3600
+      comparison:
+        practical_delta: 0.05
+        metric: qa_correct
+      metrics:
+        - name: qa_correct
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: answerability_accuracy
+          source: task_metric
+          reducer: mean
+        - name: exact_match
+          source: task_metric
+          reducer: mean
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms
+
+    public-json-schema-compliance:
+      task: json-schema-compliance
+      datasets: [jsonschemabench-github-easy-test]
+      description: >-
+        JSONSchemaBench Github_easy/test; object-root, locally-resolvable, bounded
+        schemas only. Compliance scoring, not semantic extraction or official harness.
+      tags: [structured-output, json-schema, public, subset]
+      benchmark:
+        smoke:
+          max_cases: 12
+          target_local_seconds: 180
+          hard_local_seconds: 300
+        core:
+          max_cases: 40
+          target_local_seconds: 600
+          hard_local_seconds: 900
+        extended:
+          max_cases: 150
+          hard_local_seconds: 3600
+      comparison:
+        practical_delta: 0.05
+        metric: schema_valid_rate
+      metrics:
+        - name: schema_valid_rate
+          source: task_metric
+          reducer: mean
+          primary: true
+        - name: parse_valid
+          source: task_metric
+          reducer: mean
+        - name: latency_p95_ms
+          source: inference
+          reducer: p95
+          field: latency_ms

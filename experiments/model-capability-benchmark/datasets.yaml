@@ -156,3 +156,54 @@ datasets:
       path: data/math-reasoning-controlled-v3.yaml
       human_reviewed: false
       difficulty_labels: authored-provisional
+
+  # Public benchmarks: immutable Hugging Face dataset revisions and original test splits.
+  gsm8k-main-test:
+    version: "1"
+    adapter: public-parquet
+    source: openai/gsm8k
+    revision: 740312add88f781978c0658806c59bc2815b9866
+    split: test
+    license: MIT
+    sample_schema_version: "1"
+    cache_mode: download
+    options:
+      timeout_seconds: 120
+      user_agent: model-capability-bench/0.1
+      file:
+        url: https://huggingface.co/datasets/openai/gsm8k/resolve/740312add88f781978c0658806c59bc2815b9866/main/test-00000-of-00001.parquet
+        cache_path: gsm8k/740312add88f781978c0658806c59bc2815b9866/test.parquet
+
+  squad-v2-validation:
+    version: "1"
+    adapter: public-parquet
+    source: rajpurkar/squad_v2
+    revision: 3ffb306f725f7d2ce8394bc1873b24868140c412
+    split: validation
+    license: CC-BY-SA-4.0
+    sample_schema_version: "1"
+    cache_mode: download
+    options:
+      timeout_seconds: 120
+      user_agent: model-capability-bench/0.1
+      file:
+        url: https://huggingface.co/datasets/rajpurkar/squad_v2/resolve/3ffb306f725f7d2ce8394bc1873b24868140c412/squad_v2/validation-00000-of-00001.parquet
+        cache_path: squad-v2/3ffb306f725f7d2ce8394bc1873b24868140c412/validation.parquet
+
+  jsonschemabench-github-easy-test:
+    version: "1"
+    adapter: public-parquet
+    source: epfl-dlab/JSONSchemaBench
+    revision: 83df923c5b1dd05fb5c9659ad751d7c056a3cd43
+    split: test
+    license: MIT
+    sample_schema_version: "1"
+    cache_mode: download
+    options:
+      subset: Github_easy
+      max_schema_chars: 12000
+      timeout_seconds: 120
+      user_agent: model-capability-bench/0.1
+      file:
+        url: https://huggingface.co/datasets/epfl-dlab/JSONSchemaBench/resolve/83df923c5b1dd05fb5c9659ad751d7c056a3cd43/Github_easy/test-00000-of-00001.parquet
+        cache_path: jsonschemabench/83df923c5b1dd05fb5c9659ad751d7c056a3cd43/github_easy_test.parquet
