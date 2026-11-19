@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { editWithKorgis, readMultipartEdit } from "./playground-edit.js";
 import { enrichLiveLocalModels } from "./live-models.js";
+import { controlLocalRuntime } from "./local-runtime-control.js";
 
 const UI_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = path.resolve(UI_DIR, "..");
@@ -93,6 +94,13 @@ function sameOrigin(request) {
   }
 }
 
+function loopbackRequestHost(request) {
+  try {
+    const hostname = new URL(`http://${request.headers.host || ""}`).hostname;
+    return ["127.0.0.1", "localhost", "[::1]"].includes(hostname);
+  } catch { return false; }
+}
+
 function runPython(action, { model_key, prompt, seed, size, output_format } = {}) {
   const args = ["run", "--frozen", "python", PYTHON_SCRIPT, action];
   if (action === "generate") {
@@ -158,6 +166,7 @@ function runPython(action, { model_key, prompt, seed, size, output_format } = {}
 
 export function playgroundApi() {
   let generating = false;
+  let managing = false;
   async function middleware(request, response, next) {
     const url = new URL(request.url, "http://127.0.0.1");
     const pathname = url.pathname;
@@ -170,6 +179,28 @@ export function playgroundApi() {
           catalog.models || [], process.env.KORGIS_BASE_URL,
         );
         send(response, 200, { models });
+        return;
+      }
+      if (pathname === "/api/playground/local-runtime" && request.method === "POST") {
+        if (!sameOrigin(request) || !loopbackRequestHost(request)) {
+          send(response, 403, { error: "Local runtime control is restricted to loopback, same-origin requests" });
+          return;
+        }
+        if (generating || managing) {
+          send(response, 409, { error: "An image or model operation is already in progress" });
+          return;
+        }
+        const body = await readBody(request);
+        managing = true;
+        try {
+          const catalog = await runPython("models");
+          const result = await controlLocalRuntime(
+            body, catalog.models || [], process.env.KORGIS_BASE_URL,
+          );
+          send(response, 200, result);
+        } finally {
+          managing = false;
+        }
         return;
       }
       if (pathname === "/api/playground/image" && request.method === "GET") {
@@ -198,8 +229,8 @@ export function playgroundApi() {
           return;
         }
         const body = validateGeneration(await readBody(request));
-        if (generating) {
-          send(response, 409, { error: "An image is already being generated" });
+        if (generating || managing) {
+          send(response, 409, { error: "An image or model operation is already in progress" });
           return;
         }
         generating = true;
@@ -215,8 +246,8 @@ export function playgroundApi() {
           send(response, 403, { error: "Cross-origin editing is not allowed" });
           return;
         }
-        if (generating) {
-          send(response, 409, { error: "An image operation is already running" });
+        if (generating || managing) {
+          send(response, 409, { error: "An image or model operation is already running" });
           return;
         }
         generating = true;
@@ -239,6 +270,7 @@ export function playgroundApi() {
       const status = error?.status || (error?.code === "ENOENT" ? 404 : 400);
       send(response, status, {
         error: error instanceof Error ? error.message : "Playground request failed",
+        code: typeof error?.code === "string" ? error.code : "request_failed",
       });
     }
   }

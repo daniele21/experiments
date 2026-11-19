@@ -54,6 +54,8 @@ export default function Playground() {
   const [historySelectionId, setHistorySelectionId] = useState(null);
   const historyRef = useRef([]);
   const [loadingModels, setLoadingModels] = useState(true);
+  const [managingModel, setManagingModel] = useState(false);
+  const [modelActionError, setModelActionError] = useState("");
   const [working, setWorking] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState("");
@@ -70,7 +72,8 @@ export default function Playground() {
       .then((payload) => {
         if (!active) return;
         setModels(payload.models || []);
-        const preferred = payload.models?.find((model) => model.key === "qwen-image-2.1-turbo-gguf-q4km");
+        const preferred = payload.models?.find((model) => model.kind === "local" && model.model_resident) ||
+          payload.models?.find((model) => model.key === "qwen-image-2.1-turbo-gguf-q4km");
         setModelKey(preferred?.key || payload.models?.[0]?.key || "");
         setError("");
       })
@@ -135,7 +138,7 @@ export default function Playground() {
     ? selectedHistory.sourceUrl : preparedPreview;
   const canSubmit = selected?.configured && (!local || selected.model_resident !== false) &&
     prompt.trim().length > 0 &&
-    prompt.length <= 4000 && !working && !preparingImage &&
+    prompt.length <= 4000 && !working && !managingModel && !preparingImage &&
     (!editing || (editAvailable && prepared?.file));
 
   // Retain reference image object URLs only while this Playground tab is open.
@@ -210,6 +213,46 @@ export default function Playground() {
     setResult(null);
     setError("");
     if (nextMode === "edit" && prompt === INITIAL_PROMPT) setPrompt(EDIT_PROMPT);
+  }
+
+  async function refreshEngines() {
+    const response = await fetch("/api/playground/models", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Cannot refresh engines");
+    setModels(payload.models || []);
+    return payload.models || [];
+  }
+
+  async function manageLocalModel(action, replaceKey = null) {
+    if (!selected || selected.kind !== "local" || working || managingModel) return;
+    if (action === "replace") {
+      const previousName = models.find((item) => item.model_id === replaceKey)?.name || replaceKey;
+      if (!window.confirm(
+        `Unload ${previousName} to free memory and start ${selected.name}? The previous model will be restored if the new load fails, when possible.`,
+      )) return;
+    }
+    setManagingModel(true);
+    setModelActionError("");
+    try {
+      const body = { action, model_key: modelKey };
+      if (action === "replace") body.replace_key = models.find(
+        (item) => item.model_id === replaceKey,
+      )?.key;
+      const response = await fetch("/api/playground/local-runtime", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Unable to change local model");
+    } catch (reason) {
+      setModelActionError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      try { await refreshEngines(); } catch (reason) {
+        setModelActionError(reason instanceof Error ? reason.message : String(reason));
+      }
+      setManagingModel(false);
+    }
   }
 
   async function generate(event) {
@@ -302,8 +345,9 @@ export default function Playground() {
                 setMode("generate");
                 setResult(null);
                 setError("");
+                setModelActionError("");
               }}
-              disabled={working || loadingModels}
+              disabled={working || managingModel || loadingModels}
             >
               {!models.length ? <option value="">No engines loaded</option> : null}
               <optgroup label="Local / Korgis">
@@ -320,18 +364,48 @@ export default function Playground() {
           </label>
           {selected ? (
             <div className="pg-engine-detail">
-              <span className={selected.configured ? "pg-config-status ready" : "pg-config-status"}>
+              <span className={(!local && selected.configured) || (local && selected.model_resident)
+                ? "pg-config-status ready" : "pg-config-status"}>
                 <span aria-hidden="true" className="pg-dot" />
-                {selected.configured ? "Configured" : "Setup needed"}
+                {local ? (selected.model_resident ? "Ready" :
+                  selected.korgis_connection === "offline" ? "Offline" :
+                    selected.korgis_connection === "unconfigured" ? "Setup needed" :
+                      selected.model_installed === false ? "Files missing" : "Not loaded")
+                  : selected.configured ? "Configured" : "Setup needed"}
               </span>
               <span>{local ? "On-device via Korgis" : "Cloud API · may incur charges"}</span>
               <small>{selected.model_id}</small>
               {!selected.configured ? <p>{selected.setup_hint}</p> : null}
-              {local && selected.model_resident === false ? (
-                <p>Not loaded in Korgis. Start the selected model and refresh engines before generating.</p>
+              {local && selected.model_status_message && selected.configured ? (
+                <p>{selected.model_status_message}</p>
               ) : null}
-              {selected.image_editing_supported && !editAvailable ? (
-                <p>Editing unavailable. Start Korgis with <code>--image-editing-enabled</code> and refresh engines.</p>
+              {local && selected.model_resident && (
+                <p className="pg-local-ready">Model ready to generate images.</p>
+              )}
+              {local && !selected.model_resident && selected.korgis_connection === "online" &&
+                selected.korgis_admin_enabled && selected.model_installed === true ? (
+                <div className="pg-local-actions">
+                  <button type="button" className="pg-local-load"
+                    disabled={working || managingModel || loadingModels}
+                    onClick={() => manageLocalModel("load")}>
+                    {managingModel ? "Loading model…" : "Load model"}
+                  </button>
+                  {selected.resident_model_keys?.length === 1 &&
+                    selected.resident_model_keys[0] !== selected.model_id ? (
+                    <button type="button" className="pg-local-replace"
+                      disabled={working || managingModel || loadingModels}
+                      onClick={() => manageLocalModel("replace", selected.resident_model_keys[0])}>
+                      Replace current model
+                    </button>
+                  ) : null}
+                  <small>Load keeps existing models. Replace frees memory after confirmation.</small>
+                </div>
+              ) : null}
+              {modelActionError && local ? (
+                <p className="pg-local-error" role="alert">{modelActionError}</p>
+              ) : null}
+              {selected.image_editing_supported && selected.model_resident && !editAvailable ? (
+                <p>Editing unavailable. Restart Qwen with <code>--image-editing-enabled</code> to enable it.</p>
               ) : null}
             </div>
           ) : null}
@@ -342,11 +416,9 @@ export default function Playground() {
                 onClick={async () => {
                   try {
                     setLoadingModels(true);
-                    const response = await fetch("/api/playground/models", { cache: "no-store" });
-                    const payload = await response.json();
-                    if (!response.ok) throw new Error(payload.error || "Engine refresh failed");
-                    setModels(payload.models || []);
+                    await refreshEngines();
                     setError("");
+                    setModelActionError("");
                   } catch (reason) {
                     setError(reason?.message || String(reason));
                   } finally {

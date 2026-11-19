@@ -53,3 +53,33 @@ test("a missing local server or unsafe base URL never falsely advertises residen
     assert.equal(rows[2].configured, true);
   }
 });
+
+test("installed local models expose one-click loading only with reachable admin API", async () => {
+  const rows = await enrichLiveLocalModels(entries, "http://127.0.0.1:1235", async (url) => {
+    if (url.endsWith("/v1/models")) {
+      return new Response(JSON.stringify({ data: [{ key: "flux-3-image-klein-gguf-q5km" }] }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ models: [
+      { key: "flux-3-image-klein-gguf-q5km", downloaded: true },
+      { key: "qwen-image-2.1-turbo-gguf-q4km", downloaded: true },
+    ] }), { status: 200 });
+  });
+  assert.equal(rows[0].korgis_admin_enabled, true);
+  assert.equal(rows[0].model_resident, false);
+  assert.equal(rows[0].model_installed, true);
+  assert.deepEqual(rows[0].resident_model_keys, ["flux-3-image-klein-gguf-q5km"]);
+  assert.equal(rows[1].model_resident, true);
+  assert.equal(rows[1].model_installed, true);
+  assert.equal(rows[1].korgis_connection, "online");
+});
+
+test("status distinguishes unreachable Korgis from a cold resident model", async () => {
+  const offline = await enrichLiveLocalModels(entries, "http://127.0.0.1:1235",
+    async () => { throw new Error("connection refused"); });
+  assert.equal(offline[1].korgis_connection, "offline");
+  assert.match(offline[1].model_status_message, /unreachable/);
+  const cold = await enrichLiveLocalModels(entries, "http://127.0.0.1:1235", async () =>
+    new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  assert.equal(cold[1].korgis_connection, "online");
+  assert.match(cold[1].model_status_message, /--enable-admin-api/);
+});

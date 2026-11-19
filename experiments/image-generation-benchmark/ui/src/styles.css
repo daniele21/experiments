@@ -537,3 +537,14 @@ button { cursor: pointer; }
 }
 .pg-compare-reuse-prompt:hover:not(:disabled) { background: #263a47; }
 .pg-compare-reuse-prompt:disabled { opacity: .55; cursor: not-allowed; }
+
+
+/* Local image model residency controls: quiet, single-purpose actions. */
+.pg-local-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.pg-local-actions button { border: 1px solid #cfd7e1; border-radius: 9px; padding: 8px 12px; font-size: 12px; font-weight: 700; }
+.pg-local-actions button:disabled { opacity: .55; cursor: wait; }
+.pg-local-actions .pg-local-load { color: #fff; background: #172033; border-color: #172033; }
+.pg-local-actions .pg-local-replace { color: #35465e; background: #fff; }
+.pg-local-actions small { flex-basis: 100%; font-size: 11px; color: #667085; }
+.pg-engine-detail .pg-local-error { color: #b42318; overflow-wrap: anywhere; }
+.pg-engine-detail .pg-local-ready { color: #087443; }
