@@ -80,6 +80,34 @@ models:
       runtime: stable-diffusion.cpp
       quantization: Q4_K_M
 
+  flux-3-image-klein-gguf-q5km:
+    display_name: "FLUX.3 Image Klein · GGUF Q5_K_M"
+    model_id: flux-3-image-klein-gguf-q5km
+    runtime: korgis-image-local
+    capabilities:
+      text_input: true
+      image_output: true
+      # First release is T2I; reference editing awaits native validation.
+      image_editing: false
+    generation:
+      output_format: png
+      size: 1024x1024
+      num_inference_steps: 16
+      guidance_scale: 1.0
+      sampling_method: euler
+    playground:
+      sizes: [512x512, 768x768, 1024x1024, 1024x768, 768x1024]
+      output_formats: [png, jpeg, webp]
+    benchmark_mapping:
+      family: flux-3-image-klein
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: local-open-weight-q5
+      runtime: stable-diffusion.cpp
+      quantization: Q5_K_M
+      sampling: distilled-16-euler-cfg1
+      execution: korgis-local
+
   qwen-image-2.1-turbo-gguf-q4km:
     display_name: "Qwen Image 2.1 Turbo · GGUF Q4_K_M"
     model_id: qwen-image-2.1-turbo-gguf-q4km
