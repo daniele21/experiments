@@ -18,6 +18,7 @@ class ImageRunPlan:
     seed: int
     models: tuple[ResolvedImageModel, ...]
     prompts: tuple[PromptCase, ...]
+    outputs_per_prompt: int = 1
 
 
 def build_run_plan(
@@ -47,6 +48,10 @@ def build_run_plan(
         raise ConfigError(f"profile id mismatch for {profile_id!r}")
 
     seed = int(profile["seed"])
+    outputs_per_prompt = profile.get("outputs_per_prompt", 1)
+    if (not isinstance(outputs_per_prompt, int) or isinstance(outputs_per_prompt, bool)
+            or outputs_per_prompt <= 0):
+        raise ConfigError(f"{profile_id}: outputs_per_prompt must be a positive integer")
     category_limits = profile.get("categories")
     if not isinstance(category_limits, dict) or not category_limits:
         raise ConfigError(f"profile {profile_id!r} requires category limits")
@@ -100,4 +105,5 @@ def build_run_plan(
         seed=seed,
         models=tuple(models),
         prompts=tuple(selected),
+        outputs_per_prompt=outputs_per_prompt,
     )
