@@ -24,11 +24,16 @@ const DEFAULT_ARMS = [
   "openai-sunburst",
 ];
 
+export function isModelReady(model) {
+  return Boolean(model?.configured &&
+    (model.kind !== "local" || model.model_resident !== false));
+}
+
 export function defaultCompareModels(models) {
   const candidates = DEFAULT_ARMS.filter((key) =>
-    models.some((model) => model.key === key && model.configured));
+    models.some((model) => model.key === key && isModelReady(model)));
   if (candidates.length >= 2) return candidates;
-  return models.filter((model) => model.configured)
+  return models.filter(isModelReady)
     .slice(0, 3).map((model) => model.key);
 }
 
@@ -43,8 +48,8 @@ export function comparisonPlan(models, selectedKeys, prompt) {
   }
   const ordered = selectedKeys.map((key) => {
     const model = models.find((item) => item.key === key);
-    if (!model || !model.configured) {
-      throw new Error(`${model?.name || key} is not configured. Start Korgis or set the provider API key on the local UI server.`);
+    if (!isModelReady(model)) {
+      throw new Error(`${model?.name || key} is not ready. Load this model in Korgis, or set the cloud API key, then refresh engines.`);
     }
     return model;
   });
