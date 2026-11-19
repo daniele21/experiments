@@ -4,7 +4,10 @@ suite:
   prompt_suite: prompt_suites/core_v1.yaml
   profiles:
     - smoke
+    - pilot
+    - canary
     - budget
+    - robust
 
 task_requirements:
   text_to_image:
