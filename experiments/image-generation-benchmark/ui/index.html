@@ -3,7 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b111b" />
+    <script>
+      // Apply saved theme before React/CSS paints to avoid a bright flash.
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem("imagegen-theme") === "light" ? "light" : "dark";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
     <title>Image Generation Benchmark</title>
   </head>
   <body>
