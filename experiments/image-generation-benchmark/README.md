@@ -202,6 +202,47 @@ resume or deduplication; avoid launching it automatically on CI until local
 pilot validation and human review are complete. Preserve the full run directory
 (`manifest.json`, `evidence.csv`, artifacts) for downstream gallery/scoring.
 
+
+### On-demand local image-model switching (FLUX.3 / Qwen Turbo)
+
+The **Playground** can now manage local Korgis image-model residency directly.
+It distinguishes *offline*, *model files missing*, *installed but cold*, and
+*ready* instead of displaying all of them as "Setup needed". Models are not
+implicitly loaded by changing the dropdown.
+
+1. Sync Experiments `main` and its pinned `korgis` submodule.
+2. Start Korgis on loopback with its admin API enabled. Set the sd-server
+   executable **in the Korgis process environment**, so models loaded after
+   startup find the same native image runtime:
+
+   ```bash
+   cd ~/Projects/experiments/korgis
+   unset LOCAL_LLM_BACKEND
+   export LOCAL_LLM_SD_SERVER_BIN="$HOME/.local-llm/tools/sdcpp-b43af40461cc64c89cac3b621019f8914f50dd9c/build/bin/sd-server"
+   uv run --frozen local-llm serve --model flux-3-image-klein-gguf-q5km \
+     --host 127.0.0.1 --port 1235 --enable-admin-api --no-download
+   ```
+
+3. Launch the UI with `KORGIS_BASE_URL=http://127.0.0.1:1235 npm run dev -- --host 127.0.0.1`.
+4. Select the local model. **Load model** attempts to keep the current one
+   resident too; host memory admission can reject it. **Replace current model**
+   is an *explicit confirmed* one-for-one action that stops the sole resident
+   model and activates the selected one, attempting to restore the original
+   model if activation fails. Never replace during an active generation.
+5. The UI uses the live `/v1/models` route to enable generation only after
+   the selected model is reported resident. Both local models can remain
+   resident if the host budget allows; otherwise use explicit replacement.
+
+Only catalogue-listed local image engines are exposed by the Playground
+runtime-control proxy; its POST endpoint is restricted to same-origin and
+loopback Host requests. Korgis must be started with `--enable-admin-api`,
+otherwise controls are not offered. Calls to the Korgis admin API set
+`no_download=true` for the requested model. Missing Qwen Turbo auxiliary
+artifacts must be installed separately before loading; the UI will not fetch
+weights in the background. This workflow changes **runtime residency**,
+not installed model weights or the benchmark's cloud provider configuration.
+
+
 ## Local Image-to-Image in the Playground (draft PR #132)
 
 The existing Playground supports both `Text to Image` and a **local-only**
