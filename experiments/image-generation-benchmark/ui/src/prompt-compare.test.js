@@ -70,11 +70,26 @@ test("one-prompt plan enforces configured distinct engines and literal shared pr
   assert.equal(plan.imageIntent, "square / approximately 1K");
   assert.throws(() => comparisonPlan(models, [models[0].key], "Prompt"), /2 and 5/);
   assert.throws(() => comparisonPlan(models, [models[0].key, models[0].key], "Prompt"), /distinct/);
-  assert.throws(() => comparisonPlan(models, [models[0].key, "unknown"], "Prompt"), /not configured/);
+  assert.throws(() => comparisonPlan(models, [models[0].key, "unknown"], "Prompt"), /not ready/);
   assert.throws(() => comparisonPlan(models, [models[0].key, models[1].key], " "), /Enter a comparison prompt/);
   assert.equal(comparisonPlan([
     models[0], { ...models[1], benchmark_mapping: { resolution: "2K", aspect_ratio: "1:1" } },
   ], [models[0].key, models[1].key], "Prompt").comparableDefaults, false);
+});
+
+test("a configured but not resident FLUX is never silently selected", () => {
+  const flux = {
+    key: "flux-3-image-klein-gguf-q5km",
+    name: "FLUX.3 Q5", model_id: "flux-3-image-klein-gguf-q5km",
+    kind: "local", provider: "korgis-image", configured: true,
+    model_resident: false,
+  };
+  const catalog = [...models, flux];
+  assert(!defaultCompareModels(catalog).includes(flux.key));
+  assert.throws(
+    () => comparisonPlan(catalog, [models[1].key, flux.key], "Prompt"),
+    /not ready/,
+  );
 });
 
 test("blind shuffle is independent of the fixed provider launch order", () => {
