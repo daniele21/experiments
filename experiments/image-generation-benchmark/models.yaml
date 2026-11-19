@@ -109,3 +109,32 @@ models:
       sigma_preset: qwen-image-2.1-turbo-v1
       execution: korgis-local
 
+
+  flux-3-image-klein-gguf-q5km:
+    display_name: "FLUX.3 Image Klein · GGUF Q5_K_M"
+    model_id: flux-3-image-klein-gguf-q5km
+    runtime: korgis-image-local
+    capabilities:
+      text_input: true
+      image_output: true
+      image_editing: false
+    generation:
+      output_format: png
+      size: 1024x1024
+      # Distilled Klein: 16 steps, CFG 1.0 (sdcpp docs/flux3.md and unsloth model card).
+      num_inference_steps: 16
+      guidance_scale: 1.0
+      sampling_method: euler
+    # UI-only allowlist, distinct from fixed benchmark generation settings.
+    playground:
+      sizes: [512x512, 768x768, 1024x1024, 1024x768, 768x1024]
+      output_formats: [png, jpeg, webp]
+    benchmark_mapping:
+      family: flux-3-image-klein
+      aspect_ratio: "1:1"
+      resolution: "1K"
+      intent: local-open-weight-q5
+      runtime: stable-diffusion.cpp
+      quantization: Q5_K_M
+      execution: korgis-local
+      weights_path: /Users/daniele/.lmstudio/models/unsloth/flux-3-image-klein-GGUF/flux-3-image-klein-Q5_K_M.gguf

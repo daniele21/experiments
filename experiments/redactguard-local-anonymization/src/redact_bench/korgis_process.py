@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -12,6 +13,35 @@ from redact_bench.provider import KorgisController, KorgisUnavailableError
 
 
 KORGIS_REPO_NAMES = ("korgis", "local-llm-server")
+
+
+def _process_snapshot() -> dict[int, tuple[int, str, str]]:
+    rows = subprocess.check_output(
+        ["ps", "-axo", "pid=,ppid=,stat=,lstart="], text=True,
+    )
+    processes = {}
+    for row in rows.splitlines():
+        pid, parent, state, started = row.split(None, 3)
+        processes[int(pid)] = (int(parent), state, started)
+    return processes
+
+
+def _descendant_pids(pid: int, snapshot: dict[int, tuple[int, str, str]]) -> list[int]:
+    """Capture owned children before terminating uv can orphan them.
+
+    Backends may create separate sessions, so a process-group signal alone
+    does not cover the runtime tree.
+    """
+    children: dict[int, list[int]] = {}
+    for child, (parent, _, _) in snapshot.items():
+        children.setdefault(parent, []).append(child)
+    descendants: list[int] = []
+    pending = list(children.get(pid, []))
+    while pending:
+        child = pending.pop()
+        descendants.append(child)
+        pending.extend(children.get(child, []))
+    return descendants
 
 
 def _looks_like_korgis_repo(path: Path) -> bool:
@@ -188,7 +218,12 @@ class ManagedKorgis:
             self.reused_existing = True
             return self
 
-        self.start()
+        try:
+            self.start()
+        except BaseException:
+            # __exit__ is not called when __enter__ fails (including Ctrl-C).
+            self.stop()
+            raise
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -288,19 +323,54 @@ class ManagedKorgis:
         )
 
     def stop(self) -> None:
+        try:
+            self._stop_process_tree()
+        finally:
+            if self._log_handle is not None:
+                self._log_handle.close()
+                self._log_handle = None
+
+    def _stop_process_tree(self) -> None:
         if self.process is not None and not self.reused_existing:
             if self.process.poll() is None:
-                self.process.terminate()
-                try:
-                    self.process.wait(timeout=15)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
-                    self.process.wait(timeout=5)
-            self.process = None
+                snapshot = _process_snapshot()
+                pids = _descendant_pids(self.process.pid, snapshot)
+                pids.append(self.process.pid)
+                identities = {pid: snapshot[pid][2] for pid in pids if pid in snapshot}
 
-        if self._log_handle is not None:
-            self._log_handle.close()
-            self._log_handle = None
+                def survivors() -> list[int]:
+                    self.process.poll()  # Reap our direct child.
+                    current = _process_snapshot()
+                    return [pid for pid, started in identities.items()
+                            if pid in current and current[pid][2] == started
+                            and "Z" not in current[pid][1]]
+
+                def send(pids: list[int], sig: int) -> None:
+                    for pid in pids:
+                        try:
+                            os.kill(pid, sig)
+                        except ProcessLookupError:
+                            pass
+
+                # Signal runtimes first, including those in independent sessions.
+                # Terminating only the uv wrapper leaves them resident.
+                send(list(reversed(pids[:-1])) + [self.process.pid], signal.SIGTERM)
+                deadline = time.monotonic() + 15
+                remaining = survivors()
+                while remaining and time.monotonic() < deadline:
+                    time.sleep(0.1)
+                    remaining = survivors()
+                if remaining:
+                    # Check start times so a recycled PID is never killed.
+                    send(remaining, signal.SIGKILL)
+                    deadline = time.monotonic() + 5
+                    while survivors() and time.monotonic() < deadline:
+                        time.sleep(0.1)
+                    remaining = survivors()
+                    if remaining:
+                        raise RuntimeError(f"Korgis processes failed to stop: {remaining}")
+                self.process.wait(timeout=5)
+            self.process = None
 
     def tail_log(self, lines: int = 40) -> str:
         if self._log_handle is not None:

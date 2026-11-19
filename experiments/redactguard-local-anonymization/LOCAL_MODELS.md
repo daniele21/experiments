@@ -67,6 +67,37 @@ The comparison is intended to measure bounded PII extraction rather than chain-o
 
 ## Adding future models
 
+### Local Unsloth Q4_K_M campaign
+
+`config/models-local-q4km.yaml` is an opt-in external Korgis registry for
+Gemma 4 E4B IT, Qwen3.5 2B, and Nemotron Nano 4B. It pins the SHA-256 of the
+three local Unsloth artifacts; files must already exist (or be symlinked) in
+`~/.local-llm/models/`. Gemma is evaluated as text-only, without a vision projector.
+No models are downloaded by this campaign.
+
+Run all four existing dataset configurations sequentially:
+
+```bash
+# From this experiment directory. Point to a Korgis checkout that supports
+# --inference-cache-max-entries and reports it through /health.
+KORGIS_REPO=/path/to/compatible/korgis bash scripts/run_local_q4km.sh
+
+# Or choose individual datasets:
+KORGIS_REPO=/path/to/compatible/korgis bash scripts/run_local_q4km.sh healthcare ambiguous
+```
+
+The locally verified cache-control checkout on 2026-11-12 was
+`~/Projects/local-llm-server` at `0826e568cfbda8368b7d9cad609f50ff0cdb35df`.
+The repository's current Korgis submodule checkout did not accept that flag;
+do not remove the cache-off gate to work around an incompatible runtime.
+Runtime revisions are recorded in suite artifacts.
+
+Realistic and Challenge include their configured latency repetitions;
+Healthcare and Ambiguous are quality-only. Each model starts in a fresh
+Korgis process on port 12435, with response caching disabled and the normal
+RedactGuard structured-output preflight enabled. Results remain under
+`results/suites/` and are discovered by `uv run redact-bench ui`.
+
 Prefer adding a stable model to Korgis when it is broadly useful across products/experiments. Use an experiment-owned external registry only for genuinely experimental artifacts.
 
 Never put a guessed model key in the benchmarkn. A model is runnable only if the active Korgis registry can resolve its artifact/backend configuration.

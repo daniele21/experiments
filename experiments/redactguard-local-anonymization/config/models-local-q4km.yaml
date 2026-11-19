@@ -1,0 +1,38 @@
+# Opt-in text-only registry for the locally installed Unsloth GGUF artifacts.
+# Enable with LOCAL_LLM_REGISTRY_PATHS; does not change Korgis defaults.
+models:
+  gemma-4-e4b-it-q4km:
+    filename: gemma-4-E4B-it-Q4_K_M.gguf
+    model_id: google/gemma-4-E4B-it
+    quantization: Q4_K_M
+    sha256: 85a896a047553e842f25297ee5b031d64ff30147d9c4af17b1e4b394cd1fab87
+    backend: llama_server
+    thinking_mode: switchable
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, gemma, text]
+  qwen3.5-2b-q4km:
+    filename: Qwen3.5-2B-Q4_K_M.gguf
+    model_id: Qwen/Qwen3.5-2B
+    quantization: Q4_K_M
+    sha256: aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223
+    backend: llama_server
+    thinking_mode: switchable
+    params:
+      ctx_size: 8192
+      startup_timeout: 300
+      max_concurrent_requests: 1
+      enable_thinking: false
+      show_thinking: false
+    tags: [local-benchmark, qwen, text, 2b]
+  nemotron-nano-4b:
+    # Explicitly identify the user's Unsloth artifact rather than the built-in
+    # LM Studio Community download. SHA-256 binds this local run to its bytes.
+    filename: NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf
+    sha256: e515c9ceb10ae503db22a201fade92167f757510d1247a65987f8b6ae9e296e7
+    url: https://huggingface.co/unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF/resolve/main/NVIDIA-Nemotron-3-Nano-4B-Q4_K_M.gguf
+    backend: llama_server
