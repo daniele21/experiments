@@ -49,6 +49,9 @@ class KorgisImageProvider:
                     raise ValueError("provider_options must be a mapping")
                 options.update(overrides)
 
+            if request.generation.seed is not None:
+                options["seed"] = int(request.generation.seed)
+
             output_format = str(options.get("output_format") or "png")
             payload: dict[str, Any] = {
                 "model": self.model_id,

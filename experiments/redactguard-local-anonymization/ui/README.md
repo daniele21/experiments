@@ -1,6 +1,6 @@
-# RedactBench UI
+# RedactGuard Benchmark Lab
 
-Minimal React/Vite dashboard for exploring local benchmark results.
+Local React/Vite workspace for presenting benchmark results and exploring their evidence.
 
 The UI does not copy or transform benchmark output. A small Vite middleware reads the
 experiment's `../results` directory directly, so completed runs become available without
@@ -49,19 +49,22 @@ The dashboard intentionally stays read-only. Benchmark execution remains owned b
 Python CLI; the React app only visualizes evidence already written under `results/`.
 
 
-## Unified overview
+## Workspace journey
 
-The dashboard opens on **All models**, a cross-run comparison assembled dynamically from
-the result folders.
+The entry page (`/client/experiments`) is an experiment library organized by dataset.
+SPACCC, ASQ-PHI, E3C, synthetic healthcare, realistic documents, challenge and
+ambiguous datasets stay separate. Unknown and partial runs remain accessible.
+The library does not load document payloads or silently select a benchmark.
 
-For each model the overview selects:
+1. Choose a dataset, then an execution identified by date, case count and models.
+2. **Risultati** presents a same-execution summary, model measurements and gold scope.
+   **Stampa report** prints this view without workspace navigation.
+3. **Casi & errori** filters and compares documents, then opens the existing masked
+   annotation inspector. Missing or unverifiable source text remains unavailable.
+4. **Confronto dataset** shows each model's latest eligible measurement per exact
+   dataset version. Every cell links to its original execution; scores are never
+   averaged across datasets.
 
-1. the newest completed quality benchmark, when one exists;
-2. otherwise, the newest partial JSONL evidence.
-
-The table always exposes the source run, completion status and case count so partial
-evidence cannot be mistaken for a completed benchmark. The scatter plot and all-model
-comparison therefore allow models produced by separate benchmark invocations to be viewed
-together while preserving provenance.
-
-The selected run pages remain available in the sidebar for drill-down.
+Technical diagnostics remain under **Analisi tecnica**. Existing model/document
+URLs remain valid, and the selected run is preserved through document navigation.
+The workspace supports light/dark/system appearance and responsive layouts.

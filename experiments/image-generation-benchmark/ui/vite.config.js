@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
+import { playgroundApi } from "./playground-api.js";
 import { defineConfig } from "vite";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -93,6 +94,7 @@ function rowView(runId, row) {
     ...row,
     valid: String(row.valid).toLowerCase() === "true",
     latency_ms: Number(row.latency_ms || 0),
+    sample_index: Number(row.sample_index || 0),
     generation_config: parseObject(row.generation_config),
     provider_metadata: metadata,
     artifact_url: row.artifact_path
@@ -103,12 +105,13 @@ function rowView(runId, row) {
 
 async function loadRun(runId) {
   const dir = safeRunDir(runId);
-  const [manifest, csv] = await Promise.all([
+  const [manifest, csv, runtimeMetrics] = await Promise.all([
     readJson(path.join(dir, "manifest.json"), {}),
     fs.readFile(path.join(dir, "evidence.csv"), "utf8"),
+    readJson(path.join(dir, "runtime_metrics.json"), null),
   ]);
   const rows = parseCsv(csv).map((row) => rowView(runId, row));
-  return { runId, manifest, rows };
+  return { runId, manifest, rows, runtimeMetrics };
 }
 
 async function discoverRuns() {
@@ -180,26 +183,32 @@ async function blindView(runId, reveal = false) {
   for (const row of run.rows) {
     if (!row.artifact_url) continue;
     if (!byPrompt.has(row.prompt_id)) byPrompt.set(row.prompt_id, new Map());
-    byPrompt.get(row.prompt_id).set(row.model_key, row);
+    const samples = byPrompt.get(row.prompt_id);
+    const sampleIndex = Number(row.sample_index || 0);
+    if (!samples.has(sampleIndex)) samples.set(sampleIndex, new Map());
+    samples.get(sampleIndex).set(row.model_key, row);
   }
   const pairs = [];
-  for (const [promptId, modelRows] of byPrompt.entries()) {
-    const available = requested.filter((model) => modelRows.has(model)).sort();
-    for (const [first, second] of combinations(available)) {
-      const pair = blindPair(promptId, first, second, seed);
-      const rowA = modelRows.get(pair.model_for_a);
-      const rowB = modelRows.get(pair.model_for_b);
-      pairs.push({
-        pair_id: pair.pair_id,
-        prompt_id: promptId,
-        category: rowA.category,
-        prompt: rowA.prompt,
-        image_a: rowA.artifact_url,
-        image_b: rowB.artifact_url,
-        ...(reveal
-          ? { model_for_a: pair.model_for_a, model_for_b: pair.model_for_b }
-          : {}),
-      });
+  for (const [promptId, samples] of byPrompt.entries()) {
+    for (const [sampleIndex, modelRows] of samples.entries()) {
+      const available = requested.filter((model) => modelRows.has(model)).sort();
+      for (const [first, second] of combinations(available)) {
+        const pair = blindPair(promptId, first, second, seed + sampleIndex);
+        const rowA = modelRows.get(pair.model_for_a);
+        const rowB = modelRows.get(pair.model_for_b);
+        pairs.push({
+          pair_id: pair.pair_id,
+          prompt_id: promptId,
+          sample_index: sampleIndex,
+          category: rowA.category,
+          prompt: rowA.prompt,
+          image_a: rowA.artifact_url,
+          image_b: rowB.artifact_url,
+          ...(reveal
+            ? { model_for_a: pair.model_for_a, model_for_b: pair.model_for_b }
+            : {}),
+        });
+      }
     }
   }
   return { runId, pairs };
@@ -272,6 +281,7 @@ async function apiMiddleware(request, response, next) {
 }
 
 export default defineConfig({
-  plugins: [react(), resultsApi()],
+  plugins: [react(), playgroundApi(), resultsApi()],
   server: { host: "127.0.0.1", port: 5173 },
+  preview: { host: "127.0.0.1" },
 });
