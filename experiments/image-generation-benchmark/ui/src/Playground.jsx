@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { matchedOutputSize, prepareReferenceImage } from "./reference-resize.js";
+import PromptCompare from "./PromptCompare.jsx";
 import { appendHistory, makeHistoryEntry, outputChoices, resolveSeed } from "./playground-session.js";
 
 const EXAMPLES = [
@@ -32,6 +33,7 @@ export default function Playground() {
   const [modelKey, setModelKey] = useState("");
   const [prompt, setPrompt] = useState(INITIAL_PROMPT);
   const [mode, setMode] = useState("generate");
+  const [workspaceMode, setWorkspaceMode] = useState("single");
   const [sourceImage, setSourceImage] = useState(null);
   const [sourcePreview, setSourcePreview] = useState("");
   const [prepared, setPrepared] = useState(null);
@@ -267,9 +269,17 @@ export default function Playground() {
           <h2>Image Playground</h2>
           <p>Generate a new image or edit a reference photo with a local model.</p>
         </div>
-        <span className="playground-intro-tag">One image at a time</span>
+        <span className="playground-intro-tag">Generate · edit · compare</span>
       </div>
-      <div className="playground-layout">
+      <div className="pg-workspace-tabs" role="group" aria-label="Playground workspace">
+        <button type="button" className={workspaceMode === "single" ? "selected" : ""}
+          aria-pressed={workspaceMode === "single"}
+          onClick={() => setWorkspaceMode("single")}>Single image</button>
+        <button type="button" className={workspaceMode === "compare" ? "selected" : ""}
+          aria-pressed={workspaceMode === "compare"}
+          onClick={() => setWorkspaceMode("compare")}>Compare models</button>
+      </div>
+      <div className="playground-layout" hidden={workspaceMode === "compare"}>
         <form className="playground-panel" onSubmit={generate}>
           <div className="pg-section-title">
             <span className="pg-step">01</span>
@@ -644,6 +654,9 @@ export default function Playground() {
             )}
           </section>
         </section>
+      </div>
+      <div hidden={workspaceMode !== "compare"}>
+        <PromptCompare models={models} />
       </div>
     </div>
   );
