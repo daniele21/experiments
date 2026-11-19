@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Playground from "./Playground.jsx";
+import { initialTheme, setTheme } from "./theme.js";
 
 const REFRESH_MS = 4000;
 const CRITERIA = ["prompt_adherence", "visual_preference", "text_quality"];
@@ -108,7 +109,7 @@ function RunSidebar({ runs, selectedRun, onSelect }) {
   );
 }
 
-function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
+function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh, theme, onToggleTheme }) {
   return (
     <header className="topbar">
       <div>
@@ -143,12 +144,24 @@ function RunHeader({ run, summary, activeTab, setActiveTab, lastRefresh }) {
           Blind review
         </button>
       </div>
-      <div className="header-stat">
-        {activeTab === "playground" ? (
-          <><strong>1 at a time</strong><span>prompt → image</span></>
-        ) : (
-          <><strong>{summary.valid}/{summary.total}</strong><span>valid outputs</span></>
-        )}
+      <div className="header-actions">
+        <button className="theme-toggle" type="button"
+          onClick={onToggleTheme}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-pressed={theme === "dark"}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+          <span className="theme-toggle-icon" aria-hidden="true">
+            {theme === "dark" ? "☀" : "☾"}
+          </span>
+          <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+        </button>
+        <div className="header-stat">
+          {activeTab === "playground" ? (
+            <><strong>1 at a time</strong><span>prompt → image</span></>
+          ) : (
+            <><strong>{summary.valid}/{summary.total}</strong><span>valid outputs</span></>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -485,6 +498,19 @@ export default function App() {
   const [selectedRun, setSelectedRun] = useState(null);
   const [run, setRun] = useState(null);
   const [activeTab, setActiveTab] = useState("playground");
+  const [theme, setActiveTheme] = useState(() => {
+    if (typeof document !== "undefined") {
+      const boot = document.documentElement.dataset.theme;
+      if (boot === "dark" || boot === "light") return boot;
+    }
+    return typeof localStorage !== "undefined" ? initialTheme(localStorage) : "dark";
+  });
+
+  useEffect(() => {
+    setTheme(theme, document.documentElement, localStorage);
+    document.querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#0b111b" : "#f4f6f8");
+  }, [theme]);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
@@ -556,6 +582,8 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           lastRefresh={lastRefresh}
+          theme={theme}
+          onToggleTheme={() => setActiveTheme((value) => value === "dark" ? "light" : "dark")}
         />
         {error && activeTab !== "playground" ? <div className="error-banner">{error}</div> : null}
         {activeTab !== "playground" && run?.runtimeMetrics?.mac_resource_telemetry ? (
