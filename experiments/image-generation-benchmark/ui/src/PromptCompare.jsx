@@ -29,7 +29,7 @@ function downloadJson(filename, data) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function PromptCompare({ models, onGeneration }) {
+export default function PromptCompare({ models, onGeneration, singlePrompt = "" }) {
   const [selectedKeys, setSelectedKeys] = useState([]);
   const initialized = useRef(false);
   const [prompt, setPrompt] = useState(DEFAULT_COMPARE_PROMPT);
@@ -171,6 +171,10 @@ export default function PromptCompare({ models, onGeneration }) {
         <span className="pg-compare-intro-pill">Exploratory · not a leaderboard</span>
       </div>
       <form className="pg-compare-form" onSubmit={run}>
+        {singlePrompt.trim() && singlePrompt.trim() !== prompt.trim() ? (
+          <button type="button" className="pg-compare-reuse-prompt" disabled={running}
+            onClick={() => setPrompt(singlePrompt)}>Use prompt from Single image</button>
+        ) : null}
         <label className="pg-field" htmlFor="pg-compare-prompt">
           <span>Shared prompt · identical text for every model</span>
           <textarea id="pg-compare-prompt" rows={5} maxLength={4000}
