@@ -34,6 +34,24 @@ const models = [
   },
 ];
 
+test("FLUX.3 can be selected alongside Qwen, Gemini and GPT Image", () => {
+  const flux = {
+    key: "flux-3-image-klein-gguf-q5km",
+    name: "FLUX.3 Klein Q5",
+    model_id: "flux-3-image-klein-gguf-q5km",
+    kind: "local", provider: "korgis-image", configured: true,
+    generation: { size: "1024x1024", output_format: "png", num_inference_steps: 16 },
+    benchmark_mapping: { resolution: "1K", aspect_ratio: "1:1", quantization: "Q5_K_M" },
+  };
+  const all = [...models, flux];
+  assert.equal(defaultCompareModels(all).length, 4);
+  const plan = comparisonPlan(all, defaultCompareModels(all), "Same scene");
+  assert.equal(plan.models.length, 4);
+  assert.equal(plan.models[1].key, flux.key);
+  assert.equal(plan.comparableDefaults, true);
+  assert.equal(plan.includesCloud, true);
+});
+
 test("quick comparison defaults to configured Qwen, Gemini and GPT Image", () => {
   assert.deepEqual(defaultCompareModels(models), models.map((m) => m.key));
   assert.deepEqual(defaultCompareModels(models.map((m) =>
