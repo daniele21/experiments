@@ -329,6 +329,8 @@ The Playground now has a **Compare models** workspace alongside **Single image**
    The local engine receives its own fresh random seed, and cloud
    providers receive no seed parameter because they do not promise
    equivalent seed semantics.
+   Successful outputs also enter the Playground's existing 12-entry temporary
+   session history, without duplicating the generated files.
 6. **Export JSON evidence** to save the exact prompt, resolved model
    IDs, per-model defaults, generated image identifiers and hashes,
    latency, failures, source seeds (where supported), randomized
