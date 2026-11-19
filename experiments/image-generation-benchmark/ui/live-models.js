@@ -57,7 +57,7 @@ export async function enrichLiveLocalModels(models, baseUrl, fetchImpl = fetch) 
         ? "Korgis is unreachable. Start the server on the configured local port."
         : modelResident ? null
           : !adminEnabled
-            ? "Korgis is online. Restart it with --enable-admin-api to load models here."
+            ? "Model not loaded in Korgis. Restart it with --enable-admin-api to load models here."
             : installed === false
               ? "Required model files are not installed locally. No automatic downloads."
               : "Model installed but not loaded. Load it from this Playground.";
