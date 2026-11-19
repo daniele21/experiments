@@ -133,7 +133,8 @@ export default function Playground() {
   const displayedMode = selectedHistory?.mode || mode;
   const displayedSource = selectedHistory
     ? selectedHistory.sourceUrl : preparedPreview;
-  const canSubmit = selected?.configured && prompt.trim().length > 0 &&
+  const canSubmit = selected?.configured && (!local || selected.model_resident !== false) &&
+    prompt.trim().length > 0 &&
     prompt.length <= 4000 && !working && !preparingImage &&
     (!editing || (editAvailable && prepared?.file));
 
@@ -326,6 +327,9 @@ export default function Playground() {
               <span>{local ? "On-device via Korgis" : "Cloud API · may incur charges"}</span>
               <small>{selected.model_id}</small>
               {!selected.configured ? <p>{selected.setup_hint}</p> : null}
+              {local && selected.model_resident === false ? (
+                <p>Not loaded in Korgis. Start the selected model and refresh engines before generating.</p>
+              ) : null}
               {selected.image_editing_supported && !editAvailable ? (
                 <p>Editing unavailable. Start Korgis with <code>--image-editing-enabled</code> and refresh engines.</p>
               ) : null}
@@ -656,7 +660,14 @@ export default function Playground() {
         </section>
       </div>
       <div hidden={workspaceMode !== "compare"}>
-        <PromptCompare models={models} singlePrompt={prompt} onGeneration={(output) => recordHistory(output, "generate")} />
+        <PromptCompare models={models} singlePrompt={prompt}
+          onRefresh={async () => {
+            const response = await fetch("/api/playground/models", { cache: "no-store" });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || "Cannot refresh engines");
+            setModels(payload.models || []);
+          }}
+          onGeneration={(output) => recordHistory(output, "generate")} />
       </div>
     </div>
   );
