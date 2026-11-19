@@ -19,6 +19,7 @@ export const MAX_COMPARE_ARMS = 5;
 
 const DEFAULT_ARMS = [
   "qwen-image-2.1-turbo-gguf-q4km",
+  "flux-3-image-klein-gguf-q5km",
   "gemini-pro-image",
   "openai-sunburst",
 ];
