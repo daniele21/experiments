@@ -1,0 +1,22 @@
+# MCB-owned Korgis registry extension. Load with LOCAL_LLM_REGISTRY_PATHS.
+# Text-only benchmark: no multimodal projector required.
+models:
+  inkling-2-mini-ud-q4km:
+    model_id: thinkingmachines/Inkling-2-Mini
+    filename: Inkling-2-Mini-UD-Q4_K_M.gguf
+    lmstudio_path: unsloth/Inkling-2-Mini-GGUF
+    path: "~/.lmstudio/models/unsloth/Inkling-2-Mini-GGUF/Inkling-2-Mini-UD-Q4_K_M.gguf"
+    quantization: UD-Q4_K_M
+    sha256: "78fcedcf93c5d1bfe83e225513b71392bb52259be0eaa5f8899c856a2e5834ae"
+    backend: llama_server
+    thinking_mode: always
+    params:
+      ctx_size: 8192
+      startup_timeout: 600
+      max_concurrent_requests: 1
+      n_gpu_layers: -1
+      default_temperature: 0.0
+      enable_thinking: true
+      show_thinking: false
+      llama_server_min_build: 12611
+    tags: [local, open-weight, moe, reasoning, local-benchmark]

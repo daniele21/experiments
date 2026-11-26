@@ -76,3 +76,22 @@ def test_committed_registry_contains_no_machine_specific_paths_or_secrets() -> N
     assert "api_key:" not in text
     assert "password:" not in text
     assert "secret:" not in text
+
+
+def test_inkling_registry_matches_korgis_overlay() -> None:
+    import yaml
+
+    key = "inkling-2-mini-ud-q4km"
+    model = load_registry(REGISTRY).resolve(key)
+    entry = yaml.safe_load((ROOT / "korgis-inkling.yaml").read_text())["models"][key]
+    assert model.runtime.lifecycle == "managed"
+    assert model.effective_model_id == key
+    assert model.model.model_id == entry["model_id"]
+    assert model.model.parameters_b == 26.4
+    assert model.model.artifact is not None
+    assert model.model.artifact.quantization == entry["quantization"]
+    assert model.model.artifact.metadata["sha256"] == entry["sha256"]
+    assert entry["filename"] == "Inkling-2-Mini-UD-Q4_K_M.gguf"
+    assert entry["params"]["llama_server_min_build"] == 12611
+    assert entry["params"]["ctx_size"] == 8192
+    assert entry["thinking_mode"] == "always"

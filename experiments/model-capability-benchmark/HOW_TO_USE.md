@@ -373,6 +373,55 @@ uv run model-bench dashboard-data
 uv run model-bench dashboard-build
 ~~~
 
+## 4e. Thinking Machines Inkling 2 Mini (UD-Q4_K_M)
+
+[Model card](https://huggingface.co/thinkingmachines/Inkling-2-Mini) ·
+[Exact GGUF](https://huggingface.co/unsloth/Inkling-2-Mini-GGUF/blob/main/Inkling-2-Mini-UD-Q4_K_M.gguf).
+The model has 26.4B total, 3.4B active and 5.4B effective active parameters per
+token with the repeated layers. MCB records total parameters for the size frontier.
+The text-only MCB profile does not need an image projector.
+
+The registry extension belongs to MCB rather than changing the pinned Korgis
+submodule. Use a recent mainline llama-server (b12611 or newer) with the exact
+mainline-compatible GGUF revision; the launcher checks its SHA-256 and never downloads
+or overwrites your file. An older Unsloth layout may require a separate compatible
+runtime/artifact lineage. Inkling cannot completely disable native reasoning, so
+the Korgis profile is marked always-thinking and uses the embedded template default,
+not a claimed thinking-off baseline. An explicit reasoning-effort experiment should
+be recorded separately. Do not silently change token budgets to repair a failed run.
+
+From the experiments repository root, start Korgis in one terminal:
+
+~~~bash
+export LOCAL_LLM_REGISTRY_PATHS="$PWD/experiments/model-capability-benchmark/korgis-inkling.yaml"
+export KORGIS_CONTROL_TIMEOUT_SECONDS=660
+cd korgis
+uv run --frozen local-llm serve --model inkling-2-mini-ud-q4km --enable-admin-api --no-download
+~~~
+
+If needed, supply a compatible binary with `--llama-server-bin /path/to/llama-server`.
+Avoid other simultaneous local inference for meaningful RAM/latency measurements.
+
+In another terminal, from the experiments repository root:
+
+~~~bash
+cd experiments/model-capability-benchmark
+uv sync --extra dev
+PROFILE=smoke bash scripts/run_inkling_benchmark.sh
+# Inspect scratch reports and resolve any runtime or output failures first.
+PROFILE=core bash scripts/run_inkling_benchmark.sh
+# Optional production/standalone dashboard build after core.
+uv run model-bench dashboard-build
+~~~
+
+Core uses the same five verticals, suite version, default seed and generation
+budgets as the other models. The launcher runs separate immutable capability runs;
+use the same explicit CAMPAIGN value to resume a failed invocation. Scratch runs
+are excluded from canonical analytics. Compare only matching dataset/task/prompt
+versions and generation budgets; native reasoning and runtime build differences
+remain relevant when comparing efficiency. Results are not assumed to exist before
+actual inference finishes.
+
 ## 5. API models
 
 OpenAI:

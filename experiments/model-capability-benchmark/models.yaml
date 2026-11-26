@@ -159,6 +159,26 @@ runtimes:
 
 
 models:
+  inkling-2-mini-ud-q4km:
+    model_id: thinkingmachines/Inkling-2-Mini
+    runtime_model_id: inkling-2-mini-ud-q4km
+    runtime: korgis-local
+    family: inkling-2
+    parameters_b: 26.4
+    artifact:
+      format: gguf
+      quantization: UD-Q4_K_M
+      metadata:
+        sha256: "78fcedcf93c5d1bfe83e225513b71392bb52259be0eaa5f8899c856a2e5834ae"
+        resolved_by: korgis-model-registry
+        source_repo: unsloth/Inkling-2-Mini-GGUF
+        required_runtime: "llama.cpp>=b12611"
+    metadata:
+      active_parameters_b: 3.4
+      effective_active_parameters_b: 5.4
+      reasoning_policy: native-template-default
+    tags: [local, open-weight, moe, looped-transformer, reasoning, inkling, gguf]
+
   lfm2.5-24b-a2b-ud-q3-k-xl:
     model_id: unsloth/LFM2.5-24B-A2B-GGUF
     runtime_model_id: lfm2.5-24b-a2b-ud-q3-k-xl
