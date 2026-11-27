@@ -203,6 +203,8 @@ models:
       quantization: UD-Q4_K_XL
       metadata:
         resolved_by: korgis-model-registry
+    metadata:
+      default_max_output_tokens: 4096
     tags: [local, open-weight, moe]
 
   lfm3-1.7b-q8:
