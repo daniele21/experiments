@@ -1,0 +1,24 @@
+# MCB-owned Korgis registry extension. Load with LOCAL_LLM_REGISTRY_PATHS.
+# Text-only benchmark: no multimodal projector required.
+models:
+  qwen3.8-27b-ud-q4km:
+    model_id: Qwen/Qwen3.8-27B-UD-Q4_K_M
+    filename: Qwen3.8-27B-UD-Q4_K_M.gguf
+    lmstudio_path: unsloth/Qwen3.8-27B-GGUF
+    path: "~/.lmstudio/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf"
+    quantization: UD-Q4_K_M
+    sha256: "322e194ff79741c7baa497c240f677f54b201b0efab44ca8e50f122b39123482"
+    size_gb: 15.33
+    backend: llama_server
+    thinking_mode: switchable
+    params:
+      ctx_size: 8192
+      startup_timeout: 600
+      max_concurrent_requests: 1
+      n_gpu_layers: -1
+      default_temperature: 0.7
+      default_top_p: 0.8
+      default_top_k: 20
+      enable_thinking: false
+      show_thinking: false
+    tags: [local, open-weight, qwen, reasoning, local-benchmark, 27b, ud-q4km]

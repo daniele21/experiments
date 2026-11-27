@@ -22,7 +22,7 @@ CAMPAIGN="${CAMPAIGN:-inkling2-mini-$(date -u +%Y%m%dT%H%M%SZ)}"
 cd "$ROOT"
 curl -fsS "${KORGIS_BASE_URL%/v1}/health" >/dev/null
 uv run model-bench validate-config --models "$MODEL"
-uv run model-bench plan --models "$MODEL" --capabilities all --profile "$PROFILE"
+uv run model-bench plan --capabilities all --profile "$PROFILE"
 for CAP in structured-output qa-abstention mathematical-reasoning intent-classification oos-calibration; do
   RUN_ID="$CAMPAIGN-$CAP-$PROFILE"
   args=(--models "$MODEL" --capabilities "$CAP" --profile "$PROFILE" --run-group "$CAMPAIGN" --run-id "$RUN_ID" --resume --progress)
