@@ -27,15 +27,4 @@ experiments/*/results/history.jsonl
 experiments/*/results/*.zip
 experiments/model-capability-benchmark/results/published/dashboard-data.json
 experiments/*/ui/public/pii-taxonomy.json
-experiments/image-generation-benchmark/playground-results/92134dade1fa4d168b3a92651ddaf88c/image.png
-experiments/image-generation-benchmark/playground-results/92134dade1fa4d168b3a92651ddaf88c/result.json
-experiments/image-generation-benchmark/playground-results/92134dade1fa4d168b3a92651ddaf88c/artifacts/f1a130729f7ef449f6b0c849557f8cf8e55d90ca129eba44b67e424cbde399ec.png
-experiments/image-generation-benchmark/playground-results/9f8369c96ea8489297aadddc6e63f971/image.png
-experiments/image-generation-benchmark/playground-results/9f8369c96ea8489297aadddc6e63f971/result.json
-experiments/image-generation-benchmark/playground-results/9f8369c96ea8489297aadddc6e63f971/artifacts/6339c60585a60d9aad95ca17f7c440b6c9c59e7baeb388b66818949effaf0c14.png
-experiments/image-generation-benchmark/playground-results/f7468f35d09648aba17c52b3afff2270/image.png
-experiments/image-generation-benchmark/playground-results/f7468f35d09648aba17c52b3afff2270/result.json
-experiments/image-generation-benchmark/playground-results/f7468f35d09648aba17c52b3afff2270/artifacts/99bf49cede10b08299e8c4156ff6b6cfa1c24f5225ffabf1afa021f38be987f2.png
-experiments/image-generation-benchmark/playground-results/f8d8a36fc5564a57b6c27df3c6268af4/image.png
-experiments/image-generation-benchmark/playground-results/f8d8a36fc5564a57b6c27df3c6268af4/result.json
-experiments/image-generation-benchmark/playground-results/f8d8a36fc5564a57b6c27df3c6268af4/artifacts/36a499fec9d625d162955d282e781469a26b10b030abfb14180cf1f14c23ec18.png
+experiments/image-generation-benchmark/playground-results/*
